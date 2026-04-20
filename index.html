@@ -148,6 +148,17 @@ tbody tr:hover td{background:var(--s2)}
 #toast.ok{border-left:3px solid var(--g)}#toast.er{border-left:3px solid var(--rd)}#toast.in{border-left:3px solid var(--bl)}#toast.wa{border-left:3px solid var(--am)}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--s4);border-radius:3px}
 .fade{animation:fd .22s ease}@keyframes fd{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+/* === MODAL DE DETALHES (vmodal) === */
+.vmodal{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9996;display:none;align-items:center;justify-content:center;padding:16px}
+.vmodal.open{display:flex}
+.vbox{background:var(--s1);border:0.5px solid var(--bd2);border-radius:var(--r);padding:22px 24px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto}
+.vtit2{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.vrow{display:flex;gap:8px;margin-bottom:9px;font-size:13px;flex-wrap:wrap}
+.vlbl{color:var(--tx3);font-size:11px;text-transform:uppercase;letter-spacing:.05em;min-width:90px;flex-shrink:0;padding-top:1px}
+.vval{color:var(--tx);flex:1;line-height:1.6}
+.vtec{background:var(--s2);border-radius:var(--rs);padding:10px 12px;font-size:12px;color:var(--tx2);line-height:1.7;border:0.5px solid var(--bd);word-break:break-word;white-space:pre-wrap}
+.vhr{border:none;border-top:0.5px solid var(--bd);margin:13px 0}
+tbody tr{cursor:pointer}
 </style>
 </head>
 <body>
@@ -274,6 +285,36 @@ tbody tr:hover td{background:var(--s2)}
     <div style="display:flex;gap:8px;"><button class="btn bg" id="btn-saveedit">Salvar</button><button class="btn bo" id="btn-canceledit">Cancelar</button></div>
   </div>
 </div>
+<!-- MODAL DE DETALHES DO ITEM -->
+<div class="vmodal" id="vmodal">
+  <div class="vbox">
+    <div class="vtit2">
+      <span id="v-title" style="flex:1;font-size:15px;line-height:1.4;"></span>
+      <div style="display:flex;gap:7px;align-items:center;flex-shrink:0;">
+        <span id="v-rtu-badge"></span>
+        <button class="btn bo sm" id="btn-closevmodal">Fechar</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap;align-items:flex-start;">
+      <img id="v-img" src="" alt="" style="width:100px;height:100px;object-fit:contain;background:var(--s2);border-radius:var(--rs);border:0.5px solid var(--bd2);padding:5px;cursor:zoom-in;flex-shrink:0;display:none;" onclick="zoomI(this.src)">
+      <div id="v-noimg" style="width:100px;height:100px;background:var(--s2);border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:28px;opacity:.2;flex-shrink:0;">&#128230;</div>
+      <div style="flex:1;min-width:160px;">
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--g);margin-bottom:4px;" id="v-valor">-</div>
+        <div style="font-size:13px;color:var(--tx2);margin-bottom:8px;" id="v-loja-top">-</div>
+        <span id="v-origem-badge"></span>
+      </div>
+    </div>
+    <hr class="vhr">
+    <div class="vrow"><span class="vlbl">Descricao</span><span class="vval" id="v-desc">-</span></div>
+    <div class="vrow"><span class="vlbl">Marca</span><span class="vval" id="v-marca">-</span></div>
+    <div class="vrow"><span class="vlbl">Unidade</span><span class="vval" id="v-und">-</span></div>
+    <div class="vrow"><span class="vlbl">Loja</span><span class="vval" id="v-loja2">-</span></div>
+    <div class="vrow"><span class="vlbl">Data</span><span class="vval" id="v-data">-</span></div>
+    <div class="vrow" style="flex-direction:column;gap:5px;" id="v-tec-row"><span class="vlbl">Desc. Tecnica</span><div class="vtec" id="v-tec">-</div></div>
+    <hr class="vhr">
+    <div style="display:flex;gap:8px;justify-content:flex-end;" id="v-btns"></div>
+  </div>
+</div>
 <div id="toast"></div>
 <script>
 var SENHA='180126';
@@ -282,11 +323,9 @@ var EXPIRE=30;
 var items=JSON.parse(localStorage.getItem('bp_items')||'[]');
 var rtuBase=JSON.parse(localStorage.getItem('bp_rtu')||JSON.stringify([{nome:'TechStore Paraguay',cidade:'Ciudad del Este',contato:'+595 61 555-0001'},{nome:'ElectroSur CDE',cidade:'Ciudad del Este',contato:'+595 61 555-0002'},{nome:'MegaTech Paraguay',cidade:'Salto del Guaira',contato:'+595 46 555-0003'},{nome:'InfoShop PY',cidade:'Pedro Juan Caballero',contato:'+595 36 555-0004'},{nome:'DigiStore Paraguay',cidade:'Ciudad del Este',contato:'+595 61 555-0005'}]));
 var fTxt='',fOrig='',fRtu='',sCol='item',sAsc=true,cView='cards',editIdx=-1,b64=null;
-
 function login(){var c=document.getElementById('campo-senha');if(c.value==SENHA){document.getElementById('tela-login').style.display='none';document.getElementById('tela-app').style.display='block';initApp();}else{document.getElementById('erro-login').style.display='block';c.value='';c.focus();}}
 document.getElementById('botao-entrar').addEventListener('click',login);
 document.getElementById('campo-senha').addEventListener('keypress',function(e){if(e.key==='Enter')login();});
-
 function initApp(){
   var now=new Date();
   document.getElementById('dash-date').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -324,10 +363,11 @@ function initApp(){
   document.getElementById('btn-canceledit').onclick=closeEdit;
   document.getElementById('btn-saveedit').onclick=saveEdit;
   document.getElementById('e-valor').oninput=function(){mskM(this);};
+  document.getElementById('btn-closevmodal').onclick=closeVer;
+  document.getElementById('vmodal').onclick=function(e){if(e.target===this)closeVer();};
   var ths=document.querySelectorAll('th[data-col]');
   for(var i=0;i<ths.length;i++){(function(th){th.onclick=function(){sortBy(th.getAttribute('data-col'));}})(ths[i]);}
 }
-
 function goS(id){
   var all=['d','b','m','r','p'];
   for(var i=0;i<all.length;i++){
@@ -336,7 +376,6 @@ function goS(id){
   }
   renderAll();
 }
-
 function carregarSheet(){
   setSS('go','Carregando...');
   fetch(API+'?action=get').then(function(r){return r.json();}).then(function(d){
@@ -347,7 +386,6 @@ function carregarSheet(){
     setSS('ok','Sync '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));renderAll();
   }).catch(function(){setSS('er','Erro');toast('Usando dados locais','wa');renderAll();});
 }
-
 function syncSheet(){
   setSS('go','Sincronizando...');
   var hd=['Descricao','Und','Marca','Valor','Loja','Foto','Data','DescTec','RTU','Origem','Status','TS'];
@@ -358,7 +396,6 @@ function syncSheet(){
     toast('Sincronizado!','ok');
   }).catch(function(){setSS('er','Erro');toast('Salvo local','wa');});
 }
-
 function isExp(r){return r.status==='expired'||r.origem==='expired'||(r.ts&&dA(r)>=EXPIRE);}
 function dA(r){return r.ts?Math.floor((Date.now()-new Date(r.ts).getTime())/86400000):0;}
 function pV(s){if(!s)return 0;var n=parseFloat(String(s).replace('R$','').replace(/\./g,'').replace(',','.').trim());return isNaN(n)?0:n;}
@@ -366,7 +403,6 @@ function mskM(el){var v=el.value.replace(/\D/g,'');if(!v){el.value='';return;}el
 function setSS(st,lb){var d=document.getElementById('sdot'),l=document.getElementById('slbl');d.className='sdot'+(st==='ok'?' ok':st==='go'?' go':st==='er'?' er':'');l.textContent=lb||(st==='ok'?'Sincronizado':st==='go'?'Sincronizando...':st==='er'?'Erro':'Nao sincronizado');}
 function upd30(){var n=new Date(),nx=new Date(n.getFullYear(),n.getMonth(),30);if(nx<=n)nx.setMonth(nx.getMonth()+1);var e=document.getElementById('next30');if(e)e.textContent=nx.toLocaleDateString('pt-BR');var exp=items.filter(function(r){return isExp(r);}).length;var ca=document.getElementById('calert');if(ca)ca.style.display=exp>0?'block':'none';}
 function forceUpd(){var exp=items.filter(function(r){return isExp(r);});if(!exp.length){toast('Nenhum expirado','in');return;}toast(exp.length+' expirado(s) - inicie o Assistente de Cotacao no Cowork','wa');}
-
 function addManual(){
   var desc=document.getElementById('m-desc').value.trim(),val=document.getElementById('m-valor').value.trim();
   if(!desc){toast('Descricao obrigatoria','er');return;}if(!val){toast('Valor obrigatorio','er');return;}
@@ -394,7 +430,33 @@ function rtuBadge(rtu){if(rtu==='sim')return '<span class="badge bgy">RTU SIM</s
 function oBadge(r){if(isExp(r))return '<span class="badge bge">Expirado</span>';if(r.origem==='auto')return '<span class="badge bga">Auto</span>';return '<span class="badge bgm">Manual</span>';}
 function cHTML(r){var src=iS(r),exp=isExp(r),idx=items.indexOf(r),near=!exp&&dA(r)>=25;var expB=exp?'<div class="expb">Prazo expirado - revisar manualmente</div>':'';var nearW=near?'<div style="font-size:10px;color:var(--am);margin-top:4px;">'+dA(r)+' dias - renovar em breve</div>':'';return '<div class="card fade"><div class="cimg">'+(src?'<img src="'+src+'" alt="" onerror="this.style.display=\'none\'" onclick="zoomI(\''+src.replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':'<div class="noi">&#128230;</div>')+'<div class="cbo">'+oBadge(r)+'</div>'+(r.rtu?'<div class="cbr">'+rtuBadge(r.rtu)+'</div>':'')+'</div><div class="cbody"><div class="cdesc" title="'+r.descricao+'">'+r.descricao+'</div><div class="cmarca">'+(r.marca&&r.marca!=='-'?r.marca:'')+' '+r.und+'</div>'+(r.descTecnica?'<div class="ctec">'+r.descTecnica+'</div>':'')+'<div class="cval">'+(r.valor||'-')+'</div><div class="cloja">'+(r.loja||'')+'</div>'+expB+nearW+'<div class="cfoot"><span class="cdate">'+(r.dataCadastro||'-')+'</span><div class="cacts">'+(src?'<button class="btn bp sm" onclick="zoomI(\''+src.replace(/'/g,"\\'")+'\')" style="font-size:11px;">Foto</button>':'')+'<button class="btn bs sm" onclick="abrirEdit('+idx+')">Editar</button><button class="btn br sm" onclick="remItem('+idx+')">X</button></div></div></div></div>';}
 function rD(){var el=document.getElementById('dash-cards');if(!el)return;var r=[].concat(items).sort(function(a,b){return new Date(b.ts||0)-new Date(a.ts||0);}).slice(0,6);if(!r.length){el.innerHTML='<div class="empty"><div class="empi">&#128230;</div><div class="empt">Banco vazio</div><div class="emps">Aguardando o Assistente de Cotacao ou insercao manual</div></div>';return;}el.innerHTML=r.map(cHTML).join('');}
-function rB(){var src=fI(),tct=document.getElementById('tblct');if(tct)tct.textContent=src.length+' item(s)';var cc=document.getElementById('cards-ct');if(cc){if(!src.length)cc.innerHTML='<div class="empty"><div class="empi">&#128203;</div><div class="empt">'+(items.length?'Sem resultados':'Banco vazio')+'</div><div class="emps">'+(items.length?'Ajuste os filtros':'Aguardando cotacao')+'</div></div>';else cc.innerHTML=src.map(cHTML).join('');}var tb=document.getElementById('tbl-body');if(!tb)return;if(!src.length){tb.innerHTML='<tr><td colspan="12"><div class="empty"><div class="empt">Sem dados</div></div></td></tr>';return;}tb.innerHTML=src.map(function(r){var ri=items.indexOf(r),s=iS(r),iEl=s?'<img class="tdimg" src="'+s+'" alt="" onclick="zoomI(\''+s.replace(/'/g,"\\'")+'\')" >':'<div class="tdnoi">&#128230;</div>';return '<tr class="fade"><td><span class="tdn">'+r.item+'</span></td><td>'+iEl+'</td><td class="tdd" title="'+r.descricao+'">'+r.descricao+'</td><td class="tdtec" title="'+(r.descTecnica||'')+'">'+(r.descTecnica||'-')+'</td><td style="font-size:11px;color:var(--tx2);">'+r.und+'</td><td style="font-size:12px;">'+r.marca+'</td><td class="tdval">'+(r.valor||'-')+'</td><td style="font-size:11px;color:var(--tx2);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(r.loja||'-')+'</td><td>'+rtuBadge(r.rtu)+'</td><td class="tddt">'+(r.dataCadastro||'-')+'</td><td>'+oBadge(r)+'</td><td style="display:flex;gap:4px;padding:5px 10px;"><button class="btn bs sm" onclick="abrirEdit('+ri+')">Ed</button><button class="btn br sm" onclick="remItem('+ri+')">X</button></td></tr>';}).join('');}
+function rB(){var src=fI(),tct=document.getElementById('tblct');if(tct)tct.textContent=src.length+' item(s)';var cc=document.getElementById('cards-ct');if(cc){if(!src.length)cc.innerHTML='<div class="empty"><div class="empi">&#128203;</div><div class="empt">'+(items.length?'Sem resultados':'Banco vazio')+'</div><div class="emps">'+(items.length?'Ajuste os filtros':'Aguardando cotacao')+'</div></div>';else cc.innerHTML=src.map(cHTML).join('');}var tb=document.getElementById('tbl-body');if(!tb)return;if(!src.length){tb.innerHTML='<tr><td colspan="12"><div class="empty"><div class="empt">Sem dados</div></div></td></tr>';return;}tb.innerHTML=src.map(function(r){var ri=items.indexOf(r),s=iS(r),iEl=s?'<img class="tdimg" src="'+s+'" alt="" onclick="event.stopPropagation();zoomI(\''+s.replace(/'/g,"\\'")+'\')" >':'<div class="tdnoi">&#128230;</div>';return '<tr class="fade" onclick="abrirVer('+ri+')" title="Clique para ver detalhes"><td><span class="tdn">'+r.item+'</span></td><td>'+iEl+'</td><td class="tdd" title="'+r.descricao+'">'+r.descricao+'</td><td class="tdtec" title="'+(r.descTecnica||'')+'">'+(r.descTecnica||'-')+'</td><td style="font-size:11px;color:var(--tx2);">'+r.und+'</td><td style="font-size:12px;">'+r.marca+'</td><td class="tdval">'+(r.valor||'-')+'</td><td style="font-size:11px;color:var(--tx2);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(r.loja||'-')+'</td><td>'+rtuBadge(r.rtu)+'</td><td class="tddt">'+(r.dataCadastro||'-')+'</td><td>'+oBadge(r)+'</td><td style="display:flex;gap:4px;padding:5px 10px;" onclick="event.stopPropagation()"><button class="btn bs sm" onclick="abrirEdit('+ri+')">Ed</button><button class="btn br sm" onclick="remItem('+ri+')">X</button></td></tr>';}).join('');}
+function abrirVer(i){
+  var r=items[i];
+  document.getElementById('v-title').textContent=r.descricao||'Produto';
+  document.getElementById('v-desc').textContent=r.descricao||'-';
+  document.getElementById('v-marca').textContent=(r.marca&&r.marca!=='-'?r.marca:'-');
+  document.getElementById('v-und').textContent=r.und||'-';
+  document.getElementById('v-loja-top').textContent=(r.loja&&r.loja!=='-'?r.loja:'');
+  document.getElementById('v-loja2').textContent=(r.loja&&r.loja!=='-'?r.loja:'-');
+  document.getElementById('v-valor').textContent=r.valor||'-';
+  document.getElementById('v-data').textContent=r.dataCadastro||'-';
+  document.getElementById('v-tec').textContent=r.descTecnica||'-';
+  document.getElementById('v-tec-row').style.display=r.descTecnica?'flex':'none';
+  var rtuBdg=document.getElementById('v-rtu-badge');
+  rtuBdg.innerHTML=r.rtu==='sim'?'<span class="badge bgy">RTU SIM</span>':r.rtu==='nao'?'<span class="badge bgn">RTU NAO</span>':'';
+  var origBdg=document.getElementById('v-origem-badge');
+  origBdg.innerHTML=isExp(r)?'<span class="badge bge">Expirado</span>':r.origem==='auto'?'<span class="badge bga">Auto</span>':'<span class="badge bgm">Manual</span>';
+  var img=document.getElementById('v-img'),noi=document.getElementById('v-noimg');
+  if(r.foto){img.src=r.foto;img.style.display='block';noi.style.display='none';}
+  else{img.style.display='none';noi.style.display='flex';}
+  var btns=document.getElementById('v-btns');
+  btns.innerHTML=(r.foto?'<button class="btn bp sm" onclick="zoomI(\''+r.foto.replace(/'/g,"\\'")+'\')">&#128247; Ver foto</button>':'')+
+    '<button class="btn bs sm" onclick="closeVer();abrirEdit('+i+')">Editar</button>'+
+    '<button class="btn br sm" onclick="closeVer();remItem('+i+')">Remover</button>';
+  document.getElementById('vmodal').classList.add('open');
+}
+function closeVer(){document.getElementById('vmodal').classList.remove('open');}
 function renderRTU(){var el=document.getElementById('rtu-list');if(!el)return;if(!rtuBase.length){el.innerHTML='<div class="empty"><div class="empi">&#127978;</div><div class="empt">Base RTU vazia</div></div>';return;}el.innerHTML=rtuBase.map(function(r,i){return '<div class="rtucard"><div><div class="rtun">'+r.nome+'</div><div class="rtui">'+r.cidade+(r.contato?' - '+r.contato:'')+'</div></div><div style="display:flex;align-items:center;gap:6px;"><span class="badge bgy">RTU</span><button class="btn br sm" onclick="remRTU('+i+')">X</button></div></div>';}).join('');}
 function updM(){var exp=items.filter(function(r){return isExp(r);}).length,el=function(id){return document.getElementById(id);};if(el('m-tot'))el('m-tot').textContent=items.length;if(el('m-aut'))el('m-aut').textContent=items.filter(function(r){return r.origem==='auto';}).length;if(el('m-man'))el('m-man').textContent=items.filter(function(r){return r.origem==='manual';}).length;if(el('m-rtu'))el('m-rtu').textContent=items.filter(function(r){return r.rtu==='sim';}).length;if(el('m-fot'))el('m-fot').textContent=items.filter(function(r){return !!r.foto;}).length;if(el('m-exp'))el('m-exp').textContent=exp;}
 function exportXLSX(){if(!items.length){toast('Banco vazio','er');return;}var wd=[['#','Descricao','DescTec','Und','Marca','Valor','Loja','RTU','Data','Origem','Status']].concat(items.map(function(r){return[r.item,r.descricao,r.descTecnica||'',r.und,r.marca,r.valor,r.loja,r.rtu||'',r.dataCadastro,r.origem,r.status||''];}));var wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(wd);ws['!cols']=[{wch:5},{wch:44},{wch:38},{wch:7},{wch:16},{wch:14},{wch:26},{wch:8},{wch:13},{wch:10},{wch:20}];XLSX.utils.book_append_sheet(wb,ws,'BANCO');XLSX.writeFile(wb,'BancoPreco-SELECTA_'+new Date().toISOString().slice(0,10)+'.xlsx');toast('Exportado!','ok');}
