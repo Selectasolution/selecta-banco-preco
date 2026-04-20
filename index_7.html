@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SELECTA — Banco de Preco</title>
+<style>
+body{margin:0;padding:0;font-family:Arial,sans-serif;background:#07090C;color:#ECF0F4;min-height:100vh}
+#tela-login{position:fixed;inset:0;background:#07090C;display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:#0D1117;border:1px solid #1F2830;border-radius:12px;padding:40px;width:320px;text-align:center}
+.login-box h2{font-size:22px;margin-bottom:4px;color:#00D68F}
+.login-box p{font-size:13px;color:#7A8794;margin-bottom:24px}
+.login-box label{display:block;text-align:left;font-size:11px;color:#3A4550;text-transform:uppercase;margin-bottom:4px}
+.login-box input{width:100%;padding:12px;background:#192028;border:1px solid #1F2830;color:#ECF0F4;font-size:16px;border-radius:7px;text-align:center;letter-spacing:3px;box-sizing:border-box;margin-bottom:12px}
+.login-box input:focus{outline:none;border-color:#00D68F}
+.login-box button{width:100%;padding:13px;background:#00D68F;color:#000;font-size:14px;font-weight:bold;border:none;border-radius:7px;cursor:pointer}
+.login-box button:hover{background:#00B377}
+#erro-login{color:#FF4D4D;font-size:12px;margin-top:8px;display:none}
+#tela-app{display:none;padding:30px}
+.header{background:#0D1117;padding:20px 28px;border-bottom:1px solid #1F2830;display:flex;align-items:center;gap:12px;position:fixed;top:0;left:0;right:0;z-index:100}
+.header h1{font-size:18px;color:#00D68F;margin:0}
+.header span{font-size:12px;color:#7A8794}
+.content{margin-top:80px;padding:24px}
+.bem-vindo{background:#0D1117;border:1px solid #1F2830;border-radius:10px;padding:30px;text-align:center;margin-bottom:24px}
+.bem-vindo h2{color:#00D68F;font-size:20px;margin-bottom:8px}
+.bem-vindo p{color:#7A8794;font-size:14px;line-height:1.6}
+.status-ok{background:#0D1117;border:1px solid rgba(0,214,143,.3);border-radius:10px;padding:20px;margin-bottom:16px}
+.status-ok h3{color:#00D68F;margin:0 0 8px}
+.status-ok p{color:#ECF0F4;font-size:13px;margin:4px 0}
+</style>
+</head>
+<body>
+
+<div id="tela-login">
+  <div class="login-box">
+    <h2>SELECTA</h2>
+    <p>Banco de Preco · Selecta Solution</p>
+    <label>Senha de acesso</label>
+    <input type="password" id="campo-senha" placeholder="Digite a senha">
+    <button id="botao-entrar">Entrar</button>
+    <div id="erro-login">Senha incorreta. Tente novamente.</div>
+  </div>
+</div>
+
+<div id="tela-app">
+  <div class="header">
+    <h1>SELECTA</h1>
+    <span>Banco de Preco · Selecta Solution</span>
+  </div>
+  <div class="content">
+    <div class="bem-vindo">
+      <h2>Sistema funcionando!</h2>
+      <p>Login realizado com sucesso.<br>O sistema completo sera carregado aqui.</p>
+    </div>
+    <div class="status-ok">
+      <h3>Status do sistema</h3>
+      <p>Login: OK</p>
+      <p>URL: https://selectasolution.github.io/selecta-banco-preco</p>
+      <p>Versao: SELECTA v1.0</p>
+    </div>
+  </div>
+</div>
+
+<script>
+var SENHA_CORRETA = '180126';
+
+function fazerLogin() {
+  var campo = document.getElementById('campo-senha');
+  var erro = document.getElementById('erro-login');
+  var digitado = campo.value;
+  
+  if (digitado == SENHA_CORRETA) {
+    document.getElementById('tela-login').style.display = 'none';
+    document.getElementById('tela-app').style.display = 'block';
+  } else {
+    erro.style.display = 'block';
+    campo.value = '';
+    campo.focus();
+  }
+}
+
+document.getElementById('botao-entrar').addEventListener('click', fazerLogin);
+document.getElementById('campo-senha').addEventListener('keypress', function(e) {
+  if (e.keyCode == 13 || e.key == 'Enter') {
+    fazerLogin();
+  }
+});
+</script>
+</body>
+</html>
