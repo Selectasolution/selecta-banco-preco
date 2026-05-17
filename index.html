@@ -278,6 +278,7 @@ tbody tr{cursor:pointer}
   <div class="sbsec">Ferramentas</div>
   <div class="sbi" id="nav-r"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3.5l2 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Base RTU</div>
   <div class="sbi" id="nav-p"><svg viewBox="0 0 16 16" fill="none"><path d="M4 5h8M4 8h6M4 11h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Prompt Licitacao</div>
+  <div class="sbi" id="nav-ds"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2.5" width="12" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M6 13.5h4M8 10.5v3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Simulador Desktop</div>
   <div class="sbi" id="nav-x"><svg viewBox="0 0 16 16" fill="none"><path d="M3 12h10M8 3v7M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Exportar .xlsx</div>
     <div class="sbsec">Operacao</div>
   <div class="sbi" id="nav-v"><svg viewBox="0 0 16 16" fill="none"><path d="M2 4h12v2H2zM3 6v8h10V6" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6 9h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Vendas</div>
@@ -354,6 +355,10 @@ tbody tr{cursor:pointer}
   <div class="topbar"><div><div class="pgt">Prompt Licitacao</div><div class="pgs">Cole no assistente para consulta automatica ao banco</div></div><div class="tba"><button class="btn bg" id="btn-genprompt">Gerar prompt</button></div></div>
   <div class="panel" style="background:var(--amd);border-color:rgba(255,176,32,.2);margin-bottom:16px;"><div style="font-size:13px;color:var(--tx);line-height:1.7;"><strong style="color:var(--am);">Como usar:</strong> Gere o prompt, copie e cole nas instrucoes do projeto do assistente de licitacao no Cowork. Ele consultara esta base antes de qualquer busca externa.</div></div>
   <div class="pbox"><div class="phd"><div class="st" style="font-size:13px;"><span class="dot" style="background:var(--am)"></span>Prompt gerado</div><div style="display:flex;gap:6px;"><button class="btn bg sm" id="btn-copyprompt">Copiar</button><button class="btn bo sm" id="btn-regenprompt">Regenerar</button></div></div><div class="pbd" id="prompt-content">Clique em Gerar prompt para criar o conteudo com os dados atuais.</div></div>
+</div>
+<div id="sec-ds" class="sec">
+  <div class="topbar"><div><div class="pgt">Simulador de Desktop</div><div class="pgs">Monte o orcamento da maquina por compatibilidade de pecas</div></div></div>
+  <iframe src="montador.html" title="Simulador de Desktop" loading="lazy" style="width:100%;height:calc(100vh - 150px);min-height:600px;border:0;border-radius:12px;background:#EBEEEF;display:block"></iframe>
 </div>
 <div id="sec-v" class="sec">
   <div class="topbar">
@@ -736,6 +741,7 @@ function initApp(){
   document.getElementById('nav-m').onclick=function(){goS('m');};
   document.getElementById('nav-r').onclick=function(){goS('r');};
   document.getElementById('nav-p').onclick=function(){goS('p');};
+  document.getElementById('nav-ds').onclick=function(){goS('ds');};
   document.getElementById('nav-x').onclick=exportXLSX;
   document.getElementById('btn-sync').onclick=syncSheet;
   document.getElementById('btn-sync2').onclick=syncSheet;
@@ -770,7 +776,7 @@ function initApp(){
   for(var i=0;i<ths.length;i++){(function(th){th.onclick=function(){sortBy(th.getAttribute('data-col'));}})(ths[i]);}
 }
 function goS(id){
-  var all=['d','b','m','r','p'];
+  var all=['d','b','m','r','p','ds'];
   for(var i=0;i<all.length;i++){
     var s=document.getElementById('sec-'+all[i]);if(s)s.className='sec'+(all[i]===id?' on':'');
     var n=document.getElementById('nav-'+all[i]);if(n)n.className='sbi'+(all[i]===id?' on':'');
@@ -2029,7 +2035,7 @@ VEN.switchTab = function(tab){
 };
 VEN.showSection = function(){
   // Esconder outras secoes do sistema
-  ['d','b','m','r','p'].forEach(function(s){
+  ['d','b','m','r','p','ds'].forEach(function(s){
     var sec = $('sec-' + s); if(sec) sec.classList.remove('on');
     var nav = $('nav-' + s); if(nav) nav.classList.remove('on');
   });
