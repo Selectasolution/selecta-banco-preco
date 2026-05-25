@@ -716,9 +716,17 @@ async function loadCatalog() {
   if (state.filters.fornecedor) q = q.contains('fornecedores_disponiveis', [state.filters.fornecedor]);
   if (state.filters.search) {
     const s = state.filters.search.trim();
+    // Busca em código SLC ou descrição ou marca
     q = q.or(`codigo_slc.ilike.%${s}%,descricao.ilike.%${s}%,marca.ilike.%${s}%`);
   }
-  q = q.order('codigo_slc');
+
+  // Ordenação: com filtro/busca → menor preço primeiro; sem filtro → código
+  const hasFilter = state.filters.search || state.filters.prefixo || state.filters.marca || state.filters.fornecedor;
+  if (hasFilter) {
+    q = q.order('menor_brl', { ascending: true, nullsFirst: false });
+  } else {
+    q = q.order('codigo_slc');
+  }
   const { data, count, error } = await q;
   hide('#catalog-loader');
   if (error) {
@@ -749,7 +757,9 @@ function renderCatalog(items) {
   }
   const from = items.length > 0 ? state.page * CONFIG.PER_PAGE + 1 : 0;
   const to = state.page * CONFIG.PER_PAGE + items.length;
-  $('#catalog-info').textContent = `${state.total.toLocaleString('pt-BR')} produto(s) encontrado(s)`;
+  const hasFilter = state.filters.search || state.filters.prefixo || state.filters.marca || state.filters.fornecedor;
+  const sortHint = hasFilter ? ' · <span class="text-primary-500">ordenado por menor preço</span>' : '';
+  $('#catalog-info').innerHTML = `${state.total.toLocaleString('pt-BR')} produto(s) encontrado(s)${sortHint}`;
   $('#page-info').textContent = `${from}–${to} de ${state.total.toLocaleString('pt-BR')}`;
   $('#page-prev').disabled = state.page === 0;
   $('#page-next').disabled = (state.page + 1) * CONFIG.PER_PAGE >= state.total;
