@@ -3,2184 +3,662 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SELECTA — Banco de Preco</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--g:#00D68F;--gd:#00B377;--gx:rgba(0,214,143,.13);--gg:rgba(0,214,143,.28);--bg:#07090C;--s1:#0D1117;--s2:#131920;--s3:#192028;--s4:#1F2830;--bd:rgba(255,255,255,.06);--bd2:rgba(255,255,255,.11);--tx:#ECF0F4;--tx2:#7A8794;--tx3:#3A4550;--am:#FFB020;--amd:rgba(255,176,32,.12);--rd:#FF4D4D;--rdd:rgba(255,77,77,.10);--bl:#3D9EFF;--bld:rgba(61,158,255,.10);--pu:#A07CF8;--pud:rgba(160,124,248,.10);--r:10px;--rs:7px}
-body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 65% 40% at 85% 0%,rgba(0,214,143,.06) 0%,transparent 60%),radial-gradient(ellipse 45% 35% at 0% 100%,rgba(61,158,255,.04) 0%,transparent 55%)}
-#tela-login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
-.lwrap{width:100%;max-width:360px;padding:0 24px}
-.llogo{display:flex;align-items:center;gap:12px;margin-bottom:32px;justify-content:center}
-.licon{width:48px;height:48px;border-radius:12px;background:var(--gx);border:1px solid rgba(0,214,143,.35);display:flex;align-items:center;justify-content:center}
-.ltitle{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:-.5px}
-.lsub{font-size:13px;color:var(--tx2);text-align:center;margin-bottom:28px}
-.llabel{display:block;font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-.linput{width:100%;background:var(--s2);border:1px solid var(--bd2);color:var(--tx);font-family:'Outfit',sans-serif;font-size:18px;padding:13px 16px;border-radius:var(--rs);text-align:center;letter-spacing:4px;outline:none;transition:border-color .2s,box-shadow .2s;margin-bottom:12px}
-.linput:focus{border-color:var(--g);box-shadow:0 0 0 3px var(--gx)}
-.lbtn{width:100%;background:var(--g);color:#000;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;padding:14px;border:none;border-radius:var(--rs);cursor:pointer;transition:all .2s}
-.lbtn:hover{background:var(--gd);box-shadow:0 4px 20px var(--gg)}
-.lerr{color:var(--rd);font-size:12px;text-align:center;margin-top:10px;display:none}
-.lfoot{font-size:11px;color:var(--tx3);text-align:center;margin-top:24px}
-#tela-app{display:none;position:relative;z-index:1}
-.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
-@media(max-width:860px){.layout{grid-template-columns:1fr}}
-.sidebar{background:var(--s1);border-right:0.5px solid var(--bd);padding:20px 0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
-@media(max-width:860px){.sidebar{display:none}}
-.sbbrand{padding:0 16px 16px;border-bottom:0.5px solid var(--bd);margin-bottom:6px;display:flex;align-items:center;gap:10px}
-.sbicon{width:36px;height:36px;border-radius:8px;background:var(--gx);border:0.5px solid rgba(0,214,143,.35);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.sbname{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;letter-spacing:-.3px}
-.sbver{font-size:10px;color:var(--tx3)}
-.sbsec{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.1em;padding:10px 16px 3px;font-weight:600}
-.sbi{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:1px 8px;border-radius:var(--rs);cursor:pointer;font-size:13px;color:var(--tx2);transition:all .15s;user-select:none}
-.sbi:hover{background:var(--s3);color:var(--tx)}
-.sbi.on{background:var(--gx);color:var(--g);font-weight:500}
-.sbi svg{width:14px;height:14px;flex-shrink:0}
-.sbbot{margin-top:auto;padding:12px 8px 0;border-top:0.5px solid var(--bd)}
-.sbsync{display:flex;align-items:center;gap:7px;padding:9px 10px;border-radius:var(--rs);background:var(--s2);cursor:pointer;font-size:12px;color:var(--tx2)}
-.sbsync:hover{background:var(--s3)}
-.sdot{width:6px;height:6px;border-radius:50%;background:var(--tx3);transition:all .3s;flex-shrink:0}
-.sdot.ok{background:var(--g);box-shadow:0 0 6px var(--g)}.sdot.go{background:var(--am);animation:bl 1s infinite}.sdot.er{background:var(--rd)}
-@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
-.main{padding:24px 28px 60px;overflow-x:hidden}
-@media(max-width:860px){.main{padding:16px 14px 60px}}
-.topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
-.pgt{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;letter-spacing:-.3px}
-.pgs{font-size:12px;color:var(--tx3);margin-top:3px}
-.tba{display:flex;gap:7px;flex-wrap:wrap}
-.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px;margin-bottom:20px}
-.mc{background:var(--s1);border:0.5px solid var(--bd);border-radius:var(--r);padding:13px 15px;transition:border-color .2s}
-.mc:hover{border-color:var(--bd2)}
-.mcl{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
-.mcv{font-family:'Syne',sans-serif;font-size:22px;font-weight:700}
-.cg{color:var(--g)}.ca{color:var(--am)}.cb{color:var(--bl)}.cp{color:var(--pu)}.cr{color:var(--rd)}
-.sec{display:none}.sec.on{display:block}
-.panel{background:var(--s1);border:0.5px solid var(--bd);border-radius:var(--r);padding:16px 18px;margin-bottom:16px}
-.ptit{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;margin-bottom:13px}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--g);flex-shrink:0}
-.btn{font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;padding:8px 14px;border-radius:var(--rs);border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .17s;white-space:nowrap}
-.bg{background:var(--g);color:#000}.bg:hover{background:var(--gd);box-shadow:0 3px 14px var(--gg);transform:translateY(-1px)}
-.bs{background:var(--s4);color:var(--tx);border:0.5px solid var(--bd2)}.bs:hover{background:var(--s3)}
-.bb{background:var(--bld);color:var(--bl);border:0.5px solid rgba(61,158,255,.2)}.bb:hover{background:rgba(61,158,255,.18)}
-.ba{background:var(--amd);color:var(--am);border:0.5px solid rgba(255,176,32,.2)}.ba:hover{background:rgba(255,176,32,.18)}
-.br{background:var(--rdd);color:var(--rd);border:0.5px solid rgba(255,77,77,.2)}.br:hover{background:rgba(255,77,77,.18)}
-.bp{background:var(--pud);color:var(--pu);border:0.5px solid rgba(160,124,248,.2)}.bp:hover{background:rgba(160,124,248,.18)}
-.bo{background:transparent;color:var(--tx2);border:0.5px solid var(--bd)}.bo:hover{color:var(--tx);border-color:var(--bd2)}
-.sm{padding:5px 11px;font-size:12px}
-.btn svg{width:13px;height:13px}
-input[type=text],input[type=url],input[type=file],select,textarea{background:var(--s3);border:0.5px solid var(--bd2);color:var(--tx);font-family:'Outfit',sans-serif;font-size:13px;padding:9px 12px;border-radius:var(--rs);outline:none;width:100%;transition:border-color .2s,box-shadow .2s}
-input[type=text]:focus,input[type=url]:focus,select:focus,textarea:focus{border-color:var(--g);box-shadow:0 0 0 3px var(--gx)}
-input::placeholder,textarea::placeholder{color:var(--tx3);font-size:12px}
-select option{background:var(--s3)}
-textarea{resize:vertical;min-height:70px;line-height:1.6}
-.fl{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
-.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.fg3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}
-.fg5{display:grid;grid-template-columns:2.5fr 65px 115px 135px 120px;gap:10px}
-@media(max-width:700px){.fg2,.fg3,.fg5{grid-template-columns:1fr}}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
-.card{background:var(--s1);border:0.5px solid var(--bd);border-radius:var(--r);overflow:hidden;transition:border-color .2s,transform .18s}
-.card:hover{border-color:var(--bd2);transform:translateY(-2px)}
-.cimg{width:100%;height:145px;background:var(--s2);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.cimg img{width:100%;height:100%;object-fit:contain;padding:10px;cursor:zoom-in}
-.cimg .noi{font-size:30px;opacity:.18}
-.cbo{position:absolute;top:7px;right:7px}.cbr{position:absolute;top:7px;left:7px}
-.cbody{padding:12px 14px}
-.cdesc{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px}
-.cmarca{font-size:11px;color:var(--tx2);margin-bottom:5px}
-.ctec{font-size:11px;color:var(--tx3);margin-bottom:8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.cval{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--g)}
-.cloja{font-size:10px;color:var(--tx3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cfoot{display:flex;align-items:center;justify-content:space-between;margin-top:9px;padding-top:9px;border-top:0.5px solid var(--bd)}
-.cdate{font-size:10px;color:var(--tx3)}.cacts{display:flex;gap:4px}
-.expb{background:var(--rdd);border:0.5px solid rgba(255,77,77,.3);border-radius:5px;padding:4px 8px;font-size:10px;color:var(--rd);margin-top:6px}
-.tblsec{background:var(--s1);border:0.5px solid var(--bd);border-radius:var(--r);overflow:hidden}
-.tblbar{padding:9px 13px;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid var(--bd);flex-wrap:wrap;gap:7px}
-.tblwrap{overflow-x:auto}
-.fi{position:relative}.fi input{padding-left:26px;width:155px;padding-top:6px;padding-bottom:6px;font-size:12px}
-.fi input:focus{width:200px}.fii{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--tx3);pointer-events:none}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{font-family:'Syne',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--tx3);padding:8px 11px;text-align:left;white-space:nowrap;background:var(--s1);border-bottom:0.5px solid var(--bd);cursor:pointer;user-select:none}
-th:hover{color:var(--tx2)}
-td{padding:8px 11px;border-bottom:0.5px solid var(--bd);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tbody tr:hover td{background:var(--s2)}
-.tdimg{width:42px;height:42px;object-fit:contain;background:var(--s2);border-radius:5px;padding:3px;cursor:zoom-in}
-.tdnoi{width:42px;height:42px;background:var(--s2);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:15px;opacity:.2}
-.tdval{font-family:'Syne',sans-serif;font-weight:700;color:var(--g);white-space:nowrap}
-.tdn{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--tx3)}
-.tdd{max-width:175px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tdtec{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--tx2)}
-.tddt{white-space:nowrap;color:var(--tx2);font-size:11px}
-.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500}
-.bga{background:var(--gx);color:var(--g)}.bgm{background:var(--amd);color:var(--am)}.bge{background:var(--rdd);color:var(--rd)}
-.bgy{background:rgba(0,214,143,.15);color:var(--g);border:0.5px solid rgba(0,214,143,.3)}
-.bgn{background:var(--rdd);color:var(--rd);border:0.5px solid rgba(255,77,77,.3)}
-.vtabs{display:flex;border-bottom:0.5px solid var(--bd);margin-bottom:14px}
-.vtab{padding:7px 15px;font-size:13px;cursor:pointer;color:var(--tx2);border-bottom:2px solid transparent;margin-bottom:-0.5px;transition:all .17s;display:flex;align-items:center;gap:5px;user-select:none}
-.vtab.on{color:var(--g);border-bottom-color:var(--g);font-weight:500}
-.vtab svg{width:13px;height:13px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9998;display:none;align-items:center;justify-content:center;padding:16px}
-.modal.open{display:flex}
-.mclose{position:absolute;top:14px;right:18px;font-size:20px;color:var(--tx2);cursor:pointer;width:34px;height:34px;border-radius:50%;background:var(--s2);border:0.5px solid var(--bd2);display:flex;align-items:center;justify-content:center}
-.mimg{max-width:88vw;max-height:82vh;object-fit:contain;border-radius:var(--r)}
-.emodal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9997;display:none;align-items:center;justify-content:center;padding:16px}
-.emodal.open{display:flex}
-.ebox{background:var(--s1);border:0.5px solid var(--bd2);border-radius:var(--r);padding:20px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto}
-.etit{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
-.pbox{background:var(--s2);border:0.5px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-top:14px}
-.phd{padding:10px 14px;border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
-.pbd{padding:14px;font-family:monospace;font-size:12px;line-height:1.8;color:var(--tx2);white-space:pre-wrap;max-height:320px;overflow-y:auto;background:var(--s3)}
-.rtugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:9px}
-.rtucard{background:var(--s2);border:0.5px solid var(--bd);border-radius:var(--rs);padding:11px 13px;display:flex;align-items:center;justify-content:space-between}
-.rtun{font-size:13px;font-weight:500}.rtui{font-size:11px;color:var(--tx2);margin-top:2px}
-.cbanner{background:var(--pud);border:0.5px solid rgba(160,124,248,.2);border-radius:var(--r);padding:11px 15px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;font-size:13px}
-.empty{padding:44px 20px;text-align:center}
-.empi{font-size:30px;opacity:.22;margin-bottom:9px}
-.empt{font-family:'Syne',sans-serif;font-size:14px;font-weight:600;color:var(--tx2)}
-.emps{font-size:12px;color:var(--tx3);margin-top:3px}
-.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
-.st{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px}
-#toast{position:fixed;bottom:20px;right:20px;background:var(--s4);border:0.5px solid var(--bd2);border-radius:var(--r);padding:11px 15px;font-size:13px;color:var(--tx);z-index:99999;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:7px;max-width:290px;pointer-events:none}
-#toast.show{transform:translateY(0);opacity:1;pointer-events:auto}
-#toast.ok{border-left:3px solid var(--g)}#toast.er{border-left:3px solid var(--rd)}#toast.in{border-left:3px solid var(--bl)}#toast.wa{border-left:3px solid var(--am)}
-::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--s4);border-radius:3px}
-.fade{animation:fd .22s ease}@keyframes fd{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-/* === MODAL DE DETALHES (vmodal) === */
-.vmodal{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9996;display:none;align-items:center;justify-content:center;padding:16px}
-.vmodal.open{display:flex}
-.vbox{background:var(--s1);border:0.5px solid var(--bd2);border-radius:var(--r);padding:22px 24px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto}
-.vtit2{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.vrow{display:flex;gap:8px;margin-bottom:9px;font-size:13px;flex-wrap:wrap}
-.vlbl{color:var(--tx3);font-size:11px;text-transform:uppercase;letter-spacing:.05em;min-width:90px;flex-shrink:0;padding-top:1px}
-.vval{color:var(--tx);flex:1;line-height:1.6}
-.vtec{background:var(--s2);border-radius:var(--rs);padding:10px 12px;font-size:12px;color:var(--tx2);line-height:1.7;border:0.5px solid var(--bd);word-break:break-word;white-space:pre-wrap}
-.vhr{border:none;border-top:0.5px solid var(--bd);margin:13px 0}
-tbody tr{cursor:pointer}
+<title>SELECTA — Banco de Preço</title>
 
-/* ===== SISTEMA DE VENDAS ===== */
-.ven-vtabs{display:flex;gap:0;border-bottom:0.5px solid var(--bd);margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.ven-vtabs::-webkit-scrollbar{height:0}
-.ven-vtab{padding:8px 14px;font-size:12px;cursor:pointer;color:var(--tx2);border-bottom:2px solid transparent;margin-bottom:-0.5px;transition:all .17s;display:flex;align-items:center;gap:6px;user-select:none;white-space:nowrap;flex-shrink:0}
-.ven-vtab.on{color:var(--g);border-bottom-color:var(--g);font-weight:500}
-.ven-vtab svg{width:13px;height:13px}
-.ven-sub{display:none}
-.ven-sub.on{display:block;animation:fd .22s ease}
-.ven-kpi{background:var(--s1);border:0.5px solid var(--bd);border-radius:var(--r);padding:14px;transition:border-color .2s}
-.ven-kpi:hover{border-color:var(--bd2)}
-.ven-kpi-l{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
-.ven-kpi-v{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;line-height:1.1}
-.ven-kpi-s{font-size:11px;color:var(--tx2);margin-top:4px}
-.ven-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px}
-.ven-alert{background:var(--rdd);border:0.5px solid rgba(255,77,77,.3);border-radius:var(--r);padding:11px 14px;margin-bottom:9px;display:flex;align-items:flex-start;gap:9px;font-size:13px;line-height:1.5}
-.ven-alert.am{background:var(--amd);border-color:rgba(255,176,32,.3)}
-.ven-alert.ok{background:var(--gx);border-color:rgba(0,214,143,.3)}
-.ven-alert.bl{background:var(--bld);border-color:rgba(61,158,255,.3)}
-.ven-alert-i{flex-shrink:0;margin-top:1px;font-size:15px}
-.ven-alert-t{font-weight:600;display:block;margin-bottom:2px}
-.ven-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.ven-form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
-@media(max-width:700px){.ven-form-grid,.ven-form-grid-3{grid-template-columns:1fr}}
-.ven-saldo-bar{background:var(--amd);border:0.5px solid rgba(255,176,32,.35);border-radius:var(--rs);padding:11px 13px;margin-bottom:12px;font-size:12px;display:flex;align-items:flex-start;gap:9px}
-.ven-saldo-bar strong{color:var(--am);font-size:13px;display:block;margin-bottom:3px}
-.ven-saldo-bar input{margin-top:6px}
-.ven-tbl{width:100%;border-collapse:collapse;font-size:12px}
-.ven-tbl th{font-family:'Syne',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--tx3);padding:8px 11px;text-align:left;white-space:nowrap;background:var(--s1);border-bottom:0.5px solid var(--bd)}
-.ven-tbl td{padding:8px 11px;border-bottom:0.5px solid var(--bd);vertical-align:middle}
-.ven-tbl tbody tr:hover td{background:var(--s2)}
-.ven-tbl tr:last-child td{border-bottom:none}
-.ven-tbl-wrap{overflow-x:auto;background:var(--s1);border:0.5px solid var(--bd);border-radius:var(--r)}
-.ven-tbl-num{font-family:'Syne',sans-serif;font-weight:700;text-align:right;white-space:nowrap}
-.ven-tbl-val{font-family:'Syne',sans-serif;font-weight:700;color:var(--g);white-space:nowrap;text-align:right}
-.ven-st-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle}
-.ven-st-dot.ok{background:var(--g)}.ven-st-dot.al{background:var(--am)}.ven-st-dot.zr{background:var(--rd)}
-.ven-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9995;display:none;align-items:center;justify-content:center;padding:16px}
-.ven-modal.open{display:flex}
-.ven-mbox{background:var(--s1);border:0.5px solid var(--bd2);border-radius:var(--r);padding:20px 22px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto}
-.ven-mtit{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.ven-mbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.ven-divida-card{background:var(--s2);border:0.5px solid var(--bd);border-radius:var(--r);padding:13px 15px;margin-bottom:9px}
-.ven-divida-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:7px}
-.ven-divida-n{font-family:'Syne',sans-serif;font-size:14px;font-weight:600}
-.ven-divida-row{display:flex;gap:18px;font-size:12px;color:var(--tx2);flex-wrap:wrap;margin-bottom:4px}
-.ven-divida-row b{color:var(--tx);font-weight:500}
-.ven-divida-acts{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
-.ven-prio{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.ven-prio-1{background:var(--rdd);color:var(--rd)}
-.ven-prio-2{background:var(--amd);color:var(--am)}
-.ven-prio-3{background:var(--bld);color:var(--bl)}
-.ven-meta{background:var(--s1);border:0.5px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
-.ven-meta-h{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;margin-bottom:11px;display:flex;align-items:center;gap:7px}
-.ven-meta-row{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:5px}
-.ven-meta-row b{font-family:'Syne',sans-serif;font-size:15px}
-.ven-bar{height:8px;background:var(--s3);border-radius:4px;overflow:hidden;margin-top:8px}
-.ven-bar-f{height:100%;background:linear-gradient(90deg,var(--g),var(--gd));transition:width .4s ease}
-.ven-bar-f.am{background:linear-gradient(90deg,var(--am),#FF9000)}
-.ven-bar-f.rd{background:linear-gradient(90deg,var(--rd),#D03030)}
-.ven-divg{color:var(--rd);font-size:11px}
-.ven-divg.ok{color:var(--g)}
-.ven-row-cat{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
-.ven-chip{padding:5px 11px;border-radius:14px;font-size:11px;background:var(--s3);color:var(--tx2);cursor:pointer;border:0.5px solid var(--bd);transition:all .15s}
-.ven-chip.on{background:var(--gx);color:var(--g);border-color:rgba(0,214,143,.3)}
-.ven-chip:hover{background:var(--s4)}
-.ven-prod-card{background:var(--s1);border:0.5px solid var(--bd);border-radius:var(--r);padding:13px 14px;transition:all .2s}
-.ven-prod-card:hover{border-color:var(--bd2);transform:translateY(-1px)}
-.ven-prod-cat{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
-.ven-prod-n{font-size:13px;font-weight:500;margin-bottom:7px}
-.ven-prod-px{display:flex;gap:10px;font-size:11px;color:var(--tx2);margin-bottom:6px;flex-wrap:wrap}
-.ven-prod-px b{color:var(--tx);font-family:'Syne',sans-serif;font-weight:700}
-.ven-prod-st{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--bd)}
-.ven-prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
-.ven-empty{padding:35px 18px;text-align:center;color:var(--tx3)}
-.ven-empty-i{font-size:28px;opacity:.22;margin-bottom:8px}
-.ven-empty-t{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--tx2)}
-.ven-empty-s{font-size:11px;margin-top:3px}
-.ven-tip{font-size:11px;color:var(--tx3);margin-top:4px;line-height:1.5}
-.ven-prov-info{background:var(--s2);border-left:3px solid var(--bl);padding:7px 11px;border-radius:4px;font-size:11px;color:var(--tx2);margin-top:10px}
-.ven-cfg-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--bd)}
-.ven-cfg-row:last-child{border-bottom:none}
-.ven-cfg-l{flex:1;font-size:13px}
-.ven-cfg-l-d{font-size:11px;color:var(--tx3);margin-top:2px}
-.ven-cfg-v input{max-width:140px;text-align:right}
-.ven-acoes{display:flex;gap:4px}
-.ven-num-input{font-family:'Syne',sans-serif;font-weight:600}
-
-</style>
-</head>
-<body>
-<div id="tela-login">
-  <div class="lwrap">
-    <div class="llogo">
-      <div class="licon"><svg viewBox="0 0 22 22" fill="none" width="24" height="24"><path d="M11 2L3.5 7.5V19H8v-5.5h6V19h4.5V7.5L11 2z" fill="#00D68F" opacity=".9"/><circle cx="11" cy="10" r="2.2" fill="#00D68F"/></svg></div>
-      <div><div class="ltitle">SELECTA</div><div style="font-size:11px;color:var(--tx3);">Banco de Preco</div></div>
-    </div>
-    <div class="lsub">Selecta Solution - Acesso restrito</div>
-    <label class="llabel">Senha de acesso</label>
-    <input class="linput" type="password" id="campo-senha" placeholder="senha">
-    <button class="lbtn" id="botao-entrar">Entrar</button>
-    <div class="lerr" id="erro-login">Senha incorreta.</div>
-    <div class="lfoot">Selecta Solution 2025</div>
-  </div>
-</div>
-<div id="tela-app">
-<div class="layout">
-<nav class="sidebar">
-  <div class="sbbrand">
-    <div class="sbicon"><svg viewBox="0 0 22 22" fill="none" width="18" height="18"><path d="M11 2L3.5 7.5V19H8v-5.5h6V19h4.5V7.5L11 2z" fill="#00D68F" opacity=".9"/><circle cx="11" cy="10" r="2.2" fill="#00D68F"/></svg></div>
-    <div><div class="sbname">SELECTA</div><div class="sbver">Banco de Preco</div></div>
-  </div>
-  <div class="sbsec">Principal</div>
-  <div class="sbi on" id="nav-d"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>Dashboard</div>
-  <div class="sbi" id="nav-b"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 6h12" stroke="currentColor" stroke-width="1.3"/></svg>Banco de Preco</div>
-  <div class="sbi" id="nav-m"><svg viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Insercao Manual</div>
-  <div class="sbsec">Ferramentas</div>
-  <div class="sbi" id="nav-r"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3.5l2 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Base RTU</div>
-  <div class="sbi" id="nav-p"><svg viewBox="0 0 16 16" fill="none"><path d="M4 5h8M4 8h6M4 11h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Prompt Licitacao</div>
-  <div class="sbi" id="nav-ds"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2.5" width="12" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M6 13.5h4M8 10.5v3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Simulador Desktop</div>
-  <div class="sbi" id="nav-x"><svg viewBox="0 0 16 16" fill="none"><path d="M3 12h10M8 3v7M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Exportar .xlsx</div>
-    <div class="sbsec">Operacao</div>
-  <div class="sbi" id="nav-v"><svg viewBox="0 0 16 16" fill="none"><path d="M2 4h12v2H2zM3 6v8h10V6" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6 9h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Vendas</div>
-  <div class="sbbot">
-    <div class="sbsync" id="btn-sync">
-      <div class="sdot" id="sdot"></div>
-      <span id="slbl" style="flex:1;font-size:12px;">Nao sincronizado</span>
-      <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><path d="M13 8A5 5 0 1 1 3 8M13 5v3h-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-  </div>
-</nav>
-<div class="main">
-<div id="sec-d" class="sec on">
-  <div class="topbar"><div><div class="pgt">Dashboard</div><div class="pgs" id="dash-date"></div></div><div class="tba"><button class="btn bp sm" id="btn-upd"><svg viewBox="0 0 16 16" fill="none"><path d="M13 8A5 5 0 1 1 3 8M13 5v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Atualizar expirados</button></div></div>
-  <div class="cbanner"><div style="display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 16 16" fill="none" width="15" height="15"><circle cx="8" cy="8" r="6" stroke="#A07CF8" stroke-width="1.4"/><path d="M8 5v3.5l2 2" stroke="#A07CF8" stroke-width="1.4" stroke-linecap="round"/></svg><span>Ciclo mensal - Atualizacao todo dia <strong>30</strong> - Proximo: <strong id="next30"></strong></span></div><span id="calert" style="display:none;font-size:12px;color:var(--am);">Itens expirados aguardando revisao</span></div>
-  <div class="metrics">
-    <div class="mc"><div class="mcl">Total itens</div><div class="mcv cg" id="m-tot">0</div></div>
-    <div class="mc"><div class="mcl">Automaticos</div><div class="mcv cb" id="m-aut">0</div></div>
-    <div class="mc"><div class="mcl">Manuais</div><div class="mcv ca" id="m-man">0</div></div>
-    <div class="mc"><div class="mcl">Com RTU</div><div class="mcv cg" id="m-rtu">0</div></div>
-    <div class="mc"><div class="mcl">Com foto</div><div class="mcv cp" id="m-fot">0</div></div>
-    <div class="mc"><div class="mcl">Expirados</div><div class="mcv cr" id="m-exp">0</div></div>
-  </div>
-  <div class="sh"><div class="st"><span class="dot"></span>Ultimos itens cadastrados</div><button class="btn bs sm" id="btn-vtodos">Ver todos</button></div>
-  <div class="cards" id="dash-cards"></div>
-</div>
-<div id="sec-b" class="sec">
-  <div class="topbar"><div><div class="pgt">Banco de Preco</div><div class="pgs" id="banco-sub"></div></div><div class="tba"><button class="btn bb sm" id="btn-sync2">Sync</button><button class="btn bs sm" id="btn-xlsx">xlsx</button><button class="btn br sm" id="btn-limpar">Limpar</button></div></div>
-  <div class="vtabs"><div class="vtab on" id="tab-c">Cards</div><div class="vtab" id="tab-t">Tabela</div></div>
-  <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px;align-items:center;">
-    <div class="fi" style="flex:1;min-width:170px;"><span class="fii"><svg viewBox="0 0 16 16" fill="none" width="11" height="11"><circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.4"/><path d="M10 10L14 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><input type="text" id="ftxt" placeholder="Filtrar..." style="padding-left:25px;padding-top:6px;padding-bottom:6px;font-size:12px;"></div>
-    <select id="forig" style="width:auto;padding-top:6px;padding-bottom:6px;font-size:12px;"><option value="">Todos</option><option value="auto">Automaticos</option><option value="manual">Manuais</option><option value="expired">Expirados</option></select>
-    <select id="frtu" style="width:auto;padding-top:6px;padding-bottom:6px;font-size:12px;"><option value="">RTU-Todos</option><option value="sim">RTU Sim</option><option value="nao">RTU Nao</option></select>
-  </div>
-  <div id="v-c"><div class="cards" id="cards-ct"></div></div>
-  <div id="v-t" style="display:none;"><div class="tblsec"><div class="tblbar"><span style="font-size:11px;color:var(--tx3);" id="tblct">-</span></div><div class="tblwrap"><table><thead><tr><th data-col="item"># </th><th>Foto</th><th data-col="descricao">Descricao</th><th>Desc.Tec</th><th>Und</th><th data-col="marca">Marca</th><th data-col="valorNum">Valor</th><th>Loja</th><th>RTU</th><th data-col="dataCadastro">Data</th><th>Status</th><th></th></tr></thead><tbody id="tbl-body"></tbody></table></div></div></div>
-</div>
-<div id="sec-m" class="sec">
-  <div class="topbar"><div><div class="pgt">Insercao Manual</div><div class="pgs">Diretora ou gestor - adicionar, editar e excluir produtos</div></div></div>
-  <div class="panel">
-    <div class="ptit"><span class="dot" style="background:var(--am)"></span>Dados do produto</div>
-    <div style="margin-bottom:10px;"><div class="fl">Descricao *</div><input type="text" id="m-desc" placeholder="Ex: Notebook Dell Inspiron 15 i5 8GB SSD 256GB"></div>
-    <div style="margin-bottom:10px;"><div class="fl">Descricao tecnica *</div><textarea id="m-tec" placeholder="Processador, memoria, armazenamento, tela, conectividade..."></textarea></div>
-    <div class="fg5" style="margin-bottom:10px;">
-      <div><div class="fl">Loja</div><input type="text" id="m-loja" placeholder="Ex: TechStore CDE"></div>
-      <div><div class="fl">Und</div><select id="m-und"><option>UN</option><option>CX</option><option>PCT</option><option>KG</option><option>LT</option><option>MT</option><option>PAR</option><option>RL</option><option>DZ</option></select></div>
-      <div><div class="fl">Marca</div><input type="text" id="m-marca" placeholder="Ex: Dell"></div>
-      <div><div class="fl">Valor R$ *</div><input type="text" id="m-valor" placeholder="2.890,00"></div>
-      <div><div class="fl">RTU</div><select id="m-rtu"><option value="sim">SIM RTU</option><option value="nao">NAO RTU</option><option value="">N/A</option></select></div>
-    </div>
-    <div class="fg2" style="margin-bottom:10px;">
-      <div><div class="fl">URL foto</div><input type="url" id="m-foto-url" placeholder="https://...jpg"></div>
-      <div><div class="fl">Upload foto</div><input type="file" accept="image/*" id="m-foto-file" style="padding:6px 10px;font-size:12px;"></div>
-    </div>
-    <div id="fpreview" style="display:none;margin-bottom:10px;align-items:center;gap:10px;"><img id="fimg" src="" style="height:68px;object-fit:contain;background:var(--s2);border-radius:5px;border:0.5px solid var(--bd2);padding:3px;" alt=""><button class="btn br sm" id="btn-remfoto">Remover foto</button></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn bg" id="btn-addm">Adicionar ao banco</button><button class="btn bo" id="btn-limform">Limpar</button></div>
-  </div>
-  <div class="panel">
-    <div class="ptit"><span class="dot"></span>Adicionar loja RTU</div>
-    <div class="fg3" style="margin-bottom:10px;">
-      <div><div class="fl">Nome *</div><input type="text" id="rtu-n" placeholder="TechStore CDE"></div>
-      <div><div class="fl">Cidade</div><input type="text" id="rtu-c" placeholder="Ciudad del Este"></div>
-      <div><div class="fl">Contato</div><input type="text" id="rtu-ct" placeholder="+595 61 000000"></div>
-    </div>
-    <button class="btn bg" id="btn-addrtu">Adicionar RTU</button>
-  </div>
-</div>
-<div id="sec-r" class="sec">
-  <div class="topbar"><div><div class="pgt">Base RTU</div><div class="pgs">Lojas paraguaias com Regime de Tributacao Unificada</div></div><div class="tba"><button class="btn bs sm" id="btn-ir-m">+ Adicionar loja</button></div></div>
-  <div class="panel" style="background:var(--gx);border-color:rgba(0,214,143,.2);margin-bottom:16px;"><div style="font-size:13px;color:var(--tx);line-height:1.7;"><strong style="color:var(--g);">RTU</strong> - Regime de Tributacao Unificada garante nota fiscal valida para licitacoes. O assistente sempre prioriza lojas RTU.</div></div>
-  <div class="rtugrid" id="rtu-list"></div>
-</div>
-<div id="sec-p" class="sec">
-  <div class="topbar"><div><div class="pgt">Prompt Licitacao</div><div class="pgs">Cole no assistente para consulta automatica ao banco</div></div><div class="tba"><button class="btn bg" id="btn-genprompt">Gerar prompt</button></div></div>
-  <div class="panel" style="background:var(--amd);border-color:rgba(255,176,32,.2);margin-bottom:16px;"><div style="font-size:13px;color:var(--tx);line-height:1.7;"><strong style="color:var(--am);">Como usar:</strong> Gere o prompt, copie e cole nas instrucoes do projeto do assistente de licitacao no Cowork. Ele consultara esta base antes de qualquer busca externa.</div></div>
-  <div class="pbox"><div class="phd"><div class="st" style="font-size:13px;"><span class="dot" style="background:var(--am)"></span>Prompt gerado</div><div style="display:flex;gap:6px;"><button class="btn bg sm" id="btn-copyprompt">Copiar</button><button class="btn bo sm" id="btn-regenprompt">Regenerar</button></div></div><div class="pbd" id="prompt-content">Clique em Gerar prompt para criar o conteudo com os dados atuais.</div></div>
-</div>
-<div id="sec-ds" class="sec">
-  <div class="topbar"><div><div class="pgt">Simulador de Desktop</div><div class="pgs">Monte o orcamento da maquina por compatibilidade de pecas</div></div></div>
-  <iframe src="montador.html" title="Simulador de Desktop" loading="lazy" style="width:100%;height:calc(100vh - 150px);min-height:600px;border:0;border-radius:12px;background:#EBEEEF;display:block"></iframe>
-</div>
-<div id="sec-v" class="sec">
-  <div class="topbar">
-    <div><div class="pgt">Vendas</div><div class="pgs" id="ven-sub-title">Operacao Apple - Capital R$ 60.000 / Meta R$ 45.000/mes</div></div>
-    <div class="tba">
-      <button class="btn bo sm" id="ven-btn-cfg">Configuracoes</button>
-    </div>
-  </div>
-
-  <div class="ven-vtabs" id="ven-tabs">
-    <div class="ven-vtab on" data-vtab="painel"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>Painel</div>
-    <div class="ven-vtab" data-vtab="catalogo"><svg viewBox="0 0 16 16" fill="none"><path d="M3 3h10v10H3z" stroke="currentColor" stroke-width="1.3"/><path d="M3 6h10" stroke="currentColor" stroke-width="1.3"/></svg>Catalogo</div>
-    <div class="ven-vtab" data-vtab="vendas"><svg viewBox="0 0 16 16" fill="none"><path d="M3 4l1 9h8l1-9" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M5 4V3a3 3 0 016 0v1" stroke="currentColor" stroke-width="1.3"/></svg>Vendas</div>
-    <div class="ven-vtab" data-vtab="compras"><svg viewBox="0 0 16 16" fill="none"><path d="M3 6h10l-1 7H4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6 6V4a2 2 0 014 0v2" stroke="currentColor" stroke-width="1.3"/></svg>Compras</div>
-    <div class="ven-vtab" data-vtab="saidas"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Saidas</div>
-    <div class="ven-vtab" data-vtab="estoque"><svg viewBox="0 0 16 16" fill="none"><path d="M2 5l6-3 6 3-6 3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M2 5v6l6 3 6-3V5M8 8v6" stroke="currentColor" stroke-width="1.3"/></svg>Estoque</div>
-    <div class="ven-vtab" data-vtab="analise"><svg viewBox="0 0 16 16" fill="none"><path d="M2 14h12M4 11l2-4 3 2 4-6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Analise</div>
-    <div class="ven-vtab" data-vtab="conciliacao"><svg viewBox="0 0 16 16" fill="none"><path d="M3 5h10M3 11h10M5 3v10M11 3v10" stroke="currentColor" stroke-width="1.3"/></svg>Conciliacao</div>
-    <div class="ven-vtab" data-vtab="dividas"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="4" width="12" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M2 7h12" stroke="currentColor" stroke-width="1.3"/></svg>Dividas</div>
-  </div>
-
-  <!-- ============ PAINEL ============ -->
-  <div class="ven-sub on" id="ven-sub-painel">
-    <div id="ven-alerts"></div>
-    <div class="ven-kpi-grid">
-      <div class="ven-kpi"><div class="ven-kpi-l">Saldo conta (sistema)</div><div class="ven-kpi-v cg" id="ven-k-saldo">R$ 0,00</div><div class="ven-kpi-s" id="ven-k-saldo-s">Sem movimentacao</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Valor em estoque</div><div class="ven-kpi-v cb" id="ven-k-estoque">R$ 0,00</div><div class="ven-kpi-s" id="ven-k-estoque-s">0 itens</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Total ativos</div><div class="ven-kpi-v cp" id="ven-k-total">R$ 0,00</div><div class="ven-kpi-s" id="ven-k-total-s">Saldo + estoque</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Saude do capital</div><div class="ven-kpi-v" id="ven-k-saude">--</div><div class="ven-kpi-s" id="ven-k-saude-s">Min: R$ 60.000</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Provisao viagem</div><div class="ven-kpi-v ca" id="ven-k-prov">R$ 0,00</div><div class="ven-kpi-s" id="ven-k-prov-s">5% sobre custo</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Lucro do mes</div><div class="ven-kpi-v cg" id="ven-k-lucro">R$ 0,00</div><div class="ven-kpi-s" id="ven-k-lucro-s">Margem acumulada</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Retirado do mes</div><div class="ven-kpi-v ca" id="ven-k-retir">R$ 0,00</div><div class="ven-kpi-s" id="ven-k-retir-s">Saidas tipo Retirada</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Excedente acumulado</div><div class="ven-kpi-v cp" id="ven-k-exc">R$ 0,00</div><div class="ven-kpi-s" id="ven-k-exc-s">Para amortizar</div></div>
-    </div>
-
-    <div class="ven-meta">
-      <div class="ven-meta-h"><span class="dot"></span>Meta do mes</div>
-      <div class="ven-meta-row"><span>Retirada acumulada</span><b id="ven-meta-retr">R$ 0,00</b></div>
-      <div class="ven-meta-row"><span>Falta para meta</span><b id="ven-meta-falta">R$ 45.000,00</b></div>
-      <div class="ven-bar"><div class="ven-bar-f" id="ven-meta-bar" style="width:0%"></div></div>
-      <div class="ven-meta-row" style="margin-top:8px"><span>Lucro gerado no mes</span><b id="ven-meta-lucro" class="cg">R$ 0,00</b></div>
-    </div>
-
-    <div class="ven-meta">
-      <div class="ven-meta-h"><span class="dot" style="background:var(--am)"></span>Proxima viagem</div>
-      <div class="ven-meta-row"><span>Provisao acumulada</span><b id="ven-viaj-prov">R$ 0,00</b></div>
-      <div class="ven-meta-row"><span>Custo da viagem</span><b>R$ 2.000,00</b></div>
-      <div class="ven-bar"><div class="ven-bar-f am" id="ven-viaj-bar" style="width:0%"></div></div>
-      <div class="ven-tip" id="ven-viaj-tip">Cada venda contribui com 5% sobre o custo para garantir a proxima viagem.</div>
-    </div>
-  </div>
-
-  <!-- ============ CATALOGO ============ -->
-  <div class="ven-sub" id="ven-sub-catalogo">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px;align-items:center;">
-      <button class="btn bg sm" id="ven-btn-novo-prod">+ Novo produto</button>
-      <button class="btn bs sm" id="ven-btn-cats">Gerenciar categorias</button>
-      <div class="fi" style="flex:1;min-width:170px;"><span class="fii"><svg viewBox="0 0 16 16" fill="none" width="11" height="11"><circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.4"/><path d="M10 10L14 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><input type="text" id="ven-prod-busca" placeholder="Buscar produto..." style="padding-left:25px;font-size:12px;"></div>
-    </div>
-    <div class="ven-row-cat" id="ven-cat-chips"></div>
-    <div id="ven-prod-list"></div>
-  </div>
-
-  <!-- ============ VENDAS ============ -->
-  <div class="ven-sub" id="ven-sub-vendas">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px;align-items:center;">
-      <button class="btn bg sm" id="ven-btn-nova-venda">+ Nova venda</button>
-      <span style="font-size:11px;color:var(--tx3);" id="ven-vendas-count">0 venda(s)</span>
-    </div>
-    <div class="ven-tbl-wrap" id="ven-vendas-tbl"></div>
-  </div>
-
-  <!-- ============ COMPRAS ============ -->
-  <div class="ven-sub" id="ven-sub-compras">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px;align-items:center;">
-      <button class="btn bg sm" id="ven-btn-nova-compra">+ Nova compra</button>
-      <span style="font-size:11px;color:var(--tx3);" id="ven-compras-count">0 compra(s)</span>
-    </div>
-    <div class="ven-tbl-wrap" id="ven-compras-tbl"></div>
-  </div>
-
-  <!-- ============ SAIDAS ============ -->
-  <div class="ven-sub" id="ven-sub-saidas">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px;align-items:center;">
-      <button class="btn bg sm" id="ven-btn-nova-saida">+ Nova saida</button>
-      <span style="font-size:11px;color:var(--tx3);" id="ven-saidas-count">0 saida(s)</span>
-    </div>
-    <div class="ven-tbl-wrap" id="ven-saidas-tbl"></div>
-  </div>
-
-  <!-- ============ ESTOQUE ============ -->
-  <div class="ven-sub" id="ven-sub-estoque">
-    <div class="ven-kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
-      <div class="ven-kpi"><div class="ven-kpi-l">SKUs cadastrados</div><div class="ven-kpi-v" id="ven-est-skus">0</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Unidades em estoque</div><div class="ven-kpi-v cb" id="ven-est-un">0</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Valor a custo</div><div class="ven-kpi-v cg" id="ven-est-val">R$ 0,00</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Em alerta</div><div class="ven-kpi-v ca" id="ven-est-al">0</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Zerados</div><div class="ven-kpi-v cr" id="ven-est-zr">0</div></div>
-    </div>
-    <div class="ven-tbl-wrap" id="ven-est-tbl"></div>
-  </div>
-
-  <!-- ============ ANALISE ============ -->
-  <div class="ven-sub" id="ven-sub-analise">
-    <div id="ven-analise-content"></div>
-  </div>
-
-  <!-- ============ CONCILIACAO ============ -->
-  <div class="ven-sub" id="ven-sub-conciliacao">
-    <div class="ven-kpi-grid">
-      <div class="ven-kpi"><div class="ven-kpi-l">Saldo do sistema</div><div class="ven-kpi-v cg" id="ven-con-sis">R$ 0,00</div><div class="ven-kpi-s">Soma de movimentacoes</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Ultimo saldo informado</div><div class="ven-kpi-v" id="ven-con-inf">R$ 0,00</div><div class="ven-kpi-s" id="ven-con-inf-s">Sem registro</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Divergencia atual</div><div class="ven-kpi-v" id="ven-con-div">R$ 0,00</div><div class="ven-kpi-s" id="ven-con-div-s">--</div></div>
-    </div>
-    <div class="panel" id="ven-con-list-wrap">
-      <div class="ptit"><span class="dot" style="background:var(--am)"></span>Movimentos com divergencia</div>
-      <div id="ven-con-list"></div>
-    </div>
-  </div>
-
-  <!-- ============ DIVIDAS ============ -->
-  <div class="ven-sub" id="ven-sub-dividas">
-    <div class="ven-kpi-grid">
-      <div class="ven-kpi"><div class="ven-kpi-l">Total devido</div><div class="ven-kpi-v cr" id="ven-div-total">R$ 0,00</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Juros mensal total</div><div class="ven-kpi-v ca" id="ven-div-juros">R$ 0,00</div><div class="ven-kpi-s">Sai todo mes</div></div>
-      <div class="ven-kpi"><div class="ven-kpi-l">Numero de dividas</div><div class="ven-kpi-v" id="ven-div-qtd">0</div></div>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px">
-      <button class="btn bg sm" id="ven-btn-nova-divida">+ Cadastrar divida</button>
-      <button class="btn bb sm" id="ven-btn-sim-divida">Simulador de amortizacao</button>
-    </div>
-    <div id="ven-divida-list"></div>
-  </div>
-</div>
-
-<!-- ============ MODAIS DO SISTEMA DE VENDAS ============ -->
-<div class="ven-modal" id="ven-modal-prod">
-  <div class="ven-mbox">
-    <div class="ven-mtit"><span id="ven-mp-tit">Novo produto</span><button class="btn bo sm" onclick="VEN.closeModal('prod')">Fechar</button></div>
-    <div class="ven-form-grid">
-      <div><div class="fl">Categoria *</div><select id="ven-mp-cat"></select></div>
-      <div><div class="fl">Modelo / SKU *</div><input type="text" id="ven-mp-mod" placeholder="Ex: iPhone 13 128GB Preto"></div>
-    </div>
-    <div class="ven-form-grid-3">
-      <div><div class="fl">Preco compra (R$) *</div><input type="text" id="ven-mp-pc" placeholder="2601,00" class="ven-num-input"></div>
-      <div><div class="fl">Preco venda alvo (R$) *</div><input type="text" id="ven-mp-pv" placeholder="3900,00" class="ven-num-input"></div>
-      <div><div class="fl">Preco minimo venda (R$)</div><input type="text" id="ven-mp-pm" placeholder="3600,00" class="ven-num-input"></div>
-    </div>
-    <div class="ven-form-grid">
-      <div><div class="fl">Estoque minimo (un)</div><input type="text" id="ven-mp-em" placeholder="2"></div>
-      <div><div class="fl">URL foto (opcional)</div><input type="url" id="ven-mp-foto" placeholder="https://..."></div>
-    </div>
-    <div><div class="fl">Observacao</div><textarea id="ven-mp-obs" placeholder="Cor, capacidade, detalhe relevante..."></textarea></div>
-    <div class="ven-prov-info" id="ven-mp-margem">Margem unitaria: R$ 0,00 (0,0%)</div>
-    <div class="ven-mbtns"><button class="btn bg" id="ven-btn-save-prod">Salvar</button><button class="btn bo" onclick="VEN.closeModal('prod')">Cancelar</button></div>
-  </div>
-</div>
-
-<div class="ven-modal" id="ven-modal-venda">
-  <div class="ven-mbox">
-    <div class="ven-mtit"><span>Nova venda</span><button class="btn bo sm" onclick="VEN.closeModal('venda')">Fechar</button></div>
-    <div class="ven-form-grid">
-      <div><div class="fl">Data *</div><input type="text" id="ven-mv-data" placeholder="dd/mm/aaaa"></div>
-      <div><div class="fl">Produto *</div><select id="ven-mv-prod"></select></div>
-    </div>
-    <div class="ven-form-grid-3">
-      <div><div class="fl">Quantidade *</div><input type="text" id="ven-mv-qtd" value="1" class="ven-num-input"></div>
-      <div><div class="fl">Preco unit. (R$) *</div><input type="text" id="ven-mv-pv" placeholder="3900,00" class="ven-num-input"></div>
-      <div><div class="fl">Total (R$)</div><input type="text" id="ven-mv-tot" disabled class="ven-num-input"></div>
-    </div>
-    <div class="ven-form-grid-3">
-      <div><div class="fl">Canal *</div><select id="ven-mv-canal"><option>Instagram</option><option>WhatsApp</option><option>OLX</option><option>Indicacao</option><option>Presencial</option><option>Outro</option></select></div>
-      <div><div class="fl">Forma pgto *</div><select id="ven-mv-pgt"><option>PIX</option><option>Dinheiro</option><option>Cartao Debito</option><option>Cartao Credito</option><option>Outro</option></select></div>
-      <div><div class="fl">Cliente</div><input type="text" id="ven-mv-cli" placeholder="Nome / contato"></div>
-    </div>
-    <div class="ven-prov-info" id="ven-mv-calc">Margem: -- | Provisao viagem: -- | Lucro: --</div>
-    <div class="ven-saldo-bar">
-      <span style="font-size:16px">!</span>
-      <div style="flex:1">
-        <strong>Saldo da conta apos a venda (obrigatorio)</strong>
-        <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">Esperado pelo sistema: <span id="ven-mv-esp">R$ 0,00</span></div>
-        <input type="text" id="ven-mv-saldo" placeholder="0,00" class="ven-num-input">
-      </div>
-    </div>
-    <div><div class="fl">Observacao</div><input type="text" id="ven-mv-obs" placeholder="(opcional)"></div>
-    <div class="ven-mbtns"><button class="btn bg" id="ven-btn-save-venda">Registrar venda</button><button class="btn bo" onclick="VEN.closeModal('venda')">Cancelar</button></div>
-  </div>
-</div>
-
-<div class="ven-modal" id="ven-modal-compra">
-  <div class="ven-mbox">
-    <div class="ven-mtit"><span>Nova compra</span><button class="btn bo sm" onclick="VEN.closeModal('compra')">Fechar</button></div>
-    <div class="ven-form-grid">
-      <div><div class="fl">Data *</div><input type="text" id="ven-mc-data" placeholder="dd/mm/aaaa"></div>
-      <div><div class="fl">Viagem nº *</div><input type="text" id="ven-mc-via" placeholder="1" class="ven-num-input"></div>
-    </div>
-    <div class="ven-form-grid">
-      <div><div class="fl">Produto *</div><select id="ven-mc-prod"></select></div>
-      <div><div class="fl">Quantidade *</div><input type="text" id="ven-mc-qtd" class="ven-num-input"></div>
-    </div>
-    <div class="ven-form-grid">
-      <div><div class="fl">Custo unit. (R$) *</div><input type="text" id="ven-mc-cu" placeholder="2601,00" class="ven-num-input"></div>
-      <div><div class="fl">Total (R$)</div><input type="text" id="ven-mc-tot" disabled class="ven-num-input"></div>
-    </div>
-    <div class="ven-prov-info" id="ven-mc-medio">Novo custo medio do produto: --</div>
-    <div class="ven-saldo-bar">
-      <span style="font-size:16px">!</span>
-      <div style="flex:1">
-        <strong>Saldo da conta apos a compra (obrigatorio)</strong>
-        <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">Esperado pelo sistema: <span id="ven-mc-esp">R$ 0,00</span></div>
-        <input type="text" id="ven-mc-saldo" placeholder="0,00" class="ven-num-input">
-      </div>
-    </div>
-    <div><div class="fl">Observacao</div><input type="text" id="ven-mc-obs" placeholder="(opcional)"></div>
-    <div class="ven-mbtns"><button class="btn bg" id="ven-btn-save-compra">Registrar compra</button><button class="btn bo" onclick="VEN.closeModal('compra')">Cancelar</button></div>
-  </div>
-</div>
-
-<div class="ven-modal" id="ven-modal-saida">
-  <div class="ven-mbox">
-    <div class="ven-mtit"><span>Nova saida</span><button class="btn bo sm" onclick="VEN.closeModal('saida')">Fechar</button></div>
-    <div class="ven-form-grid">
-      <div><div class="fl">Data *</div><input type="text" id="ven-ms-data" placeholder="dd/mm/aaaa"></div>
-      <div><div class="fl">Tipo *</div><select id="ven-ms-tipo"><option value="Viagem">Despesa Viagem</option><option value="Retirada">Retirada de Lucro</option><option value="Amortizacao">Amortizacao Divida</option><option value="Outros">Outros</option></select></div>
-    </div>
-    <div class="ven-form-grid">
-      <div><div class="fl">Valor (R$) *</div><input type="text" id="ven-ms-val" placeholder="0,00" class="ven-num-input"></div>
-      <div id="ven-ms-divwrap" style="display:none"><div class="fl">Divida (qual amortizar)</div><select id="ven-ms-div"></select></div>
-    </div>
-    <div id="ven-ms-viawrap" style="display:none;margin-bottom:10px"><div class="fl">Viagem nº</div><input type="text" id="ven-ms-via" class="ven-num-input"></div>
-    <div><div class="fl">Descricao / justificativa *</div><input type="text" id="ven-ms-desc" placeholder="Ex: Pensao mes 5, Hospedagem PR 18-21/05, etc"></div>
-    <div class="ven-saldo-bar">
-      <span style="font-size:16px">!</span>
-      <div style="flex:1">
-        <strong>Saldo da conta apos a saida (obrigatorio)</strong>
-        <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">Esperado pelo sistema: <span id="ven-ms-esp">R$ 0,00</span></div>
-        <input type="text" id="ven-ms-saldo" placeholder="0,00" class="ven-num-input">
-      </div>
-    </div>
-    <div class="ven-mbtns"><button class="btn bg" id="ven-btn-save-saida">Registrar saida</button><button class="btn bo" onclick="VEN.closeModal('saida')">Cancelar</button></div>
-  </div>
-</div>
-
-<div class="ven-modal" id="ven-modal-divida">
-  <div class="ven-mbox">
-    <div class="ven-mtit"><span id="ven-md-tit">Nova divida</span><button class="btn bo sm" onclick="VEN.closeModal('divida')">Fechar</button></div>
-    <div><div class="fl">Credor / apelido *</div><input type="text" id="ven-md-cred" placeholder="Ex: Capital Apple, Cartao Bradesco..."></div>
-    <div class="ven-form-grid" style="margin-top:10px">
-      <div><div class="fl">Saldo atual (R$) *</div><input type="text" id="ven-md-sal" class="ven-num-input"></div>
-      <div><div class="fl">Taxa juros (% ao mes) *</div><input type="text" id="ven-md-tx" placeholder="10" class="ven-num-input"></div>
-    </div>
-    <div class="ven-form-grid">
-      <div><div class="fl">Parcela minima mensal (R$)</div><input type="text" id="ven-md-pm" placeholder="0,00 se so juros" class="ven-num-input"></div>
-      <div><div class="fl">Proximo vencimento</div><input type="text" id="ven-md-venc" placeholder="dd/mm/aaaa"></div>
-    </div>
-    <div><div class="fl">Observacao</div><textarea id="ven-md-obs" placeholder="Detalhes, condicoes, contato..."></textarea></div>
-    <div class="ven-prov-info" id="ven-md-juros">Juros mensal: R$ 0,00</div>
-    <div class="ven-mbtns"><button class="btn bg" id="ven-btn-save-divida">Salvar</button><button class="btn bo" onclick="VEN.closeModal('divida')">Cancelar</button></div>
-  </div>
-</div>
-
-<div class="ven-modal" id="ven-modal-cat">
-  <div class="ven-mbox">
-    <div class="ven-mtit"><span>Gerenciar categorias</span><button class="btn bo sm" onclick="VEN.closeModal('cat')">Fechar</button></div>
-    <div style="display:flex;gap:8px;margin-bottom:14px">
-      <input type="text" id="ven-mcat-n" placeholder="Nome da nova categoria">
-      <button class="btn bg sm" id="ven-btn-add-cat">+ Adicionar</button>
-    </div>
-    <div id="ven-mcat-list"></div>
-  </div>
-</div>
-
-<div class="ven-modal" id="ven-modal-sim">
-  <div class="ven-mbox">
-    <div class="ven-mtit"><span>Simulador de amortizacao</span><button class="btn bo sm" onclick="VEN.closeModal('sim')">Fechar</button></div>
-    <div style="margin-bottom:14px"><div class="fl">Quanto voce tem para amortizar agora? (R$)</div><input type="text" id="ven-sim-val" placeholder="10000,00" class="ven-num-input"></div>
-    <button class="btn bg sm" id="ven-btn-calc-sim">Calcular impacto</button>
-    <div id="ven-sim-result" style="margin-top:16px"></div>
-  </div>
-</div>
-
-<div class="ven-modal" id="ven-modal-cfg">
-  <div class="ven-mbox">
-    <div class="ven-mtit"><span>Configuracoes</span><button class="btn bo sm" onclick="VEN.closeModal('cfg')">Fechar</button></div>
-    <div class="ven-cfg-row">
-      <div class="ven-cfg-l">Capital Principal (R$)<div class="ven-cfg-l-d">Valor minimo invariante. Total ativos nao pode cair abaixo disso.</div></div>
-      <div class="ven-cfg-v"><input type="text" id="ven-cfg-cap" class="ven-num-input"></div>
-    </div>
-    <div class="ven-cfg-row">
-      <div class="ven-cfg-l">Meta retirada mensal (R$)<div class="ven-cfg-l-d">Quanto voce precisa retirar por mes para suas despesas.</div></div>
-      <div class="ven-cfg-v"><input type="text" id="ven-cfg-meta" class="ven-num-input"></div>
-    </div>
-    <div class="ven-cfg-row">
-      <div class="ven-cfg-l">% Provisao Viagem<div class="ven-cfg-l-d">Sobre o custo de cada venda - reserva para proxima viagem.</div></div>
-      <div class="ven-cfg-v"><input type="text" id="ven-cfg-pct" class="ven-num-input"></div>
-    </div>
-    <div class="ven-cfg-row">
-      <div class="ven-cfg-l">Custo da viagem (R$)<div class="ven-cfg-l-d">Valor de referencia (passagem + hospedagem + alimentacao).</div></div>
-      <div class="ven-cfg-v"><input type="text" id="ven-cfg-cv" class="ven-num-input"></div>
-    </div>
-    <div class="ven-cfg-row">
-      <div class="ven-cfg-l">Saldo inicial da conta (R$)<div class="ven-cfg-l-d">Saldo no momento de comecar a usar o sistema.</div></div>
-      <div class="ven-cfg-v"><input type="text" id="ven-cfg-si" class="ven-num-input"></div>
-    </div>
-    <div class="ven-cfg-row">
-      <div class="ven-cfg-l">Tolerancia conciliacao (R$)<div class="ven-cfg-l-d">Diferenca aceita entre saldo informado e esperado sem alertar.</div></div>
-      <div class="ven-cfg-v"><input type="text" id="ven-cfg-tol" class="ven-num-input"></div>
-    </div>
-    <div class="ven-mbtns"><button class="btn bg" id="ven-btn-save-cfg">Salvar</button><button class="btn br sm" id="ven-btn-reset" style="margin-left:auto">Resetar tudo</button></div>
-  </div>
-</div>
-
-</div>
-</div>
-</div>
-<div class="modal" id="img-modal"><div class="mclose" id="img-close">X</div><img class="mimg" id="mimg" src="" alt=""></div>
-<div class="emodal" id="emodal">
-  <div class="ebox">
-    <div class="etit"><span>Editar produto</span><button class="btn bo sm" id="btn-closeedit">Fechar</button></div>
-    <div style="margin-bottom:9px;"><div class="fl">Descricao</div><input type="text" id="e-desc"></div>
-    <div style="margin-bottom:9px;"><div class="fl">Desc tecnica</div><textarea id="e-tec"></textarea></div>
-    <div class="fg5" style="margin-bottom:9px;">
-      <div><div class="fl">Loja</div><input type="text" id="e-loja"></div>
-      <div><div class="fl">Und</div><select id="e-und"><option>UN</option><option>CX</option><option>PCT</option><option>KG</option><option>LT</option><option>MT</option><option>PAR</option><option>RL</option><option>DZ</option></select></div>
-      <div><div class="fl">Marca</div><input type="text" id="e-marca"></div>
-      <div><div class="fl">Valor R$</div><input type="text" id="e-valor"></div>
-      <div><div class="fl">RTU</div><select id="e-rtu"><option value="sim">SIM</option><option value="nao">NAO</option><option value="">-</option></select></div>
-    </div>
-    <div style="margin-bottom:10px;"><div class="fl">URL foto</div><input type="url" id="e-foto"></div>
-    <div style="display:flex;gap:8px;"><button class="btn bg" id="btn-saveedit">Salvar</button><button class="btn bo" id="btn-canceledit">Cancelar</button></div>
-  </div>
-</div>
-<!-- MODAL DE DETALHES DO ITEM -->
-<div class="vmodal" id="vmodal">
-  <div class="vbox">
-    <div class="vtit2">
-      <span id="v-title" style="flex:1;font-size:15px;line-height:1.4;"></span>
-      <div style="display:flex;gap:7px;align-items:center;flex-shrink:0;">
-        <span id="v-rtu-badge"></span>
-        <button class="btn bo sm" id="btn-closevmodal">Fechar</button>
-      </div>
-    </div>
-    <div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap;align-items:flex-start;">
-      <img id="v-img" src="" alt="" style="width:100px;height:100px;object-fit:contain;background:var(--s2);border-radius:var(--rs);border:0.5px solid var(--bd2);padding:5px;cursor:zoom-in;flex-shrink:0;display:none;" onclick="zoomI(this.src)">
-      <div id="v-noimg" style="width:100px;height:100px;background:var(--s2);border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:28px;opacity:.2;flex-shrink:0;">&#128230;</div>
-      <div style="flex:1;min-width:160px;">
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--g);margin-bottom:4px;" id="v-valor">-</div>
-        <div style="font-size:13px;color:var(--tx2);margin-bottom:8px;" id="v-loja-top">-</div>
-        <span id="v-origem-badge"></span>
-      </div>
-    </div>
-    <hr class="vhr">
-    <div class="vrow"><span class="vlbl">Descricao</span><span class="vval" id="v-desc">-</span></div>
-    <div class="vrow"><span class="vlbl">Marca</span><span class="vval" id="v-marca">-</span></div>
-    <div class="vrow"><span class="vlbl">Unidade</span><span class="vval" id="v-und">-</span></div>
-    <div class="vrow"><span class="vlbl">Loja</span><span class="vval" id="v-loja2">-</span></div>
-    <div class="vrow"><span class="vlbl">Data</span><span class="vval" id="v-data">-</span></div>
-    <div class="vrow" style="flex-direction:column;gap:5px;" id="v-tec-row"><span class="vlbl">Desc. Tecnica</span><div class="vtec" id="v-tec">-</div></div>
-    <hr class="vhr">
-    <div style="display:flex;gap:8px;justify-content:flex-end;" id="v-btns"></div>
-  </div>
-</div>
-<div id="toast"></div>
+<!-- Tailwind CSS via CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
 <script>
-var SENHA='180126';
-var API='https://script.google.com/macros/s/AKfycbw46ssdqXUPBr8ybb3y57knuzcmvWyYbuo-FnD30YxwCDXZs2TBwDZAhO6SJzYAQa4/exec';
-var EXPIRE=30;
-var items=JSON.parse(localStorage.getItem('bp_items')||'[]');
-var rtuBase=JSON.parse(localStorage.getItem('bp_rtu')||JSON.stringify([{nome:'TechStore Paraguay',cidade:'Ciudad del Este',contato:'+595 61 555-0001'},{nome:'ElectroSur CDE',cidade:'Ciudad del Este',contato:'+595 61 555-0002'},{nome:'MegaTech Paraguay',cidade:'Salto del Guaira',contato:'+595 46 555-0003'},{nome:'InfoShop PY',cidade:'Pedro Juan Caballero',contato:'+595 36 555-0004'},{nome:'DigiStore Paraguay',cidade:'Ciudad del Este',contato:'+595 61 555-0005'}]));
-var fTxt='',fOrig='',fRtu='',sCol='item',sAsc=true,cView='cards',editIdx=-1,b64=null;
-function login(){var c=document.getElementById('campo-senha');if(c.value==SENHA){document.getElementById('tela-login').style.display='none';document.getElementById('tela-app').style.display='block';initApp();}else{document.getElementById('erro-login').style.display='block';c.value='';c.focus();}}
-document.getElementById('botao-entrar').addEventListener('click',login);
-document.getElementById('campo-senha').addEventListener('keypress',function(e){if(e.key==='Enter')login();});
-function initApp(){
-  var now=new Date();
-  document.getElementById('dash-date').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  upd30();carregarSheet();renderAll();setSS('idle');
-  document.getElementById('nav-d').onclick=function(){goS('d');};
-  document.getElementById('nav-b').onclick=function(){goS('b');};
-  document.getElementById('nav-m').onclick=function(){goS('m');};
-  document.getElementById('nav-r').onclick=function(){goS('r');};
-  document.getElementById('nav-p').onclick=function(){goS('p');};
-  document.getElementById('nav-ds').onclick=function(){goS('ds');};
-  document.getElementById('nav-x').onclick=exportXLSX;
-  document.getElementById('btn-sync').onclick=syncSheet;
-  document.getElementById('btn-sync2').onclick=syncSheet;
-  document.getElementById('btn-xlsx').onclick=exportXLSX;
-  document.getElementById('btn-limpar').onclick=limparTudo;
-  document.getElementById('btn-upd').onclick=forceUpd;
-  document.getElementById('btn-vtodos').onclick=function(){goS('b');};
-  document.getElementById('btn-ir-m').onclick=function(){goS('m');};
-  document.getElementById('tab-c').onclick=function(){swV('c');};
-  document.getElementById('tab-t').onclick=function(){swV('t');};
-  document.getElementById('ftxt').oninput=function(){fTxt=this.value;rB();};
-  document.getElementById('forig').onchange=function(){fOrig=this.value;rB();};
-  document.getElementById('frtu').onchange=function(){fRtu=this.value;rB();};
-  document.getElementById('btn-addm').onclick=addManual;
-  document.getElementById('btn-limform').onclick=limForm;
-  document.getElementById('btn-remfoto').onclick=clearFoto;
-  document.getElementById('m-foto-file').onchange=function(){hUpload(this);};
-  document.getElementById('m-valor').oninput=function(){mskM(this);};
-  document.getElementById('btn-addrtu').onclick=addRTU;
-  document.getElementById('btn-genprompt').onclick=genPrompt;
-  document.getElementById('btn-regenprompt').onclick=genPrompt;
-  document.getElementById('btn-copyprompt').onclick=cpPrompt;
-  document.getElementById('img-close').onclick=function(){document.getElementById('img-modal').classList.remove('open');};
-  document.getElementById('img-modal').onclick=function(e){if(e.target===this)this.classList.remove('open');};
-  document.getElementById('btn-closeedit').onclick=closeEdit;
-  document.getElementById('btn-canceledit').onclick=closeEdit;
-  document.getElementById('btn-saveedit').onclick=saveEdit;
-  document.getElementById('e-valor').oninput=function(){mskM(this);};
-  document.getElementById('btn-closevmodal').onclick=closeVer;
-  document.getElementById('vmodal').onclick=function(e){if(e.target===this)closeVer();};
-  var ths=document.querySelectorAll('th[data-col]');
-  for(var i=0;i<ths.length;i++){(function(th){th.onclick=function(){sortBy(th.getAttribute('data-col'));}})(ths[i]);}
-}
-function goS(id){
-  var all=['d','b','m','r','p','ds'];
-  for(var i=0;i<all.length;i++){
-    var s=document.getElementById('sec-'+all[i]);if(s)s.className='sec'+(all[i]===id?' on':'');
-    var n=document.getElementById('nav-'+all[i]);if(n)n.className='sbi'+(all[i]===id?' on':'');
-  }
-  renderAll();
-}
-function carregarSheet(){
-  setSS('go','Carregando...');
-  fetch(API+'?action=get').then(function(r){return r.json();}).then(function(d){
-    if(d.ok&&d.data&&d.data.length>1){
-      var r2=d.data.slice(1).filter(function(r){return r[0];}).map(function(r,i){return{item:i+1,descricao:r[0]||'',und:r[1]||'UN',marca:r[2]||'',valor:r[3]||'',valorNum:pV(r[3]),loja:r[4]||'',foto:r[5]||'',dataCadastro:r[6]||'',descTecnica:r[7]||'',rtu:r[8]||'',origem:r[9]||'manual',status:r[10]||'',ts:r[11]||new Date().toISOString()};});
-      if(r2.length>0){items=r2;localStorage.setItem('bp_items',JSON.stringify(items));}
-    }
-    setSS('ok','Sync '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));renderAll();
-  }).catch(function(){setSS('er','Erro');toast('Usando dados locais','wa');renderAll();});
-}
-function syncSheet(){
-  setSS('go','Sincronizando...');
-  var hd=['Descricao','Und','Marca','Valor','Loja','Foto','Data','DescTec','RTU','Origem','Status','TS'];
-  var rows=[hd].concat(items.map(function(r){return[r.descricao,r.und,r.marca,r.valor,r.loja,r.foto||'',r.dataCadastro,r.descTecnica||'',r.rtu||'',r.origem,r.status||'',r.ts];}));
-  fetch(API,{method:'POST',body:JSON.stringify({action:'save',rows:rows})}).then(function(){
-    localStorage.setItem('bp_items',JSON.stringify(items));
-    setSS('ok','Sync '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
-    toast('Sincronizado!','ok');
-  }).catch(function(){setSS('er','Erro');toast('Salvo local','wa');});
-}
-function isExp(r){return r.status==='expired'||r.origem==='expired'||(r.ts&&dA(r)>=EXPIRE);}
-function dA(r){return r.ts?Math.floor((Date.now()-new Date(r.ts).getTime())/86400000):0;}
-function pV(s){if(!s)return 0;var n=parseFloat(String(s).replace('R$','').replace(/\./g,'').replace(',','.').trim());return isNaN(n)?0:n;}
-function mskM(el){var v=el.value.replace(/\D/g,'');if(!v){el.value='';return;}el.value=(parseInt(v)/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function setSS(st,lb){var d=document.getElementById('sdot'),l=document.getElementById('slbl');d.className='sdot'+(st==='ok'?' ok':st==='go'?' go':st==='er'?' er':'');l.textContent=lb||(st==='ok'?'Sincronizado':st==='go'?'Sincronizando...':st==='er'?'Erro':'Nao sincronizado');}
-function upd30(){var n=new Date(),nx=new Date(n.getFullYear(),n.getMonth(),30);if(nx<=n)nx.setMonth(nx.getMonth()+1);var e=document.getElementById('next30');if(e)e.textContent=nx.toLocaleDateString('pt-BR');var exp=items.filter(function(r){return isExp(r);}).length;var ca=document.getElementById('calert');if(ca)ca.style.display=exp>0?'block':'none';}
-function forceUpd(){var exp=items.filter(function(r){return isExp(r);});if(!exp.length){toast('Nenhum expirado','in');return;}toast(exp.length+' expirado(s) - inicie o Assistente de Cotacao no Cowork','wa');}
-function addManual(){
-  var desc=document.getElementById('m-desc').value.trim(),val=document.getElementById('m-valor').value.trim();
-  if(!desc){toast('Descricao obrigatoria','er');return;}if(!val){toast('Valor obrigatorio','er');return;}
-  var vf='R$ '+val,loja=document.getElementById('m-loja').value.trim(),rtuV=document.getElementById('m-rtu').value;
-  if(rtuV==='sim'&&loja&&!rtuBase.some(function(r){return r.nome.toLowerCase()===loja.toLowerCase();})){rtuBase.push({nome:loja,cidade:'Paraguai',contato:''});localStorage.setItem('bp_rtu',JSON.stringify(rtuBase));}
-  items.push({item:items.length+1,descricao:desc,und:document.getElementById('m-und').value,marca:document.getElementById('m-marca').value.trim()||'-',valor:vf,valorNum:pV(vf),loja:loja||'-',foto:b64||document.getElementById('m-foto-url').value.trim()||'',dataCadastro:new Date().toLocaleDateString('pt-BR'),descTecnica:document.getElementById('m-tec').value.trim(),rtu:rtuV,origem:'manual',status:'',ts:new Date().toISOString()});
-  limForm();renderAll();syncSheet();toast('Produto adicionado!','ok');
-}
-function limForm(){['m-desc','m-tec','m-marca','m-valor','m-loja','m-foto-url'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});document.getElementById('m-und').value='UN';document.getElementById('m-rtu').value='sim';clearFoto();}
-function hUpload(inp){if(!inp.files||!inp.files[0])return;var rd=new FileReader();rd.onload=function(e){b64=e.target.result;document.getElementById('fimg').src=e.target.result;document.getElementById('fpreview').style.display='flex';};rd.readAsDataURL(inp.files[0]);}
-function clearFoto(){b64=null;var fu=document.getElementById('m-foto-url'),ff=document.getElementById('m-foto-file');if(fu)fu.value='';if(ff)ff.value='';document.getElementById('fpreview').style.display='none';}
-function addRTU(){var n=document.getElementById('rtu-n').value.trim();if(!n){toast('Nome obrigatorio','er');return;}if(rtuBase.some(function(r){return r.nome.toLowerCase()===n.toLowerCase();})){toast('Loja ja cadastrada','wa');return;}rtuBase.push({nome:n,cidade:document.getElementById('rtu-c').value.trim()||'Paraguai',contato:document.getElementById('rtu-ct').value.trim()||''});localStorage.setItem('bp_rtu',JSON.stringify(rtuBase));['rtu-n','rtu-c','rtu-ct'].forEach(function(id){document.getElementById(id).value='';});renderRTU();toast('RTU adicionada!','ok');}
-function remRTU(i){rtuBase.splice(i,1);localStorage.setItem('bp_rtu',JSON.stringify(rtuBase));renderRTU();toast('Removida','in');}
-function abrirEdit(i){editIdx=i;var r=items[i];document.getElementById('e-desc').value=r.descricao||'';document.getElementById('e-tec').value=r.descTecnica||'';document.getElementById('e-loja').value=r.loja||'';document.getElementById('e-und').value=r.und||'UN';document.getElementById('e-marca').value=r.marca||'';var vStr=typeof r.valor==='number'?r.valor.toFixed(2).replace('.',','):r.valor?String(r.valor).replace('R$ ','').replace('.',','):'';document.getElementById('e-valor').value=vStr;document.getElementById('e-foto').value=r.foto||'';document.getElementById('e-rtu').value=r.rtu||'';document.getElementById('emodal').classList.add('open');}
-function closeEdit(){document.getElementById('emodal').classList.remove('open');editIdx=-1;}
-function saveEdit(){if(editIdx<0)return;var r=items[editIdx];r.descricao=document.getElementById('e-desc').value.trim();r.descTecnica=document.getElementById('e-tec').value.trim();r.loja=document.getElementById('e-loja').value.trim();r.und=document.getElementById('e-und').value;r.marca=document.getElementById('e-marca').value.trim();var vr=document.getElementById('e-valor').value.trim();if(vr){r.valor='R$ '+vr;r.valorNum=pV(r.valor);}var nf=document.getElementById('e-foto').value.trim();if(nf)r.foto=nf;r.rtu=document.getElementById('e-rtu').value;r.dataCadastro=new Date().toLocaleDateString('pt-BR');r.ts=new Date().toISOString();r.status='';if(r.origem==='expired')r.origem='manual';closeEdit();renderAll();syncSheet();toast('Atualizado!','ok');}
-function remItem(i){if(!confirm('Remover?'))return;items.splice(i,1);items.forEach(function(r,j){r.item=j+1;});renderAll();syncSheet();toast('Removido','in');}
-function limparTudo(){if(!confirm('Limpar tudo?'))return;items=[];renderAll();syncSheet();toast('Limpo','in');}
-function fI(){return items.filter(function(r){if(fTxt&&JSON.stringify(r).toLowerCase().indexOf(fTxt.toLowerCase())<0)return false;if(fOrig==='expired'&&!isExp(r))return false;if(fOrig&&fOrig!=='expired'&&r.origem!==fOrig)return false;if(fRtu==='sim'&&r.rtu!=='sim')return false;if(fRtu==='nao'&&r.rtu!=='nao')return false;return true;}).sort(function(a,b){var av=a[sCol]!==undefined?a[sCol]:'',bv=b[sCol]!==undefined?b[sCol]:'';if(typeof av==='number')return sAsc?av-bv:bv-av;return sAsc?String(av).localeCompare(String(bv)):String(bv).localeCompare(String(av));});}
-function sortBy(col){if(sCol===col)sAsc=!sAsc;else{sCol=col;sAsc=true;}rB();}
-function swV(v){cView=v;document.getElementById('tab-c').className='vtab'+(v==='c'?' on':'');document.getElementById('tab-t').className='vtab'+(v==='t'?' on':'');document.getElementById('v-c').style.display=v==='c'?'block':'none';document.getElementById('v-t').style.display=v==='t'?'block':'none';}
-function renderAll(){updM();rD();rB();renderRTU();upd30();var bs=document.getElementById('banco-sub');if(bs)bs.textContent=items.length+' item(s) total';}
-function iS(r){return r.foto||'';}
-function rtuBadge(rtu){if(rtu==='sim')return '<span class="badge bgy">RTU SIM</span>';if(rtu==='nao')return '<span class="badge bgn">RTU NAO</span>';return '';}
-function oBadge(r){if(isExp(r))return '<span class="badge bge">Expirado</span>';if(r.origem==='auto')return '<span class="badge bga">Auto</span>';return '<span class="badge bgm">Manual</span>';}
-function cHTML(r){var src=iS(r),exp=isExp(r),idx=items.indexOf(r),near=!exp&&dA(r)>=25;var expB=exp?'<div class="expb">Prazo expirado - revisar manualmente</div>':'';var nearW=near?'<div style="font-size:10px;color:var(--am);margin-top:4px;">'+dA(r)+' dias - renovar em breve</div>':'';return '<div class="card fade"><div class="cimg">'+(src?'<img src="'+src+'" alt="" onerror="this.style.display=\'none\'" onclick="zoomI(\''+src.replace(/'/g,"\\'")+'\')" style="cursor:zoom-in">':'<div class="noi">&#128230;</div>')+'<div class="cbo">'+oBadge(r)+'</div>'+(r.rtu?'<div class="cbr">'+rtuBadge(r.rtu)+'</div>':'')+'</div><div class="cbody"><div class="cdesc" title="'+r.descricao+'">'+r.descricao+'</div><div class="cmarca">'+(r.marca&&r.marca!=='-'?r.marca:'')+' '+r.und+'</div>'+(r.descTecnica?'<div class="ctec">'+r.descTecnica+'</div>':'')+'<div class="cval">'+(r.valor||'-')+'</div><div class="cloja">'+(r.loja||'')+'</div>'+expB+nearW+'<div class="cfoot"><span class="cdate">'+(r.dataCadastro||'-')+'</span><div class="cacts">'+(src?'<button class="btn bp sm" onclick="zoomI(\''+src.replace(/'/g,"\\'")+'\')" style="font-size:11px;">Foto</button>':'')+'<button class="btn bs sm" onclick="abrirEdit('+idx+')">Editar</button><button class="btn br sm" onclick="remItem('+idx+')">X</button></div></div></div></div>';}
-function rD(){var el=document.getElementById('dash-cards');if(!el)return;var r=[].concat(items).sort(function(a,b){return new Date(b.ts||0)-new Date(a.ts||0);}).slice(0,6);if(!r.length){el.innerHTML='<div class="empty"><div class="empi">&#128230;</div><div class="empt">Banco vazio</div><div class="emps">Aguardando o Assistente de Cotacao ou insercao manual</div></div>';return;}el.innerHTML=r.map(cHTML).join('');}
-function rB(){var src=fI(),tct=document.getElementById('tblct');if(tct)tct.textContent=src.length+' item(s)';var cc=document.getElementById('cards-ct');if(cc){if(!src.length)cc.innerHTML='<div class="empty"><div class="empi">&#128203;</div><div class="empt">'+(items.length?'Sem resultados':'Banco vazio')+'</div><div class="emps">'+(items.length?'Ajuste os filtros':'Aguardando cotacao')+'</div></div>';else cc.innerHTML=src.map(cHTML).join('');}var tb=document.getElementById('tbl-body');if(!tb)return;if(!src.length){tb.innerHTML='<tr><td colspan="12"><div class="empty"><div class="empt">Sem dados</div></div></td></tr>';return;}tb.innerHTML=src.map(function(r){var ri=items.indexOf(r),s=iS(r),iEl=s?'<img class="tdimg" src="'+s+'" alt="" onclick="event.stopPropagation();zoomI(\''+s.replace(/'/g,"\\'")+'\')" >':'<div class="tdnoi">&#128230;</div>';return '<tr class="fade" onclick="abrirVer('+ri+')" title="Clique para ver detalhes"><td><span class="tdn">'+r.item+'</span></td><td>'+iEl+'</td><td class="tdd" title="'+r.descricao+'">'+r.descricao+'</td><td class="tdtec" title="'+(r.descTecnica||'')+'">'+(r.descTecnica||'-')+'</td><td style="font-size:11px;color:var(--tx2);">'+r.und+'</td><td style="font-size:12px;">'+r.marca+'</td><td class="tdval">'+(r.valor||'-')+'</td><td style="font-size:11px;color:var(--tx2);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(r.loja||'-')+'</td><td>'+rtuBadge(r.rtu)+'</td><td class="tddt">'+(r.dataCadastro||'-')+'</td><td>'+oBadge(r)+'</td><td style="display:flex;gap:4px;padding:5px 10px;" onclick="event.stopPropagation()"><button class="btn bs sm" onclick="abrirEdit('+ri+')">Ed</button><button class="btn br sm" onclick="remItem('+ri+')">X</button></td></tr>';}).join('');}
-function abrirVer(i){
-  var r=items[i];
-  document.getElementById('v-title').textContent=r.descricao||'Produto';
-  document.getElementById('v-desc').textContent=r.descricao||'-';
-  document.getElementById('v-marca').textContent=(r.marca&&r.marca!=='-'?r.marca:'-');
-  document.getElementById('v-und').textContent=r.und||'-';
-  document.getElementById('v-loja-top').textContent=(r.loja&&r.loja!=='-'?r.loja:'');
-  document.getElementById('v-loja2').textContent=(r.loja&&r.loja!=='-'?r.loja:'-');
-  document.getElementById('v-valor').textContent=r.valor||'-';
-  document.getElementById('v-data').textContent=r.dataCadastro||'-';
-  document.getElementById('v-tec').textContent=r.descTecnica||'-';
-  document.getElementById('v-tec-row').style.display=r.descTecnica?'flex':'none';
-  var rtuBdg=document.getElementById('v-rtu-badge');
-  rtuBdg.innerHTML=r.rtu==='sim'?'<span class="badge bgy">RTU SIM</span>':r.rtu==='nao'?'<span class="badge bgn">RTU NAO</span>':'';
-  var origBdg=document.getElementById('v-origem-badge');
-  origBdg.innerHTML=isExp(r)?'<span class="badge bge">Expirado</span>':r.origem==='auto'?'<span class="badge bga">Auto</span>':'<span class="badge bgm">Manual</span>';
-  var img=document.getElementById('v-img'),noi=document.getElementById('v-noimg');
-  if(r.foto){img.src=r.foto;img.style.display='block';noi.style.display='none';}
-  else{img.style.display='none';noi.style.display='flex';}
-  var btns=document.getElementById('v-btns');
-  btns.innerHTML=(r.foto?'<button class="btn bp sm" onclick="zoomI(\''+r.foto.replace(/'/g,"\\'")+'\')">&#128247; Ver foto</button>':'')+
-    '<button class="btn bs sm" onclick="closeVer();abrirEdit('+i+')">Editar</button>'+
-    '<button class="btn br sm" onclick="closeVer();remItem('+i+')">Remover</button>';
-  document.getElementById('vmodal').classList.add('open');
-}
-function closeVer(){document.getElementById('vmodal').classList.remove('open');}
-function renderRTU(){var el=document.getElementById('rtu-list');if(!el)return;if(!rtuBase.length){el.innerHTML='<div class="empty"><div class="empi">&#127978;</div><div class="empt">Base RTU vazia</div></div>';return;}el.innerHTML=rtuBase.map(function(r,i){return '<div class="rtucard"><div><div class="rtun">'+r.nome+'</div><div class="rtui">'+r.cidade+(r.contato?' - '+r.contato:'')+'</div></div><div style="display:flex;align-items:center;gap:6px;"><span class="badge bgy">RTU</span><button class="btn br sm" onclick="remRTU('+i+')">X</button></div></div>';}).join('');}
-function updM(){var exp=items.filter(function(r){return isExp(r);}).length,el=function(id){return document.getElementById(id);};if(el('m-tot'))el('m-tot').textContent=items.length;if(el('m-aut'))el('m-aut').textContent=items.filter(function(r){return r.origem==='auto';}).length;if(el('m-man'))el('m-man').textContent=items.filter(function(r){return r.origem==='manual';}).length;if(el('m-rtu'))el('m-rtu').textContent=items.filter(function(r){return r.rtu==='sim';}).length;if(el('m-fot'))el('m-fot').textContent=items.filter(function(r){return !!r.foto;}).length;if(el('m-exp'))el('m-exp').textContent=exp;}
-function exportXLSX(){if(!items.length){toast('Banco vazio','er');return;}var wd=[['#','Descricao','DescTec','Und','Marca','Valor','Loja','RTU','Data','Origem','Status']].concat(items.map(function(r){return[r.item,r.descricao,r.descTecnica||'',r.und,r.marca,r.valor,r.loja,r.rtu||'',r.dataCadastro,r.origem,r.status||''];}));var wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(wd);ws['!cols']=[{wch:5},{wch:44},{wch:38},{wch:7},{wch:16},{wch:14},{wch:26},{wch:8},{wch:13},{wch:10},{wch:20}];XLSX.utils.book_append_sheet(wb,ws,'BANCO');XLSX.writeFile(wb,'BancoPreco-SELECTA_'+new Date().toISOString().slice(0,10)+'.xlsx');toast('Exportado!','ok');}
-function genPrompt(){if(!items.length){toast('Banco vazio','er');return;}var t=new Date().toLocaleDateString('pt-BR'),rows=items.map(function(r){return'| '+r.item+' | '+r.descricao+' | '+r.und+' | '+r.marca+' | '+r.valor+' | '+(r.rtu==='sim'?'SIM RTU':r.rtu==='nao'?'NAO':'-')+' | '+r.dataCadastro+' |'+(isExp(r)?' REVISAR':'');}).join('\n'),exps=items.filter(function(r){return isExp(r);}),expB=exps.length?'\nITENS EXPIRADOS - revisar com a Diretora:\n'+exps.map(function(r){return '- '+r.descricao;}).join('\n')+'\n':'';var prompt='## BASE DE PRECOS - SELECTA Solution\nAtualizado: '+t+' - '+items.length+' itens - Fonte: comprasparaguai.com.br\n\nINSTRUCAO: Antes de qualquer busca externa, consulte a tabela abaixo.\nSe o produto estiver cadastrado, USE O PRECO REGISTRADO.\nSempre prefira fornecedores RTU SIM.\n\n| # | Descricao | Und | Marca | Valor | RTU | Data |\n|---|-----------|-----|-------|-------|-----|------|\n'+rows+'\n'+expB+'\nREGRAS:\n1. Produto na tabela -> use o valor, informe: Base SELECTA ('+t+')\n2. Item REVISAR -> avise que precisa confirmacao manual com a Diretora\n3. Produto nao cadastrado -> busque em comprasparaguai.com.br, priorize RTU\n4. Margem padrao: 20% sobre valor de compra\n5. Sempre informe a fonte e data\n\nATUALIZACAO: Todo dia 30\nFONTE: www.comprasparaguai.com.br';document.getElementById('prompt-content').textContent=prompt;toast('Prompt gerado!','ok');}
-function cpPrompt(){var t=document.getElementById('prompt-content').textContent;if(t.indexOf('Clique')>=0){toast('Gere o prompt primeiro','wa');return;}navigator.clipboard.writeText(t).then(function(){toast('Copiado!','ok');});}
-function zoomI(src){document.getElementById('mimg').src=src;document.getElementById('img-modal').classList.add('open');}
-var toastT;
-function toast(msg,type){type=type||'in';var t=document.getElementById('toast'),ic={ok:'OK',er:'X',in:'i',wa:'!'};t.innerHTML='<strong>'+(ic[type]||'i')+'</strong> '+msg;t.className='show '+type;clearTimeout(toastT);toastT=setTimeout(function(){t.className='';},3500);}
-function fmtValor(v){if(!v||v==='-')return'-';var s=String(v).trim();if(s.indexOf('R$')<0)s='R$ '+s;return s;}
-window.SELECTA={addItem:function(item){items.push({item:items.length+1,descricao:item.descricao||'',und:item.und||'UN',marca:item.marca||'-',valor:fmtValor(item.valor),valorNum:pV(item.valor),loja:item.loja||'-',foto:item.foto||'',dataCadastro:new Date().toLocaleDateString('pt-BR'),descTecnica:item.descTecnica||'',rtu:item.rtu||'',origem:'auto',status:'',ts:new Date().toISOString()});renderAll();syncSheet();},updateItem:function(desc,upds){var idx=items.findIndex(function(r){return r.descricao.toLowerCase().indexOf(desc.toLowerCase())>=0;});if(idx>=0){Object.assign(items[idx],upds,{ts:new Date().toISOString(),dataCadastro:new Date().toLocaleDateString('pt-BR'),status:''});renderAll();syncSheet();return true;}return false;},markExpired:function(desc){var idx=items.findIndex(function(r){return r.descricao.toLowerCase().indexOf(desc.toLowerCase())>=0;});if(idx>=0){items[idx].status='expired';renderAll();syncSheet();return true;}return false;},getItems:function(){return items;},getRTU:function(){return rtuBase;}};
-
-
-/* ============================================================ */
-/* ============== SISTEMA DE VENDAS ============================ */
-/* ============================================================ */
-(function(){
-'use strict';
-
-var DEFAULT_CATS = ['iPhone','iPad','MacBook','Apple Watch','AirPods','Acessorios Apple','Notebook','Smartphone','Audio','Eletronicos','Mobilidade','Perfumaria','Vestuario','Outros'];
-
-var DEFAULT_CFG = {
-  capital: 60000,
-  meta: 45000,
-  pctProv: 0.05,
-  custoViagem: 2000,
-  saldoInicial: 60000,
-  tolerancia: 5
-};
-
-var VEN = window.VEN = {
-  produtos: [], vendas: [], compras: [], saidas: [], dividas: [],
-  categorias: DEFAULT_CATS.slice(),
-  config: Object.assign({}, DEFAULT_CFG),
-  ui: { tab: 'painel', filterCat: '', editProdId: null, editDivId: null, _init: false, _viaSaida: null }
-};
-
-/* ============== UTILS ============== */
-function $(id){ return document.getElementById(id); }
-function fmtBR(n){ if(typeof n !== 'number' || isNaN(n)) n = 0; var neg = n<0; n = Math.abs(n); var s = n.toFixed(2).replace('.',','); s = s.replace(/\B(?=(\d{3})+(?!\d),)/g, '.'); return (neg ? '-R$ ' : 'R$ ') + s; }
-function parseBR(v){ if(!v && v!==0) return 0; if(typeof v === 'number') return v; v = String(v).replace(/[R$\s]/g,'').replace(/\./g,'').replace(',','.'); var n = parseFloat(v); return isNaN(n) ? 0 : n; }
-function fmtPct(n){ return (n*100).toFixed(1).replace('.',',') + '%'; }
-function fmtData(d){ if(!d) return '-'; if(d instanceof Date) d = d.toISOString().slice(0,10); if(/^\d{4}-\d{2}-\d{2}/.test(d)){ var p = d.slice(0,10).split('-'); return p[2]+'/'+p[1]+'/'+p[0]; } return d; }
-function todayBR(){ var d = new Date(); return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear(); }
-function parseDataBR(s){ if(!s) return null; if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10); var m = String(s).match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); if(!m) return null; var y = m[3].length === 2 ? '20'+m[3] : m[3]; return y+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2); }
-function uid(p){ return p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
-function mesAtual(){ var d = new Date(); return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2); }
-function mesDe(iso){ return iso ? iso.slice(0,7) : ''; }
-function maskMoney(el){ if(!el) return; el.addEventListener('input', function(){ var v = this.value.replace(/\D/g,''); if(!v){ this.value = ''; return; } this.value = (parseInt(v)/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }); }
-function maskInt(el){ if(!el) return; el.addEventListener('input', function(){ this.value = this.value.replace(/\D/g,''); }); }
-function maskData(el){ if(!el) return; el.addEventListener('input', function(){ var v = this.value.replace(/\D/g,'').slice(0,8); var out = v; if(v.length > 2) out = v.slice(0,2)+'/'+v.slice(2); if(v.length > 4) out = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4); this.value = out; }); }
-
-VEN.fmtBR = fmtBR; VEN.parseBR = parseBR;
-
-/* ============== STORAGE ============== */
-VEN.save = function(){
-  try {
-    localStorage.setItem('bp_vendas_produtos', JSON.stringify(VEN.produtos));
-    localStorage.setItem('bp_vendas_vendas', JSON.stringify(VEN.vendas));
-    localStorage.setItem('bp_vendas_compras', JSON.stringify(VEN.compras));
-    localStorage.setItem('bp_vendas_saidas', JSON.stringify(VEN.saidas));
-    localStorage.setItem('bp_vendas_dividas', JSON.stringify(VEN.dividas));
-    localStorage.setItem('bp_vendas_categorias', JSON.stringify(VEN.categorias));
-    localStorage.setItem('bp_vendas_config', JSON.stringify(VEN.config));
-  } catch(e){ console.error('Save error', e); }
-};
-VEN.load = function(){
-  try {
-    VEN.produtos = JSON.parse(localStorage.getItem('bp_vendas_produtos') || '[]');
-    VEN.vendas = JSON.parse(localStorage.getItem('bp_vendas_vendas') || '[]');
-    VEN.compras = JSON.parse(localStorage.getItem('bp_vendas_compras') || '[]');
-    VEN.saidas = JSON.parse(localStorage.getItem('bp_vendas_saidas') || '[]');
-    VEN.dividas = JSON.parse(localStorage.getItem('bp_vendas_dividas') || '[]');
-    var cats = localStorage.getItem('bp_vendas_categorias');
-    VEN.categorias = cats ? JSON.parse(cats) : DEFAULT_CATS.slice();
-    var cfg = localStorage.getItem('bp_vendas_config');
-    if(cfg) Object.assign(VEN.config, JSON.parse(cfg));
-  } catch(e){ console.error('Load error', e); }
-};
-
-/* ============== CALCULOS ============== */
-VEN.estoqueDe = function(prodId){
-  var entrada = 0, saida = 0;
-  for(var i=0; i<VEN.compras.length; i++) if(VEN.compras[i].produtoId === prodId) entrada += VEN.compras[i].qtd;
-  for(var i=0; i<VEN.vendas.length; i++) if(VEN.vendas[i].produtoId === prodId) saida += VEN.vendas[i].qtd;
-  return entrada - saida;
-};
-VEN.valorEstoque = function(){
-  var t = 0;
-  for(var i=0; i<VEN.produtos.length; i++){
-    var p = VEN.produtos[i]; var q = VEN.estoqueDe(p.id);
-    if(q > 0) t += q * (p.custoAtual || 0);
-  }
-  return t;
-};
-VEN.unidadesEstoque = function(){
-  var t = 0;
-  for(var i=0; i<VEN.produtos.length; i++){ var q = VEN.estoqueDe(VEN.produtos[i].id); if(q>0) t += q; }
-  return t;
-};
-VEN.saldoEsperado = function(ateTs){
-  var s = VEN.config.saldoInicial || 0;
-  var ts = ateTs || Number.MAX_SAFE_INTEGER;
-  for(var i=0; i<VEN.vendas.length; i++) if(VEN.vendas[i]._ts <= ts) s += VEN.vendas[i].total;
-  for(var i=0; i<VEN.compras.length; i++) if(VEN.compras[i]._ts <= ts) s -= VEN.compras[i].total;
-  for(var i=0; i<VEN.saidas.length; i++) if(VEN.saidas[i]._ts <= ts) s -= VEN.saidas[i].valor;
-  return s;
-};
-VEN.saldoAtual = function(){ return VEN.saldoEsperado(); };
-VEN.ultimoSaldoInformado = function(){
-  var all = [];
-  for(var i=0; i<VEN.vendas.length; i++) all.push(VEN.vendas[i]);
-  for(var i=0; i<VEN.compras.length; i++) all.push(VEN.compras[i]);
-  for(var i=0; i<VEN.saidas.length; i++) all.push(VEN.saidas[i]);
-  all.sort(function(a,b){ return b._ts - a._ts; });
-  for(var i=0; i<all.length; i++) if(typeof all[i].saldoConta === 'number') return all[i];
-  return null;
-};
-VEN.totalProvisao = function(){
-  var t = 0;
-  for(var i=0; i<VEN.vendas.length; i++) t += VEN.vendas[i].provisaoViagem || 0;
-  return t;
-};
-VEN.totalSaidasTipo = function(tipo, mes){
-  var t = 0;
-  for(var i=0; i<VEN.saidas.length; i++){
-    if(VEN.saidas[i].tipo === tipo && (!mes || mesDe(VEN.saidas[i].data) === mes)) t += VEN.saidas[i].valor;
-  }
-  return t;
-};
-VEN.provisaoDisponivel = function(){ return VEN.totalProvisao() - VEN.totalSaidasTipo('Viagem'); };
-VEN.totalMargem = function(mes){
-  var t = 0;
-  for(var i=0; i<VEN.vendas.length; i++){
-    if(!mes || mesDe(VEN.vendas[i].data) === mes) t += (VEN.vendas[i].margemBruta || 0);
-  }
-  return t;
-};
-VEN.totalCMV = function(mes){
-  var t = 0;
-  for(var i=0; i<VEN.vendas.length; i++){
-    if(!mes || mesDe(VEN.vendas[i].data) === mes) t += (VEN.vendas[i].cmv || 0);
-  }
-  return t;
-};
-VEN.totalVendas = function(mes){
-  var t = 0;
-  for(var i=0; i<VEN.vendas.length; i++){
-    if(!mes || mesDe(VEN.vendas[i].data) === mes) t += (VEN.vendas[i].total || 0);
-  }
-  return t;
-};
-VEN.lucroLiquidoMes = function(mes){
-  var t = 0;
-  for(var i=0; i<VEN.vendas.length; i++){
-    if(!mes || mesDe(VEN.vendas[i].data) === mes) t += ((VEN.vendas[i].margemBruta || 0) - (VEN.vendas[i].provisaoViagem || 0));
-  }
-  return t;
-};
-VEN.excedenteAcumulado = function(){
-  var lucro = VEN.lucroLiquidoMes();
-  var retiradas = VEN.totalSaidasTipo('Retirada');
-  var amort = VEN.totalSaidasTipo('Amortizacao');
-  var outros = VEN.totalSaidasTipo('Outros');
-  return lucro - retiradas - amort - outros;
-};
-VEN.totalAtivos = function(){ return VEN.saldoAtual() + VEN.valorEstoque(); };
-VEN.saudeCapital = function(){
-  var ta = VEN.totalAtivos();
-  var cap = VEN.config.capital;
-  return { total: ta, min: cap, diff: ta - cap, pct: cap > 0 ? ta/cap : 0 };
-};
-VEN.custoMedioAtualizado = function(prodId, qtdNova, precoNovo){
-  var p = VEN.produtos.find(function(x){ return x.id === prodId; });
-  if(!p) return precoNovo;
-  var qAtual = VEN.estoqueDe(prodId);
-  if(qAtual <= 0) return precoNovo;
-  return (qAtual * p.custoAtual + qtdNova * precoNovo) / (qAtual + qtdNova);
-};
-VEN.totalDivida = function(){
-  var t = 0;
-  for(var i=0; i<VEN.dividas.length; i++) if(VEN.dividas[i].ativo !== false) t += VEN.dividas[i].saldoAtual || 0;
-  return t;
-};
-VEN.totalJurosMensal = function(){
-  var t = 0;
-  for(var i=0; i<VEN.dividas.length; i++){
-    var d = VEN.dividas[i]; if(d.ativo === false) continue;
-    t += (d.saldoAtual || 0) * (d.taxaJurosMensal || 0);
-  }
-  return t;
-};
-VEN.diasParado = function(prodId){
-  var ult = null;
-  for(var i=0; i<VEN.vendas.length; i++){
-    if(VEN.vendas[i].produtoId === prodId){
-      var t = VEN.vendas[i]._ts;
-      if(!ult || t > ult) ult = t;
-    }
-  }
-  if(!ult){
-    for(var i=0; i<VEN.compras.length; i++){
-      if(VEN.compras[i].produtoId === prodId){
-        var t = VEN.compras[i]._ts;
-        if(!ult || t > ult) ult = t;
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: { 50: '#ecfdf5', 500: '#10b981', 600: '#059669', 700: '#047857', 900: '#064e3b' },
+        }
       }
     }
   }
-  if(!ult) return 0;
-  return Math.floor((Date.now() - ult) / 86400000);
+</script>
+
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+  .hidden-section { display: none; }
+  /* Scrollbar customizada */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #1f2937; }
+  ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+  /* Animação leve em hover */
+  .product-row { transition: background-color 0.1s ease; }
+  /* Loader */
+  .loader { border: 3px solid #1f2937; border-top: 3px solid #10b981; border-radius: 50%; width: 30px; height: 30px; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+
+<!-- ============================================================ -->
+<!-- TELA DE LOGIN                                                  -->
+<!-- ============================================================ -->
+<div id="login-screen" class="min-h-screen flex items-center justify-center px-4">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-primary-500 mb-2">SELECTA</h1>
+      <p class="text-gray-400 text-sm">Banco de Preço · Solution</p>
+    </div>
+
+    <div class="bg-gray-800 rounded-lg p-6 shadow-xl border border-gray-700">
+      <h2 class="text-lg font-semibold mb-4 text-gray-200">Acesso</h2>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+          <input id="login-email" type="email" autocomplete="email"
+                 class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                 placeholder="seu@email.com">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Senha</label>
+          <input id="login-password" type="password" autocomplete="current-password"
+                 class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                 placeholder="••••••••">
+        </div>
+
+        <button id="login-btn"
+                class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 rounded-md transition-colors">
+          Entrar
+        </button>
+
+        <div id="login-error" class="hidden text-sm text-red-400 bg-red-900/30 border border-red-800 rounded-md p-3"></div>
+      </div>
+    </div>
+
+    <p class="text-center text-xs text-gray-500 mt-6">Selecta Solution · 2026</p>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- APLICAÇÃO PRINCIPAL (escondida até logar)                     -->
+<!-- ============================================================ -->
+<div id="app" class="hidden-section">
+
+  <!-- Header -->
+  <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-10">
+    <div class="max-w-screen-2xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-6">
+        <h1 class="text-xl font-bold text-primary-500">SELECTA</h1>
+        
+        <!-- Tabs -->
+        <nav class="flex gap-1">
+          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="catalogo">
+            Catálogo
+          </button>
+          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="simulador">
+            Simulador PC
+          </button>
+        </nav>
+      </div>
+
+      <div class="flex items-center gap-3 text-sm">
+        <span id="user-email" class="text-gray-400"></span>
+        <button id="logout-btn" class="text-gray-400 hover:text-white transition-colors">Sair</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================== -->
+  <!-- TAB: CATÁLOGO                                                 -->
+  <!-- =========================================================== -->
+  <section id="tab-catalogo" class="max-w-screen-2xl mx-auto px-4 py-6">
+    
+    <!-- Filtros + Busca -->
+    <div class="bg-gray-800 rounded-lg p-4 mb-4 border border-gray-700">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+        
+        <div class="md:col-span-2">
+          <label class="block text-xs font-medium text-gray-400 mb-1">Buscar</label>
+          <input id="filter-search" type="search" placeholder="Marca, modelo, descrição, código SLC..."
+                 class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Prefixo</label>
+          <select id="filter-prefixo" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
+            <option value="">Todos</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Marca</label>
+          <select id="filter-marca" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
+            <option value="">Todas</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Fornecedor</label>
+          <select id="filter-fornecedor" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
+            <option value="">Todos</option>
+            <option value="Atacado">Atacado</option>
+            <option value="Visão">Visão</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-700">
+        <span id="catalog-info" class="text-sm text-gray-400">—</span>
+        <button id="clear-filters" class="text-xs text-primary-500 hover:text-primary-400">Limpar filtros</button>
+      </div>
+    </div>
+
+    <!-- Lista de Produtos -->
+    <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+      <div id="catalog-loader" class="hidden-section py-12 flex justify-center"><div class="loader"></div></div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-900 text-xs uppercase text-gray-400 sticky top-0">
+            <tr>
+              <th class="px-3 py-2.5 text-left font-medium">Código</th>
+              <th class="px-3 py-2.5 text-left font-medium">Prefixo</th>
+              <th class="px-3 py-2.5 text-left font-medium">Marca</th>
+              <th class="px-3 py-2.5 text-left font-medium">Descrição</th>
+              <th class="px-3 py-2.5 text-right font-medium">USD</th>
+              <th class="px-3 py-2.5 text-right font-medium">BRL</th>
+              <th class="px-3 py-2.5 text-center font-medium">Fornecedores</th>
+            </tr>
+          </thead>
+          <tbody id="catalog-tbody" class="divide-y divide-gray-700"></tbody>
+        </table>
+      </div>
+
+      <!-- Paginação -->
+      <div class="flex items-center justify-between px-4 py-3 bg-gray-900 border-t border-gray-700">
+        <button id="page-prev" class="px-3 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 rounded-md disabled:opacity-40 disabled:cursor-not-allowed">
+          ← Anterior
+        </button>
+        <span id="page-info" class="text-sm text-gray-400">—</span>
+        <button id="page-next" class="px-3 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 rounded-md disabled:opacity-40 disabled:cursor-not-allowed">
+          Próximo →
+        </button>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- =========================================================== -->
+  <!-- TAB: SIMULADOR PC                                             -->
+  <!-- =========================================================== -->
+  <section id="tab-simulador" class="hidden-section">
+    <iframe src="montador.html" class="w-full" style="height: calc(100vh - 64px); border: 0;"></iframe>
+  </section>
+
+</div>
+
+
+<!-- ============================================================ -->
+<!-- MODAL: DETALHE DO PRODUTO                                      -->
+<!-- ============================================================ -->
+<div id="modal-product" class="hidden-section fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto">
+  <div class="bg-gray-800 rounded-lg border border-gray-700 max-w-4xl w-full my-8 shadow-2xl">
+    
+    <header class="flex items-start justify-between px-6 py-4 border-b border-gray-700">
+      <div class="flex-1 pr-4">
+        <div class="flex items-center gap-2 text-xs text-gray-400 mb-1">
+          <span id="modal-codigo" class="font-mono font-medium text-primary-500"></span>
+          <span>·</span>
+          <span id="modal-prefixo"></span>
+          <span>·</span>
+          <span id="modal-categoria"></span>
+        </div>
+        <h2 id="modal-marca" class="text-lg font-semibold text-gray-100"></h2>
+        <p id="modal-descricao" class="text-sm text-gray-300 mt-1"></p>
+      </div>
+      <button id="modal-close" class="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+    </header>
+
+    <div class="px-6 py-4 space-y-4">
+      
+      <!-- Atributos técnicos -->
+      <div>
+        <h3 class="text-xs font-medium text-gray-400 uppercase mb-2">Atributos técnicos</h3>
+        <div id="modal-atributos" class="text-sm text-gray-200 bg-gray-900 rounded-md p-3 border border-gray-700"></div>
+      </div>
+
+      <!-- Tags -->
+      <div id="modal-tags-wrapper" class="hidden-section">
+        <h3 class="text-xs font-medium text-gray-400 uppercase mb-2">Tags</h3>
+        <div id="modal-tags" class="flex flex-wrap gap-1.5"></div>
+      </div>
+
+      <!-- Ofertas -->
+      <div>
+        <h3 class="text-xs font-medium text-gray-400 uppercase mb-2">Ofertas dos fornecedores</h3>
+        <div class="bg-gray-900 rounded-md border border-gray-700 overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-800 text-xs uppercase text-gray-400">
+              <tr>
+                <th class="px-3 py-2 text-left font-medium">Fornecedor</th>
+                <th class="px-3 py-2 text-left font-medium">SKU</th>
+                <th class="px-3 py-2 text-right font-medium">USD</th>
+                <th class="px-3 py-2 text-right font-medium">BRL</th>
+                <th class="px-3 py-2 text-left font-medium">Condição</th>
+                <th class="px-3 py-2 text-left font-medium">Garantia</th>
+                <th class="px-3 py-2 text-center font-medium">Disp.</th>
+              </tr>
+            </thead>
+            <tbody id="modal-ofertas-tbody" class="divide-y divide-gray-700"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Desc original do fornecedor -->
+      <div>
+        <h3 class="text-xs font-medium text-gray-400 uppercase mb-2">Descrições originais (PDF do fornecedor)</h3>
+        <div id="modal-desc-originais" class="text-xs text-gray-400 space-y-1.5 font-mono"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- JAVASCRIPT                                                     -->
+<!-- ============================================================ -->
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// =====================================================================
+// CONFIGURAÇÃO
+// =====================================================================
+const CONFIG = {
+  SUPABASE_URL: 'https://odamfhflldygdfrnnjzu.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_7q_884vzxsdTLOIw7ZMx7A_qiUuUc-n',
+  PER_PAGE: 50,
 };
-VEN.velocidadeVenda = function(prodId){
-  var vds = VEN.vendas.filter(function(v){ return v.produtoId === prodId; });
-  if(vds.length === 0) return null;
-  vds.sort(function(a,b){ return a._ts - b._ts; });
-  var primeira = vds[0]._ts;
-  var ultima = vds[vds.length-1]._ts;
-  var diasIntervalo = Math.max(1, Math.floor((ultima - primeira) / 86400000));
-  var qtdTotal = vds.reduce(function(s,v){ return s + v.qtd; }, 0);
-  return diasIntervalo / qtdTotal;
+
+const sb = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+// =====================================================================
+// ESTADO
+// =====================================================================
+const state = {
+  user: null,
+  page: 0,
+  total: 0,
+  filters: { search: '', prefixo: '', marca: '', fornecedor: '' },
 };
 
+// =====================================================================
+// HELPERS DE UI
+// =====================================================================
+const $ = sel => document.querySelector(sel);
+const $$ = sel => document.querySelectorAll(sel);
 
+function show(el) { 
+  if (typeof el === 'string') el = $(el); 
+  el.classList.remove('hidden-section'); 
+}
 
+function hide(el) { 
+  if (typeof el === 'string') el = $(el); 
+  el.classList.add('hidden-section'); 
+}
 
-/* ============== CRUD PRODUTOS ============== */
-VEN.openModalProd = function(prodId){
-  VEN.ui.editProdId = prodId || null;
-  var cat = $('ven-mp-cat'); cat.innerHTML = '';
-  for(var i=0; i<VEN.categorias.length; i++){ var o = document.createElement('option'); o.value = VEN.categorias[i]; o.textContent = VEN.categorias[i]; cat.appendChild(o); }
-  if(prodId){
-    var p = VEN.produtos.find(function(x){ return x.id === prodId; });
-    if(p){
-      $('ven-mp-tit').textContent = 'Editar produto';
-      $('ven-mp-cat').value = p.categoria;
-      $('ven-mp-mod').value = p.modelo;
-      $('ven-mp-pc').value = p.custoAtual.toFixed(2).replace('.',',');
-      $('ven-mp-pv').value = (p.precoVendaAlvo||0).toFixed(2).replace('.',',');
-      $('ven-mp-pm').value = (p.precoVendaMin||0).toFixed(2).replace('.',',');
-      $('ven-mp-em').value = p.estoqueMin || 0;
-      $('ven-mp-foto').value = p.foto || '';
-      $('ven-mp-obs').value = p.obs || '';
-    }
-  } else {
-    $('ven-mp-tit').textContent = 'Novo produto';
-    $('ven-mp-mod').value = ''; $('ven-mp-pc').value = ''; $('ven-mp-pv').value = '';
-    $('ven-mp-pm').value = ''; $('ven-mp-em').value = ''; $('ven-mp-foto').value = ''; $('ven-mp-obs').value = '';
+function fmtBRL(v) {
+  if (v == null) return '—';
+  return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtUSD(v) {
+  if (v == null) return '—';
+  return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// =====================================================================
+// AUTH
+// =====================================================================
+async function tryLogin() {
+  const email = $('#login-email').value.trim();
+  const password = $('#login-password').value;
+  hide('#login-error');
+
+  if (!email || !password) {
+    showLoginError('Preencha email e senha.');
+    return;
   }
-  VEN.atualizaMargemProd();
-  $('ven-modal-prod').classList.add('open');
-};
-VEN.atualizaMargemProd = function(){
-  var pc = parseBR($('ven-mp-pc').value);
-  var pv = parseBR($('ven-mp-pv').value);
-  var m = pv - pc;
-  var p = pc > 0 ? (m/pc) : 0;
-  $('ven-mp-margem').textContent = 'Margem unitaria: ' + fmtBR(m) + ' (' + fmtPct(p) + ')';
-};
-VEN.saveProd = function(){
-  var modelo = $('ven-mp-mod').value.trim();
-  var custo = parseBR($('ven-mp-pc').value);
-  var pv = parseBR($('ven-mp-pv').value);
-  if(!modelo){ toast('Modelo obrigatorio','er'); return; }
-  if(!custo){ toast('Preco de compra obrigatorio','er'); return; }
-  if(!pv){ toast('Preco de venda obrigatorio','er'); return; }
-  if(pv < custo){ if(!confirm('Preco de venda menor que custo. Salvar mesmo assim?')) return; }
-  var dados = {
-    categoria: $('ven-mp-cat').value,
-    modelo: modelo,
-    custoAtual: custo,
-    precoVendaAlvo: pv,
-    precoVendaMin: parseBR($('ven-mp-pm').value) || custo * 1.1,
-    estoqueMin: parseInt($('ven-mp-em').value) || 0,
-    foto: $('ven-mp-foto').value.trim(),
-    obs: $('ven-mp-obs').value.trim(),
-    ativo: true
+
+  const btn = $('#login-btn');
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  
+  btn.disabled = false;
+  btn.textContent = 'Entrar';
+
+  if (error) {
+    showLoginError(error.message === 'Invalid login credentials' 
+      ? 'Email ou senha incorretos.' 
+      : error.message);
+    return;
+  }
+
+  state.user = data.user;
+  enterApp();
+}
+
+function showLoginError(msg) {
+  const el = $('#login-error');
+  el.textContent = msg;
+  show(el);
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  state.user = null;
+  hide('#app');
+  show('#login-screen');
+  $('#login-password').value = '';
+}
+
+async function checkSession() {
+  const { data } = await sb.auth.getSession();
+  if (data.session) {
+    state.user = data.session.user;
+    enterApp();
+  }
+}
+
+function enterApp() {
+  hide('#login-screen');
+  show('#app');
+  $('#user-email').textContent = state.user.email;
+  switchTab('catalogo');
+  loadFilters();
+  loadCatalog();
+}
+
+// =====================================================================
+// FILTROS
+// =====================================================================
+async function loadFilters() {
+  // Distinct prefixos
+  const { data: prefixosData } = await sb
+    .from('produtos')
+    .select('prefixo')
+    .order('prefixo');
+  
+  if (prefixosData) {
+    const prefixos = [...new Set(prefixosData.map(r => r.prefixo))].sort();
+    const sel = $('#filter-prefixo');
+    sel.innerHTML = '<option value="">Todos</option>' + 
+      prefixos.map(p => `<option value="${p}">${p}</option>`).join('');
+  }
+
+  // Distinct marcas (top 50 com mais produtos pra não inflar o dropdown)
+  const { data: marcasData } = await sb
+    .from('produtos')
+    .select('marca')
+    .not('marca', 'is', null)
+    .order('marca');
+  
+  if (marcasData) {
+    const marcasCounts = {};
+    marcasData.forEach(r => { if (r.marca) marcasCounts[r.marca] = (marcasCounts[r.marca] || 0) + 1; });
+    const marcasTop = Object.entries(marcasCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([m]) => m);
+    
+    const sel = $('#filter-marca');
+    sel.innerHTML = '<option value="">Todas</option>' + 
+      marcasTop.map(m => `<option value="${m}">${m}</option>`).join('');
+  }
+}
+
+// =====================================================================
+// CATÁLOGO
+// =====================================================================
+async function loadCatalog() {
+  show('#catalog-loader');
+  
+  const start = state.page * CONFIG.PER_PAGE;
+  const end = start + CONFIG.PER_PAGE - 1;
+
+  let q = sb
+    .from('produtos_com_ofertas')
+    .select('*', { count: 'exact' })
+    .range(start, end);
+
+  // Filtros
+  if (state.filters.prefixo) {
+    q = q.eq('prefixo', state.filters.prefixo);
+  }
+  if (state.filters.marca) {
+    q = q.eq('marca', state.filters.marca);
+  }
+  if (state.filters.fornecedor) {
+    q = q.contains('fornecedores_disponiveis', [state.filters.fornecedor]);
+  }
+  if (state.filters.search) {
+    const s = state.filters.search.trim();
+    // Busca em código SLC ou descrição ou marca
+    q = q.or(`codigo_slc.ilike.%${s}%,descricao.ilike.%${s}%,marca.ilike.%${s}%`);
+  }
+
+  q = q.order('codigo_slc');
+
+  const { data, count, error } = await q;
+  
+  hide('#catalog-loader');
+  
+  if (error) {
+    console.error('Erro ao carregar catálogo:', error);
+    $('#catalog-tbody').innerHTML = `<tr><td colspan="7" class="px-3 py-6 text-center text-red-400">Erro: ${error.message}</td></tr>`;
+    return;
+  }
+
+  state.total = count || 0;
+  renderCatalog(data || []);
+}
+
+function renderCatalog(items) {
+  const tbody = $('#catalog-tbody');
+  
+  if (items.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="px-3 py-8 text-center text-gray-500">Nenhum produto encontrado com esses filtros.</td></tr>`;
+  } else {
+    tbody.innerHTML = items.map(p => `
+      <tr class="product-row hover:bg-gray-700/50 cursor-pointer" data-id="${p.id}">
+        <td class="px-3 py-2 font-mono text-xs text-primary-500">${p.codigo_slc}</td>
+        <td class="px-3 py-2"><span class="bg-gray-700 text-xs px-1.5 py-0.5 rounded">${p.prefixo}</span></td>
+        <td class="px-3 py-2 font-medium">${p.marca || '—'}</td>
+        <td class="px-3 py-2 text-gray-300 max-w-xl truncate" title="${(p.descricao || '').replace(/"/g, '&quot;')}">${p.descricao || '—'}</td>
+        <td class="px-3 py-2 text-right font-mono text-sm">$ ${fmtUSD(p.menor_usd)}</td>
+        <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(p.menor_brl)}</td>
+        <td class="px-3 py-2 text-center text-xs text-gray-400">${(p.fornecedores_disponiveis || []).join(' + ') || '—'}</td>
+      </tr>
+    `).join('');
+    
+    // Click handler
+    $$('#catalog-tbody tr[data-id]').forEach(tr => {
+      tr.addEventListener('click', () => openProductDetail(tr.dataset.id));
+    });
+  }
+
+  // Info + paginação
+  const from = items.length > 0 ? state.page * CONFIG.PER_PAGE + 1 : 0;
+  const to = state.page * CONFIG.PER_PAGE + items.length;
+  $('#catalog-info').textContent = `${state.total.toLocaleString('pt-BR')} produto(s) encontrado(s)`;
+  $('#page-info').textContent = `${from}–${to} de ${state.total.toLocaleString('pt-BR')}`;
+  $('#page-prev').disabled = state.page === 0;
+  $('#page-next').disabled = (state.page + 1) * CONFIG.PER_PAGE >= state.total;
+}
+
+function applyFilters() {
+  state.filters.search = $('#filter-search').value;
+  state.filters.prefixo = $('#filter-prefixo').value;
+  state.filters.marca = $('#filter-marca').value;
+  state.filters.fornecedor = $('#filter-fornecedor').value;
+  state.page = 0;
+  loadCatalog();
+}
+
+function clearFilters() {
+  $('#filter-search').value = '';
+  $('#filter-prefixo').value = '';
+  $('#filter-marca').value = '';
+  $('#filter-fornecedor').value = '';
+  applyFilters();
+}
+
+// =====================================================================
+// DETALHE DO PRODUTO (MODAL)
+// =====================================================================
+async function openProductDetail(produtoId) {
+  // Busca produto + ofertas (com fornecedor)
+  const { data: produto } = await sb
+    .from('produtos')
+    .select('*')
+    .eq('id', produtoId)
+    .single();
+  
+  if (!produto) return;
+
+  const { data: ofertas } = await sb
+    .from('ofertas')
+    .select(`
+      *,
+      fornecedores ( nome_curto, nome )
+    `)
+    .eq('produto_id', produtoId)
+    .order('preco_usd');
+
+  $('#modal-codigo').textContent = produto.codigo_slc;
+  $('#modal-prefixo').textContent = produto.prefixo;
+  $('#modal-categoria').textContent = produto.categoria || '';
+  $('#modal-marca').textContent = produto.marca || '—';
+  $('#modal-descricao').textContent = produto.descricao || '';
+  $('#modal-atributos').textContent = produto.atributos_tecnicos || '(Sem atributos cadastrados)';
+
+  // Tags
+  if (produto.tags && produto.tags.length > 0) {
+    $('#modal-tags').innerHTML = produto.tags.map(t => 
+      `<span class="bg-primary-900 text-primary-300 text-xs px-2 py-1 rounded">${t}</span>`
+    ).join('');
+    show('#modal-tags-wrapper');
+  } else {
+    hide('#modal-tags-wrapper');
+  }
+
+  // Ofertas
+  const condicoesPT = {
+    'novo': 'Novo',
+    'novo_oem': 'Novo OEM',
+    'recondicionado': 'Recondicionado',
+    'usado': 'Usado',
+    'swap': 'Swap',
   };
-  if(VEN.ui.editProdId){
-    var p = VEN.produtos.find(function(x){ return x.id === VEN.ui.editProdId; });
-    Object.assign(p, dados);
-    p._ts = Date.now();
-    toast('Produto atualizado!','ok');
-  } else {
-    dados.id = uid('p');
-    dados._ts = Date.now();
-    dados.criadoEm = new Date().toISOString();
-    VEN.produtos.push(dados);
-    toast('Produto cadastrado!','ok');
-  }
-  VEN.save(); VEN.closeModal('prod'); VEN.render();
-};
-VEN.deleteProd = function(prodId){
-  var p = VEN.produtos.find(function(x){ return x.id === prodId; });
-  if(!p) return;
-  var qtd = VEN.estoqueDe(prodId);
-  var temMov = VEN.compras.some(function(c){ return c.produtoId === prodId; }) || VEN.vendas.some(function(v){ return v.produtoId === prodId; });
-  if(temMov){
-    if(!confirm('Esse produto tem movimentacoes registradas. Remover so vai DESATIVAR. Continuar?')) return;
-    p.ativo = false;
-    toast('Produto desativado','in');
-  } else {
-    if(!confirm('Remover produto "' + p.modelo + '"?')) return;
-    VEN.produtos = VEN.produtos.filter(function(x){ return x.id !== prodId; });
-    toast('Produto removido','in');
-  }
-  VEN.save(); VEN.render();
-};
-
-/* ============== CRUD CATEGORIAS ============== */
-VEN.openModalCat = function(){
-  $('ven-mcat-n').value = '';
-  VEN.renderCatList();
-  $('ven-modal-cat').classList.add('open');
-};
-VEN.renderCatList = function(){
-  var el = $('ven-mcat-list'); el.innerHTML = '';
-  VEN.categorias.forEach(function(c, i){
-    var usado = VEN.produtos.some(function(p){ return p.categoria === c; });
-    var row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:0.5px solid var(--bd);font-size:13px';
-    row.innerHTML = '<span>' + c + (usado ? ' <span style="font-size:10px;color:var(--tx3)">(em uso)</span>' : '') + '</span>' + (usado ? '<span style="font-size:11px;color:var(--tx3)">protegida</span>' : '<button class="btn br sm" onclick="VEN.removeCat(\''+c+'\')">X</button>');
-    el.appendChild(row);
-  });
-};
-VEN.addCat = function(){
-  var n = $('ven-mcat-n').value.trim();
-  if(!n){ toast('Nome obrigatorio','er'); return; }
-  if(VEN.categorias.indexOf(n) >= 0){ toast('Ja existe','wa'); return; }
-  VEN.categorias.push(n);
-  VEN.save();
-  $('ven-mcat-n').value = '';
-  VEN.renderCatList();
-  toast('Categoria adicionada','ok');
-};
-VEN.removeCat = function(nome){
-  var usado = VEN.produtos.some(function(p){ return p.categoria === nome; });
-  if(usado){ toast('Categoria em uso por produtos','er'); return; }
-  if(!confirm('Remover categoria "' + nome + '"?')) return;
-  VEN.categorias = VEN.categorias.filter(function(c){ return c !== nome; });
-  VEN.save(); VEN.renderCatList(); toast('Removida','in');
-};
-
-/* ============== CRUD VENDAS ============== */
-VEN.openModalVenda = function(){
-  $('ven-mv-data').value = todayBR();
-  $('ven-mv-qtd').value = '1';
-  $('ven-mv-pv').value = ''; $('ven-mv-tot').value = '';
-  $('ven-mv-canal').value = 'Instagram';
-  $('ven-mv-pgt').value = 'PIX';
-  $('ven-mv-cli').value = ''; $('ven-mv-obs').value = '';
-  $('ven-mv-saldo').value = '';
-  var sel = $('ven-mv-prod'); sel.innerHTML = '<option value="">-- Escolher produto --</option>';
-  VEN.produtos.forEach(function(p){
-    if(p.ativo === false) return;
-    var q = VEN.estoqueDe(p.id);
-    if(q <= 0) return;
-    var o = document.createElement('option'); o.value = p.id;
-    o.textContent = p.modelo + ' (estoque: ' + q + ')';
-    sel.appendChild(o);
-  });
-  VEN.atualizaVendaCalc();
-  $('ven-mv-esp').textContent = fmtBR(VEN.saldoAtual());
-  $('ven-modal-venda').classList.add('open');
-};
-VEN.atualizaVendaCalc = function(){
-  var prodId = $('ven-mv-prod').value;
-  var qtd = parseInt($('ven-mv-qtd').value) || 0;
-  var pv = parseBR($('ven-mv-pv').value);
-  var total = qtd * pv;
-  $('ven-mv-tot').value = total.toFixed(2).replace('.',',');
-  if(prodId){
-    var p = VEN.produtos.find(function(x){ return x.id === prodId; });
-    if(p){
-      var cmv = qtd * p.custoAtual;
-      var margem = total - cmv;
-      var prov = cmv * VEN.config.pctProv;
-      var lucro = margem - prov;
-      $('ven-mv-calc').innerHTML = 'Margem: <b>' + fmtBR(margem) + '</b> | Provisao viagem (' + (VEN.config.pctProv*100).toFixed(1).replace('.',',') + '%): <b>' + fmtBR(prov) + '</b> | Lucro liquido: <b style="color:var(--g)">' + fmtBR(lucro) + '</b>';
-      $('ven-mv-esp').textContent = fmtBR(VEN.saldoAtual() + total);
-    }
-  } else {
-    $('ven-mv-calc').textContent = 'Selecione um produto.';
-  }
-};
-VEN.saveVenda = function(){
-  var prodId = $('ven-mv-prod').value;
-  if(!prodId){ toast('Selecione um produto','er'); return; }
-  var qtd = parseInt($('ven-mv-qtd').value) || 0;
-  if(qtd <= 0){ toast('Quantidade invalida','er'); return; }
-  var pv = parseBR($('ven-mv-pv').value);
-  if(pv <= 0){ toast('Preco de venda invalido','er'); return; }
-  var p = VEN.produtos.find(function(x){ return x.id === prodId; });
-  if(!p){ toast('Produto nao encontrado','er'); return; }
-  var estoque = VEN.estoqueDe(prodId);
-  if(qtd > estoque){
-    if(!confirm('Estoque atual: ' + estoque + '. Voce esta vendendo ' + qtd + '. Continuar?')) return;
-  }
-  var dataBR = $('ven-mv-data').value.trim() || todayBR();
-  var dataISO = parseDataBR(dataBR);
-  if(!dataISO){ toast('Data invalida','er'); return; }
-  var saldoInf = $('ven-mv-saldo').value.trim();
-  if(saldoInf === ''){ toast('Saldo da conta obrigatorio','er'); return; }
-  var saldoNum = parseBR(saldoInf);
-
-  var total = qtd * pv;
-  var cmv = qtd * p.custoAtual;
-  var margem = total - cmv;
-  var prov = cmv * VEN.config.pctProv;
-  var lucro = margem - prov;
-  var saldoEsp = VEN.saldoAtual() + total;
-  var divg = saldoNum - saldoEsp;
-
-  var v = {
-    id: uid('v'), _ts: Date.now(),
-    data: dataISO, produtoId: prodId, qtd: qtd,
-    precoVenda: pv, total: total,
-    custoUnit: p.custoAtual, cmv: cmv,
-    margemBruta: margem, provisaoViagem: prov, lucro: lucro,
-    canal: $('ven-mv-canal').value, formaPgto: $('ven-mv-pgt').value,
-    cliente: $('ven-mv-cli').value.trim(), obs: $('ven-mv-obs').value.trim(),
-    saldoConta: saldoNum, saldoEsperado: saldoEsp, divergencia: divg
+  const garantiasPT = {
+    'br': 'BR',
+    'py': 'PY',
+    'fabricante': 'Fabricante',
+    'sem_garantia': 'Sem garantia',
+    'nao_declarada': '—',
   };
-  VEN.vendas.push(v);
-  VEN.save();
-  VEN.closeModal('venda');
-  VEN.render();
-  if(Math.abs(divg) > VEN.config.tolerancia){
-    toast('Venda registrada com divergencia de ' + fmtBR(divg) + ' (registrada)','wa');
-  } else {
-    toast('Venda registrada!','ok');
-  }
-};
-VEN.deleteVenda = function(id){
-  if(!confirm('Remover essa venda? O estoque vai voltar.')) return;
-  VEN.vendas = VEN.vendas.filter(function(v){ return v.id !== id; });
-  VEN.save(); VEN.render(); toast('Venda removida','in');
-};
 
-/* ============== CRUD COMPRAS ============== */
-VEN.openModalCompra = function(){
-  $('ven-mc-data').value = todayBR();
-  var ultViagem = 0;
-  VEN.compras.forEach(function(c){ if(c.viagem > ultViagem) ultViagem = c.viagem; });
-  $('ven-mc-via').value = ultViagem + 1;
-  $('ven-mc-qtd').value = ''; $('ven-mc-cu').value = ''; $('ven-mc-tot').value = '';
-  $('ven-mc-obs').value = ''; $('ven-mc-saldo').value = '';
-  var sel = $('ven-mc-prod'); sel.innerHTML = '<option value="">-- Escolher produto --</option>';
-  VEN.produtos.forEach(function(p){
-    if(p.ativo === false) return;
-    var o = document.createElement('option'); o.value = p.id;
-    o.textContent = p.modelo + ' (custo atual: ' + fmtBR(p.custoAtual) + ')';
-    sel.appendChild(o);
-  });
-  VEN.atualizaCompraCalc();
-  $('ven-mc-esp').textContent = fmtBR(VEN.saldoAtual());
-  $('ven-modal-compra').classList.add('open');
-};
-VEN.atualizaCompraCalc = function(){
-  var prodId = $('ven-mc-prod').value;
-  var qtd = parseInt($('ven-mc-qtd').value) || 0;
-  var cu = parseBR($('ven-mc-cu').value);
-  var total = qtd * cu;
-  $('ven-mc-tot').value = total.toFixed(2).replace('.',',');
-  if(prodId && qtd > 0 && cu > 0){
-    var p = VEN.produtos.find(function(x){ return x.id === prodId; });
-    if(p){
-      var novoMedio = VEN.custoMedioAtualizado(prodId, qtd, cu);
-      $('ven-mc-medio').textContent = 'Novo custo medio do produto: ' + fmtBR(novoMedio) + ' (era ' + fmtBR(p.custoAtual) + ')';
+  $('#modal-ofertas-tbody').innerHTML = (ofertas || []).map(o => `
+    <tr>
+      <td class="px-3 py-2 font-medium">${o.fornecedores.nome_curto}</td>
+      <td class="px-3 py-2 font-mono text-xs text-gray-400">${o.sku_fornecedor}</td>
+      <td class="px-3 py-2 text-right font-mono">$ ${fmtUSD(o.preco_usd)}</td>
+      <td class="px-3 py-2 text-right font-mono">R$ ${fmtBRL(o.preco_brl)}</td>
+      <td class="px-3 py-2 text-xs">${condicoesPT[o.condicao] || o.condicao}</td>
+      <td class="px-3 py-2 text-xs">${garantiasPT[o.garantia] || o.garantia}</td>
+      <td class="px-3 py-2 text-center">${o.disponivel ? '✓' : '✗'}</td>
+    </tr>
+  `).join('');
+
+  // Descrições originais
+  $('#modal-desc-originais').innerHTML = (ofertas || []).map(o => 
+    `<div><span class="text-primary-500">[${o.fornecedores.nome_curto}]</span> ${o.desc_original || '(sem descrição original)'}</div>`
+  ).join('');
+
+  show('#modal-product');
+}
+
+function closeModal() {
+  hide('#modal-product');
+}
+
+// =====================================================================
+// TABS
+// =====================================================================
+function switchTab(tabName) {
+  $$('.tab-btn').forEach(btn => {
+    if (btn.dataset.tab === tabName) {
+      btn.classList.add('bg-primary-600', 'text-white');
+      btn.classList.remove('text-gray-400', 'hover:bg-gray-700');
+    } else {
+      btn.classList.remove('bg-primary-600', 'text-white');
+      btn.classList.add('text-gray-400', 'hover:bg-gray-700');
     }
-  } else {
-    $('ven-mc-medio').textContent = 'Novo custo medio: --';
-  }
-  $('ven-mc-esp').textContent = fmtBR(VEN.saldoAtual() - total);
-};
-VEN.saveCompra = function(){
-  var prodId = $('ven-mc-prod').value;
-  if(!prodId){ toast('Selecione um produto','er'); return; }
-  var qtd = parseInt($('ven-mc-qtd').value) || 0;
-  if(qtd <= 0){ toast('Quantidade invalida','er'); return; }
-  var cu = parseBR($('ven-mc-cu').value);
-  if(cu <= 0){ toast('Custo unitario invalido','er'); return; }
-  var viagem = parseInt($('ven-mc-via').value) || 0;
-  if(viagem <= 0){ toast('Numero da viagem invalido','er'); return; }
-  var dataBR = $('ven-mc-data').value.trim() || todayBR();
-  var dataISO = parseDataBR(dataBR);
-  if(!dataISO){ toast('Data invalida','er'); return; }
-  var saldoInf = $('ven-mc-saldo').value.trim();
-  if(saldoInf === ''){ toast('Saldo da conta obrigatorio','er'); return; }
-  var saldoNum = parseBR(saldoInf);
-
-  var total = qtd * cu;
-  var novoMedio = VEN.custoMedioAtualizado(prodId, qtd, cu);
-  var saldoEsp = VEN.saldoAtual() - total;
-  var divg = saldoNum - saldoEsp;
-
-  var c = {
-    id: uid('c'), _ts: Date.now(),
-    data: dataISO, viagem: viagem,
-    produtoId: prodId, qtd: qtd, custoUnit: cu, total: total,
-    custoAnterior: VEN.produtos.find(function(x){ return x.id === prodId; }).custoAtual,
-    custoMedioNovo: novoMedio,
-    obs: $('ven-mc-obs').value.trim(),
-    saldoConta: saldoNum, saldoEsperado: saldoEsp, divergencia: divg
-  };
-  VEN.compras.push(c);
-  // Atualiza custo medio do produto
-  var p = VEN.produtos.find(function(x){ return x.id === prodId; });
-  p.custoAtual = novoMedio;
-  VEN.save();
-  VEN.closeModal('compra');
-  VEN.render();
-  if(Math.abs(divg) > VEN.config.tolerancia){
-    toast('Compra registrada com divergencia de ' + fmtBR(divg),'wa');
-  } else {
-    toast('Compra registrada! Custo medio atualizado.','ok');
-  }
-};
-VEN.deleteCompra = function(id){
-  if(!confirm('Remover essa compra? Atencao: o custo medio NAO sera recalculado automaticamente.')) return;
-  VEN.compras = VEN.compras.filter(function(c){ return c.id !== id; });
-  VEN.save(); VEN.render(); toast('Compra removida','in');
-};
-
-/* ============== CRUD SAIDAS ============== */
-VEN.openModalSaida = function(){
-  $('ven-ms-data').value = todayBR();
-  $('ven-ms-tipo').value = 'Retirada';
-  $('ven-ms-val').value = ''; $('ven-ms-desc').value = ''; $('ven-ms-saldo').value = '';
-  $('ven-ms-via').value = ''; $('ven-ms-divwrap').style.display = 'none'; $('ven-ms-viawrap').style.display = 'none';
-  var sel = $('ven-ms-div'); sel.innerHTML = '';
-  VEN.dividas.forEach(function(d){
-    if(d.ativo === false) return;
-    var o = document.createElement('option'); o.value = d.id;
-    o.textContent = d.credor + ' (saldo: ' + fmtBR(d.saldoAtual) + ')';
-    sel.appendChild(o);
   });
-  VEN.atualizaSaidaCalc();
-  $('ven-ms-esp').textContent = fmtBR(VEN.saldoAtual());
-  $('ven-modal-saida').classList.add('open');
-};
-VEN.onTipoSaidaChange = function(){
-  var t = $('ven-ms-tipo').value;
-  $('ven-ms-divwrap').style.display = t === 'Amortizacao' ? 'block' : 'none';
-  $('ven-ms-viawrap').style.display = t === 'Viagem' ? 'block' : 'none';
-  if(t === 'Viagem' && !$('ven-ms-val').value){
-    $('ven-ms-val').value = VEN.config.custoViagem.toFixed(2).replace('.',',');
-  }
-  VEN.atualizaSaidaCalc();
-};
-VEN.atualizaSaidaCalc = function(){
-  var v = parseBR($('ven-ms-val').value);
-  $('ven-ms-esp').textContent = fmtBR(VEN.saldoAtual() - v);
-};
-VEN.saveSaida = function(){
-  var tipo = $('ven-ms-tipo').value;
-  var v = parseBR($('ven-ms-val').value);
-  if(v <= 0){ toast('Valor invalido','er'); return; }
-  var desc = $('ven-ms-desc').value.trim();
-  if(!desc){ toast('Descricao/justificativa obrigatoria','er'); return; }
-  var dataBR = $('ven-ms-data').value.trim() || todayBR();
-  var dataISO = parseDataBR(dataBR);
-  if(!dataISO){ toast('Data invalida','er'); return; }
-  var saldoInf = $('ven-ms-saldo').value.trim();
-  if(saldoInf === ''){ toast('Saldo da conta obrigatorio','er'); return; }
-  var saldoNum = parseBR(saldoInf);
-  var saldoEsp = VEN.saldoAtual() - v;
-  var divg = saldoNum - saldoEsp;
+  
+  hide('#tab-catalogo');
+  hide('#tab-simulador');
+  show(`#tab-${tabName}`);
+}
 
-  var s = {
-    id: uid('s'), _ts: Date.now(),
-    data: dataISO, tipo: tipo, valor: v, descricao: desc,
-    saldoConta: saldoNum, saldoEsperado: saldoEsp, divergencia: divg
-  };
-  if(tipo === 'Amortizacao'){
-    var divId = $('ven-ms-div').value;
-    if(!divId){ toast('Escolha qual divida amortizar','er'); return; }
-    s.dividaId = divId;
-    var d = VEN.dividas.find(function(x){ return x.id === divId; });
-    if(d){ d.saldoAtual = Math.max(0, (d.saldoAtual||0) - v); }
-  }
-  if(tipo === 'Viagem'){
-    s.viagem = parseInt($('ven-ms-via').value) || 0;
-  }
-  VEN.saidas.push(s);
-  VEN.save();
-  VEN.closeModal('saida');
-  VEN.render();
-  if(Math.abs(divg) > VEN.config.tolerancia){
-    toast('Saida registrada com divergencia de ' + fmtBR(divg),'wa');
-  } else {
-    toast('Saida registrada!','ok');
-  }
-};
-VEN.deleteSaida = function(id){
-  var s = VEN.saidas.find(function(x){ return x.id === id; });
-  if(!s) return;
-  if(!confirm('Remover essa saida? Se for amortizacao, a divida sera estornada.')) return;
-  if(s.tipo === 'Amortizacao' && s.dividaId){
-    var d = VEN.dividas.find(function(x){ return x.id === s.dividaId; });
-    if(d) d.saldoAtual = (d.saldoAtual||0) + s.valor;
-  }
-  VEN.saidas = VEN.saidas.filter(function(x){ return x.id !== id; });
-  VEN.save(); VEN.render(); toast('Saida removida','in');
-};
+// =====================================================================
+// EVENT LISTENERS
+// =====================================================================
+$('#login-btn').addEventListener('click', tryLogin);
+$('#login-password').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+$('#login-email').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
 
-/* ============== CRUD DIVIDAS ============== */
-VEN.openModalDivida = function(divId){
-  VEN.ui.editDivId = divId || null;
-  if(divId){
-    var d = VEN.dividas.find(function(x){ return x.id === divId; });
-    if(d){
-      $('ven-md-tit').textContent = 'Editar divida';
-      $('ven-md-cred').value = d.credor;
-      $('ven-md-sal').value = d.saldoAtual.toFixed(2).replace('.',',');
-      $('ven-md-tx').value = (d.taxaJurosMensal*100).toFixed(2).replace('.',',');
-      $('ven-md-pm').value = (d.parcelaMinima||0).toFixed(2).replace('.',',');
-      $('ven-md-venc').value = fmtData(d.proximoVencimento);
-      $('ven-md-obs').value = d.obs || '';
-    }
-  } else {
-    $('ven-md-tit').textContent = 'Nova divida';
-    $('ven-md-cred').value = ''; $('ven-md-sal').value = ''; $('ven-md-tx').value = '';
-    $('ven-md-pm').value = ''; $('ven-md-venc').value = ''; $('ven-md-obs').value = '';
-  }
-  VEN.atualizaJurosDivida();
-  $('ven-modal-divida').classList.add('open');
-};
-VEN.atualizaJurosDivida = function(){
-  var sal = parseBR($('ven-md-sal').value);
-  var tx = parseBR($('ven-md-tx').value) / 100;
-  var j = sal * tx;
-  $('ven-md-juros').textContent = 'Juros mensal: ' + fmtBR(j);
-};
-VEN.saveDivida = function(){
-  var cred = $('ven-md-cred').value.trim();
-  if(!cred){ toast('Credor obrigatorio','er'); return; }
-  var sal = parseBR($('ven-md-sal').value);
-  if(sal <= 0){ toast('Saldo invalido','er'); return; }
-  var tx = parseBR($('ven-md-tx').value) / 100;
-  if(tx <= 0){ toast('Taxa de juros invalida','er'); return; }
-  var dados = {
-    credor: cred,
-    saldoAtual: sal,
-    taxaJurosMensal: tx,
-    parcelaMinima: parseBR($('ven-md-pm').value),
-    proximoVencimento: parseDataBR($('ven-md-venc').value),
-    obs: $('ven-md-obs').value.trim(),
-    ativo: true
-  };
-  if(VEN.ui.editDivId){
-    var d = VEN.dividas.find(function(x){ return x.id === VEN.ui.editDivId; });
-    Object.assign(d, dados); d._ts = Date.now();
-    toast('Divida atualizada','ok');
-  } else {
-    dados.id = uid('d'); dados._ts = Date.now(); dados.criadoEm = new Date().toISOString();
-    dados.saldoOriginal = sal;
-    VEN.dividas.push(dados);
-    toast('Divida cadastrada','ok');
-  }
-  VEN.save(); VEN.closeModal('divida'); VEN.render();
-};
-VEN.deleteDivida = function(id){
-  if(!confirm('Remover divida do sistema?')) return;
-  VEN.dividas = VEN.dividas.filter(function(d){ return d.id !== id; });
-  VEN.save(); VEN.render(); toast('Divida removida','in');
-};
+$('#logout-btn').addEventListener('click', logout);
 
-/* ============== SIMULADOR DIVIDAS ============== */
-VEN.openModalSim = function(){
-  $('ven-sim-val').value = '';
-  $('ven-sim-result').innerHTML = '<div style="color:var(--tx3);font-size:12px;text-align:center;padding:20px">Informe o valor disponivel e clique em Calcular.</div>';
-  $('ven-modal-sim').classList.add('open');
-};
-VEN.calcSimulacao = function(){
-  var v = parseBR($('ven-sim-val').value);
-  if(v <= 0){ toast('Informe um valor','er'); return; }
-  var ativas = VEN.dividas.filter(function(d){ return d.ativo !== false && d.saldoAtual > 0; });
-  if(ativas.length === 0){ $('ven-sim-result').innerHTML = '<div style="color:var(--tx3)">Nenhuma divida ativa cadastrada.</div>'; return; }
-  // Ordenar por taxa de juros decrescente
-  ativas.sort(function(a,b){ return b.taxaJurosMensal - a.taxaJurosMensal; });
-  var html = '<div style="font-family:Syne,sans-serif;font-size:13px;font-weight:600;margin-bottom:10px">Impacto da amortizacao de ' + fmtBR(v) + '</div>';
-  ativas.forEach(function(d, idx){
-    var amort = Math.min(v, d.saldoAtual);
-    var saldoNovo = d.saldoAtual - amort;
-    var jurosAtual = d.saldoAtual * d.taxaJurosMensal;
-    var jurosNovo = saldoNovo * d.taxaJurosMensal;
-    var economia = jurosAtual - jurosNovo;
-    var prio = idx === 0 ? '<span class="ven-prio ven-prio-1">PRIORIDADE</span>' : '';
-    html += '<div class="ven-divida-card" style="margin-bottom:6px">';
-    html += '<div class="ven-divida-hd"><span class="ven-divida-n">' + d.credor + '</span>' + prio + '</div>';
-    html += '<div class="ven-divida-row"><span>Taxa: <b>' + (d.taxaJurosMensal*100).toFixed(2).replace('.',',') + '%/mes</b></span>';
-    html += '<span>Saldo atual: <b>' + fmtBR(d.saldoAtual) + '</b></span></div>';
-    html += '<div class="ven-divida-row"><span>Amortizar: <b>' + fmtBR(amort) + '</b></span>';
-    html += '<span>Saldo apos: <b>' + fmtBR(saldoNovo) + '</b></span></div>';
-    html += '<div class="ven-divida-row"><span style="color:var(--g)">Economia mensal: <b style="color:var(--g)">' + fmtBR(economia) + '</b></span></div>';
-    html += '</div>';
-  });
-  html += '<div class="ven-prov-info" style="margin-top:14px">Recomendacao: <b>amortizar a divida no topo</b> primeiro - maior taxa de juros = maior economia mensal.</div>';
-  $('ven-sim-result').innerHTML = html;
-};
+$$('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
 
+// Filtros — debounce na busca
+let searchTimer;
+$('#filter-search').addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(applyFilters, 300);
+});
+$('#filter-prefixo').addEventListener('change', applyFilters);
+$('#filter-marca').addEventListener('change', applyFilters);
+$('#filter-fornecedor').addEventListener('change', applyFilters);
+$('#clear-filters').addEventListener('click', clearFilters);
 
+// Paginação
+$('#page-prev').addEventListener('click', () => { 
+  if (state.page > 0) { state.page--; loadCatalog(); window.scrollTo(0, 0); } 
+});
+$('#page-next').addEventListener('click', () => { 
+  state.page++; loadCatalog(); window.scrollTo(0, 0); 
+});
 
+// Modal
+$('#modal-close').addEventListener('click', closeModal);
+$('#modal-product').addEventListener('click', e => { 
+  if (e.target === $('#modal-product')) closeModal(); 
+});
+document.addEventListener('keydown', e => { 
+  if (e.key === 'Escape' && !$('#modal-product').classList.contains('hidden-section')) closeModal(); 
+});
 
-/* ============== RENDER PAINEL ============== */
-VEN.renderPainel = function(){
-  var saldo = VEN.saldoAtual();
-  var estoque = VEN.valorEstoque();
-  var unEstoque = VEN.unidadesEstoque();
-  var total = saldo + estoque;
-  var cap = VEN.config.capital;
-  var saude = VEN.saudeCapital();
-  var prov = VEN.provisaoDisponivel();
-  var mes = mesAtual();
-  var lucroMes = VEN.lucroLiquidoMes(mes);
-  var retMes = VEN.totalSaidasTipo('Retirada', mes);
-  var exc = VEN.excedenteAcumulado();
-
-  $('ven-k-saldo').textContent = fmtBR(saldo);
-  $('ven-k-estoque').textContent = fmtBR(estoque);
-  $('ven-k-estoque-s').textContent = unEstoque + ' itens em ' + VEN.produtos.filter(function(p){ return VEN.estoqueDe(p.id) > 0; }).length + ' SKU(s)';
-  $('ven-k-total').textContent = fmtBR(total);
-  $('ven-k-saude').textContent = (saude.pct*100).toFixed(0) + '%';
-  $('ven-k-saude').className = 'ven-kpi-v ' + (saude.diff >= 0 ? 'cg' : 'cr');
-  $('ven-k-saude-s').textContent = saude.diff >= 0 ? 'Acima do minimo (+' + fmtBR(saude.diff) + ')' : 'ABAIXO do minimo (' + fmtBR(saude.diff) + ')';
-  $('ven-k-prov').textContent = fmtBR(prov);
-  $('ven-k-prov-s').textContent = prov >= VEN.config.custoViagem ? 'Cobre proxima viagem' : 'Falta ' + fmtBR(VEN.config.custoViagem - prov);
-  $('ven-k-lucro').textContent = fmtBR(lucroMes);
-  $('ven-k-retir').textContent = fmtBR(retMes);
-  $('ven-k-retir-s').textContent = 'Meta: ' + fmtBR(VEN.config.meta);
-  $('ven-k-exc').textContent = fmtBR(exc);
-
-  // Meta do mes
-  var pctMeta = VEN.config.meta > 0 ? Math.min(100, retMes/VEN.config.meta*100) : 0;
-  $('ven-meta-retr').textContent = fmtBR(retMes);
-  $('ven-meta-falta').textContent = retMes >= VEN.config.meta ? 'META ATINGIDA' : fmtBR(VEN.config.meta - retMes);
-  $('ven-meta-bar').style.width = pctMeta + '%';
-  $('ven-meta-lucro').textContent = fmtBR(lucroMes);
-
-  // Proxima viagem
-  var pctViaj = VEN.config.custoViagem > 0 ? Math.min(100, prov/VEN.config.custoViagem*100) : 0;
-  $('ven-viaj-prov').textContent = fmtBR(prov);
-  $('ven-viaj-bar').style.width = pctViaj + '%';
-  $('ven-viaj-tip').textContent = prov >= VEN.config.custoViagem ? 'Proxima viagem coberta! Excedente: ' + fmtBR(prov - VEN.config.custoViagem) : 'Falta ' + fmtBR(VEN.config.custoViagem - prov) + ' (' + pctViaj.toFixed(0) + '% acumulado)';
-
-  // Alertas estrategicos
-  var alerts = [];
-  if(saude.diff < 0){
-    alerts.push({ tipo:'rd', t:'Capital Principal violado!', m:'Total de ativos (' + fmtBR(saude.total) + ') esta ABAIXO de ' + fmtBR(cap) + '. Pare de retirar lucro ate normalizar.' });
-  } else if(saude.diff < cap*0.1){
-    alerts.push({ tipo:'am', t:'Capital perto do limite', m:'So tem ' + fmtBR(saude.diff) + ' de margem acima de ' + fmtBR(cap) + '.' });
-  }
-  if(prov < 0){
-    alerts.push({ tipo:'am', t:'Provisao de viagem negativa', m:'Voce gastou mais com viagens do que a provisao acumulada. Diferenca: ' + fmtBR(prov) });
-  } else if(prov >= VEN.config.custoViagem * 1.5){
-    alerts.push({ tipo:'ok', t:'Proxima viagem garantida', m:'Provisao acumulada (' + fmtBR(prov) + ') cobre proxima viagem com folga.' });
-  }
-  // Estoque minimo
-  var prodAbaixo = VEN.produtos.filter(function(p){
-    if(p.ativo === false) return false;
-    var q = VEN.estoqueDe(p.id);
-    return p.estoqueMin > 0 && q < p.estoqueMin && q > 0;
-  });
-  if(prodAbaixo.length > 0){
-    alerts.push({ tipo:'am', t:prodAbaixo.length + ' produto(s) em alerta de estoque', m:prodAbaixo.slice(0,3).map(function(p){ return p.modelo + ' (' + VEN.estoqueDe(p.id) + '/' + p.estoqueMin + ')'; }).join(', ') });
-  }
-  // Meta proxima
-  if(retMes < VEN.config.meta && retMes > 0){
-    var falta = VEN.config.meta - retMes;
-    if(falta < VEN.config.meta * 0.2){
-      alerts.push({ tipo:'bl', t:'Falta pouco para a meta mensal', m:'Mais ' + fmtBR(falta) + ' e voce bate a meta de ' + fmtBR(VEN.config.meta) + ' deste mes.' });
-    }
-  }
-  // Divergencias recentes
-  var divg = [];
-  VEN.vendas.forEach(function(v){ if(Math.abs(v.divergencia||0) > VEN.config.tolerancia) divg.push(v); });
-  VEN.compras.forEach(function(c){ if(Math.abs(c.divergencia||0) > VEN.config.tolerancia) divg.push(c); });
-  VEN.saidas.forEach(function(s){ if(Math.abs(s.divergencia||0) > VEN.config.tolerancia) divg.push(s); });
-  if(divg.length > 0){
-    alerts.push({ tipo:'am', t:divg.length + ' movimento(s) com divergencia', m:'Saldo informado nao bate com o esperado. Verifique na aba Conciliacao.' });
-  }
-  if(VEN.produtos.length === 0){
-    alerts.push({ tipo:'bl', t:'Comece cadastrando seus produtos', m:'Va em Catalogo e adicione iPhone, AirPods etc com preco de compra e venda.' });
-  } else if(VEN.vendas.length === 0 && VEN.compras.length === 0){
-    alerts.push({ tipo:'bl', t:'Registre sua primeira compra', m:'Registre as compras da viagem (entrada de estoque) e depois comece a vender.' });
-  }
-  var ah = '';
-  alerts.forEach(function(a){
-    ah += '<div class="ven-alert ' + a.tipo + '"><span class="ven-alert-i">!</span><div><span class="ven-alert-t">' + a.t + '</span>' + a.m + '</div></div>';
-  });
-  $('ven-alerts').innerHTML = ah;
-};
-
-/* ============== RENDER CATALOGO ============== */
-VEN.renderCatalogo = function(){
-  // Chips de categoria
-  var chips = $('ven-cat-chips'); chips.innerHTML = '';
-  var todasChip = document.createElement('div');
-  todasChip.className = 'ven-chip' + (VEN.ui.filterCat === '' ? ' on' : '');
-  todasChip.textContent = 'Todas (' + VEN.produtos.filter(function(p){ return p.ativo !== false; }).length + ')';
-  todasChip.onclick = function(){ VEN.ui.filterCat = ''; VEN.renderCatalogo(); };
-  chips.appendChild(todasChip);
-  VEN.categorias.forEach(function(c){
-    var n = VEN.produtos.filter(function(p){ return p.categoria === c && p.ativo !== false; }).length;
-    if(n === 0) return;
-    var chip = document.createElement('div');
-    chip.className = 'ven-chip' + (VEN.ui.filterCat === c ? ' on' : '');
-    chip.textContent = c + ' (' + n + ')';
-    chip.onclick = function(){ VEN.ui.filterCat = c; VEN.renderCatalogo(); };
-    chips.appendChild(chip);
-  });
-  // Lista
-  var busca = ($('ven-prod-busca').value || '').toLowerCase().trim();
-  var list = $('ven-prod-list');
-  var filtrados = VEN.produtos.filter(function(p){
-    if(p.ativo === false) return false;
-    if(VEN.ui.filterCat && p.categoria !== VEN.ui.filterCat) return false;
-    if(busca && p.modelo.toLowerCase().indexOf(busca) === -1 && p.categoria.toLowerCase().indexOf(busca) === -1) return false;
-    return true;
-  });
-  if(filtrados.length === 0){
-    list.innerHTML = '<div class="ven-empty"><div class="ven-empty-i">[ ]</div><div class="ven-empty-t">Nenhum produto encontrado</div><div class="ven-empty-s">Cadastre um produto para comecar</div></div>';
-    return;
-  }
-  var h = '<div class="ven-prod-grid">';
-  filtrados.forEach(function(p){
-    var q = VEN.estoqueDe(p.id);
-    var stCls = q <= 0 ? 'zr' : (p.estoqueMin > 0 && q < p.estoqueMin ? 'al' : 'ok');
-    var stTxt = q <= 0 ? 'Sem estoque' : (p.estoqueMin > 0 && q < p.estoqueMin ? 'Alerta' : 'OK');
-    var margem = p.precoVendaAlvo - p.custoAtual;
-    var pct = p.custoAtual > 0 ? (margem/p.custoAtual*100) : 0;
-    h += '<div class="ven-prod-card">';
-    h += '<div class="ven-prod-cat">' + p.categoria + '</div>';
-    h += '<div class="ven-prod-n">' + p.modelo + '</div>';
-    h += '<div class="ven-prod-px"><span>Compra: <b>' + fmtBR(p.custoAtual) + '</b></span><span>Venda: <b>' + fmtBR(p.precoVendaAlvo) + '</b></span><span class="cg">Margem: <b>' + pct.toFixed(0) + '%</b></span></div>';
-    h += '<div class="ven-prod-st"><span><span class="ven-st-dot ' + stCls + '"></span>Estoque: <b>' + q + '</b> <span style="color:var(--tx3)">' + stTxt + '</span></span>';
-    h += '<div class="ven-acoes"><button class="btn bs sm" onclick="VEN.openModalProd(\'' + p.id + '\')">Editar</button><button class="btn br sm" onclick="VEN.deleteProd(\'' + p.id + '\')">X</button></div></div>';
-    h += '</div>';
-  });
-  h += '</div>';
-  list.innerHTML = h;
-};
-
-/* ============== RENDER VENDAS ============== */
-VEN.renderVendas = function(){
-  var w = $('ven-vendas-tbl');
-  $('ven-vendas-count').textContent = VEN.vendas.length + ' venda(s)';
-  if(VEN.vendas.length === 0){
-    w.innerHTML = '<div class="ven-empty"><div class="ven-empty-i">$</div><div class="ven-empty-t">Sem vendas registradas</div><div class="ven-empty-s">Clique em Nova venda para registrar.</div></div>';
-    return;
-  }
-  var list = VEN.vendas.slice().sort(function(a,b){ return b._ts - a._ts; });
-  var h = '<table class="ven-tbl"><thead><tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Preco</th><th>Total</th><th>Margem</th><th>Lucro</th><th>Canal</th><th>Cliente</th><th>Div.</th><th></th></tr></thead><tbody>';
-  list.forEach(function(v){
-    var p = VEN.produtos.find(function(x){ return x.id === v.produtoId; });
-    var nome = p ? p.modelo : '(removido)';
-    var divCls = Math.abs(v.divergencia||0) > VEN.config.tolerancia ? 'ven-divg' : 'ven-divg ok';
-    h += '<tr>';
-    h += '<td>' + fmtData(v.data) + '</td>';
-    h += '<td>' + nome + '</td>';
-    h += '<td class="ven-tbl-num">' + v.qtd + '</td>';
-    h += '<td class="ven-tbl-num">' + fmtBR(v.precoVenda) + '</td>';
-    h += '<td class="ven-tbl-val">' + fmtBR(v.total) + '</td>';
-    h += '<td class="ven-tbl-num">' + fmtBR(v.margemBruta) + '</td>';
-    h += '<td class="ven-tbl-val">' + fmtBR(v.lucro) + '</td>';
-    h += '<td>' + v.canal + '</td>';
-    h += '<td>' + (v.cliente||'-') + '</td>';
-    h += '<td class="' + divCls + '">' + (Math.abs(v.divergencia||0) > 0.01 ? fmtBR(v.divergencia) : '-') + '</td>';
-    h += '<td><button class="btn br sm" onclick="VEN.deleteVenda(\'' + v.id + '\')">X</button></td>';
-    h += '</tr>';
-  });
-  h += '</tbody></table>';
-  w.innerHTML = h;
-};
-
-/* ============== RENDER COMPRAS ============== */
-VEN.renderCompras = function(){
-  var w = $('ven-compras-tbl');
-  $('ven-compras-count').textContent = VEN.compras.length + ' compra(s)';
-  if(VEN.compras.length === 0){
-    w.innerHTML = '<div class="ven-empty"><div class="ven-empty-i">+</div><div class="ven-empty-t">Sem compras registradas</div><div class="ven-empty-s">Registre as compras da viagem.</div></div>';
-    return;
-  }
-  var list = VEN.compras.slice().sort(function(a,b){ return b._ts - a._ts; });
-  var h = '<table class="ven-tbl"><thead><tr><th>Data</th><th>Vg</th><th>Produto</th><th>Qtd</th><th>Custo un.</th><th>Total</th><th>Custo Medio</th><th>Div.</th><th></th></tr></thead><tbody>';
-  list.forEach(function(c){
-    var p = VEN.produtos.find(function(x){ return x.id === c.produtoId; });
-    var nome = p ? p.modelo : '(removido)';
-    var divCls = Math.abs(c.divergencia||0) > VEN.config.tolerancia ? 'ven-divg' : 'ven-divg ok';
-    h += '<tr>';
-    h += '<td>' + fmtData(c.data) + '</td>';
-    h += '<td class="ven-tbl-num">#' + c.viagem + '</td>';
-    h += '<td>' + nome + '</td>';
-    h += '<td class="ven-tbl-num">' + c.qtd + '</td>';
-    h += '<td class="ven-tbl-num">' + fmtBR(c.custoUnit) + '</td>';
-    h += '<td class="ven-tbl-val">' + fmtBR(c.total) + '</td>';
-    h += '<td class="ven-tbl-num">' + fmtBR(c.custoMedioNovo||c.custoUnit) + '</td>';
-    h += '<td class="' + divCls + '">' + (Math.abs(c.divergencia||0) > 0.01 ? fmtBR(c.divergencia) : '-') + '</td>';
-    h += '<td><button class="btn br sm" onclick="VEN.deleteCompra(\'' + c.id + '\')">X</button></td>';
-    h += '</tr>';
-  });
-  h += '</tbody></table>';
-  w.innerHTML = h;
-};
-
-/* ============== RENDER SAIDAS ============== */
-VEN.renderSaidas = function(){
-  var w = $('ven-saidas-tbl');
-  $('ven-saidas-count').textContent = VEN.saidas.length + ' saida(s)';
-  if(VEN.saidas.length === 0){
-    w.innerHTML = '<div class="ven-empty"><div class="ven-empty-i">-></div><div class="ven-empty-t">Sem saidas registradas</div><div class="ven-empty-s">Registre viagens, retiradas e amortizacoes.</div></div>';
-    return;
-  }
-  var list = VEN.saidas.slice().sort(function(a,b){ return b._ts - a._ts; });
-  var h = '<table class="ven-tbl"><thead><tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Descricao</th><th>Vinculo</th><th>Div.</th><th></th></tr></thead><tbody>';
-  list.forEach(function(s){
-    var divCls = Math.abs(s.divergencia||0) > VEN.config.tolerancia ? 'ven-divg' : 'ven-divg ok';
-    var vinc = '-';
-    if(s.tipo === 'Amortizacao' && s.dividaId){
-      var d = VEN.dividas.find(function(x){ return x.id === s.dividaId; });
-      vinc = d ? d.credor : '(divida removida)';
-    } else if(s.tipo === 'Viagem' && s.viagem){
-      vinc = 'Viagem #' + s.viagem;
-    }
-    var corTipo = s.tipo === 'Retirada' ? 'ca' : (s.tipo === 'Amortizacao' ? 'cg' : (s.tipo === 'Viagem' ? 'cb' : 'cp'));
-    h += '<tr>';
-    h += '<td>' + fmtData(s.data) + '</td>';
-    h += '<td class="' + corTipo + '">' + s.tipo + '</td>';
-    h += '<td class="ven-tbl-val">' + fmtBR(s.valor) + '</td>';
-    h += '<td>' + (s.descricao||'-') + '</td>';
-    h += '<td>' + vinc + '</td>';
-    h += '<td class="' + divCls + '">' + (Math.abs(s.divergencia||0) > 0.01 ? fmtBR(s.divergencia) : '-') + '</td>';
-    h += '<td><button class="btn br sm" onclick="VEN.deleteSaida(\'' + s.id + '\')">X</button></td>';
-    h += '</tr>';
-  });
-  h += '</tbody></table>';
-  w.innerHTML = h;
-};
-
-/* ============== RENDER ESTOQUE ============== */
-VEN.renderEstoque = function(){
-  var ativos = VEN.produtos.filter(function(p){ return p.ativo !== false; });
-  var comEst = ativos.filter(function(p){ return VEN.estoqueDe(p.id) > 0; });
-  var alerta = ativos.filter(function(p){ var q = VEN.estoqueDe(p.id); return p.estoqueMin > 0 && q < p.estoqueMin && q > 0; });
-  var zerados = ativos.filter(function(p){ return VEN.estoqueDe(p.id) <= 0; });
-
-  $('ven-est-skus').textContent = comEst.length;
-  $('ven-est-un').textContent = VEN.unidadesEstoque();
-  $('ven-est-val').textContent = fmtBR(VEN.valorEstoque());
-  $('ven-est-al').textContent = alerta.length;
-  $('ven-est-zr').textContent = zerados.length;
-
-  var w = $('ven-est-tbl');
-  if(ativos.length === 0){
-    w.innerHTML = '<div class="ven-empty"><div class="ven-empty-i">[ ]</div><div class="ven-empty-t">Nenhum produto cadastrado</div></div>';
-    return;
-  }
-  var lista = ativos.slice().sort(function(a,b){ return VEN.estoqueDe(b.id) - VEN.estoqueDe(a.id); });
-  var h = '<table class="ven-tbl"><thead><tr><th>Categoria</th><th>Produto</th><th>Estoque</th><th>Min</th><th>Custo Medio</th><th>Valor</th><th>Dias parado</th><th>Velocidade</th><th>Status</th></tr></thead><tbody>';
-  lista.forEach(function(p){
-    var q = VEN.estoqueDe(p.id);
-    var stCls = q <= 0 ? 'zr' : (p.estoqueMin > 0 && q < p.estoqueMin ? 'al' : 'ok');
-    var stTxt = q <= 0 ? 'Zerado' : (p.estoqueMin > 0 && q < p.estoqueMin ? 'Alerta' : 'OK');
-    var dias = VEN.diasParado(p.id);
-    var vel = VEN.velocidadeVenda(p.id);
-    h += '<tr>';
-    h += '<td>' + p.categoria + '</td>';
-    h += '<td>' + p.modelo + '</td>';
-    h += '<td class="ven-tbl-num">' + q + '</td>';
-    h += '<td class="ven-tbl-num">' + (p.estoqueMin || '-') + '</td>';
-    h += '<td class="ven-tbl-num">' + fmtBR(p.custoAtual) + '</td>';
-    h += '<td class="ven-tbl-val">' + fmtBR(q > 0 ? q * p.custoAtual : 0) + '</td>';
-    h += '<td class="ven-tbl-num">' + (dias > 0 ? dias + 'd' : '-') + '</td>';
-    h += '<td class="ven-tbl-num">' + (vel ? '1 a cada ' + vel.toFixed(1) + 'd' : '-') + '</td>';
-    h += '<td><span class="ven-st-dot ' + stCls + '"></span>' + stTxt + '</td>';
-    h += '</tr>';
-  });
-  h += '</tbody></table>';
-  w.innerHTML = h;
-};
-
-/* ============== RENDER ANALISE ============== */
-VEN.renderAnalise = function(){
-  var w = $('ven-analise-content');
-  if(VEN.vendas.length === 0){
-    w.innerHTML = '<div class="ven-empty"><div class="ven-empty-i">~</div><div class="ven-empty-t">Sem dados para analisar</div><div class="ven-empty-s">Registre algumas vendas para ver os rankings.</div></div>';
-    return;
-  }
-  // Agregar por produto
-  var porProd = {};
-  VEN.vendas.forEach(function(v){
-    if(!porProd[v.produtoId]) porProd[v.produtoId] = { qtd:0, total:0, margem:0, lucro:0, dias:[] };
-    porProd[v.produtoId].qtd += v.qtd;
-    porProd[v.produtoId].total += v.total;
-    porProd[v.produtoId].margem += v.margemBruta || 0;
-    porProd[v.produtoId].lucro += v.lucro || 0;
-    porProd[v.produtoId].dias.push(v._ts);
-  });
-  // Agregar por canal
-  var porCanal = {};
-  VEN.vendas.forEach(function(v){
-    var c = v.canal || 'Outro';
-    if(!porCanal[c]) porCanal[c] = { qtd:0, total:0, lucro:0 };
-    porCanal[c].qtd += 1; porCanal[c].total += v.total; porCanal[c].lucro += v.lucro || 0;
-  });
-  // Agregar por categoria
-  var porCat = {};
-  VEN.vendas.forEach(function(v){
-    var p = VEN.produtos.find(function(x){ return x.id === v.produtoId; });
-    var c = p ? p.categoria : 'Outros';
-    if(!porCat[c]) porCat[c] = { qtd:0, total:0, lucro:0 };
-    porCat[c].qtd += v.qtd; porCat[c].total += v.total; porCat[c].lucro += v.lucro || 0;
-  });
-
-  var h = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px">';
-  // Top produtos por unidades vendidas
-  h += '<div class="panel"><div class="ptit"><span class="dot"></span>Mais vendidos (unidades)</div>';
-  var topUn = Object.keys(porProd).map(function(k){ return { id:k, d:porProd[k] }; }).sort(function(a,b){ return b.d.qtd - a.d.qtd; }).slice(0,6);
-  h += '<table class="ven-tbl"><thead><tr><th>Produto</th><th>Qtd</th><th>Lucro</th></tr></thead><tbody>';
-  topUn.forEach(function(t){
-    var p = VEN.produtos.find(function(x){ return x.id === t.id; });
-    h += '<tr><td>' + (p ? p.modelo : '?') + '</td><td class="ven-tbl-num">' + t.d.qtd + '</td><td class="ven-tbl-val">' + fmtBR(t.d.lucro) + '</td></tr>';
-  });
-  h += '</tbody></table></div>';
-  // Top produtos por lucro
-  h += '<div class="panel"><div class="ptit"><span class="dot" style="background:var(--am)"></span>Mais lucrativos (R$)</div>';
-  var topLucro = Object.keys(porProd).map(function(k){ return { id:k, d:porProd[k] }; }).sort(function(a,b){ return b.d.lucro - a.d.lucro; }).slice(0,6);
-  h += '<table class="ven-tbl"><thead><tr><th>Produto</th><th>Lucro</th><th>Margem un.</th></tr></thead><tbody>';
-  topLucro.forEach(function(t){
-    var p = VEN.produtos.find(function(x){ return x.id === t.id; });
-    var ml = t.d.qtd > 0 ? t.d.lucro/t.d.qtd : 0;
-    h += '<tr><td>' + (p ? p.modelo : '?') + '</td><td class="ven-tbl-val">' + fmtBR(t.d.lucro) + '</td><td class="ven-tbl-num">' + fmtBR(ml) + '</td></tr>';
-  });
-  h += '</tbody></table></div>';
-  // Por canal
-  h += '<div class="panel"><div class="ptit"><span class="dot" style="background:var(--bl)"></span>Por canal de venda</div>';
-  h += '<table class="ven-tbl"><thead><tr><th>Canal</th><th>Vendas</th><th>Total</th><th>Lucro</th></tr></thead><tbody>';
-  Object.keys(porCanal).sort(function(a,b){ return porCanal[b].lucro - porCanal[a].lucro; }).forEach(function(c){
-    h += '<tr><td>' + c + '</td><td class="ven-tbl-num">' + porCanal[c].qtd + '</td><td class="ven-tbl-num">' + fmtBR(porCanal[c].total) + '</td><td class="ven-tbl-val">' + fmtBR(porCanal[c].lucro) + '</td></tr>';
-  });
-  h += '</tbody></table></div>';
-  // Por categoria
-  h += '<div class="panel"><div class="ptit"><span class="dot" style="background:var(--pp)"></span>Por categoria</div>';
-  h += '<table class="ven-tbl"><thead><tr><th>Categoria</th><th>Unidades</th><th>Lucro</th></tr></thead><tbody>';
-  Object.keys(porCat).sort(function(a,b){ return porCat[b].lucro - porCat[a].lucro; }).forEach(function(c){
-    h += '<tr><td>' + c + '</td><td class="ven-tbl-num">' + porCat[c].qtd + '</td><td class="ven-tbl-val">' + fmtBR(porCat[c].lucro) + '</td></tr>';
-  });
-  h += '</tbody></table></div>';
-  h += '</div>';
-
-  // Resumo geral
-  var totVendas = VEN.totalVendas();
-  var totCMV = VEN.totalCMV();
-  var totMargem = VEN.totalMargem();
-  var totProv = VEN.totalProvisao();
-  var totLucro = VEN.lucroLiquidoMes();
-  h += '<div class="panel" style="margin-top:14px"><div class="ptit"><span class="dot" style="background:var(--g)"></span>Resumo da operacao (lifetime)</div>';
-  h += '<div class="ven-kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">';
-  h += '<div class="ven-kpi"><div class="ven-kpi-l">Faturamento</div><div class="ven-kpi-v cg">' + fmtBR(totVendas) + '</div></div>';
-  h += '<div class="ven-kpi"><div class="ven-kpi-l">CMV total</div><div class="ven-kpi-v">' + fmtBR(totCMV) + '</div></div>';
-  h += '<div class="ven-kpi"><div class="ven-kpi-l">Margem bruta</div><div class="ven-kpi-v cp">' + fmtBR(totMargem) + '</div></div>';
-  h += '<div class="ven-kpi"><div class="ven-kpi-l">Provisao total</div><div class="ven-kpi-v ca">' + fmtBR(totProv) + '</div></div>';
-  h += '<div class="ven-kpi"><div class="ven-kpi-l">Lucro liquido</div><div class="ven-kpi-v cg">' + fmtBR(totLucro) + '</div></div>';
-  h += '<div class="ven-kpi"><div class="ven-kpi-l">Margem %</div><div class="ven-kpi-v cb">' + (totVendas > 0 ? (totMargem/totVendas*100).toFixed(1).replace('.',',') : '0') + '%</div></div>';
-  h += '</div></div>';
-  w.innerHTML = h;
-};
-
-/* ============== RENDER CONCILIACAO ============== */
-VEN.renderConciliacao = function(){
-  var sis = VEN.saldoAtual();
-  $('ven-con-sis').textContent = fmtBR(sis);
-  var ult = VEN.ultimoSaldoInformado();
-  if(ult){
-    $('ven-con-inf').textContent = fmtBR(ult.saldoConta);
-    $('ven-con-inf-s').textContent = 'Registro de ' + fmtData(ult.data);
-    var diff = ult.saldoConta - sis;
-    $('ven-con-div').textContent = fmtBR(diff);
-    $('ven-con-div').className = 'ven-kpi-v ' + (Math.abs(diff) > VEN.config.tolerancia ? 'cr' : 'cg');
-    $('ven-con-div-s').textContent = Math.abs(diff) > VEN.config.tolerancia ? 'Acima da tolerancia (' + fmtBR(VEN.config.tolerancia) + ')' : 'Dentro da tolerancia';
-  } else {
-    $('ven-con-inf').textContent = 'R$ 0,00';
-    $('ven-con-inf-s').textContent = 'Sem registro';
-    $('ven-con-div').textContent = '-';
-    $('ven-con-div-s').textContent = 'Sem dados';
-  }
-  // Lista de divergencias
-  var divg = [];
-  VEN.vendas.forEach(function(v){ if(Math.abs(v.divergencia||0) > VEN.config.tolerancia) divg.push({ t:'Venda', d:v.data, id:v.id, val:v.total, sb:v.saldoConta, se:v.saldoEsperado, dv:v.divergencia }); });
-  VEN.compras.forEach(function(c){ if(Math.abs(c.divergencia||0) > VEN.config.tolerancia) divg.push({ t:'Compra', d:c.data, id:c.id, val:c.total, sb:c.saldoConta, se:c.saldoEsperado, dv:c.divergencia }); });
-  VEN.saidas.forEach(function(s){ if(Math.abs(s.divergencia||0) > VEN.config.tolerancia) divg.push({ t:'Saida ' + s.tipo, d:s.data, id:s.id, val:s.valor, sb:s.saldoConta, se:s.saldoEsperado, dv:s.divergencia }); });
-  divg.sort(function(a,b){ return new Date(b.d) - new Date(a.d); });
-  var w = $('ven-con-list');
-  if(divg.length === 0){
-    w.innerHTML = '<div style="padding:18px;text-align:center;color:var(--tx3);font-size:12px">Sem divergencias acima da tolerancia. Tudo conferindo!</div>';
-    return;
-  }
-  var h = '<table class="ven-tbl"><thead><tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Saldo informado</th><th>Esperado</th><th>Divergencia</th></tr></thead><tbody>';
-  divg.forEach(function(d){
-    h += '<tr><td>' + fmtData(d.d) + '</td><td>' + d.t + '</td><td class="ven-tbl-num">' + fmtBR(d.val) + '</td><td class="ven-tbl-num">' + fmtBR(d.sb) + '</td><td class="ven-tbl-num">' + fmtBR(d.se) + '</td><td class="ven-tbl-val" style="color:var(--rd)">' + fmtBR(d.dv) + '</td></tr>';
-  });
-  h += '</tbody></table>';
-  w.innerHTML = h;
-};
-
-/* ============== RENDER DIVIDAS ============== */
-VEN.renderDividas = function(){
-  $('ven-div-total').textContent = fmtBR(VEN.totalDivida());
-  $('ven-div-juros').textContent = fmtBR(VEN.totalJurosMensal());
-  $('ven-div-qtd').textContent = VEN.dividas.filter(function(d){ return d.ativo !== false; }).length;
-  var w = $('ven-divida-list');
-  var lista = VEN.dividas.filter(function(d){ return d.ativo !== false; });
-  if(lista.length === 0){
-    w.innerHTML = '<div class="ven-empty"><div class="ven-empty-i">$$</div><div class="ven-empty-t">Sem dividas cadastradas</div><div class="ven-empty-s">Cadastre suas dividas para priorizacao e simulacoes.</div></div>';
-    return;
-  }
-  lista.sort(function(a,b){ return b.taxaJurosMensal - a.taxaJurosMensal; });
-  var h = '';
-  lista.forEach(function(d, idx){
-    var jm = d.saldoAtual * d.taxaJurosMensal;
-    var prioCls = idx === 0 ? 'ven-prio-1' : (idx === 1 ? 'ven-prio-2' : 'ven-prio-3');
-    var prioTxt = idx === 0 ? 'PRIORIDADE' : 'P' + (idx+1);
-    var pago = d.saldoOriginal ? (1 - d.saldoAtual/d.saldoOriginal) * 100 : 0;
-    h += '<div class="ven-divida-card">';
-    h += '<div class="ven-divida-hd"><div class="ven-divida-n">' + d.credor + '</div><span class="ven-prio ' + prioCls + '">' + prioTxt + '</span></div>';
-    h += '<div class="ven-divida-row"><span>Saldo: <b>' + fmtBR(d.saldoAtual) + '</b></span>';
-    h += '<span>Taxa: <b>' + (d.taxaJurosMensal*100).toFixed(2).replace('.',',') + '%/mes</b></span>';
-    h += '<span>Juros: <b style="color:var(--am)">' + fmtBR(jm) + '/mes</b></span></div>';
-    if(d.parcelaMinima > 0 || d.proximoVencimento){
-      h += '<div class="ven-divida-row">';
-      if(d.parcelaMinima > 0) h += '<span>Parcela min: <b>' + fmtBR(d.parcelaMinima) + '</b></span>';
-      if(d.proximoVencimento) h += '<span>Vencimento: <b>' + fmtData(d.proximoVencimento) + '</b></span>';
-      h += '</div>';
-    }
-    if(d.saldoOriginal && d.saldoOriginal !== d.saldoAtual){
-      h += '<div class="ven-bar"><div class="ven-bar-f" style="width:' + pago + '%"></div></div>';
-      h += '<div style="font-size:10px;color:var(--tx3);margin-top:3px">' + pago.toFixed(1).replace('.',',') + '% pago (' + fmtBR(d.saldoOriginal - d.saldoAtual) + ' de ' + fmtBR(d.saldoOriginal) + ')</div>';
-    }
-    if(d.obs){ h += '<div style="font-size:11px;color:var(--tx3);margin-top:6px">' + d.obs + '</div>'; }
-    h += '<div class="ven-divida-acts"><button class="btn bs sm" onclick="VEN.openModalDivida(\'' + d.id + '\')">Editar</button><button class="btn br sm" onclick="VEN.deleteDivida(\'' + d.id + '\')">Remover</button></div>';
-    h += '</div>';
-  });
-  w.innerHTML = h;
-};
-
-/* ============== RENDER GERAL ============== */
-VEN.render = function(){
-  try {
-    VEN.renderPainel();
-    VEN.renderCatalogo();
-    VEN.renderVendas();
-    VEN.renderCompras();
-    VEN.renderSaidas();
-    VEN.renderEstoque();
-    VEN.renderAnalise();
-    VEN.renderConciliacao();
-    VEN.renderDividas();
-  } catch(e){ console.error('Render error', e); }
-};
-
-
-
-
-/* ============== TABS / NAV ============== */
-VEN.switchTab = function(tab){
-  VEN.ui.tab = tab;
-  document.querySelectorAll('.ven-vtab').forEach(function(el){ el.classList.toggle('on', el.getAttribute('data-vtab') === tab); });
-  document.querySelectorAll('.ven-sub').forEach(function(el){ el.classList.remove('on'); });
-  var sub = $('ven-sub-' + tab); if(sub) sub.classList.add('on');
-};
-VEN.showSection = function(){
-  // Esconder outras secoes do sistema
-  ['d','b','m','r','p','ds'].forEach(function(s){
-    var sec = $('sec-' + s); if(sec) sec.classList.remove('on');
-    var nav = $('nav-' + s); if(nav) nav.classList.remove('on');
-  });
-  // Mostrar a nossa
-  $('sec-v').classList.add('on');
-  $('nav-v').classList.add('on');
-  VEN.render();
-};
-VEN.hideSection = function(){
-  $('sec-v').classList.remove('on');
-  $('nav-v').classList.remove('on');
-};
-
-/* ============== MODAIS ============== */
-VEN.openModal = function(name){
-  var el = $('ven-modal-' + name);
-  if(el) el.classList.add('open');
-};
-VEN.closeModal = function(name){
-  var el = $('ven-modal-' + name);
-  if(el) el.classList.remove('open');
-};
-
-/* ============== CFG ============== */
-VEN.openModalCfg = function(){
-  $('ven-cfg-cap').value = VEN.config.capital.toFixed(2).replace('.',',');
-  $('ven-cfg-meta').value = VEN.config.meta.toFixed(2).replace('.',',');
-  $('ven-cfg-pct').value = (VEN.config.pctProv*100).toFixed(2).replace('.',',');
-  $('ven-cfg-cv').value = VEN.config.custoViagem.toFixed(2).replace('.',',');
-  $('ven-cfg-si').value = VEN.config.saldoInicial.toFixed(2).replace('.',',');
-  $('ven-cfg-tol').value = VEN.config.tolerancia.toFixed(2).replace('.',',');
-  $('ven-modal-cfg').classList.add('open');
-};
-VEN.saveCfg = function(){
-  VEN.config.capital = parseBR($('ven-cfg-cap').value);
-  VEN.config.meta = parseBR($('ven-cfg-meta').value);
-  VEN.config.pctProv = parseBR($('ven-cfg-pct').value) / 100;
-  VEN.config.custoViagem = parseBR($('ven-cfg-cv').value);
-  VEN.config.saldoInicial = parseBR($('ven-cfg-si').value);
-  VEN.config.tolerancia = parseBR($('ven-cfg-tol').value);
-  VEN.save(); VEN.closeModal('cfg'); VEN.render();
-  toast('Configuracoes salvas','ok');
-};
-VEN.resetAll = function(){
-  if(!confirm('ATENCAO: isso vai apagar TODOS os dados do sistema de vendas (produtos, vendas, compras, saidas, dividas, configuracoes). Voce tem certeza?')) return;
-  if(!confirm('CONFIRMACAO FINAL: realmente quer apagar tudo? Esta acao nao pode ser desfeita.')) return;
-  ['produtos','vendas','compras','saidas','dividas','categorias','config'].forEach(function(k){ localStorage.removeItem('bp_vendas_' + k); });
-  VEN.produtos = []; VEN.vendas = []; VEN.compras = []; VEN.saidas = []; VEN.dividas = [];
-  VEN.categorias = DEFAULT_CATS.slice();
-  VEN.config = Object.assign({}, DEFAULT_CFG);
-  VEN.closeModal('cfg'); VEN.render();
-  toast('Tudo resetado','in');
-};
-
-/* ============== INIT ============== */
-VEN.init = function(){
-  if(VEN.ui._init) return;
-  VEN.ui._init = true;
-  VEN.load();
-
-  // Tab switching
-  document.querySelectorAll('.ven-vtab').forEach(function(el){
-    el.onclick = function(){ VEN.switchTab(this.getAttribute('data-vtab')); };
-  });
-
-  // Nav item Vendas
-  var nv = $('nav-v');
-  if(nv) nv.onclick = function(){ VEN.showSection(); };
-
-  // Interceptar clicks nos outros nav items para esconder sec-v
-  document.querySelectorAll('.sidebar .sbi').forEach(function(el){
-    if(el.id === 'nav-v' || el.id === 'nav-x') return;
-    var orig = el.onclick;
-    el.addEventListener('click', function(){ VEN.hideSection(); }, true);
-  });
-
-  // Botoes principais
-  $('ven-btn-cfg').onclick = VEN.openModalCfg;
-  $('ven-btn-novo-prod').onclick = function(){ VEN.openModalProd(); };
-  $('ven-btn-cats').onclick = VEN.openModalCat;
-  $('ven-btn-nova-venda').onclick = VEN.openModalVenda;
-  $('ven-btn-nova-compra').onclick = VEN.openModalCompra;
-  $('ven-btn-nova-saida').onclick = VEN.openModalSaida;
-  $('ven-btn-nova-divida').onclick = function(){ VEN.openModalDivida(); };
-  $('ven-btn-sim-divida').onclick = VEN.openModalSim;
-  $('ven-prod-busca').oninput = VEN.renderCatalogo;
-
-  // Save buttons nos modais
-  $('ven-btn-save-prod').onclick = VEN.saveProd;
-  $('ven-btn-save-venda').onclick = VEN.saveVenda;
-  $('ven-btn-save-compra').onclick = VEN.saveCompra;
-  $('ven-btn-save-saida').onclick = VEN.saveSaida;
-  $('ven-btn-save-divida').onclick = VEN.saveDivida;
-  $('ven-btn-save-cfg').onclick = VEN.saveCfg;
-  $('ven-btn-reset').onclick = VEN.resetAll;
-  $('ven-btn-add-cat').onclick = VEN.addCat;
-  $('ven-btn-calc-sim').onclick = VEN.calcSimulacao;
-
-  // Calculos em tempo real - produto
-  ['ven-mp-pc','ven-mp-pv'].forEach(function(id){ $(id).addEventListener('input', VEN.atualizaMargemProd); });
-  // Venda
-  ['ven-mv-prod','ven-mv-qtd','ven-mv-pv'].forEach(function(id){ $(id).addEventListener('input', VEN.atualizaVendaCalc); $(id).addEventListener('change', VEN.atualizaVendaCalc); });
-  // Compra
-  ['ven-mc-prod','ven-mc-qtd','ven-mc-cu'].forEach(function(id){ $(id).addEventListener('input', VEN.atualizaCompraCalc); $(id).addEventListener('change', VEN.atualizaCompraCalc); });
-  // Saida
-  $('ven-ms-tipo').addEventListener('change', VEN.onTipoSaidaChange);
-  $('ven-ms-val').addEventListener('input', VEN.atualizaSaidaCalc);
-  // Divida
-  ['ven-md-sal','ven-md-tx'].forEach(function(id){ $(id).addEventListener('input', VEN.atualizaJurosDivida); });
-
-  // Masks
-  ['ven-mp-pc','ven-mp-pv','ven-mp-pm','ven-mv-pv','ven-mv-saldo','ven-mc-cu','ven-mc-saldo','ven-ms-val','ven-ms-saldo','ven-md-sal','ven-md-pm','ven-cfg-cap','ven-cfg-meta','ven-cfg-cv','ven-cfg-si','ven-cfg-tol','ven-sim-val'].forEach(function(id){ maskMoney($(id)); });
-  ['ven-mp-em','ven-mv-qtd','ven-mc-qtd','ven-mc-via','ven-ms-via'].forEach(function(id){ maskInt($(id)); });
-  ['ven-mv-data','ven-mc-data','ven-ms-data','ven-md-venc'].forEach(function(id){ maskData($(id)); });
-  // pct/taxa - sem mascara monetaria pra deixar mais simples
-  $('ven-md-tx').addEventListener('input', function(){ this.value = this.value.replace(/[^\d,\.]/g, ''); });
-  $('ven-cfg-pct').addEventListener('input', function(){ this.value = this.value.replace(/[^\d,\.]/g, ''); });
-
-  // Fechar modais ao clicar fora
-  document.querySelectorAll('.ven-modal').forEach(function(m){
-    m.addEventListener('click', function(e){ if(e.target === m) m.classList.remove('open'); });
-  });
-
-  VEN.render();
-  console.log('VEN system initialized');
-};
-
-/* ============== HOOK NO LOGIN ============== */
-(function hook(){
-  function check(){
-    if(!VEN.ui._init && document.getElementById('tela-app') && document.getElementById('tela-app').style.display === 'block'){
-      VEN.init();
-    }
-  }
-  var be = document.getElementById('botao-entrar');
-  if(be) be.addEventListener('click', function(){ setTimeout(check, 200); });
-  var sn = document.getElementById('campo-senha');
-  if(sn) sn.addEventListener('keypress', function(e){ if(e.key === 'Enter') setTimeout(check, 200); });
-  // Verificar periodicamente nos primeiros 5s (caso login ja esteja ativo)
-  var tries = 0;
-  var iv = setInterval(function(){ check(); tries++; if(tries > 25 || VEN.ui._init) clearInterval(iv); }, 200);
-})();
-
-})();
+// =====================================================================
+// INICIALIZAÇÃO
+// =====================================================================
+checkSession();
 
 </script>
+
 </body>
 </html>
