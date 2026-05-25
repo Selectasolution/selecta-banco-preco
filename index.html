@@ -7,6 +7,10 @@
 
 <!-- Tailwind CSS via CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
+
+<!-- jsPDF + AutoTable (para geração de orçamentos em PDF) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
 <script>
   tailwind.config = {
     theme: {
@@ -326,6 +330,7 @@
                 <th class="px-3 py-2 text-left font-medium">Condição</th>
                 <th class="px-3 py-2 text-left font-medium">Garantia</th>
                 <th class="px-3 py-2 text-center font-medium">Disp.</th>
+                <th class="px-3 py-2 text-center font-medium">Ação</th>
               </tr>
             </thead>
             <tbody id="modal-ofertas-tbody" class="divide-y divide-gray-700"></tbody>
@@ -534,6 +539,44 @@
 
 
 <!-- ============================================================ -->
+<!-- BOTÃO FLUTUANTE: CARRINHO DE ORÇAMENTO                         -->
+<!-- ============================================================ -->
+<button id="cart-floating" class="hidden-section fixed bottom-6 right-6 z-40 bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-full shadow-2xl font-medium flex items-center gap-2 transition-transform hover:scale-105">
+  <span>📋 Orçamento</span>
+  <span id="cart-count" class="bg-white text-primary-700 text-xs font-bold rounded-full px-2 py-0.5 min-w-[24px] text-center">0</span>
+</button>
+
+
+<!-- ============================================================ -->
+<!-- MODAL: CARRINHO DE ORÇAMENTO                                   -->
+<!-- ============================================================ -->
+<div id="modal-cart" class="hidden-section fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto">
+  <div class="bg-gray-800 rounded-lg border border-gray-700 max-w-4xl w-full my-8 shadow-2xl">
+    <header class="flex items-center justify-between px-6 py-4 border-b border-gray-700">
+      <h2 class="text-lg font-semibold">Orçamento — itens selecionados</h2>
+      <button id="cart-close" class="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+    </header>
+
+    <div class="px-6 py-4">
+      <div id="cart-body" class="space-y-3"></div>
+
+      <div id="cart-empty" class="hidden-section text-center text-gray-500 py-12">
+        Nenhum item adicionado. Abra um produto no Catálogo e clique em <span class="text-primary-500 font-medium">+ Adicionar</span> em uma das ofertas.
+      </div>
+    </div>
+
+    <footer class="flex items-center justify-between gap-2 px-6 py-4 border-t border-gray-700">
+      <button id="cart-clear" class="px-4 py-2 text-sm text-red-400 hover:text-red-300">Limpar carrinho</button>
+      <div class="flex gap-2">
+        <button id="cart-close-2" class="px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-md">Continuar adicionando</button>
+        <button id="cart-generate-pdf" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 rounded-md font-medium">Gerar PDFs</button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
 <!-- JAVASCRIPT                                                     -->
 <!-- ============================================================ -->
 <script type="module">
@@ -558,6 +601,7 @@ const state = {
   page: 0,
   total: 0,
   filters: { search: '', prefixo: '', marca: '', fornecedor: '' },
+  cart: JSON.parse(localStorage.getItem('selecta_cart_licitacao') || '{}'),
   apple: {
     categorias: [],
     produtos: [],
@@ -641,6 +685,7 @@ function enterApp() {
   switchTab('catalogo');
   loadFilters();
   loadCatalog();
+  updateCartUI();
 }
 
 // =====================================================================
@@ -745,6 +790,10 @@ async function openProductDetail(produtoId) {
 
   const condPT = { novo: 'Novo', novo_oem: 'Novo OEM', recondicionado: 'Recondicionado', usado: 'Usado', swap: 'Swap' };
   const garPT = { br: 'BR', py: 'PY', fabricante: 'Fabricante', sem_garantia: 'Sem garantia', nao_declarada: '—' };
+
+  // Guarda contexto do produto pra usar no addToCart
+  state.modalProdutoAtual = produto;
+
   $('#modal-ofertas-tbody').innerHTML = (ofertas || []).map(o => `
     <tr>
       <td class="px-3 py-2 font-medium">${o.fornecedores.nome_curto}</td>
@@ -754,12 +803,227 @@ async function openProductDetail(produtoId) {
       <td class="px-3 py-2 text-xs">${condPT[o.condicao] || o.condicao}</td>
       <td class="px-3 py-2 text-xs">${garPT[o.garantia] || o.garantia}</td>
       <td class="px-3 py-2 text-center">${o.disponivel ? '✓' : '✗'}</td>
+      <td class="px-3 py-2 text-center">
+        <button class="add-to-cart-btn text-xs bg-primary-600 hover:bg-primary-700 text-white px-2 py-1 rounded font-medium"
+                data-oferta-id="${o.id}"
+                data-sku="${(o.sku_fornecedor || '').replace(/"/g, '&quot;')}"
+                data-desc="${(o.desc_original || '').replace(/"/g, '&quot;')}"
+                data-fornecedor-id="${o.fornecedor_id}"
+                data-fornecedor-nome="${o.fornecedores.nome_curto.replace(/"/g, '&quot;')}">
+          + Add
+        </button>
+      </td>
     </tr>`).join('');
+
+  // Listener nos botões de adicionar ao orçamento
+  $$('#modal-ofertas-tbody .add-to-cart-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const fallbackDesc = `${state.modalProdutoAtual.marca || ''} ${state.modalProdutoAtual.descricao || ''}`.trim();
+      addToCart({
+        oferta_id: btn.dataset.ofertaId,
+        sku: btn.dataset.sku,
+        descricao: btn.dataset.desc || fallbackDesc,
+        fornecedor_id: btn.dataset.fornecedorId,
+        fornecedor_nome: btn.dataset.fornecedorNome,
+      });
+    });
+  });
+
   $('#modal-desc-originais').innerHTML = (ofertas || []).map(o => `<div><span class="text-primary-500">[${o.fornecedores.nome_curto}]</span> ${o.desc_original || '(sem descrição original)'}</div>`).join('');
   show('#modal-product');
 }
 
 function closeModal() { hide('#modal-product'); }
+
+// =====================================================================
+// CARRINHO DE ORÇAMENTO (gera PDF para fornecedor confirmar preço)
+// =====================================================================
+function saveCart() {
+  localStorage.setItem('selecta_cart_licitacao', JSON.stringify(state.cart));
+}
+
+function updateCartUI() {
+  const count = Object.keys(state.cart).length;
+  if (count === 0) {
+    hide('#cart-floating');
+  } else {
+    $('#cart-count').textContent = count;
+    show('#cart-floating');
+  }
+}
+
+function addToCart(item) {
+  const existing = state.cart[item.oferta_id];
+  const defaultQty = existing ? existing.qty : 1;
+  const qtyStr = prompt(`Quantidade desejada para "${item.descricao || item.sku}":`, defaultQty);
+  if (qtyStr === null) return;
+  const qty = parseInt(qtyStr);
+  if (!qty || qty < 1) { alert('Quantidade inválida.'); return; }
+  state.cart[item.oferta_id] = { ...item, qty };
+  saveCart();
+  updateCartUI();
+  // Feedback visual leve: troca cor do botão por 1s
+  const btn = document.querySelector(`.add-to-cart-btn[data-oferta-id="${item.oferta_id}"]`);
+  if (btn) {
+    const original = btn.textContent;
+    btn.textContent = '✓ Adicionado';
+    btn.classList.add('bg-primary-700');
+    setTimeout(() => { btn.textContent = original; btn.classList.remove('bg-primary-700'); }, 1200);
+  }
+}
+
+function removeFromCart(ofertaId) {
+  delete state.cart[ofertaId];
+  saveCart();
+  updateCartUI();
+  renderCartModal();
+}
+
+function clearCart() {
+  if (!confirm('Limpar todos os itens do orçamento?')) return;
+  state.cart = {};
+  saveCart();
+  updateCartUI();
+  hide('#modal-cart');
+}
+
+function openCartModal() {
+  renderCartModal();
+  show('#modal-cart');
+}
+
+function renderCartModal() {
+  const items = Object.values(state.cart);
+  if (items.length === 0) {
+    $('#cart-body').innerHTML = '';
+    show('#cart-empty');
+    $('#cart-generate-pdf').disabled = true;
+    $('#cart-generate-pdf').classList.add('opacity-50', 'cursor-not-allowed');
+    return;
+  }
+  hide('#cart-empty');
+  $('#cart-generate-pdf').disabled = false;
+  $('#cart-generate-pdf').classList.remove('opacity-50', 'cursor-not-allowed');
+
+  // Agrupar por fornecedor
+  const groups = {};
+  items.forEach(it => {
+    if (!groups[it.fornecedor_id]) groups[it.fornecedor_id] = { nome: it.fornecedor_nome, items: [] };
+    groups[it.fornecedor_id].items.push(it);
+  });
+
+  $('#cart-body').innerHTML = Object.entries(groups).map(([fid, g]) => `
+    <div class="bg-gray-900 rounded-md border border-gray-700 overflow-hidden">
+      <div class="bg-gray-800 px-3 py-2 font-medium text-sm flex justify-between items-center">
+        <span>${g.nome}</span>
+        <span class="text-gray-400 text-xs">${g.items.length} ${g.items.length === 1 ? 'item' : 'itens'}</span>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-gray-800/50 text-xs uppercase text-gray-400">
+          <tr>
+            <th class="px-3 py-1.5 text-left font-medium">SKU</th>
+            <th class="px-3 py-1.5 text-left font-medium">Descrição</th>
+            <th class="px-3 py-1.5 text-center font-medium">Qtd</th>
+            <th class="px-3 py-1.5"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${g.items.map(it => `
+            <tr class="border-t border-gray-700">
+              <td class="px-3 py-2 font-mono text-xs text-gray-400">${it.sku || '—'}</td>
+              <td class="px-3 py-2 text-gray-200 max-w-md">${it.descricao || '—'}</td>
+              <td class="px-3 py-2 text-center font-mono">${it.qty}</td>
+              <td class="px-3 py-2 text-center">
+                <button class="cart-remove text-red-400 hover:text-red-300 text-xs" data-id="${it.oferta_id}">Remover</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `).join('');
+
+  $$('.cart-remove').forEach(b => b.addEventListener('click', e => removeFromCart(e.target.dataset.id)));
+}
+
+function generatePDFs() {
+  const items = Object.values(state.cart);
+  if (items.length === 0) return;
+
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert('Biblioteca de PDF ainda carregando. Tente novamente em alguns segundos.');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const hoje = new Date();
+  const dataPT = hoje.toLocaleDateString('pt-BR');
+  const dataFile = hoje.toISOString().slice(0, 10);
+
+  // Agrupar por fornecedor
+  const groups = {};
+  items.forEach(it => {
+    if (!groups[it.fornecedor_id]) groups[it.fornecedor_id] = { nome: it.fornecedor_nome, items: [] };
+    groups[it.fornecedor_id].items.push(it);
+  });
+
+  Object.entries(groups).forEach(([fid, g]) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+
+    // Título
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ORÇAMENTO', pageWidth / 2, 22, { align: 'center' });
+
+    // Linha verde
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(0.8);
+    doc.line(14, 28, pageWidth - 14, 28);
+
+    // Cabeçalho
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Data: ${dataPT}`, 14, 38);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Fornecedor: ${g.nome}`, 14, 46);
+
+    // Texto orientativo
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(70);
+    doc.text('Solicitamos cotação dos itens abaixo. Favor confirmar preço e disponibilidade.', 14, 56);
+    doc.setTextColor(0);
+
+    // Tabela
+    doc.autoTable({
+      startY: 64,
+      head: [['SKU', 'Descrição', 'Qtd', 'Preço unit. (R$)']],
+      body: g.items.map(it => [it.sku || '—', it.descricao || '—', String(it.qty), '']),
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [245, 247, 250] },
+      columnStyles: {
+        0: { cellWidth: 32 },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 16, halign: 'center' },
+        3: { cellWidth: 42, halign: 'right' },
+      },
+      margin: { left: 14, right: 14 },
+    });
+
+    // Rodapé
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text('Solicitado via SELECTA · Banco de Preço', pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    // Nome do arquivo: orcamento_FORNECEDOR_AAAA-MM-DD.pdf
+    const slug = g.nome.replace(/[^a-zA-Z0-9]/g, '_');
+    doc.save(`orcamento_${slug}_${dataFile}.pdf`);
+  });
+}
+
 
 // =====================================================================
 // TABS PRINCIPAIS
@@ -1328,6 +1592,7 @@ document.addEventListener('keydown', e => {
     if (!$('#modal-apple-produto').classList.contains('hidden-section')) hide('#modal-apple-produto');
     if (!$('#modal-apple-venda').classList.contains('hidden-section')) hide('#modal-apple-venda');
     if (!$('#modal-apple-compra').classList.contains('hidden-section')) hide('#modal-apple-compra');
+    if (!$('#modal-cart').classList.contains('hidden-section')) hide('#modal-cart');
   }
 });
 
@@ -1368,6 +1633,14 @@ $$('.ap-modal-close').forEach(btn => btn.addEventListener('click', () => hide('#
   const m = $('#' + mid);
   m.addEventListener('click', e => { if (e.target === m) hide(m); });
 });
+
+// Carrinho de orçamento
+$('#cart-floating').addEventListener('click', openCartModal);
+$('#cart-close').addEventListener('click', () => hide('#modal-cart'));
+$('#cart-close-2').addEventListener('click', () => hide('#modal-cart'));
+$('#cart-clear').addEventListener('click', clearCart);
+$('#cart-generate-pdf').addEventListener('click', generatePDFs);
+$('#modal-cart').addEventListener('click', e => { if (e.target === $('#modal-cart')) hide('#modal-cart'); });
 
 // =====================================================================
 // INICIALIZAÇÃO
