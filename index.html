@@ -11,6 +11,10 @@
 <!-- jsPDF + AutoTable (para geração de orçamentos em PDF) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
+
+<!-- Lucide Icons (usado pela sub-aba Importação) -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
 <script>
   tailwind.config = {
     theme: {
@@ -38,6 +42,79 @@
   .apple-subtab-btn { color: #9ca3af; border-bottom: 2px solid transparent; }
   .apple-subtab-btn.active { color: #10b981; border-bottom-color: #10b981; }
   .apple-subtab-btn:hover:not(.active) { color: #e5e7eb; }
+
+  /* =========================================================
+     SUB-ABA IMPORTAÇÃO — estilos próprios (adaptado dark)
+     ========================================================= */
+  .imp-subnav-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 0.875rem; font-size: 0.875rem; font-weight: 500;
+    color: #9ca3af; border-bottom: 2px solid transparent;
+    transition: all .15s ease; cursor: pointer; white-space: nowrap;
+    background: transparent; border-radius: 0;
+  }
+  .imp-subnav-btn:hover { color: #e5e7eb; }
+  .imp-subnav-btn.active {
+    color: #10b981; border-bottom-color: #10b981;
+  }
+  .imp-subnav-btn .lucide { width: 1rem; height: 1rem; }
+
+  .imp-kpi {
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    display: flex; flex-direction: column; gap: 0.25rem;
+  }
+  .imp-kpi__label {
+    font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: #9ca3af; font-weight: 600;
+  }
+  .imp-kpi__value {
+    font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums;
+    color: #f3f4f6;
+  }
+  .imp-kpi__hint { font-size: 0.75rem; color: #9ca3af; }
+  .imp-kpi--accent .imp-kpi__value { color: #10b981; }
+  .imp-kpi--warn   .imp-kpi__value { color: #f59e0b; }
+  .imp-kpi--danger .imp-kpi__value { color: #ef4444; }
+
+  .imp-empty {
+    text-align: center; padding: 3rem 1.5rem; color: #9ca3af;
+    border: 2px dashed #374151; border-radius: 0.5rem;
+    background: #111827;
+  }
+  .imp-empty .lucide {
+    width: 2.5rem; height: 2.5rem; margin: 0 auto 0.75rem; opacity: 0.4;
+  }
+  .imp-empty h3 { color: #d1d5db; }
+  .imp-empty code {
+    background: #1f2937; padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem; font-size: 0.75rem;
+    font-family: ui-monospace, "SF Mono", monospace;
+    color: #10b981;
+  }
+
+  .imp-btn-primary {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 1rem; background: #059669; color: white;
+    border-radius: 0.375rem; font-weight: 500; font-size: 0.875rem;
+    transition: background .15s ease; cursor: pointer; border: none;
+  }
+  .imp-btn-primary:hover { background: #047857; }
+  .imp-btn-primary .lucide { width: 1rem; height: 1rem; }
+  .imp-btn-secondary { background: #374151; }
+  .imp-btn-secondary:hover { background: #4b5563; }
+
+  .imp-pane { display: none; }
+  .imp-pane.active { display: block; }
+
+  .imp-version-tag {
+    display: inline-block; padding: 0.125rem 0.5rem;
+    background: #1f2937; border: 1px solid #374151;
+    border-radius: 9999px; font-size: 0.6875rem; color: #9ca3af;
+    font-weight: 500; font-family: ui-monospace, "SF Mono", monospace;
+  }
 </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen">
@@ -90,6 +167,7 @@
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="catalogo">Catálogo</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="apple">Apple</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="simulador">Simulador PC</button>
+          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="importacao">📦 Importação</button>
         </nav>
       </div>
       <div class="flex items-center gap-3 text-sm">
@@ -287,6 +365,154 @@
   <!-- =========================================================== -->
   <section id="tab-simulador" class="hidden-section">
     <iframe src="montador.html" class="w-full" style="height: calc(100vh - 64px); border: 0;"></iframe>
+  </section>
+
+
+  <!-- =========================================================== -->
+  <!-- TAB: IMPORTAÇÃO (Selecta Import OS — Fase 0)                  -->
+  <!-- =========================================================== -->
+  <section id="tab-importacao" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
+
+    <header class="flex items-start justify-between mb-6 gap-4 flex-wrap">
+      <div>
+        <div class="flex items-center gap-3 mb-1">
+          <i data-lucide="ship" class="w-7 h-7 text-primary-500"></i>
+          <h2 class="text-2xl font-bold tracking-tight text-gray-100">Importação</h2>
+          <span class="imp-version-tag">v0.2 · Fase 0</span>
+        </div>
+        <p class="text-sm text-gray-400">
+          Pipeline ponta-a-ponta de importação direta China → Brasil.
+          Simulação, operações em 9 fases, tracking integrado, base regulatória.
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button class="imp-btn-primary" onclick="importacao.iniciarSimulacao()">
+          <i data-lucide="calculator"></i> Nova simulação
+        </button>
+        <button class="imp-btn-primary imp-btn-secondary" onclick="importacao.iniciarOperacao()">
+          <i data-lucide="plus"></i> Nova operação
+        </button>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div class="imp-kpi imp-kpi--accent">
+        <div class="imp-kpi__label">Em curso</div>
+        <div class="imp-kpi__value" id="imp-kpi-em-curso">—</div>
+        <div class="imp-kpi__hint">operações ativas</div>
+      </div>
+      <div class="imp-kpi imp-kpi--warn">
+        <div class="imp-kpi__label">Próx. 7 dias</div>
+        <div class="imp-kpi__value" id="imp-kpi-prazo">—</div>
+        <div class="imp-kpi__hint">prazos críticos</div>
+      </div>
+      <div class="imp-kpi">
+        <div class="imp-kpi__label">Câmbio</div>
+        <div class="imp-kpi__value" id="imp-kpi-cambio">—</div>
+        <div class="imp-kpi__hint" id="imp-kpi-cambio-fonte">PTAX</div>
+      </div>
+      <div class="imp-kpi">
+        <div class="imp-kpi__label">Catálogo</div>
+        <div class="imp-kpi__value" id="imp-kpi-produtos">—</div>
+        <div class="imp-kpi__hint">produtos cadastrados</div>
+      </div>
+    </div>
+
+    <nav class="border-b border-gray-700 mb-6 overflow-x-auto">
+      <div class="flex gap-1 min-w-max">
+        <button class="imp-subnav-btn active" data-pane="simulacao">
+          <i data-lucide="calculator"></i> Simulação
+        </button>
+        <button class="imp-subnav-btn" data-pane="operacoes">
+          <i data-lucide="package"></i> Operações
+        </button>
+        <button class="imp-subnav-btn" data-pane="catalogo">
+          <i data-lucide="library"></i> Catálogo
+        </button>
+        <button class="imp-subnav-btn" data-pane="fornecedores">
+          <i data-lucide="factory"></i> Fornecedores
+        </button>
+        <button class="imp-subnav-btn" data-pane="cambio">
+          <i data-lucide="coins"></i> Câmbio &amp; Fretes
+        </button>
+        <button class="imp-subnav-btn" data-pane="regulatorio">
+          <i data-lucide="scale"></i> Base Regulatória
+        </button>
+      </div>
+    </nav>
+
+    <div class="imp-pane active" id="imp-pane-simulacao">
+      <div class="imp-empty">
+        <i data-lucide="calculator"></i>
+        <h3 class="text-base font-semibold mb-1">Simulação de custo landed</h3>
+        <p class="text-sm max-w-md mx-auto">
+          Input livre do produto → classificação NCM via IA → cálculo completo de custo landed
+          (FOB + frete + tributos federais + ICMS-PI + despesas + margem-alvo).
+        </p>
+        <p class="text-xs mt-3 text-gray-500">A ser construído na <strong>Fase 2</strong>.</p>
+      </div>
+    </div>
+
+    <div class="imp-pane" id="imp-pane-operacoes">
+      <div class="imp-empty">
+        <i data-lucide="package"></i>
+        <h3 class="text-base font-semibold mb-1">Operações em curso</h3>
+        <p class="text-sm max-w-md mx-auto">
+          Workflow das 9 fases por operação, tracking aéreo via AWB, status TECA/Siscomex,
+          documentos anexados, pagamentos e timeline física.
+        </p>
+        <p class="text-xs mt-3 text-gray-500">A ser construído na <strong>Fase 4</strong>.</p>
+      </div>
+    </div>
+
+    <div class="imp-pane" id="imp-pane-catalogo">
+      <div class="imp-empty">
+        <i data-lucide="library"></i>
+        <h3 class="text-base font-semibold mb-1">Catálogo de produtos</h3>
+        <p class="text-sm max-w-md mx-auto">
+          Banco proprietário Selecta (tabela <code>imp_produtos</code>). Cresce a cada simulação salva.
+          NCM, alíquotas, homologações vinculadas, histórico de FOB.
+        </p>
+        <p class="text-xs mt-3 text-gray-500">A ser construído na <strong>Fase 3</strong>.</p>
+      </div>
+    </div>
+
+    <div class="imp-pane" id="imp-pane-fornecedores">
+      <div class="imp-empty">
+        <i data-lucide="factory"></i>
+        <h3 class="text-base font-semibold mb-1">Cadastro de fornecedores</h3>
+        <p class="text-sm max-w-md mx-auto">
+          Fornecedores internacionais (tabela <code>imp_fornecedores</code> — distinta dos seus
+          fornecedores Apple do banco-preço). Termos comerciais, marcas distribuídas, ranking.
+        </p>
+        <p class="text-xs mt-3 text-gray-500">A ser construído na <strong>Fase 3</strong>.</p>
+      </div>
+    </div>
+
+    <div class="imp-pane" id="imp-pane-cambio">
+      <div class="imp-empty">
+        <i data-lucide="coins"></i>
+        <h3 class="text-base font-semibold mb-1">Câmbio &amp; Fretes</h3>
+        <p class="text-sm max-w-md mx-auto">
+          PTAX BACEN + spread efetivo Caixa/Itaú. Tabela de fretes aéreos SZX/HKG → VCP
+          com benchmarks de mercado e dados extraídos de operações reais.
+        </p>
+        <p class="text-xs mt-3 text-gray-500">A ser construído na <strong>Fase 5</strong>.</p>
+      </div>
+    </div>
+
+    <div class="imp-pane" id="imp-pane-regulatorio">
+      <div class="imp-empty">
+        <i data-lucide="scale"></i>
+        <h3 class="text-base font-semibold mb-1">Base Regulatória</h3>
+        <p class="text-sm max-w-md mx-auto">
+          Admin das fontes de dados: tabela NCM (TEC/TIPI), alíquotas ICMS-PI,
+          caches Anatel/INMETRO/INPI, legislação aduaneira monitorada.
+        </p>
+        <p class="text-xs mt-3 text-gray-500">A ser construído na <strong>Fase 1</strong>.</p>
+      </div>
+    </div>
+
   </section>
 
 </div>
@@ -686,22 +912,27 @@ function enterApp() {
   loadFilters();
   loadCatalog();
   updateCartUI();
+  // Inicializa módulo Importação (Selecta Import OS — Fase 0)
+  importacao.init({
+    supabaseClient: sb,
+    edgeFunctionUrl: `${CONFIG.SUPABASE_URL}/functions/v1/claude-proxy`
+  });
 }
 
 // =====================================================================
 // TAB: CATÁLOGO (licitação) — código existente
 // =====================================================================
 async function loadFilters() {
-  // Prefixos (usa view com DISTINCT pra evitar limite de 1000 linhas do Supabase)
-  const { data: prefixosData } = await sb.from('prefixos_distintos').select('prefixo');
+  const { data: prefixosData } = await sb.from('produtos').select('prefixo').order('prefixo');
   if (prefixosData) {
-    const prefixos = prefixosData.map(r => r.prefixo);
+    const prefixos = [...new Set(prefixosData.map(r => r.prefixo))].sort();
     $('#filter-prefixo').innerHTML = '<option value="">Todos</option>' + prefixos.map(p => `<option value="${p}">${p}</option>`).join('');
   }
-  // Marcas (usa view que já vem ordenada por contagem desc)
-  const { data: marcasData } = await sb.from('marcas_contagem').select('marca');
+  const { data: marcasData } = await sb.from('produtos').select('marca').not('marca', 'is', null).order('marca');
   if (marcasData) {
-    const top = marcasData.map(r => r.marca);
+    const c = {};
+    marcasData.forEach(r => { if (r.marca) c[r.marca] = (c[r.marca] || 0) + 1; });
+    const top = Object.entries(c).sort((a, b) => b[1] - a[1]).map(([m]) => m);
     $('#filter-marca').innerHTML = '<option value="">Todas</option>' + top.map(m => `<option value="${m}">${m}</option>`).join('');
   }
 }
@@ -716,17 +947,9 @@ async function loadCatalog() {
   if (state.filters.fornecedor) q = q.contains('fornecedores_disponiveis', [state.filters.fornecedor]);
   if (state.filters.search) {
     const s = state.filters.search.trim();
-    // Busca em código SLC ou descrição ou marca
     q = q.or(`codigo_slc.ilike.%${s}%,descricao.ilike.%${s}%,marca.ilike.%${s}%`);
   }
-
-  // Ordenação: com filtro/busca → menor preço primeiro; sem filtro → código
-  const hasFilter = state.filters.search || state.filters.prefixo || state.filters.marca || state.filters.fornecedor;
-  if (hasFilter) {
-    q = q.order('menor_brl', { ascending: true, nullsFirst: false });
-  } else {
-    q = q.order('codigo_slc');
-  }
+  q = q.order('codigo_slc');
   const { data, count, error } = await q;
   hide('#catalog-loader');
   if (error) {
@@ -757,9 +980,7 @@ function renderCatalog(items) {
   }
   const from = items.length > 0 ? state.page * CONFIG.PER_PAGE + 1 : 0;
   const to = state.page * CONFIG.PER_PAGE + items.length;
-  const hasFilter = state.filters.search || state.filters.prefixo || state.filters.marca || state.filters.fornecedor;
-  const sortHint = hasFilter ? ' · <span class="text-primary-500">ordenado por menor preço</span>' : '';
-  $('#catalog-info').innerHTML = `${state.total.toLocaleString('pt-BR')} produto(s) encontrado(s)${sortHint}`;
+  $('#catalog-info').textContent = `${state.total.toLocaleString('pt-BR')} produto(s) encontrado(s)`;
   $('#page-info').textContent = `${from}–${to} de ${state.total.toLocaleString('pt-BR')}`;
   $('#page-prev').disabled = state.page === 0;
   $('#page-next').disabled = (state.page + 1) * CONFIG.PER_PAGE >= state.total;
@@ -1048,9 +1269,10 @@ function switchTab(tabName) {
       btn.classList.add('text-gray-400', 'hover:bg-gray-700');
     }
   });
-  hide('#tab-catalogo'); hide('#tab-apple'); hide('#tab-simulador');
+  hide('#tab-catalogo'); hide('#tab-apple'); hide('#tab-simulador'); hide('#tab-importacao');
   show(`#tab-${tabName}`);
   if (tabName === 'apple') enterAppleTab();
+  if (tabName === 'importacao') importacao.onEnter();
 }
 
 // =====================================================================
@@ -1572,6 +1794,148 @@ async function saveAppleCompra() {
   hide('#modal-apple-compra');
   loadAppleCompras();
 }
+
+
+// =====================================================================
+// IMPORTAÇÃO (Selecta Import OS — Fase 0)
+// Adaptado do shell para o ambiente real do banco-preço
+// =====================================================================
+window.importacao = (function () {
+  'use strict';
+
+  const impState = {
+    paneAtivo: 'simulacao',
+    sb: null,                    // cliente Supabase compartilhado
+    edgeFunctionUrl: null,
+    kpisJaCarregados: false,
+  };
+
+  function init({ supabaseClient, edgeFunctionUrl }) {
+    impState.sb = supabaseClient;
+    impState.edgeFunctionUrl = edgeFunctionUrl;
+
+    document.querySelectorAll('.imp-subnav-btn').forEach((btn) => {
+      btn.addEventListener('click', () => showPane(btn.dataset.pane));
+    });
+
+    if (window.lucide && window.lucide.createIcons) {
+      window.lucide.createIcons();
+    }
+    console.log('[importacao] módulo inicializado (v0.2 — prefixo imp_)');
+  }
+
+  // Chamado por switchTab quando o usuário entra na aba Importação
+  function onEnter() {
+    if (window.lucide && window.lucide.createIcons) {
+      window.lucide.createIcons();
+    }
+    fetchKPIs();
+  }
+
+  function showPane(paneId) {
+    impState.paneAtivo = paneId;
+    document.querySelectorAll('.imp-subnav-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.pane === paneId);
+    });
+    document.querySelectorAll('.imp-pane').forEach((p) => {
+      p.classList.toggle('active', p.id === `imp-pane-${paneId}`);
+    });
+  }
+
+  async function fetchKPIs() {
+    if (!impState.sb) return;
+    try {
+      // Em curso — tabela imp_operacoes
+      const { count: emCurso } = await impState.sb
+        .from('imp_operacoes')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'em_curso');
+      setKpi('imp-kpi-em-curso', emCurso ?? 0);
+
+      // Prazos críticos (próximos 7 dias)
+      const hoje = new Date().toISOString().slice(0, 10);
+      const em7dias = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+      const { count: prazo } = await impState.sb
+        .from('imp_operacoes')
+        .select('id', { count: 'exact', head: true })
+        .in('status', ['rascunho', 'em_curso'])
+        .gte('prazo_contratual', hoje)
+        .lte('prazo_contratual', em7dias);
+      setKpi('imp-kpi-prazo', prazo ?? 0);
+
+      // Câmbio — view imp_vw_cambio_atual
+      const { data: cambio } = await impState.sb
+        .from('imp_vw_cambio_atual')
+        .select('ptax_venda, banco_melhor_spread')
+        .maybeSingle();
+      if (cambio?.ptax_venda) {
+        setKpi('imp-kpi-cambio', 'R$ ' + Number(cambio.ptax_venda).toFixed(4));
+        document.getElementById('imp-kpi-cambio-fonte').textContent =
+          'PTAX · melhor: ' + (cambio.banco_melhor_spread || '—');
+      } else {
+        setKpi('imp-kpi-cambio', '—');
+        document.getElementById('imp-kpi-cambio-fonte').textContent = 'PTAX (aguardando sync)';
+      }
+
+      // Catálogo — tabela imp_produtos
+      const { count: produtos } = await impState.sb
+        .from('imp_produtos')
+        .select('id', { count: 'exact', head: true })
+        .eq('ativo', true);
+      setKpi('imp-kpi-produtos', produtos ?? 0);
+
+      impState.kpisJaCarregados = true;
+    } catch (err) {
+      console.warn('[importacao] erro ao carregar KPIs:', err);
+    }
+  }
+
+  function setKpi(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  function iniciarSimulacao() {
+    showPane('simulacao');
+    console.log('[importacao] iniciarSimulacao — implementar na Fase 2');
+  }
+
+  function iniciarOperacao() {
+    showPane('operacoes');
+    console.log('[importacao] iniciarOperacao — implementar na Fase 4');
+  }
+
+  async function chamarClaudeProxy(endpoint, payload) {
+    if (!impState.edgeFunctionUrl) {
+      throw new Error('Edge Function URL não configurada');
+    }
+    const session = impState.sb ? (await impState.sb.auth.getSession()).data.session : null;
+
+    const resp = await fetch(`${impState.edgeFunctionUrl}/${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error || 'Erro desconhecido');
+    return data.result;
+  }
+
+  return {
+    init,
+    onEnter,
+    showPane,
+    fetchKPIs,
+    iniciarSimulacao,
+    iniciarOperacao,
+    chamarClaudeProxy,
+  };
+})();
+
 
 // =====================================================================
 // EVENT LISTENERS
