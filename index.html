@@ -122,15 +122,12 @@
           <label class="block text-xs font-medium text-gray-400 mb-1">Fornecedor</label>
           <select id="filter-fornecedor" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
             <option value="">Todos</option>
-            <option value="Atacado">Atacado</option>
-            <option value="Visão">Visão</option>
           </select>
         </div>
       </div>
       <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-700">
         <span id="catalog-info" class="text-sm text-gray-400">—</span>
         <div class="flex items-center gap-3">
-          <button id="export-cotacao-btn" class="text-xs bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-md font-medium" title="Exporta JSON para alimentar o agente de cotação">⬇ Exportar p/ Cotação</button>
           <button id="add-item-btn" class="text-xs bg-primary-600 hover:bg-primary-500 text-white px-3 py-1.5 rounded-md font-medium">+ Adicionar item</button>
           <button id="clear-filters" class="text-xs text-primary-500 hover:text-primary-400">Limpar filtros</button>
         </div>
@@ -414,7 +411,10 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-medium text-gray-400 mb-1">Fornecedor *</label>
-            <select id="add-fornecedor" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm"><option value="">— selecione —</option></select>
+            <div class="flex gap-2">
+              <select id="add-fornecedor" class="flex-1 bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm"><option value="">— selecione —</option></select>
+              <button id="add-novo-fornecedor-btn" type="button" class="bg-gray-700 hover:bg-gray-600 text-white px-3 rounded-md text-sm font-medium" title="Cadastrar novo fornecedor">+</button>
+            </div>
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-400 mb-1">SKU do fornecedor *</label>
@@ -916,6 +916,12 @@ async function loadFilters() {
     const top = marcasData.map(r => r.marca);
     $('#filter-marca').innerHTML = '<option value="">Todas</option>' + top.map(m => `<option value="${m}">${m}</option>`).join('');
   }
+  // Fornecedores (dinâmico, vem da tabela fornecedores)
+  const { data: fornData } = await sb.from('fornecedores').select('nome_curto').order('nome_curto');
+  if (fornData) {
+    $('#filter-fornecedor').innerHTML = '<option value="">Todos</option>' +
+      fornData.map(f => `<option value="${f.nome_curto}">${f.nome_curto}</option>`).join('');
+  }
 }
 
 async function loadCatalog() {
@@ -1021,6 +1027,44 @@ async function populateFornecedores() {
   }
   $('#add-fornecedor').innerHTML = '<option value="">— selecione —</option>' +
     fornecedoresCache.map(f => `<option value="${f.id}">${f.nome_curto} (${f.nome})</option>`).join('');
+}
+
+async function addNewFornecedor() {
+  const nomeCurto = prompt('Nome curto do fornecedor (ex: "Visão", "Atacado"):\nUsado em filtros e tabelas. Deve ser único.');
+  if (!nomeCurto || !nomeCurto.trim()) return;
+  const nc = nomeCurto.trim();
+
+  const nome = prompt(`Nome completo do fornecedor:\n(razão social ou nome comercial completo)`, nc);
+  if (!nome || !nome.trim()) return;
+  const nm = nome.trim();
+
+  try {
+    const { data, error } = await sb.from('fornecedores')
+      .insert({ nome_curto: nc, nome: nm })
+      .select('id, nome_curto, nome')
+      .single();
+
+    if (error) {
+      if ((error.message || '').match(/duplicate|unique/i)) {
+        alert(`Já existe fornecedor com nome curto "${nc}". Escolha outro.`);
+      } else {
+        alert('Erro: ' + error.message);
+      }
+      return;
+    }
+
+    // Invalida caches e re-popula
+    fornecedoresCache = null;
+    await populateFornecedores();
+    $('#add-fornecedor').value = data.id; // já seleciona o recém-criado
+
+    // Atualiza também o filter da página principal
+    loadFilters();
+
+    alert(`✓ Fornecedor "${data.nome_curto}" cadastrado e selecionado.`);
+  } catch (e) {
+    alert('Erro: ' + (e.message || JSON.stringify(e)));
+  }
 }
 
 function resetItemForm() {
@@ -2145,77 +2189,6 @@ $('#logout-btn').addEventListener('click', logout);
 
 $$('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
 
-// =====================================================================
-// EXPORT PARA AGENTE DE COTAÇÃO — gera banco_padrao.json
-// =====================================================================
-async function exportarBancoCotacao() {
-  const btn = $('#export-cotacao-btn');
-  const textoOriginal = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Exportando...';
-
-  try {
-    // Busca paginada (Supabase limita 1000 por request)
-    const PAGE = 1000;
-    let offset = 0;
-    let todos = [];
-
-    while (true) {
-      const { data, error } = await sb
-        .from('produtos_com_ofertas')
-        .select('codigo_slc, prefixo, marca, descricao, menor_usd, menor_brl, fornecedores_disponiveis')
-        .range(offset, offset + PAGE - 1)
-        .order('codigo_slc');
-
-      if (error) throw error;
-      if (!data || data.length === 0) break;
-
-      todos = todos.concat(data);
-      if (data.length < PAGE) break;
-      offset += PAGE;
-    }
-
-    // Filtra exclusões (Desktop e Notebook completos — agente não cota)
-    const itens = todos
-      .filter(p => p.prefixo !== 'DSK' && p.prefixo !== 'NB')
-      .map(p => ({
-        codigo_slc: p.codigo_slc,
-        prefixo: p.prefixo,
-        marca: p.marca || '',
-        descricao: p.descricao || '',
-        menor_brl: p.menor_brl,
-        menor_usd: p.menor_usd,
-        fornecedores: p.fornecedores_disponiveis || []
-      }));
-
-    const payload = {
-      versao: new Date().toISOString(),
-      total_itens: itens.length,
-      itens: itens
-    };
-
-    // Gera download
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'banco_padrao.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    btn.textContent = `✓ ${itens.length} itens`;
-    setTimeout(() => { btn.textContent = textoOriginal; btn.disabled = false; }, 2500);
-  } catch (e) {
-    alert('Erro ao exportar: ' + e.message);
-    btn.textContent = textoOriginal;
-    btn.disabled = false;
-  }
-}
-
-$('#export-cotacao-btn').addEventListener('click', exportarBancoCotacao);
-
 // Filtros catálogo (licitação)
 let searchTimer;
 $('#filter-search').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(applyFilters, 300); });
@@ -2248,6 +2221,7 @@ $('#add-prefixo').addEventListener('change', async () => {
 });
 $('#add-preco-usd').addEventListener('input', calcPrecoBRL);
 $('#add-taxa').addEventListener('input', calcPrecoBRL);
+$('#add-novo-fornecedor-btn').addEventListener('click', addNewFornecedor);
 $('#modal-edit-produto').addEventListener('click', () => {
   const pid = $('#modal-product').dataset.produtoId;
   if (pid) openItemModal('edit-produto', { produtoId: pid });
