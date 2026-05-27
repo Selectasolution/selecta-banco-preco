@@ -128,6 +128,7 @@
       <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-700">
         <span id="catalog-info" class="text-sm text-gray-400">—</span>
         <div class="flex items-center gap-3">
+          <button id="export-cotacao-btn" class="text-xs bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-md font-medium" title="Exporta JSON para alimentar o agente de cotação">⬇ Exportar p/ Cotação</button>
           <button id="add-item-btn" class="text-xs bg-primary-600 hover:bg-primary-500 text-white px-3 py-1.5 rounded-md font-medium">+ Adicionar item</button>
           <button id="clear-filters" class="text-xs text-primary-500 hover:text-primary-400">Limpar filtros</button>
         </div>
@@ -2190,6 +2191,74 @@ $('#login-email').addEventListener('keydown', e => { if (e.key === 'Enter') tryL
 $('#logout-btn').addEventListener('click', logout);
 
 $$('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+
+// =====================================================================
+// EXPORT PARA AGENTE DE COTAÇÃO — gera banco_padrao.json
+// =====================================================================
+async function exportarBancoCotacao() {
+  const btn = $('#export-cotacao-btn');
+  const textoOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Exportando...';
+
+  try {
+    const PAGE = 1000;
+    let offset = 0;
+    let todos = [];
+
+    while (true) {
+      const { data, error } = await sb
+        .from('produtos_com_ofertas')
+        .select('codigo_slc, prefixo, marca, descricao, menor_usd, menor_brl, fornecedores_disponiveis')
+        .range(offset, offset + PAGE - 1)
+        .order('codigo_slc');
+
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+
+      todos = todos.concat(data);
+      if (data.length < PAGE) break;
+      offset += PAGE;
+    }
+
+    const itens = todos
+      .filter(p => p.prefixo !== 'DSK' && p.prefixo !== 'NB')
+      .map(p => ({
+        codigo_slc: p.codigo_slc,
+        prefixo: p.prefixo,
+        marca: p.marca || '',
+        descricao: p.descricao || '',
+        menor_brl: p.menor_brl,
+        menor_usd: p.menor_usd,
+        fornecedores: p.fornecedores_disponiveis || []
+      }));
+
+    const payload = {
+      versao: new Date().toISOString(),
+      total_itens: itens.length,
+      itens: itens
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'banco_padrao.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    btn.textContent = `✓ ${itens.length} itens`;
+    setTimeout(() => { btn.textContent = textoOriginal; btn.disabled = false; }, 2500);
+  } catch (e) {
+    alert('Erro ao exportar: ' + e.message);
+    btn.textContent = textoOriginal;
+    btn.disabled = false;
+  }
+}
+
+$('#export-cotacao-btn').addEventListener('click', exportarBancoCotacao);
 
 // Filtros catálogo (licitação)
 let searchTimer;
