@@ -417,8 +417,8 @@
             </div>
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">SKU do fornecedor *</label>
-            <input id="add-sku-fornecedor" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Código interno do fornecedor">
+            <label class="block text-xs font-medium text-gray-400 mb-1">SKU do fornecedor <span class="text-gray-500 normal-case">(opcional)</span></label>
+            <input id="add-sku-fornecedor" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Vazio = gera automático (MAN-codigo)">
           </div>
         </div>
         <div class="grid grid-cols-3 gap-3">
@@ -1250,7 +1250,7 @@ function validateProduto(p) {
 
 function validateOferta(o) {
   if (!o.fornecedor_id) return 'Selecione o fornecedor.';
-  if (!o.sku_fornecedor) return 'Informe o SKU do fornecedor.';
+  // SKU é opcional — se vazio, será gerado automaticamente como MAN-{codigo_slc}
   if (!o.preco_usd || o.preco_usd <= 0) return 'Preço USD inválido.';
   if (!o.taxa_cambio || o.taxa_cambio <= 0) return 'Taxa de câmbio inválida.';
   if (!COND_OPTS.includes(o.condicao)) return 'Condição inválida.';
@@ -1265,6 +1265,9 @@ async function submitNewItemAction() {
   err = validateOferta(ofr); if (err) return showAddError(err);
 
   const codigoSlc = await getNextCodigoSlc(prod.prefixo);
+  // Auto-gera SKU se vazio: prefixo "MAN-" identifica cadastro manual
+  if (!ofr.sku_fornecedor) ofr.sku_fornecedor = `MAN-${codigoSlc}`;
+
   const { data: novoProduto, error: errP } = await sb.from('produtos').insert({
     codigo_slc: codigoSlc, ...prod
   }).select('id').single();
@@ -1279,7 +1282,7 @@ async function submitNewItemAction() {
 
   delete nextCodigoCache[prod.prefixo];
   closeItemModal();
-  alert(`✓ Item ${codigoSlc} cadastrado.`);
+  alert(`✓ Item ${codigoSlc} cadastrado.${ofr.sku_fornecedor.startsWith('MAN-') ? `\nSKU auto-gerado: ${ofr.sku_fornecedor}` : ''}`);
   loadCatalog(); loadFilters();
 }
 
@@ -1302,17 +1305,16 @@ async function submitNewOfertaAction() {
   const ofr = readOfertaFields();
   const err = validateOferta(ofr); if (err) return showAddError(err);
 
-  // Pegar descrição do produto pra default de desc_original
-  if (!ofr.desc_original) {
-    const { data: p } = await sb.from('produtos').select('descricao').eq('id', modalState.produtoId).single();
-    ofr.desc_original = (p && p.descricao) || '';
-  }
+  // Busca descricao + codigo_slc do produto pai (pra desc_original e SKU automático)
+  const { data: p } = await sb.from('produtos').select('descricao, codigo_slc').eq('id', modalState.produtoId).single();
+  if (!ofr.desc_original) ofr.desc_original = (p && p.descricao) || '';
+  if (!ofr.sku_fornecedor && p) ofr.sku_fornecedor = `MAN-${p.codigo_slc}`;
 
   const { error } = await sb.from('ofertas').insert({ produto_id: modalState.produtoId, ...ofr });
   if (error) throw error;
 
   closeItemModal();
-  alert('✓ Oferta adicionada.');
+  alert(`✓ Oferta adicionada.${ofr.sku_fornecedor.startsWith('MAN-') ? `\nSKU auto-gerado: ${ofr.sku_fornecedor}` : ''}`);
   loadCatalog();
   openProductDetail(modalState.produtoId); // re-abre detalhe com a oferta nova
 }
