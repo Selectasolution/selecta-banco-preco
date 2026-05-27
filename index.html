@@ -129,7 +129,10 @@
       </div>
       <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-700">
         <span id="catalog-info" class="text-sm text-gray-400">—</span>
-        <button id="clear-filters" class="text-xs text-primary-500 hover:text-primary-400">Limpar filtros</button>
+        <div class="flex items-center gap-3">
+          <button id="add-item-btn" class="text-xs bg-primary-600 hover:bg-primary-500 text-white px-3 py-1.5 rounded-md font-medium">+ Adicionar item</button>
+          <button id="clear-filters" class="text-xs text-primary-500 hover:text-primary-400">Limpar filtros</button>
+        </div>
       </div>
     </div>
 
@@ -306,7 +309,11 @@
         <h2 id="modal-marca" class="text-lg font-semibold text-gray-100"></h2>
         <p id="modal-descricao" class="text-sm text-gray-300 mt-1"></p>
       </div>
-      <button id="modal-close" class="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+      <div class="flex items-center gap-2">
+        <button id="modal-edit-produto" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2.5 py-1 rounded-md font-medium" title="Editar produto">✏ Editar</button>
+        <button id="modal-delete-produto" class="text-xs bg-red-900 hover:bg-red-800 text-white px-2.5 py-1 rounded-md font-medium" title="Apagar produto e todas as ofertas">🗑 Apagar</button>
+        <button id="modal-close" class="text-gray-400 hover:text-white text-2xl leading-none ml-2">×</button>
+      </div>
     </header>
     <div class="px-6 py-4 space-y-4">
       <div>
@@ -318,7 +325,10 @@
         <div id="modal-tags" class="flex flex-wrap gap-1.5"></div>
       </div>
       <div>
-        <h3 class="text-xs font-medium text-gray-400 uppercase mb-2">Ofertas dos fornecedores</h3>
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-xs font-medium text-gray-400 uppercase">Ofertas dos fornecedores</h3>
+          <button id="modal-add-oferta" class="text-xs bg-primary-600 hover:bg-primary-500 text-white px-2.5 py-1 rounded-md font-medium">+ Nova oferta</button>
+        </div>
         <div class="bg-gray-900 rounded-md border border-gray-700 overflow-hidden">
           <table class="w-full text-sm">
             <thead class="bg-gray-800 text-xs uppercase text-gray-400">
@@ -342,6 +352,134 @@
         <div id="modal-desc-originais" class="text-xs text-gray-400 space-y-1.5 font-mono"></div>
       </div>
     </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- MODAL: ITEM (criar/editar produto / criar/editar oferta)      -->
+<!-- ============================================================ -->
+<div id="modal-item" class="hidden-section fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto">
+  <div class="bg-gray-800 rounded-lg border border-gray-700 max-w-3xl w-full my-8 shadow-2xl">
+    <header class="flex items-center justify-between px-6 py-4 border-b border-gray-700">
+      <div>
+        <h2 id="modal-item-title" class="text-lg font-semibold">Adicionar item ao catálogo</h2>
+        <p id="modal-item-subtitle" class="text-xs text-gray-400 mt-0.5">Cria 1 produto + 1 oferta. Mantém padrão do banco.</p>
+      </div>
+      <button id="add-modal-close" class="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+    </header>
+    <div class="px-6 py-4 space-y-4">
+
+      <!-- IDENTIFICAÇÃO DO PRODUTO -->
+      <div id="block-produto" class="bg-gray-900 rounded-md p-3 border border-gray-700 space-y-3">
+        <h3 class="text-xs font-medium text-gray-400 uppercase">Produto</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Prefixo *</label>
+            <select id="add-prefixo" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm"><option value="">— selecione —</option></select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Código SLC</label>
+            <div id="add-codigo-preview" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm font-mono text-primary-500">—</div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Marca</label>
+            <input id="add-marca" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm uppercase" placeholder="Ex: CORSAIR">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Descrição completa * <span class="text-gray-500 normal-case">(CAIXA ALTA)</span></label>
+          <textarea id="add-descricao" rows="2" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm uppercase" placeholder="Ex: MEM DDR5 16GB 6000 CORSAIR VENGEANCE BLACK"></textarea>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Modelo</label>
+            <input id="add-modelo" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Ex: CMK16GX5M1B6000C36">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Categoria (opcional)</label>
+            <input id="add-categoria" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Ex: MEMORIA RAM">
+          </div>
+        </div>
+        <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+          <input id="add-ativo" type="checkbox" checked class="w-4 h-4">
+          <span>Produto ativo no catálogo</span>
+        </label>
+      </div>
+
+      <!-- IDENTIFICAÇÃO DA OFERTA -->
+      <div id="block-oferta" class="bg-gray-900 rounded-md p-3 border border-gray-700 space-y-3">
+        <h3 class="text-xs font-medium text-gray-400 uppercase">Oferta</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Fornecedor *</label>
+            <select id="add-fornecedor" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm"><option value="">— selecione —</option></select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">SKU do fornecedor *</label>
+            <input id="add-sku-fornecedor" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Código interno do fornecedor">
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Preço USD *</label>
+            <input id="add-preco-usd" type="number" step="0.01" min="0" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="0.00">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Taxa câmbio</label>
+            <input id="add-taxa" type="number" step="0.01" min="0" value="5.40" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Preço BRL (auto)</label>
+            <input id="add-preco-brl" type="text" readonly class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-primary-500" placeholder="0.00">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Condição *</label>
+            <select id="add-condicao" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm">
+              <option value="novo">Novo</option>
+              <option value="novo_oem">Novo OEM</option>
+              <option value="recondicionado">Recondicionado</option>
+              <option value="usado">Usado</option>
+              <option value="swap">Swap</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Garantia *</label>
+            <select id="add-garantia" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm">
+              <option value="py">PY (Paraguai)</option>
+              <option value="br">BR (Brasil)</option>
+              <option value="fabricante">Fabricante</option>
+              <option value="sem_garantia">Sem garantia</option>
+              <option value="nao_declarada">Não declarada</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1">Tempo de garantia</label>
+            <input id="add-garantia-tempo" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Ex: 12 meses">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Observações</label>
+          <textarea id="add-observacoes" rows="2" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Notas internas, restrições, etc."></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Descrição original do fornecedor</label>
+          <input id="add-desc-original" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Deixe vazio pra usar a mesma descrição">
+        </div>
+        <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+          <input id="add-disponivel" type="checkbox" checked class="w-4 h-4">
+          <span>Oferta disponível</span>
+        </label>
+      </div>
+
+      <div id="add-error" class="hidden-section text-sm text-red-400 bg-red-900/30 border border-red-800 rounded-md p-3"></div>
+    </div>
+    <footer class="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-700">
+      <button id="add-cancel" class="px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-md">Cancelar</button>
+      <button id="add-salvar" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 rounded-md font-medium">Salvar</button>
+    </footer>
   </div>
 </div>
 
@@ -853,6 +991,343 @@ function clearFilters() {
   applyFilters();
 }
 
+// =====================================================================
+// CRUD ITEM no catálogo (criar/editar produto, criar/editar/apagar oferta)
+// =====================================================================
+let nextCodigoCache = {};
+let fornecedoresCache = null;
+let modalState = { mode: null, produtoId: null, ofertaId: null };
+// modes: 'new-item' | 'edit-produto' | 'new-oferta' | 'edit-oferta'
+
+const COND_OPTS = ['novo', 'novo_oem', 'recondicionado', 'usado', 'swap'];
+const GAR_OPTS  = ['py', 'br', 'fabricante', 'sem_garantia', 'nao_declarada'];
+
+async function populatePrefixos() {
+  const { data } = await sb.from('prefixos_distintos').select('prefixo');
+  if (!data) return;
+  const opts = data.map(r => r.prefixo).map(p => {
+    const nome = PREFIXOS_LABELS[p];
+    const label = nome ? `${p} — ${nome}` : p;
+    return `<option value="${p}">${label}</option>`;
+  }).join('');
+  $('#add-prefixo').innerHTML = '<option value="">— selecione —</option>' + opts;
+}
+
+async function populateFornecedores() {
+  if (!fornecedoresCache) {
+    const { data } = await sb.from('fornecedores').select('id, nome_curto, nome').order('nome_curto');
+    fornecedoresCache = data || [];
+  }
+  $('#add-fornecedor').innerHTML = '<option value="">— selecione —</option>' +
+    fornecedoresCache.map(f => `<option value="${f.id}">${f.nome_curto} (${f.nome})</option>`).join('');
+}
+
+function resetItemForm() {
+  ['add-marca','add-descricao','add-modelo','add-categoria','add-sku-fornecedor',
+   'add-preco-usd','add-preco-brl','add-garantia-tempo','add-observacoes','add-desc-original']
+    .forEach(id => { $('#'+id).value = ''; });
+  $('#add-prefixo').value = '';
+  $('#add-fornecedor').value = '';
+  $('#add-codigo-preview').textContent = '—';
+  $('#add-taxa').value = '5.40';
+  $('#add-condicao').value = 'novo';
+  $('#add-garantia').value = 'py';
+  $('#add-ativo').checked = true;
+  $('#add-disponivel').checked = true;
+  $('#add-error').classList.add('hidden-section');
+}
+
+async function openItemModal(mode, params = {}) {
+  resetItemForm();
+  modalState = { mode, produtoId: params.produtoId || null, ofertaId: params.ofertaId || null };
+  await populatePrefixos();
+  await populateFornecedores();
+
+  // Visibilidade dos blocos + título + label do botão
+  if (mode === 'new-item') {
+    $('#modal-item-title').textContent = 'Adicionar item ao catálogo';
+    $('#modal-item-subtitle').textContent = 'Cria 1 produto + 1 oferta. Mantém padrão do banco.';
+    show('#block-produto'); show('#block-oferta');
+    $('#add-salvar').textContent = 'Salvar item';
+  } else if (mode === 'edit-produto') {
+    $('#modal-item-title').textContent = 'Editar produto';
+    $('#modal-item-subtitle').textContent = 'Edita apenas os campos do produto. Ofertas não são alteradas.';
+    show('#block-produto'); hide('#block-oferta');
+    $('#add-salvar').textContent = 'Salvar alterações';
+    await fillProdutoFields(params.produtoId);
+  } else if (mode === 'new-oferta') {
+    $('#modal-item-title').textContent = 'Nova oferta';
+    $('#modal-item-subtitle').textContent = 'Adiciona nova oferta ao produto atual.';
+    hide('#block-produto'); show('#block-oferta');
+    $('#add-salvar').textContent = 'Salvar oferta';
+  } else if (mode === 'edit-oferta') {
+    $('#modal-item-title').textContent = 'Editar oferta';
+    $('#modal-item-subtitle').textContent = 'Altera dados da oferta selecionada.';
+    hide('#block-produto'); show('#block-oferta');
+    $('#add-salvar').textContent = 'Salvar alterações';
+    await fillOfertaFields(params.ofertaId);
+  }
+
+  show('#modal-item');
+}
+
+async function fillProdutoFields(produtoId) {
+  const { data: p, error } = await sb.from('produtos').select('*').eq('id', produtoId).single();
+  if (error || !p) return showAddError('Não foi possível carregar o produto.');
+  $('#add-prefixo').value = p.prefixo || '';
+  $('#add-codigo-preview').textContent = p.codigo_slc || '—';
+  $('#add-marca').value = p.marca || '';
+  $('#add-descricao').value = p.descricao || '';
+  $('#add-modelo').value = p.modelo || '';
+  $('#add-categoria').value = p.categoria || '';
+  $('#add-ativo').checked = !!p.ativo;
+}
+
+async function fillOfertaFields(ofertaId) {
+  const { data: o, error } = await sb.from('ofertas').select('*').eq('id', ofertaId).single();
+  if (error || !o) return showAddError('Não foi possível carregar a oferta.');
+  $('#add-fornecedor').value = o.fornecedor_id || '';
+  $('#add-sku-fornecedor').value = o.sku_fornecedor || '';
+  $('#add-preco-usd').value = o.preco_usd || '';
+  $('#add-taxa').value = o.taxa_cambio || '5.40';
+  $('#add-preco-brl').value = o.preco_brl || '';
+  $('#add-condicao').value = o.condicao || 'novo';
+  $('#add-garantia').value = o.garantia || 'py';
+  $('#add-garantia-tempo').value = o.garantia_tempo || '';
+  $('#add-observacoes').value = o.observacoes || '';
+  $('#add-desc-original').value = o.desc_original || '';
+  $('#add-disponivel').checked = !!o.disponivel;
+}
+
+function closeItemModal() { hide('#modal-item'); }
+
+async function getNextCodigoSlc(prefixo) {
+  if (nextCodigoCache[prefixo]) return nextCodigoCache[prefixo];
+
+  // Considera AMBOS padrões: legacy "SLC-PREFIX-NNNN" + novo "PREFIX-NNNN"
+  // Garante continuidade total da numeração (sem reiniciar)
+  const { data } = await sb.from('produtos')
+    .select('codigo_slc')
+    .eq('prefixo', prefixo);
+
+  let maxNum = 0;
+  const reNew = new RegExp(`^${prefixo}-(\\d+)$`);
+  const reLeg = new RegExp(`^SLC-${prefixo}-(\\d+)$`);
+  for (const r of data || []) {
+    let m = r.codigo_slc.match(reNew);
+    if (m) { maxNum = Math.max(maxNum, parseInt(m[1], 10)); continue; }
+    m = r.codigo_slc.match(reLeg);
+    if (m) { maxNum = Math.max(maxNum, parseInt(m[1], 10)); }
+  }
+
+  const codigo = `${prefixo}-${String(maxNum + 1).padStart(4, '0')}`;
+  nextCodigoCache[prefixo] = codigo;
+  return codigo;
+}
+
+function calcPrecoBRL() {
+  const usd = parseFloat($('#add-preco-usd').value) || 0;
+  const taxa = parseFloat($('#add-taxa').value) || 5.4;
+  $('#add-preco-brl').value = (usd * taxa).toFixed(2);
+}
+
+function showAddError(msg) {
+  const el = $('#add-error');
+  el.textContent = msg;
+  el.classList.remove('hidden-section');
+}
+
+async function submitItemModal() {
+  $('#add-error').classList.add('hidden-section');
+  const btn = $('#add-salvar');
+  const originalLabel = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Salvando...';
+
+  try {
+    if (modalState.mode === 'new-item') {
+      await submitNewItemAction();
+    } else if (modalState.mode === 'edit-produto') {
+      await submitEditProdutoAction();
+    } else if (modalState.mode === 'new-oferta') {
+      await submitNewOfertaAction();
+    } else if (modalState.mode === 'edit-oferta') {
+      await submitEditOfertaAction();
+    }
+  } catch (e) {
+    const msg = e.message || JSON.stringify(e);
+    if (msg.includes('duplicate') || msg.includes('unique')) {
+      showAddError(`Conflito de unicidade. Já existe registro com esses dados. Mensagem: ${msg}`);
+    } else {
+      showAddError('Erro: ' + msg);
+    }
+  } finally {
+    btn.disabled = false; btn.textContent = originalLabel;
+  }
+}
+
+// ---------- ACTIONS ----------
+
+function readProdutoFields() {
+  return {
+    prefixo: $('#add-prefixo').value,
+    descricao: $('#add-descricao').value.trim().toUpperCase(),
+    marca: $('#add-marca').value.trim().toUpperCase() || null,
+    modelo: $('#add-modelo').value.trim() || null,
+    categoria: $('#add-categoria').value.trim() || null,
+    ativo: $('#add-ativo').checked
+  };
+}
+
+function readOfertaFields() {
+  const precoUsd = parseFloat($('#add-preco-usd').value);
+  const taxa = parseFloat($('#add-taxa').value);
+  return {
+    fornecedor_id: $('#add-fornecedor').value,
+    sku_fornecedor: $('#add-sku-fornecedor').value.trim(),
+    preco_usd: precoUsd,
+    taxa_cambio: taxa,
+    preco_brl: parseFloat((precoUsd * taxa).toFixed(2)),
+    condicao: $('#add-condicao').value,
+    garantia: $('#add-garantia').value,
+    garantia_tempo: $('#add-garantia-tempo').value.trim() || null,
+    observacoes: $('#add-observacoes').value.trim() || null,
+    desc_original: $('#add-desc-original').value.trim() || null,
+    disponivel: $('#add-disponivel').checked,
+    ativo: true
+  };
+}
+
+function validateProduto(p) {
+  if (!p.prefixo) return 'Selecione o prefixo.';
+  if (!p.descricao || p.descricao.length < 10) return 'Descrição muito curta (mínimo 10 caracteres).';
+  return null;
+}
+
+function validateOferta(o) {
+  if (!o.fornecedor_id) return 'Selecione o fornecedor.';
+  if (!o.sku_fornecedor) return 'Informe o SKU do fornecedor.';
+  if (!o.preco_usd || o.preco_usd <= 0) return 'Preço USD inválido.';
+  if (!o.taxa_cambio || o.taxa_cambio <= 0) return 'Taxa de câmbio inválida.';
+  if (!COND_OPTS.includes(o.condicao)) return 'Condição inválida.';
+  if (!GAR_OPTS.includes(o.garantia)) return 'Garantia inválida.';
+  return null;
+}
+
+async function submitNewItemAction() {
+  const prod = readProdutoFields();
+  let err = validateProduto(prod); if (err) return showAddError(err);
+  const ofr = readOfertaFields();
+  err = validateOferta(ofr); if (err) return showAddError(err);
+
+  const codigoSlc = await getNextCodigoSlc(prod.prefixo);
+  const { data: novoProduto, error: errP } = await sb.from('produtos').insert({
+    codigo_slc: codigoSlc, ...prod
+  }).select('id').single();
+  if (errP) throw errP;
+
+  ofr.desc_original = ofr.desc_original || prod.descricao;
+  const { error: errO } = await sb.from('ofertas').insert({ produto_id: novoProduto.id, ...ofr });
+  if (errO) {
+    await sb.from('produtos').delete().eq('id', novoProduto.id); // rollback manual
+    throw errO;
+  }
+
+  delete nextCodigoCache[prod.prefixo];
+  closeItemModal();
+  alert(`✓ Item ${codigoSlc} cadastrado.`);
+  loadCatalog(); loadFilters();
+}
+
+async function submitEditProdutoAction() {
+  const prod = readProdutoFields();
+  const err = validateProduto(prod); if (err) return showAddError(err);
+
+  const { error } = await sb.from('produtos').update({
+    ...prod, updated_at: new Date().toISOString()
+  }).eq('id', modalState.produtoId);
+  if (error) throw error;
+
+  closeItemModal();
+  alert('✓ Produto atualizado.');
+  loadCatalog(); loadFilters();
+  openProductDetail(modalState.produtoId); // re-abre detalhe atualizado
+}
+
+async function submitNewOfertaAction() {
+  const ofr = readOfertaFields();
+  const err = validateOferta(ofr); if (err) return showAddError(err);
+
+  // Pegar descrição do produto pra default de desc_original
+  if (!ofr.desc_original) {
+    const { data: p } = await sb.from('produtos').select('descricao').eq('id', modalState.produtoId).single();
+    ofr.desc_original = (p && p.descricao) || '';
+  }
+
+  const { error } = await sb.from('ofertas').insert({ produto_id: modalState.produtoId, ...ofr });
+  if (error) throw error;
+
+  closeItemModal();
+  alert('✓ Oferta adicionada.');
+  loadCatalog();
+  openProductDetail(modalState.produtoId); // re-abre detalhe com a oferta nova
+}
+
+async function submitEditOfertaAction() {
+  const ofr = readOfertaFields();
+  const err = validateOferta(ofr); if (err) return showAddError(err);
+
+  const { data: ofertaAntes } = await sb.from('ofertas').select('produto_id').eq('id', modalState.ofertaId).single();
+  const { error } = await sb.from('ofertas').update({
+    ...ofr, updated_at: new Date().toISOString()
+  }).eq('id', modalState.ofertaId);
+  if (error) throw error;
+
+  closeItemModal();
+  alert('✓ Oferta atualizada.');
+  loadCatalog();
+  if (ofertaAntes && ofertaAntes.produto_id) openProductDetail(ofertaAntes.produto_id);
+}
+
+// ---------- DELETE ----------
+
+async function deleteProdutoAction(produtoId) {
+  const { data: p } = await sb.from('produtos').select('codigo_slc, descricao').eq('id', produtoId).single();
+  if (!p) return alert('Produto não encontrado.');
+  const ok = confirm(`Apagar o produto "${p.codigo_slc}" — ${p.descricao.substring(0, 60)}...?\n\nTODAS as ofertas associadas também serão removidas. Esta ação não pode ser desfeita.`);
+  if (!ok) return;
+
+  // Apaga ofertas primeiro (caso a FK não tenha CASCADE)
+  const { error: errO } = await sb.from('ofertas').delete().eq('produto_id', produtoId);
+  if (errO) return alert('Erro ao apagar ofertas: ' + errO.message);
+  const { error: errP } = await sb.from('produtos').delete().eq('id', produtoId);
+  if (errP) return alert('Erro ao apagar produto: ' + errP.message);
+
+  closeModal(); // fecha modal de detalhe
+  alert(`✓ Produto ${p.codigo_slc} apagado.`);
+  loadCatalog();
+}
+
+async function deleteOfertaAction(ofertaId) {
+  const { data: o } = await sb.from('ofertas').select('produto_id, sku_fornecedor, fornecedores(nome_curto)').eq('id', ofertaId).single();
+  if (!o) return alert('Oferta não encontrada.');
+  const ok = confirm(`Apagar a oferta SKU "${o.sku_fornecedor}" (${o.fornecedores?.nome_curto || ''})?\n\nO produto continua existindo. Esta ação não pode ser desfeita.`);
+  if (!ok) return;
+
+  // Verifica se é a última oferta — se for, alerta
+  const { count } = await sb.from('ofertas').select('id', { count: 'exact', head: true }).eq('produto_id', o.produto_id);
+  if (count <= 1) {
+    const proceed = confirm('⚠ Esta é a ÚLTIMA oferta do produto. Após apagar, o produto vai ficar órfão (sem ofertas) no catálogo. Continuar?');
+    if (!proceed) return;
+  }
+
+  const { error } = await sb.from('ofertas').delete().eq('id', ofertaId);
+  if (error) return alert('Erro ao apagar oferta: ' + error.message);
+
+  alert('✓ Oferta apagada.');
+  loadCatalog();
+  openProductDetail(o.produto_id); // re-abre detalhe atualizado
+}
+
 // Detalhe produto (modal existente)
 async function openProductDetail(produtoId) {
   const { data: produto } = await sb.from('produtos').select('*').eq('id', produtoId).single();
@@ -874,8 +1349,9 @@ async function openProductDetail(produtoId) {
   const condPT = { novo: 'Novo', novo_oem: 'Novo OEM', recondicionado: 'Recondicionado', usado: 'Usado', swap: 'Swap' };
   const garPT = { br: 'BR', py: 'PY', fabricante: 'Fabricante', sem_garantia: 'Sem garantia', nao_declarada: '—' };
 
-  // Guarda contexto do produto pra usar no addToCart
+  // Guarda contexto do produto pra usar no addToCart e nos botões CRUD
   state.modalProdutoAtual = produto;
+  $('#modal-product').dataset.produtoId = produtoId;
 
   $('#modal-ofertas-tbody').innerHTML = (ofertas || []).map(o => `
     <tr>
@@ -887,14 +1363,18 @@ async function openProductDetail(produtoId) {
       <td class="px-3 py-2 text-xs">${garPT[o.garantia] || o.garantia}</td>
       <td class="px-3 py-2 text-center">${o.disponivel ? '✓' : '✗'}</td>
       <td class="px-3 py-2 text-center">
-        <button class="add-to-cart-btn text-xs bg-primary-600 hover:bg-primary-700 text-white px-2 py-1 rounded font-medium"
-                data-oferta-id="${o.id}"
-                data-sku="${(o.sku_fornecedor || '').replace(/"/g, '&quot;')}"
-                data-desc="${(o.desc_original || '').replace(/"/g, '&quot;')}"
-                data-fornecedor-id="${o.fornecedor_id}"
-                data-fornecedor-nome="${o.fornecedores.nome_curto.replace(/"/g, '&quot;')}">
-          + Add
-        </button>
+        <div class="inline-flex items-center gap-1">
+          <button class="edit-oferta-btn text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded" title="Editar oferta" data-oferta-id="${o.id}">✏</button>
+          <button class="del-oferta-btn text-xs bg-red-900 hover:bg-red-800 text-white px-2 py-1 rounded" title="Apagar oferta" data-oferta-id="${o.id}">🗑</button>
+          <button class="add-to-cart-btn text-xs bg-primary-600 hover:bg-primary-700 text-white px-2 py-1 rounded font-medium"
+                  data-oferta-id="${o.id}"
+                  data-sku="${(o.sku_fornecedor || '').replace(/"/g, '&quot;')}"
+                  data-desc="${(o.desc_original || '').replace(/"/g, '&quot;')}"
+                  data-fornecedor-id="${o.fornecedor_id}"
+                  data-fornecedor-nome="${o.fornecedores.nome_curto.replace(/"/g, '&quot;')}">
+            + Add
+          </button>
+        </div>
       </td>
     </tr>`).join('');
 
@@ -910,6 +1390,14 @@ async function openProductDetail(produtoId) {
         fornecedor_nome: btn.dataset.fornecedorNome,
       });
     });
+  });
+
+  // Listeners CRUD por oferta
+  $$('#modal-ofertas-tbody .edit-oferta-btn').forEach(btn => {
+    btn.addEventListener('click', () => openItemModal('edit-oferta', { ofertaId: btn.dataset.ofertaId }));
+  });
+  $$('#modal-ofertas-tbody .del-oferta-btn').forEach(btn => {
+    btn.addEventListener('click', () => deleteOfertaAction(btn.dataset.ofertaId));
   });
 
   $('#modal-desc-originais').innerHTML = (ofertas || []).map(o => `<div><span class="text-primary-500">[${o.fornecedores.nome_curto}]</span> ${o.desc_original || '(sem descrição original)'}</div>`).join('');
@@ -1669,6 +2157,38 @@ $('#filter-prefixo').addEventListener('change', () => {
 $('#filter-marca').addEventListener('change', applyFilters);
 $('#filter-fornecedor').addEventListener('change', applyFilters);
 $('#clear-filters').addEventListener('click', clearFilters);
+
+// CRUD itens (criar/editar produto/oferta + apagar)
+$('#add-item-btn').addEventListener('click', () => openItemModal('new-item'));
+$('#add-modal-close').addEventListener('click', closeItemModal);
+$('#add-cancel').addEventListener('click', closeItemModal);
+$('#add-salvar').addEventListener('click', submitItemModal);
+$('#add-prefixo').addEventListener('change', async () => {
+  // Atualiza preview do codigo_slc apenas em modo new-item (em edit-produto o código é fixo)
+  if (modalState.mode !== 'new-item') return;
+  const p = $('#add-prefixo').value;
+  if (p) {
+    $('#add-codigo-preview').textContent = '...';
+    $('#add-codigo-preview').textContent = await getNextCodigoSlc(p);
+  } else {
+    $('#add-codigo-preview').textContent = '—';
+  }
+});
+$('#add-preco-usd').addEventListener('input', calcPrecoBRL);
+$('#add-taxa').addEventListener('input', calcPrecoBRL);
+$('#modal-edit-produto').addEventListener('click', () => {
+  const pid = $('#modal-product').dataset.produtoId;
+  if (pid) openItemModal('edit-produto', { produtoId: pid });
+});
+$('#modal-delete-produto').addEventListener('click', () => {
+  const pid = $('#modal-product').dataset.produtoId;
+  if (pid) deleteProdutoAction(pid);
+});
+$('#modal-add-oferta').addEventListener('click', () => {
+  const pid = $('#modal-product').dataset.produtoId;
+  if (pid) openItemModal('new-oferta', { produtoId: pid });
+});
+
 $('#page-prev').addEventListener('click', () => { if (state.page > 0) { state.page--; loadCatalog(); window.scrollTo(0, 0); } });
 $('#page-next').addEventListener('click', () => { state.page++; loadCatalog(); window.scrollTo(0, 0); });
 
@@ -1677,6 +2197,7 @@ $('#modal-close').addEventListener('click', closeModal);
 $('#modal-product').addEventListener('click', e => { if (e.target === $('#modal-product')) closeModal(); });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    if (!$('#modal-item').classList.contains('hidden-section')) { closeItemModal(); return; }
     if (!$('#modal-product').classList.contains('hidden-section')) closeModal();
     if (!$('#modal-apple-produto').classList.contains('hidden-section')) hide('#modal-apple-produto');
     if (!$('#modal-apple-venda').classList.contains('hidden-section')) hide('#modal-apple-venda');
