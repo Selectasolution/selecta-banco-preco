@@ -1,6 +1,6 @@
 {
-  "versao": "2026-05-27T13:36:52.878Z",
-  "total_itens": 4851,
+  "versao": "2026-05-27T23:35:52.173Z",
+  "total_itens": 4857,
   "itens": [
     {
       "codigo_slc": "ACS-0016",
@@ -1070,6 +1070,17 @@
       ]
     },
     {
+      "codigo_slc": "ACS-0113",
+      "prefixo": "ACS",
+      "marca": "UTP STP",
+      "descricao": "ALICATE DE CRIMPAGEM 4P 6P 8P UTP STP JZ-70028",
+      "menor_brl": 16.2,
+      "menor_usd": 3,
+      "fornecedores": [
+        "FLYTEC"
+      ]
+    },
+    {
       "codigo_slc": "ADP-0012",
       "prefixo": "ADP",
       "marca": "",
@@ -1375,6 +1386,39 @@
       "menor_usd": 1650,
       "fornecedores": [
         "Visão"
+      ]
+    },
+    {
+      "codigo_slc": "AIO-0011",
+      "prefixo": "AIO",
+      "marca": "HP",
+      "descricao": "ALL IN ONE HP 21-B0525T I3-1005G1 1.2GHZ/ 8GB/ 256SSD/ 21.5\"/ DW/ W10 NEGRO",
+      "menor_brl": 2430,
+      "menor_usd": 450,
+      "fornecedores": [
+        "Matrix"
+      ]
+    },
+    {
+      "codigo_slc": "AIO-0012",
+      "prefixo": "AIO",
+      "marca": "HP",
+      "descricao": "HP ALL IN ONE 24-CB1210 INTEL CORE I5 1.3GHZ / MEMÓRIA 8GB / SSD 256GB / 23.8\" / WINDOWS 11",
+      "menor_brl": 4185,
+      "menor_usd": 775,
+      "fornecedores": [
+        "ProBook"
+      ]
+    },
+    {
+      "codigo_slc": "AIO-0013",
+      "prefixo": "AIO",
+      "marca": "MSI",
+      "descricao": "MSI PRO AP242P 14M-643US INTEL I7-14700/ 16GB/ 1TB SSD/ 23.8\" FHD/ W11",
+      "menor_brl": 4698,
+      "menor_usd": 870,
+      "fornecedores": [
+        "CellShop"
       ]
     },
     {
@@ -3278,6 +3322,17 @@
       "menor_usd": 3.5,
       "fornecedores": [
         "Visão"
+      ]
+    },
+    {
+      "codigo_slc": "CB-0150",
+      "prefixo": "CB",
+      "marca": "DLINK",
+      "descricao": "CABO DE REDE RJ45 1.8M CAT5 AZUL",
+      "menor_brl": 4.32,
+      "menor_usd": 0.8,
+      "fornecedores": [
+        "ICOMPY"
       ]
     },
     {
@@ -18494,6 +18549,17 @@
       ]
     },
     {
+      "codigo_slc": "RTR-0119",
+      "prefixo": "RTR",
+      "marca": "HIKVISION",
+      "descricao": "AC ROUTER WIFI 6 DS-3WR18X 1800MBPS GIGA 5 ANTENAS * 5DBI",
+      "menor_brl": 186.3,
+      "menor_usd": 34.5,
+      "fornecedores": [
+        "FLYTEC"
+      ]
+    },
+    {
       "codigo_slc": "SDC-0077",
       "prefixo": "SDC",
       "marca": "SANDISK",
@@ -19375,7 +19441,7 @@
     },
     {
       "codigo_slc": "SLC-ADP-0008",
-      "prefixo": "ADP",
+      "prefixo": "WAD",
       "marca": "TP-LINK",
       "descricao": "TP-LINK USB TL-WN8200ND 300MBPS",
       "menor_brl": 66.42,
@@ -19386,7 +19452,7 @@
     },
     {
       "codigo_slc": "SLC-ADP-0009",
-      "prefixo": "ADP",
+      "prefixo": "WAD",
       "marca": "TP-LINK",
       "descricao": "TP-LINK USB TL-WN821N 300MBPS",
       "menor_brl": 34.02,
@@ -19397,7 +19463,7 @@
     },
     {
       "codigo_slc": "SLC-ADP-0010",
-      "prefixo": "ADP",
+      "prefixo": "WAD",
       "marca": "TP-LINK",
       "descricao": "TP-LINK USB TL-WN822N 300MBPS",
       "menor_brl": 44.28,
@@ -19408,7 +19474,7 @@
     },
     {
       "codigo_slc": "SLC-ADP-0011",
-      "prefixo": "ADP",
+      "prefixo": "WAD",
       "marca": "TP-LINK",
       "descricao": "TP-LINK USB TL-WN823N 300MBPS",
       "menor_brl": 33.75,
