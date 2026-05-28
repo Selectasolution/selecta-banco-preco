@@ -200,7 +200,7 @@ td.np{color:var(--lock);font-style:italic}
 <div class="panel" id="catalogo">
   <div class="card">
     <div class="bar"><h2><span class="n">·</span>Catálogo de Peças — edite os preços</h2>
-      <span class="det">os preços ficam salvos neste navegador</span></div>
+      <span class="det">os preços são salvos no servidor e sincronizam entre aparelhos</span></div>
     <div id="catBody"></div>
     <button class="ghost" id="btnResetPrec" style="max-width:260px">Restaurar preços originais</button>
   </div>
@@ -334,6 +334,55 @@ function lsLoad(){
 }
 function lsSavePre(){ try{ localStorage.setItem(K_PRE,JSON.stringify(PRECOS)); }catch(e){ LS_OK=false; } }
 function lsSaveHis(){ try{ localStorage.setItem(K_HIS,JSON.stringify(HIST)); }catch(e){ LS_OK=false; } }
+
+/* ===================== SINCRONIZAÇÃO SUPABASE (preços) ===================== */
+/* Mantém a compatibilidade intacta: só os PREÇOS passam a viver no servidor,
+   com o localStorage atuando como cache offline. Leitura é pública (anon);
+   gravação exige login (reaproveita a sessão do app, mesma origem). */
+const SB_URL='https://odamfhflldygdfrnnjzu.supabase.co';
+const SB_KEY='sb_publishable_7q_884vzxsdTLOIw7ZMx7A_qiUuUc-n';
+let SB=null, SB_OK=false;
+async function sbInit(){
+  try{
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    SB = createClient(SB_URL, SB_KEY);   // pega a sessão de login já existente no navegador
+    SB_OK = true;
+    await sbLoadPrecos();
+  }catch(e){
+    SB_OK = false;
+    console.warn('[montador] Supabase indisponível — usando preços salvos neste navegador.', e);
+    toast('Sem conexão com o servidor: usando cache local.', true);
+  }
+}
+async function sbLoadPrecos(){
+  if(!SB) return;
+  try{
+    const { data, error } = await SB.from('montador_precos').select('component_id, preco');
+    if(error) throw error;
+    (data||[]).forEach(r=>{ if(r.preco!=null && IDX[r.component_id]) PRECOS[r.component_id]=Number(r.preco); });
+    lsSavePre();                          // espelha no cache offline
+    fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento(); renderCatalogo(); renderRanking();
+  }catch(e){
+    console.warn('[montador] Falha ao ler preços do servidor.', e);
+  }
+}
+async function sbSavePreco(id, val){
+  if(!SB) return false;
+  try{
+    if(val===null || val===undefined || isNaN(val)){
+      const { error } = await SB.from('montador_precos').delete().eq('component_id', id);
+      if(error) throw error;
+    }else{
+      const { error } = await SB.from('montador_precos')
+        .upsert({ component_id:id, preco:val, updated_at:new Date().toISOString() }, { onConflict:'component_id' });
+      if(error) throw error;
+    }
+    return true;
+  }catch(e){
+    console.warn('[montador] Falha ao sincronizar preço.', e);
+    return false;
+  }
+}
 
 function preco(id){ return (PRECOS[id]!==undefined && PRECOS[id]!==null) ? PRECOS[id] : IDX[id].preco; }
 
@@ -492,10 +541,19 @@ function renderCatalogo(){
   document.querySelectorAll('.precoEdit').forEach(inp=>{
     inp.addEventListener('change',()=>{
       const v=inp.value.trim();
-      if(v==='') delete PRECOS[inp.dataset.id];
-      else PRECOS[inp.dataset.id]=parseFloat(v);
+      const id=inp.dataset.id;
+      const val=(v==='')?null:parseFloat(v);
+      if(val===null||isNaN(val)) delete PRECOS[id];
+      else PRECOS[id]=val;
       lsSavePre(); fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
-      toast('Preço atualizado.');
+      if(SB_OK){
+        sbSavePreco(id, val).then(ok=>{
+          toast(ok ? 'Preço atualizado e sincronizado.'
+                   : 'Salvo localmente — NÃO sincronizou (verifique se está logado).', !ok);
+        });
+      }else{
+        toast('Preço salvo localmente (sem sincronização).');
+      }
     });
   });
 }
@@ -596,9 +654,10 @@ el('btnClr').addEventListener('click',limpar);
 el('btnExpHist').addEventListener('click',expHist);
 el('btnExpRank').addEventListener('click',expRank);
 el('btnResetPrec').addEventListener('click',()=>{
-  if(!confirm('Restaurar todos os preços para os valores originais do catálogo?')) return;
+  if(!confirm('Recarregar os preços do servidor?\n\nDescarta edições locais ainda não sincronizadas e volta ao último valor do servidor (ou ao valor original, onde não houver preço cadastrado no servidor).')) return;
   PRECOS={}; lsSavePre(); renderCatalogo(); fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
-  toast('Preços restaurados.');
+  if(SB_OK){ sbLoadPrecos().then(()=>toast('Preços recarregados do servidor.')); }
+  else { toast('Sem servidor: preços voltaram aos valores originais.'); }
 });
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
@@ -614,6 +673,7 @@ function init(){
   el('f_data').value=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
   fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
   renderCatalogo(); renderHistorico(); renderRanking();
+  sbInit();   // carrega/segue sincronizando os preços do servidor em segundo plano
 }
 init();
 </script>
