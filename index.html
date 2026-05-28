@@ -472,14 +472,31 @@
     </div>
 
     <div class="imp-pane" id="imp-pane-fornecedores">
-      <div class="imp-empty">
-        <i data-lucide="factory"></i>
-        <h3 class="text-base font-semibold mb-1">Cadastro de fornecedores</h3>
-        <p class="text-sm max-w-md mx-auto">
-          Fornecedores internacionais (tabela <code>imp_fornecedores</code> — distinta dos seus
-          fornecedores Apple do banco-preço). Termos comerciais, marcas distribuídas, ranking.
-        </p>
-        <p class="text-xs mt-3 text-gray-500">A ser construído na <strong>Fase 3</strong>.</p>
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div>
+          <h3 class="text-base font-semibold">Fornecedores validados</h3>
+          <p class="text-xs text-gray-500">Output do Agente de Validação de Importação &middot; tabela <code>imp_fornecedor_validacoes</code></p>
+        </div>
+        <button class="imp-btn-primary" onclick="importacao.abrirImportador()">
+          <i data-lucide="upload"></i> Importar Validação (JSON)
+        </button>
+      </div>
+
+      <!-- Importador (escondido por padrão) -->
+      <div id="imp-importador" class="hidden-section" style="background:#1f2937;border:1px solid #374151;border-radius:0.5rem;padding:1rem;margin-bottom:1rem;">
+        <label class="block text-sm font-medium mb-1 text-gray-300">Cole o JSON gerado pelo Agente de Validação</label>
+        <textarea id="imp-json-input" rows="8" placeholder='{ "fornecedor": { ... } }  ou  { "fornecedores": [ ... ] }'
+          style="width:100%;background:#111827;border:1px solid #374151;border-radius:0.375rem;padding:0.5rem;color:#e5e7eb;font-family:monospace;font-size:0.8rem;"></textarea>
+        <div class="flex gap-2 mt-2 flex-wrap">
+          <button class="imp-btn-primary" onclick="importacao.validarImportacao()"><i data-lucide="check-circle"></i> Validar</button>
+          <button class="imp-btn-primary imp-btn-secondary" onclick="importacao.fecharImportador()">Cancelar</button>
+        </div>
+        <div id="imp-import-preview" class="mt-3 text-sm"></div>
+      </div>
+
+      <!-- Lista de fornecedores validados -->
+      <div id="imp-fornecedores-lista">
+        <div class="imp-empty"><i data-lucide="loader"></i><p class="text-sm">Carregando...</p></div>
       </div>
     </div>
 
@@ -2637,6 +2654,8 @@ window.importacao = (function () {
     document.querySelectorAll('.imp-pane').forEach((p) => {
       p.classList.toggle('active', p.id === `imp-pane-${paneId}`);
     });
+    if (paneId === 'fornecedores') listarFornecedores();
+    if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
   }
 
   async function fetchKPIs() {
@@ -2722,6 +2741,208 @@ window.importacao = (function () {
     return data.result;
   }
 
+  // =====================================================================
+  // IMPORTADOR DE VALIDAÇÕES (Agente de Validação -> banco)
+  // =====================================================================
+  const IMP_SLUG_RE = /^[a-z0-9]+(_[a-z0-9]+)+$/;
+
+  function impNum(v) { return (v === null || v === undefined || isNaN(Number(v))) ? null : Number(v); }
+  function impInt(v) { return (v === null || v === undefined || isNaN(parseInt(v, 10))) ? null : parseInt(v, 10); }
+  function impEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  function abrirImportador() {
+    const box = document.getElementById('imp-importador');
+    if (box) box.classList.remove('hidden-section');
+    const ta = document.getElementById('imp-json-input');
+    if (ta) ta.value = '';
+    const pv = document.getElementById('imp-import-preview');
+    if (pv) pv.innerHTML = '';
+  }
+
+  function fecharImportador() {
+    const box = document.getElementById('imp-importador');
+    if (box) box.classList.add('hidden-section');
+  }
+
+  // Normaliza o JSON colado em array de fornecedores
+  function impExtrair(raw) {
+    let obj;
+    try { obj = JSON.parse(raw); } catch (e) { throw new Error('JSON inválido: ' + e.message); }
+    if (obj && Array.isArray(obj.fornecedores)) return obj.fornecedores;
+    if (obj && obj.fornecedor) return [obj.fornecedor];
+    if (Array.isArray(obj)) return obj;
+    if (obj && obj.empresa && obj.produto) return [obj];
+    throw new Error('Estrutura não reconhecida. Esperado { fornecedor: {} } ou { fornecedores: [] }.');
+  }
+
+  // Valida um fornecedor do JSON. Retorna lista de erros (vazia = ok).
+  function impValidarUm(f, idx) {
+    const erros = [];
+    const tag = 'Fornecedor #' + (idx + 1);
+    if (!f || typeof f !== 'object') { return [tag + ': não é um objeto']; }
+    const chave = f.produto && f.produto.chave;
+    if (!chave) erros.push(tag + ': produto.chave ausente');
+    else if (!IMP_SLUG_RE.test(chave)) erros.push(tag + ': produto.chave "' + chave + '" fora do padrão slug (ex: ram_ddr4_8gb_3200)');
+    if (!(f.empresa && f.empresa.razao_social)) erros.push(tag + ': empresa.razao_social ausente');
+    const c = f.comercial || {};
+    if (impNum(c.preco_fob_usd) === null) erros.push(tag + ': comercial.preco_fob_usd ausente/não numérico');
+    if (impInt(c.moq_unidades) === null) erros.push(tag + ': comercial.moq_unidades ausente/não numérico');
+    if (impInt(c.lead_time_dias) === null) erros.push(tag + ': comercial.lead_time_dias ausente/não numérico');
+    const v = f.validacao || {};
+    if (impNum(v.score_combinado) === null) erros.push(tag + ': validacao.score_combinado ausente/não numérico');
+    return erros;
+  }
+
+  // Botão Validar: parse + checagem + preview
+  function validarImportacao() {
+    const pv = document.getElementById('imp-import-preview');
+    const raw = (document.getElementById('imp-json-input') || {}).value || '';
+    let fornecedores;
+    try { fornecedores = impExtrair(raw); }
+    catch (e) { pv.innerHTML = '<div style="color:#ef4444;">✗ ' + impEsc(e.message) + '</div>'; return; }
+
+    let todosErros = [];
+    fornecedores.forEach((f, i) => { todosErros = todosErros.concat(impValidarUm(f, i)); });
+
+    if (todosErros.length) {
+      pv.innerHTML = '<div style="color:#ef4444;font-weight:600;margin-bottom:0.5rem;">✗ ' + todosErros.length + ' problema(s) — nada será gravado:</div>'
+        + '<ul style="color:#fca5a5;font-size:0.8rem;list-style:disc;padding-left:1.25rem;">'
+        + todosErros.map(e => '<li>' + impEsc(e) + '</li>').join('') + '</ul>';
+      return;
+    }
+
+    impState._fornecedoresPendentes = fornecedores;
+    const linhas = fornecedores.map((f, i) => {
+      const e = f.empresa || {}, c = f.comercial || {}, v = f.validacao || {}, p = f.produto || {};
+      return '<tr style="border-top:1px solid #374151;">'
+        + '<td style="padding:4px 8px;">' + impEsc(e.razao_social) + '</td>'
+        + '<td style="padding:4px 8px;">' + impEsc(p.chave) + '</td>'
+        + '<td style="padding:4px 8px;text-align:right;">' + impEsc(v.score_combinado) + '</td>'
+        + '<td style="padding:4px 8px;text-align:right;">US$ ' + impEsc(c.preco_fob_usd) + '</td>'
+        + '<td style="padding:4px 8px;text-align:right;">' + impEsc(c.moq_unidades) + '</td>'
+        + '<td style="padding:4px 8px;text-align:right;">' + impEsc(c.lead_time_dias) + 'd</td>'
+        + '</tr>';
+    }).join('');
+    pv.innerHTML = '<div style="color:#10b981;font-weight:600;margin-bottom:0.5rem;">✓ ' + fornecedores.length + ' fornecedor(es) válido(s):</div>'
+      + '<table style="width:100%;font-size:0.8rem;border-collapse:collapse;"><thead><tr style="color:#9ca3af;text-align:left;">'
+      + '<th style="padding:4px 8px;">Empresa</th><th style="padding:4px 8px;">Produto</th><th style="padding:4px 8px;text-align:right;">Score</th>'
+      + '<th style="padding:4px 8px;text-align:right;">FOB</th><th style="padding:4px 8px;text-align:right;">MOQ</th><th style="padding:4px 8px;text-align:right;">Lead</th>'
+      + '</tr></thead><tbody>' + linhas + '</tbody></table>'
+      + '<button class="imp-btn-primary" style="margin-top:0.75rem;" onclick="importacao.confirmarImportacao()"><i data-lucide="database"></i> Confirmar e gravar na base</button>';
+    if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+  }
+
+  // find-or-create empresa em imp_fornecedores -> retorna id
+  async function impObterOuCriarFornecedor(f) {
+    const razao = String(f.empresa.razao_social).trim();
+    const { data: existentes, error: e1 } = await impState.sb
+      .from('imp_fornecedores').select('id').eq('nome_empresa_legal', razao).limit(1);
+    if (e1) throw new Error('Busca de fornecedor falhou: ' + e1.message);
+    if (existentes && existentes.length) return existentes[0].id;
+    const novo = {
+      nome: razao, nome_empresa_legal: razao,
+      pais: (f.empresa && f.empresa.pais) || null,
+      cidade: (f.empresa && f.empresa.cidade) || null,
+      plataforma: f.plataforma || null,
+      plataforma_url: (f.links && f.links.loja) || null,
+      certificacoes: (f.filtros_eliminatorios && f.filtros_eliminatorios.certificacoes) || null,
+      validado: true, validado_em: new Date().toISOString(), ativo: true,
+    };
+    const { data: criado, error: e2 } = await impState.sb
+      .from('imp_fornecedores').insert(novo).select('id').single();
+    if (e2) throw new Error('Criação de fornecedor falhou: ' + e2.message);
+    return criado.id;
+  }
+
+  // grava validação (desativa anteriores do mesmo fornecedor+produto)
+  async function impGravarValidacao(f, fornecedorId) {
+    const chave = f.produto.chave;
+    const { error: eU } = await impState.sb
+      .from('imp_fornecedor_validacoes').update({ vigente: false })
+      .eq('fornecedor_id', fornecedorId).eq('produto_chave', chave).eq('vigente', true);
+    if (eU) throw new Error('Falha ao desativar validações anteriores: ' + eU.message);
+    const v = f.validacao || {}, c = f.comercial || {}, p = f.produto || {};
+    const linha = {
+      fornecedor_id: fornecedorId,
+      produto_chave: chave,
+      produto_categoria: p.categoria || null,
+      produto_descricao: p.descricao || null,
+      score_fornecedor: impNum(v.score_fornecedor),
+      score_produto: impNum(v.score_produto),
+      score_combinado: impNum(v.score_combinado),
+      classificacao: v.classificacao || null,
+      posicao_ranking: impInt(v.posicao_ranking),
+      preco_fob_usd: impNum(c.preco_fob_usd),
+      moq_unidades: impInt(c.moq_unidades),
+      lead_time_dias: impInt(c.lead_time_dias),
+      plataforma: f.plataforma || null,
+      dossie: f,
+      vigente: true,
+    };
+    const { error: eI } = await impState.sb.from('imp_fornecedor_validacoes').insert(linha);
+    if (eI) throw new Error('Falha ao inserir validação: ' + eI.message);
+  }
+
+  async function confirmarImportacao() {
+    const pv = document.getElementById('imp-import-preview');
+    const fornecedores = impState._fornecedoresPendentes || [];
+    if (!fornecedores.length) { pv.innerHTML = '<div style="color:#ef4444;">Nada validado. Clique em Validar primeiro.</div>'; return; }
+    pv.innerHTML = '<div style="color:#9ca3af;">Gravando...</div>';
+    let ok = 0; const falhas = [];
+    for (let i = 0; i < fornecedores.length; i++) {
+      const f = fornecedores[i];
+      try {
+        const id = await impObterOuCriarFornecedor(f);
+        await impGravarValidacao(f, id);
+        ok++;
+      } catch (e) {
+        falhas.push((f.empresa && f.empresa.razao_social ? f.empresa.razao_social : 'Fornecedor #' + (i + 1)) + ': ' + e.message);
+      }
+    }
+    let out = '<div style="color:#10b981;font-weight:600;">✓ ' + ok + ' validação(ões) gravada(s).</div>';
+    if (falhas.length) out += '<ul style="color:#fca5a5;font-size:0.8rem;list-style:disc;padding-left:1.25rem;margin-top:0.5rem;">'
+      + falhas.map(x => '<li>' + impEsc(x) + '</li>').join('') + '</ul>';
+    pv.innerHTML = out;
+    impState._fornecedoresPendentes = null;
+    listarFornecedores();
+  }
+
+  // Lista fornecedores validados (via view imp_vw_fornecedores_por_produto)
+  async function listarFornecedores() {
+    const box = document.getElementById('imp-fornecedores-lista');
+    if (!box || !impState.sb) return;
+    try {
+      const { data, error } = await impState.sb
+        .from('imp_vw_fornecedores_por_produto')
+        .select('*').order('produto_chave', { ascending: true });
+      if (error) throw new Error(error.message);
+      if (!data || !data.length) {
+        box.innerHTML = '<div class="imp-empty"><i data-lucide="inbox"></i><h3 class="text-base font-semibold mb-1">Nenhum fornecedor validado ainda</h3><p class="text-sm">Use o botão acima para importar o JSON do Agente de Validação.</p></div>';
+        if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+        return;
+      }
+      const rows = data.map(r =>
+        '<tr style="border-top:1px solid #374151;">'
+        + '<td style="padding:6px 8px;">' + impEsc(r.fornecedor_nome) + '</td>'
+        + '<td style="padding:6px 8px;color:#9ca3af;">' + impEsc(r.produto_chave) + '</td>'
+        + '<td style="padding:6px 8px;">' + impEsc(r.pais || '') + '</td>'
+        + '<td style="padding:6px 8px;text-align:right;font-weight:600;color:#10b981;">' + impEsc(r.score_combinado) + '</td>'
+        + '<td style="padding:6px 8px;text-align:right;">US$ ' + impEsc(r.preco_fob_usd) + '</td>'
+        + '<td style="padding:6px 8px;text-align:right;">' + impEsc(r.moq_unidades) + '</td>'
+        + '<td style="padding:6px 8px;text-align:right;">' + impEsc(r.lead_time_dias) + 'd</td>'
+        + '<td style="padding:6px 8px;color:#6b7280;font-size:0.75rem;">' + impEsc(r.data_validacao || '') + '</td>'
+        + '</tr>'
+      ).join('');
+      box.innerHTML = '<table style="width:100%;font-size:0.85rem;border-collapse:collapse;"><thead><tr style="color:#9ca3af;text-align:left;">'
+        + '<th style="padding:6px 8px;">Fornecedor</th><th style="padding:6px 8px;">Produto</th><th style="padding:6px 8px;">País</th>'
+        + '<th style="padding:6px 8px;text-align:right;">Score</th><th style="padding:6px 8px;text-align:right;">FOB</th>'
+        + '<th style="padding:6px 8px;text-align:right;">MOQ</th><th style="padding:6px 8px;text-align:right;">Lead</th><th style="padding:6px 8px;">Validado</th>'
+        + '</tr></thead><tbody>' + rows + '</tbody></table>';
+    } catch (e) {
+      box.innerHTML = '<div style="color:#ef4444;font-size:0.85rem;">Erro ao carregar: ' + impEsc(e.message) + '</div>';
+    }
+  }
+
   return {
     init,
     onEnter,
@@ -2730,6 +2951,11 @@ window.importacao = (function () {
     iniciarSimulacao,
     iniciarOperacao,
     chamarClaudeProxy,
+    abrirImportador,
+    fecharImportador,
+    validarImportacao,
+    confirmarImportacao,
+    listarFornecedores,
   };
 })();
 
