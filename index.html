@@ -2,2379 +2,680 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SELECTA — Banco de Preço</title>
-
-<!-- Tailwind CSS via CDN -->
-<script src="https://cdn.tailwindcss.com"></script>
-
-<!-- jsPDF + AutoTable (para geração de orçamentos em PDF) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          primary: { 50: '#ecfdf5', 500: '#10b981', 600: '#059669', 700: '#047857', 900: '#064e3b' },
-        }
-      }
-    }
-  }
-</script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Montador de Desktop — Selecta</title>
 <style>
-  body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
-  .hidden-section { display: none !important; }
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: #1f2937; }
-  ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
-  .product-row { transition: background-color 0.1s ease; }
-  .loader { border: 3px solid #1f2937; border-top: 3px solid #10b981; border-radius: 50%; width: 30px; height: 30px; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-  /* Sub-tabs Apple */
-  .apple-subtab-btn { color: #9ca3af; border-bottom: 2px solid transparent; }
-  .apple-subtab-btn.active { color: #10b981; border-bottom-color: #10b981; }
-  .apple-subtab-btn:hover:not(.active) { color: #e5e7eb; }
+:root{
+  --ink:#1F2830; --bg:#EBEEEF; --card:#FFFFFF; --green:#00B377; --green-d:#00845A;
+  --line:#D6DBDD; --muted:#69737B; --amber:#B9791A; --red:#C0392B; --lock:#A9B1B6;
+  --soft:#F2F4F5;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+
+/* header */
+header{background:var(--ink);color:#fff;padding:14px 22px}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand b{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.brand span{font-size:11px;color:#8B97A0;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px}
+.tabs{display:flex;gap:2px;margin-top:12px;flex-wrap:wrap}
+.tab{background:#2E3942;color:#AEB8BF;border:0;padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border-radius:5px 5px 0 0}
+.tab.on{background:var(--bg);color:var(--ink)}
+.tab:hover:not(.on){color:#fff}
+
+main{max-width:1180px;margin:0 auto;padding:20px}
+.panel{display:none}
+.panel.on{display:block}
+
+/* layout */
+.grid{display:grid;grid-template-columns:1fr 380px;gap:18px;align-items:start}
+@media(max-width:880px){.grid{grid-template-columns:1fr}}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px;margin-bottom:16px}
+.card h2{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:14px;font-family:'JetBrains Mono',monospace}
+.card h2 .n{color:var(--green);margin-right:6px}
+
+label{display:block;font-size:12px;font-weight:600;color:var(--ink);margin-bottom:5px}
+.hint{font-size:11px;color:var(--muted);font-weight:400;margin-top:4px}
+input,select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:5px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:#fff}
+input:focus,select:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:var(--green)}
+select:disabled,input:disabled{background:var(--soft);color:var(--lock);cursor:not-allowed}
+.row{margin-bottom:14px}
+.row2{display:grid;grid-template-columns:1fr 110px;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:560px){.row3{grid-template-columns:1fr}}
+
+.locked{display:flex;align-items:center;gap:8px;background:var(--soft);border:1px dashed var(--line);border-radius:5px;padding:9px 10px;color:var(--lock);font-size:13px}
+.locked b{font-family:'JetBrains Mono',monospace;font-size:11px}
+
+.auto-mb{background:var(--soft);border:1px solid var(--line);border-left:3px solid var(--green);border-radius:5px;padding:10px 12px;font-size:13px}
+.auto-mb .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-family:'JetBrains Mono',monospace;margin-bottom:3px}
+.auto-mb .val{font-weight:600}
+
+.chain{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{background:#E7F6F0;color:var(--green-d);border:1px solid #BEE6D6;border-radius:4px;padding:3px 8px;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace}
+
+.check{display:flex;align-items:center;gap:9px;padding:8px 0;cursor:pointer;font-weight:500}
+.check input{width:auto}
+
+/* orçamento */
+.budget{position:sticky;top:16px}
+.budget .li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--soft);font-size:13px}
+.budget .li .nm{color:var(--ink)}
+.budget .li .nm small{color:var(--muted);font-weight:400}
+.budget .li .pr{font-family:'JetBrains Mono',monospace;font-weight:500;white-space:nowrap}
+.budget .li.cat{margin-top:8px}
+.budget .li .tag{font-size:9px;background:var(--soft);color:var(--muted);padding:1px 5px;border-radius:3px;margin-left:6px;text-transform:uppercase;letter-spacing:.5px;font-family:'JetBrains Mono',monospace}
+.total{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:2px solid var(--ink)}
+.total .t1{font-size:12px;text-transform:uppercase;letter-spacing:1px;font-weight:700;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.total .t2{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--ink)}
+.warn{background:#FBF1DF;border:1px solid #E8D49E;color:var(--amber);border-radius:5px;padding:8px 10px;font-size:12px;font-weight:600;margin-top:10px}
+.empty{color:var(--lock);font-size:13px;text-align:center;padding:20px 0}
+
+button.act{width:100%;background:var(--green);color:#fff;border:0;padding:12px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:12px}
+button.act:hover{background:var(--green-d)}
+button.act:disabled{background:var(--lock);cursor:not-allowed}
+button.ghost{width:100%;background:#fff;color:var(--muted);border:1px solid var(--line);padding:9px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px}
+button.ghost:hover{border-color:var(--muted);color:var(--ink)}
+.mini{display:inline-block;background:#fff;border:1px solid var(--line);color:var(--muted);padding:5px 11px;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer}
+.mini:hover{border-color:var(--green);color:var(--green-d)}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 8px;border-bottom:2px solid var(--line)}
+td{padding:8px 8px;border-bottom:1px solid var(--soft);vertical-align:middle}
+tr.grp td{background:var(--ink);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:5px 8px;font-weight:700}
+td .pin{width:104px;padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;background:#FFFBEC;border-color:#E8D49E}
+td.np{color:var(--lock);font-style:italic}
+.right{text-align:right}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.bar h2{margin:0}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:8px;font-weight:600;font-size:13px;transition:transform .3s;z-index:99;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.err{background:var(--red)}
+
+.notice{background:#FBF1DF;border:1px solid #E8D49E;color:var(--amber);border-radius:6px;padding:8px 14px;font-size:12px;font-weight:600;margin:0 0 14px}
+.det{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.x{color:var(--red);cursor:pointer;font-weight:700;font-family:'JetBrains Mono',monospace}
+.x:hover{text-decoration:underline}
 </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen">
+<body>
 
-<!-- ============================================================ -->
-<!-- TELA DE LOGIN                                                  -->
-<!-- ============================================================ -->
-<div id="login-screen" class="min-h-screen flex items-center justify-center px-4">
-  <div class="w-full max-w-md">
-    <div class="text-center mb-8">
-      <h1 class="text-4xl font-bold text-primary-500 mb-2">SELECTA</h1>
-      <p class="text-gray-400 text-sm">Banco de Preço · Solution</p>
-    </div>
-
-    <div class="bg-gray-800 rounded-lg p-6 shadow-xl border border-gray-700">
-      <h2 class="text-lg font-semibold mb-4 text-gray-200">Acesso</h2>
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
-          <input id="login-email" type="email" autocomplete="email"
-                 class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                 placeholder="seu@email.com">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Senha</label>
-          <input id="login-password" type="password" autocomplete="current-password"
-                 class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                 placeholder="••••••••">
-        </div>
-        <button id="login-btn" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 rounded-md transition-colors">Entrar</button>
-        <div id="login-error" class="hidden-section text-sm text-red-400 bg-red-900/30 border border-red-800 rounded-md p-3"></div>
-      </div>
-    </div>
-    <p class="text-center text-xs text-gray-500 mt-6">Selecta Solution · 2026</p>
+<header>
+  <div class="brand"><b>Montador de Desktop</b><span>Selecta · orçamento por compatibilidade</span></div>
+  <div class="tabs">
+    <button class="tab on" data-tab="montar">Montar Orçamento</button>
+    <button class="tab" data-tab="catalogo">Catálogo / Preços</button>
+    <button class="tab" data-tab="historico">Histórico</button>
+    <button class="tab" data-tab="ranking">Ranking de Peças</button>
   </div>
-</div>
+</header>
 
+<main>
+<div id="lsNotice" class="notice" style="display:none">Modo prévia: o navegador aqui não salva dados. Baixe o arquivo e abra no Chrome para o histórico e a edição de preços ficarem salvos.</div>
 
-<!-- ============================================================ -->
-<!-- APLICAÇÃO PRINCIPAL                                            -->
-<!-- ============================================================ -->
-<div id="app" class="hidden-section">
-
-  <!-- Header -->
-  <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-10">
-    <div class="max-w-screen-2xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
-      <div class="flex items-center gap-6 flex-wrap">
-        <h1 class="text-xl font-bold text-primary-500">SELECTA</h1>
-        <nav class="flex gap-1">
-          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="catalogo">Catálogo</button>
-          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="apple">Apple</button>
-          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="simulador">Simulador PC</button>
-        </nav>
-      </div>
-      <div class="flex items-center gap-3 text-sm">
-        <span id="user-email" class="text-gray-400"></span>
-        <button id="logout-btn" class="text-gray-400 hover:text-white transition-colors">Sair</button>
-      </div>
-    </div>
-  </header>
-
-  <!-- =========================================================== -->
-  <!-- TAB: CATÁLOGO (Banco de Preço — licitação)                   -->
-  <!-- =========================================================== -->
-  <section id="tab-catalogo" class="max-w-screen-2xl mx-auto px-4 py-6">
-    <div class="bg-gray-800 rounded-lg p-4 mb-4 border border-gray-700">
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-        <div class="md:col-span-2">
-          <label class="block text-xs font-medium text-gray-400 mb-1">Buscar</label>
-          <input id="filter-search" type="search" placeholder="Marca, modelo, descrição, código SLC..."
-                 class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Prefixo</label>
-          <select id="filter-prefixo" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"><option value="">Todos</option></select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Marca</label>
-          <select id="filter-marca" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"><option value="">Todas</option></select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Fornecedor</label>
-          <select id="filter-fornecedor" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-            <option value="">Todos</option>
-          </select>
-        </div>
-      </div>
-      <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-700">
-        <span id="catalog-info" class="text-sm text-gray-400">—</span>
-        <div class="flex items-center gap-3">
-          <button id="export-cotacao-btn" class="text-xs bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-md font-medium" title="Exporta JSON para alimentar o agente de cotação">⬇ Exportar p/ Cotação</button>
-          <button id="add-item-btn" class="text-xs bg-primary-600 hover:bg-primary-500 text-white px-3 py-1.5 rounded-md font-medium">+ Adicionar item</button>
-          <button id="clear-filters" class="text-xs text-primary-500 hover:text-primary-400">Limpar filtros</button>
-        </div>
+<!-- ============ MONTAR ============ -->
+<div class="panel on" id="montar">
+<div class="grid">
+  <div>
+    <div class="card">
+      <h2><span class="n">01</span>Origem do Orçamento</h2>
+      <div class="row3">
+        <div><label>Cliente</label><input id="f_cliente" placeholder="Ex.: Prefeitura de..."></div>
+        <div><label>Edital / Pregão</label><input id="f_edital" placeholder="Ex.: PE 045/2026"></div>
+        <div><label>Data</label><input id="f_data"></div>
       </div>
     </div>
 
-    <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-      <div id="catalog-loader" class="hidden-section py-12 flex justify-center"><div class="loader"></div></div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-900 text-xs uppercase text-gray-400 sticky top-0">
-            <tr>
-              <th class="px-3 py-2.5 text-left font-medium">Código</th>
-              <th class="px-3 py-2.5 text-left font-medium">Prefixo</th>
-              <th class="px-3 py-2.5 text-left font-medium">Marca</th>
-              <th class="px-3 py-2.5 text-left font-medium">Descrição</th>
-              <th class="px-3 py-2.5 text-right font-medium">USD</th>
-              <th class="px-3 py-2.5 text-right font-medium">BRL</th>
-              <th class="px-3 py-2.5 text-center font-medium">Fornecedores</th>
-            </tr>
-          </thead>
-          <tbody id="catalog-tbody" class="divide-y divide-gray-700"></tbody>
-        </table>
+    <div class="card">
+      <h2><span class="n">02</span>Processador</h2>
+      <div class="row">
+        <label>Selecione o processador</label>
+        <select id="s_cpu"></select>
+        <div class="hint">Ao escolher, o sistema trava placa-mãe e memória compatíveis automaticamente.</div>
       </div>
-      <div class="flex items-center justify-between px-4 py-3 bg-gray-900 border-t border-gray-700">
-        <button id="page-prev" class="px-3 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 rounded-md disabled:opacity-40 disabled:cursor-not-allowed">← Anterior</button>
-        <span id="page-info" class="text-sm text-gray-400">—</span>
-        <button id="page-next" class="px-3 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 rounded-md disabled:opacity-40 disabled:cursor-not-allowed">Próximo →</button>
-      </div>
+      <div id="autoMb"></div>
+      <div id="chain" class="chain"></div>
     </div>
-  </section>
 
-
-  <!-- =========================================================== -->
-  <!-- TAB: APPLE                                                    -->
-  <!-- =========================================================== -->
-  <section id="tab-apple" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
-
-    <!-- Sub-navigation -->
-    <nav class="flex gap-1 mb-5 border-b border-gray-700">
-      <button class="apple-subtab-btn px-4 py-2 text-sm font-medium" data-subtab="catalogo">Catálogo</button>
-      <button class="apple-subtab-btn px-4 py-2 text-sm font-medium" data-subtab="vendas">Vendas</button>
-      <button class="apple-subtab-btn px-4 py-2 text-sm font-medium" data-subtab="compras">Compras</button>
-    </nav>
-
-    <!-- ----- APPLE: CATÁLOGO ----- -->
-    <div id="apple-sub-catalogo">
-      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <div class="flex gap-2 flex-wrap">
-          <input id="apple-cat-search" type="search" placeholder="Buscar modelo/SKU..."
-                 class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm w-64">
-          <select id="apple-cat-categoria" class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-            <option value="">Todas categorias</option>
-          </select>
+    <div class="card">
+      <h2><span class="n">03</span>Memória e Armazenamento</h2>
+      <div class="row">
+        <label>Memória RAM</label>
+        <div class="row2">
+          <select id="s_ram" disabled></select>
+          <input id="s_ramq" type="number" min="1" value="1" title="Quantidade de pentes" disabled>
         </div>
-        <button id="btn-novo-produto" class="bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-md">+ Novo produto</button>
+        <div class="hint">Quantidade de pentes à direita.</div>
       </div>
-
-      <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-900 text-xs uppercase text-gray-400">
-              <tr>
-                <th class="px-3 py-2.5 text-left font-medium">Categoria</th>
-                <th class="px-3 py-2.5 text-left font-medium">Modelo / SKU</th>
-                <th class="px-3 py-2.5 text-right font-medium">Custo médio</th>
-                <th class="px-3 py-2.5 text-right font-medium">Venda alvo</th>
-                <th class="px-3 py-2.5 text-right font-medium">Margem</th>
-                <th class="px-3 py-2.5 text-center font-medium">Estoque</th>
-                <th class="px-3 py-2.5 text-center font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody id="apple-cat-tbody" class="divide-y divide-gray-700"></tbody>
-          </table>
-        </div>
+      <div class="row">
+        <label>Armazenamento</label>
+        <select id="s_arm" disabled></select>
       </div>
     </div>
 
-    <!-- ----- APPLE: VENDAS ----- -->
-    <div id="apple-sub-vendas" class="hidden-section">
-      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs text-gray-400 mb-1">De</label>
-            <input id="apple-vendas-de" type="date" class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-          </div>
-          <div>
-            <label class="block text-xs text-gray-400 mb-1">Até</label>
-            <input id="apple-vendas-ate" type="date" class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-          </div>
-        </div>
-        <button id="btn-nova-venda" class="bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-md">+ Nova venda</button>
-      </div>
-
-      <div id="apple-vendas-resumo" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
-
-      <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-900 text-xs uppercase text-gray-400">
-              <tr>
-                <th class="px-3 py-2.5 text-left font-medium">Data</th>
-                <th class="px-3 py-2.5 text-left font-medium">Produto</th>
-                <th class="px-3 py-2.5 text-center font-medium">Qtd</th>
-                <th class="px-3 py-2.5 text-right font-medium">Preço unit.</th>
-                <th class="px-3 py-2.5 text-right font-medium">Total</th>
-                <th class="px-3 py-2.5 text-left font-medium">Canal</th>
-                <th class="px-3 py-2.5 text-left font-medium">Pgto</th>
-                <th class="px-3 py-2.5 text-left font-medium">Cliente</th>
-                <th class="px-3 py-2.5 text-center font-medium">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="apple-vendas-tbody" class="divide-y divide-gray-700"></tbody>
-          </table>
-        </div>
-      </div>
+    <div class="card">
+      <h2><span class="n">04</span>Itens de Montagem</h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Gabinete, fonte, pasta térmica e cabo HDMI entram sempre.</div>
+      <label class="check"><input type="checkbox" id="c_cooler" checked> Incluir cooler — CPU OEM/tray</label>
+      <label class="check"><input type="checkbox" id="c_forca"> Incluir cabo de força (se a fonte não vier com)</label>
     </div>
 
-    <!-- ----- APPLE: COMPRAS ----- -->
-    <div id="apple-sub-compras" class="hidden-section">
-      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <div>
-          <label class="block text-xs text-gray-400 mb-1">Filtrar por viagem</label>
-          <select id="apple-compras-viagem" class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-            <option value="">Todas viagens</option>
-          </select>
-        </div>
-        <button id="btn-nova-compra" class="bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-md">+ Nova compra</button>
+    <div class="card">
+      <h2><span class="n">05</span>Adicionais (valor manual)</h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Sem banco de preço — digite o valor. Em branco = não soma.</div>
+      <div class="row3">
+        <div><label>Monitor</label><input class="man" data-k="Monitor" type="number" min="0" placeholder="R$"></div>
+        <div><label>Teclado</label><input class="man" data-k="Teclado" type="number" min="0" placeholder="R$"></div>
+        <div><label>Mouse</label><input class="man" data-k="Mouse" type="number" min="0" placeholder="R$"></div>
       </div>
-
-      <div id="apple-compras-resumo" class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4"></div>
-
-      <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-900 text-xs uppercase text-gray-400">
-              <tr>
-                <th class="px-3 py-2.5 text-left font-medium">Data</th>
-                <th class="px-3 py-2.5 text-center font-medium">Viagem</th>
-                <th class="px-3 py-2.5 text-left font-medium">Produto</th>
-                <th class="px-3 py-2.5 text-center font-medium">Qtd</th>
-                <th class="px-3 py-2.5 text-right font-medium">Custo unit.</th>
-                <th class="px-3 py-2.5 text-right font-medium">Total</th>
-                <th class="px-3 py-2.5 text-center font-medium">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="apple-compras-tbody" class="divide-y divide-gray-700"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-  </section>
-
-
-  <!-- =========================================================== -->
-  <!-- TAB: SIMULADOR PC                                             -->
-  <!-- =========================================================== -->
-  <section id="tab-simulador" class="hidden-section">
-    <iframe src="montador.html" class="w-full" style="height: calc(100vh - 64px); border: 0;"></iframe>
-  </section>
-
-</div>
-
-
-<!-- ============================================================ -->
-<!-- MODAL: DETALHE DO PRODUTO (catálogo licitação)                 -->
-<!-- ============================================================ -->
-<div id="modal-product" class="hidden-section fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto">
-  <div class="bg-gray-800 rounded-lg border border-gray-700 max-w-4xl w-full my-8 shadow-2xl">
-    <header class="flex items-start justify-between px-6 py-4 border-b border-gray-700">
-      <div class="flex-1 pr-4">
-        <div class="flex items-center gap-2 text-xs text-gray-400 mb-1">
-          <span id="modal-codigo" class="font-mono font-medium text-primary-500"></span>
-          <span>·</span><span id="modal-prefixo"></span><span>·</span><span id="modal-categoria"></span>
-        </div>
-        <h2 id="modal-marca" class="text-lg font-semibold text-gray-100"></h2>
-        <p id="modal-descricao" class="text-sm text-gray-300 mt-1"></p>
-      </div>
-      <div class="flex items-center gap-2">
-        <button id="modal-edit-produto" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2.5 py-1 rounded-md font-medium" title="Editar produto">✏ Editar</button>
-        <button id="modal-delete-produto" class="text-xs bg-red-900 hover:bg-red-800 text-white px-2.5 py-1 rounded-md font-medium" title="Apagar produto e todas as ofertas">🗑 Apagar</button>
-        <button id="modal-close" class="text-gray-400 hover:text-white text-2xl leading-none ml-2">×</button>
-      </div>
-    </header>
-    <div class="px-6 py-4 space-y-4">
-      <div>
-        <h3 class="text-xs font-medium text-gray-400 uppercase mb-2">Atributos técnicos</h3>
-        <div id="modal-atributos" class="text-sm text-gray-200 bg-gray-900 rounded-md p-3 border border-gray-700"></div>
-      </div>
-      <div id="modal-tags-wrapper" class="hidden-section">
-        <h3 class="text-xs font-medium text-gray-400 uppercase mb-2">Tags</h3>
-        <div id="modal-tags" class="flex flex-wrap gap-1.5"></div>
-      </div>
-      <div>
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-xs font-medium text-gray-400 uppercase">Ofertas dos fornecedores</h3>
-          <button id="modal-add-oferta" class="text-xs bg-primary-600 hover:bg-primary-500 text-white px-2.5 py-1 rounded-md font-medium">+ Nova oferta</button>
-        </div>
-        <div class="bg-gray-900 rounded-md border border-gray-700 overflow-hidden">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-800 text-xs uppercase text-gray-400">
-              <tr>
-                <th class="px-3 py-2 text-left font-medium">Fornecedor</th>
-                <th class="px-3 py-2 text-left font-medium">SKU</th>
-                <th class="px-3 py-2 text-right font-medium">USD</th>
-                <th class="px-3 py-2 text-right font-medium">BRL</th>
-                <th class="px-3 py-2 text-left font-medium">Condição</th>
-                <th class="px-3 py-2 text-left font-medium">Garantia</th>
-                <th class="px-3 py-2 text-center font-medium">Disp.</th>
-                <th class="px-3 py-2 text-center font-medium">Ação</th>
-              </tr>
-            </thead>
-            <tbody id="modal-ofertas-tbody" class="divide-y divide-gray-700"></tbody>
-          </table>
-        </div>
-      </div>
-      <div>
-        <h3 class="text-xs font-medium text-gray-400 uppercase mb-2">Descrições originais (PDF do fornecedor)</h3>
-        <div id="modal-desc-originais" class="text-xs text-gray-400 space-y-1.5 font-mono"></div>
+      <div class="row3" style="margin-top:10px">
+        <div><label>Placa de vídeo</label><input class="man" data-k="Placa de vídeo" type="number" min="0" placeholder="R$"></div>
+        <div><label>Placa de rede</label><input class="man" data-k="Placa de rede" type="number" min="0" placeholder="R$"></div>
+        <div><label>Sistema operacional</label><input class="man" data-k="Sistema operacional" type="number" min="0" placeholder="R$"></div>
       </div>
     </div>
   </div>
+
+  <div>
+    <div class="card budget">
+      <h2><span class="n">06</span>Orçamento</h2>
+      <div id="bdItems"></div>
+      <div class="total"><span class="t1">Total / máquina</span><span class="t2 mono" id="bdTotal">—</span></div>
+      <div id="bdWarn"></div>
+      <button class="act" id="btnApr">Aprovar e salvar consulta</button>
+      <button class="ghost" id="btnClr">Limpar e começar outro</button>
+    </div>
+  </div>
+</div>
 </div>
 
-
-<!-- ============================================================ -->
-<!-- MODAL: ITEM (criar/editar produto / criar/editar oferta)      -->
-<!-- ============================================================ -->
-<div id="modal-item" class="hidden-section fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto">
-  <div class="bg-gray-800 rounded-lg border border-gray-700 max-w-3xl w-full my-8 shadow-2xl">
-    <header class="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-      <div>
-        <h2 id="modal-item-title" class="text-lg font-semibold">Adicionar item ao catálogo</h2>
-        <p id="modal-item-subtitle" class="text-xs text-gray-400 mt-0.5">Cria 1 produto + 1 oferta. Mantém padrão do banco.</p>
-      </div>
-      <button id="add-modal-close" class="text-gray-400 hover:text-white text-2xl leading-none">×</button>
-    </header>
-    <div class="px-6 py-4 space-y-4">
-
-      <!-- IDENTIFICAÇÃO DO PRODUTO -->
-      <div id="block-produto" class="bg-gray-900 rounded-md p-3 border border-gray-700 space-y-3">
-        <h3 class="text-xs font-medium text-gray-400 uppercase">Produto</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Prefixo *</label>
-            <select id="add-prefixo" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm"><option value="">— selecione —</option></select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Código SLC</label>
-            <div id="add-codigo-preview" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm font-mono text-primary-500">—</div>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Marca</label>
-            <input id="add-marca" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm uppercase" placeholder="Ex: CORSAIR">
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Descrição completa * <span class="text-gray-500 normal-case">(CAIXA ALTA)</span></label>
-          <textarea id="add-descricao" rows="2" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm uppercase" placeholder="Ex: MEM DDR5 16GB 6000 CORSAIR VENGEANCE BLACK"></textarea>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Modelo</label>
-            <input id="add-modelo" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Ex: CMK16GX5M1B6000C36">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Categoria (opcional)</label>
-            <input id="add-categoria" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Ex: MEMORIA RAM">
-          </div>
-        </div>
-        <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-          <input id="add-ativo" type="checkbox" checked class="w-4 h-4">
-          <span>Produto ativo no catálogo</span>
-        </label>
-      </div>
-
-      <!-- IDENTIFICAÇÃO DA OFERTA -->
-      <div id="block-oferta" class="bg-gray-900 rounded-md p-3 border border-gray-700 space-y-3">
-        <h3 class="text-xs font-medium text-gray-400 uppercase">Oferta</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Fornecedor *</label>
-            <div class="flex gap-2">
-              <select id="add-fornecedor" class="flex-1 bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm"><option value="">— selecione —</option></select>
-              <button id="add-novo-fornecedor-btn" type="button" class="bg-gray-700 hover:bg-gray-600 text-white px-3 rounded-md text-sm font-medium" title="Cadastrar novo fornecedor">+</button>
-            </div>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">SKU do fornecedor <span class="text-gray-500 normal-case">(opcional)</span></label>
-            <input id="add-sku-fornecedor" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Vazio = gera automático (MAN-codigo)">
-          </div>
-        </div>
-        <div class="grid grid-cols-3 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Preço USD *</label>
-            <input id="add-preco-usd" type="number" step="0.01" min="0" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="0.00">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Taxa câmbio</label>
-            <input id="add-taxa" type="number" step="0.01" min="0" value="5.40" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Preço BRL (auto)</label>
-            <input id="add-preco-brl" type="text" readonly class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-primary-500" placeholder="0.00">
-          </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Condição *</label>
-            <select id="add-condicao" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm">
-              <option value="novo">Novo</option>
-              <option value="novo_oem">Novo OEM</option>
-              <option value="recondicionado">Recondicionado</option>
-              <option value="usado">Usado</option>
-              <option value="swap">Swap</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Garantia *</label>
-            <select id="add-garantia" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm">
-              <option value="py">PY (Paraguai)</option>
-              <option value="br">BR (Brasil)</option>
-              <option value="fabricante">Fabricante</option>
-              <option value="sem_garantia">Sem garantia</option>
-              <option value="nao_declarada">Não declarada</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Tempo de garantia</label>
-            <input id="add-garantia-tempo" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Ex: 12 meses">
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Observações</label>
-          <textarea id="add-observacoes" rows="2" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Notas internas, restrições, etc."></textarea>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Descrição original do fornecedor</label>
-          <input id="add-desc-original" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Deixe vazio pra usar a mesma descrição">
-        </div>
-        <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-          <input id="add-disponivel" type="checkbox" checked class="w-4 h-4">
-          <span>Oferta disponível</span>
-        </label>
-      </div>
-
-      <div id="add-error" class="hidden-section text-sm text-red-400 bg-red-900/30 border border-red-800 rounded-md p-3"></div>
-    </div>
-    <footer class="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-700">
-      <button id="add-cancel" class="px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-md">Cancelar</button>
-      <button id="add-salvar" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 rounded-md font-medium">Salvar</button>
-    </footer>
+<!-- ============ CATALOGO ============ -->
+<div class="panel" id="catalogo">
+  <div class="card">
+    <div class="bar"><h2><span class="n">·</span>Catálogo de Peças — edite os preços</h2>
+      <span class="det">os preços são salvos no servidor e sincronizam entre aparelhos</span></div>
+    <div id="catBody"></div>
+    <button class="ghost" id="btnResetPrec" style="max-width:260px">Restaurar preços originais</button>
   </div>
 </div>
 
-
-<!-- ============================================================ -->
-<!-- MODAL: NOVO/EDITAR PRODUTO APPLE                               -->
-<!-- ============================================================ -->
-<div id="modal-apple-produto" class="hidden-section fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto">
-  <div class="bg-gray-800 rounded-lg border border-gray-700 max-w-2xl w-full my-8 shadow-2xl">
-    <header class="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-      <h2 id="modal-ap-produto-titulo" class="text-lg font-semibold">Novo produto Apple</h2>
-      <button class="ap-modal-close text-gray-400 hover:text-white text-2xl leading-none" data-target="modal-apple-produto">×</button>
-    </header>
-    <div class="px-6 py-4 space-y-3">
-      <input type="hidden" id="ap-prod-id">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Categoria *</label>
-          <select id="ap-prod-categoria" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Modelo / SKU *</label>
-          <input id="ap-prod-modelo" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Ex: MacBook Air M2 8/256">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Preço compra (R$) *</label>
-          <input id="ap-prod-pcompra" type="number" step="0.01" min="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Preço venda alvo (R$) *</label>
-          <input id="ap-prod-pvenda" type="number" step="0.01" min="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Preço mínimo venda (R$)</label>
-          <input id="ap-prod-pmin" type="number" step="0.01" min="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Estoque mínimo (un)</label>
-          <input id="ap-prod-emin" type="number" min="0" value="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-400 mb-1">URL da foto (opcional)</label>
-        <input id="ap-prod-foto" type="url" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="https://...">
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-400 mb-1">Observação</label>
-        <textarea id="ap-prod-obs" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></textarea>
-      </div>
-      <div id="ap-prod-margem" class="text-sm text-gray-300 bg-gray-900 rounded-md p-3 border border-gray-700">Margem unitária: —</div>
-      <div id="ap-prod-erro" class="hidden-section text-sm text-red-400 bg-red-900/30 border border-red-800 rounded-md p-3"></div>
-    </div>
-    <footer class="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-700">
-      <button class="ap-modal-close px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-md" data-target="modal-apple-produto">Cancelar</button>
-      <button id="ap-prod-salvar" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 rounded-md font-medium">Salvar</button>
-    </footer>
+<!-- ============ HISTORICO ============ -->
+<div class="panel" id="historico">
+  <div class="card">
+    <div class="bar"><h2><span class="n">·</span>Histórico de Consultas Salvas</h2>
+      <span><button class="mini" id="btnExpHist">Exportar CSV</button></span></div>
+    <div id="histBody"></div>
   </div>
 </div>
 
-
-<!-- ============================================================ -->
-<!-- MODAL: NOVA VENDA APPLE                                        -->
-<!-- ============================================================ -->
-<div id="modal-apple-venda" class="hidden-section fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto">
-  <div class="bg-gray-800 rounded-lg border border-gray-700 max-w-2xl w-full my-8 shadow-2xl">
-    <header class="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-      <h2 class="text-lg font-semibold">Nova venda</h2>
-      <button class="ap-modal-close text-gray-400 hover:text-white text-2xl leading-none" data-target="modal-apple-venda">×</button>
-    </header>
-    <div class="px-6 py-4 space-y-3">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Data *</label>
-          <input id="ap-vend-data" type="date" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Produto *</label>
-          <select id="ap-vend-produto" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Quantidade *</label>
-          <input id="ap-vend-qtd" type="number" min="1" value="1" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Preço unit. (R$) *</label>
-          <input id="ap-vend-preco" type="number" step="0.01" min="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Canal *</label>
-          <select id="ap-vend-canal" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-            <option>Instagram</option><option>WhatsApp</option><option>OLX</option>
-            <option>Indicação</option><option>Presencial</option><option>Outro</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Forma pgto *</label>
-          <select id="ap-vend-pgto" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-            <option>PIX</option><option>Dinheiro</option><option>Cartão Débito</option>
-            <option>Cartão Crédito</option><option>Outro</option>
-          </select>
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-xs font-medium text-gray-400 mb-1">Cliente (opcional)</label>
-          <input id="ap-vend-cliente" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-      </div>
-
-      <div id="ap-vend-calc" class="bg-gray-900 rounded-md p-3 border border-gray-700 text-sm space-y-1 text-gray-300">
-        <div>Total: <span id="ap-vend-total" class="text-gray-100 font-medium">R$ 0,00</span></div>
-        <div>Margem unitária: <span id="ap-vend-margem">—</span></div>
-        <div>Provisão viagem: <span id="ap-vend-prov">—</span></div>
-        <div>Lucro: <span id="ap-vend-lucro" class="font-medium">—</span></div>
-      </div>
-
-      <div class="border-t border-gray-700 pt-3">
-        <label class="block text-xs font-medium text-yellow-500 mb-1">⚠ Saldo da conta após a venda (R$) *</label>
-        <input id="ap-vend-saldo" type="number" step="0.01" class="w-full bg-gray-900 border border-yellow-700/50 rounded-md px-3 py-2 text-sm">
-        <div class="text-xs text-gray-400 mt-1">Esperado pelo sistema: <span id="ap-vend-esperado" class="font-mono">R$ 0,00</span></div>
-        <div id="ap-vend-divergencia" class="hidden-section text-xs text-red-400 mt-1"></div>
-      </div>
-
-      <div>
-        <label class="block text-xs font-medium text-gray-400 mb-1">Observação</label>
-        <textarea id="ap-vend-obs" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></textarea>
-      </div>
-
-      <div id="ap-vend-erro" class="hidden-section text-sm text-red-400 bg-red-900/30 border border-red-800 rounded-md p-3"></div>
-    </div>
-    <footer class="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-700">
-      <button class="ap-modal-close px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-md" data-target="modal-apple-venda">Cancelar</button>
-      <button id="ap-vend-salvar" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 rounded-md font-medium">Registrar venda</button>
-    </footer>
+<!-- ============ RANKING ============ -->
+<div class="panel" id="ranking">
+  <div class="card">
+    <div class="bar"><h2><span class="n">·</span>Ranking de Peças Mais Solicitadas</h2>
+      <span><button class="mini" id="btnExpRank">Exportar CSV</button></span></div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Contado a partir das consultas aprovadas. Base para o planejamento de importação.</div>
+    <div id="rankBody"></div>
   </div>
 </div>
 
+</main>
+<div id="toast"></div>
 
-<!-- ============================================================ -->
-<!-- MODAL: NOVA COMPRA APPLE                                       -->
-<!-- ============================================================ -->
-<div id="modal-apple-compra" class="hidden-section fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto">
-  <div class="bg-gray-800 rounded-lg border border-gray-700 max-w-2xl w-full my-8 shadow-2xl">
-    <header class="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-      <h2 class="text-lg font-semibold">Nova compra</h2>
-      <button class="ap-modal-close text-gray-400 hover:text-white text-2xl leading-none" data-target="modal-apple-compra">×</button>
-    </header>
-    <div class="px-6 py-4 space-y-3">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Data *</label>
-          <input id="ap-comp-data" type="date" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Viagem nº *</label>
-          <input id="ap-comp-viagem" type="number" min="1" value="1" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-xs font-medium text-gray-400 mb-1">Produto *</label>
-          <select id="ap-comp-produto" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Quantidade *</label>
-          <input id="ap-comp-qtd" type="number" min="1" value="1" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Custo unit. (R$) *</label>
-          <input id="ap-comp-custo" type="number" step="0.01" min="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-      </div>
+<script>
+"use strict";
 
-      <div id="ap-comp-calc" class="bg-gray-900 rounded-md p-3 border border-gray-700 text-sm space-y-1 text-gray-300">
-        <div>Total: <span id="ap-comp-total" class="text-gray-100 font-medium">R$ 0,00</span></div>
-        <div>Novo custo médio do produto: <span id="ap-comp-novocusto">—</span></div>
-      </div>
-
-      <div class="border-t border-gray-700 pt-3">
-        <label class="block text-xs font-medium text-yellow-500 mb-1">⚠ Saldo da conta após a compra (R$) *</label>
-        <input id="ap-comp-saldo" type="number" step="0.01" class="w-full bg-gray-900 border border-yellow-700/50 rounded-md px-3 py-2 text-sm">
-        <div class="text-xs text-gray-400 mt-1">Esperado pelo sistema: <span id="ap-comp-esperado" class="font-mono">R$ 0,00</span></div>
-        <div id="ap-comp-divergencia" class="hidden-section text-xs text-red-400 mt-1"></div>
-      </div>
-
-      <div>
-        <label class="block text-xs font-medium text-gray-400 mb-1">Observação</label>
-        <textarea id="ap-comp-obs" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></textarea>
-      </div>
-
-      <div id="ap-comp-erro" class="hidden-section text-sm text-red-400 bg-red-900/30 border border-red-800 rounded-md p-3"></div>
-    </div>
-    <footer class="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-700">
-      <button class="ap-modal-close px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-md" data-target="modal-apple-compra">Cancelar</button>
-      <button id="ap-comp-salvar" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 rounded-md font-medium">Registrar compra</button>
-    </footer>
-  </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!-- BOTÃO FLUTUANTE: CARRINHO DE ORÇAMENTO                         -->
-<!-- ============================================================ -->
-<button id="cart-floating" class="hidden-section fixed bottom-6 right-6 z-40 bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-full shadow-2xl font-medium flex items-center gap-2 transition-transform hover:scale-105">
-  <span>📋 Orçamento</span>
-  <span id="cart-count" class="bg-white text-primary-700 text-xs font-bold rounded-full px-2 py-0.5 min-w-[24px] text-center">0</span>
-</button>
-
-
-<!-- ============================================================ -->
-<!-- MODAL: CARRINHO DE ORÇAMENTO                                   -->
-<!-- ============================================================ -->
-<div id="modal-cart" class="hidden-section fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto">
-  <div class="bg-gray-800 rounded-lg border border-gray-700 max-w-4xl w-full my-8 shadow-2xl">
-    <header class="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-      <h2 class="text-lg font-semibold">Orçamento — itens selecionados</h2>
-      <button id="cart-close" class="text-gray-400 hover:text-white text-2xl leading-none">×</button>
-    </header>
-
-    <div class="px-6 py-4">
-      <div id="cart-body" class="space-y-3"></div>
-
-      <div id="cart-empty" class="hidden-section text-center text-gray-500 py-12">
-        Nenhum item adicionado. Abra um produto no Catálogo e clique em <span class="text-primary-500 font-medium">+ Adicionar</span> em uma das ofertas.
-      </div>
-    </div>
-
-    <footer class="flex items-center justify-between gap-2 px-6 py-4 border-t border-gray-700">
-      <button id="cart-clear" class="px-4 py-2 text-sm text-red-400 hover:text-red-300">Limpar carrinho</button>
-      <div class="flex gap-2">
-        <button id="cart-close-2" class="px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-md">Continuar adicionando</button>
-        <button id="cart-generate-pdf" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 rounded-md font-medium">Gerar PDFs</button>
-      </div>
-    </footer>
-  </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!-- JAVASCRIPT                                                     -->
-<!-- ============================================================ -->
-<script type="module">
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-// =====================================================================
-// CONFIGURAÇÃO
-// =====================================================================
-const CONFIG = {
-  SUPABASE_URL: 'https://odamfhflldygdfrnnjzu.supabase.co',
-  SUPABASE_ANON_KEY: 'sb_publishable_7q_884vzxsdTLOIw7ZMx7A_qiUuUc-n',
-  PER_PAGE: 50,
+/* ===================== CATÁLOGO ===================== */
+const CAT = {
+  processadores:[
+    {id:'cpu01',marca:'Intel',linha:'i3',modelo:'Core i3-4350',plat:'LGA1150',nuc:'2/4',preco:30},
+    {id:'cpu02',marca:'Intel',linha:'i3',modelo:'Core i3-6100',plat:'LGA1151v1',nuc:'2/4',preco:66.30},
+    {id:'cpu03',marca:'Intel',linha:'i3',modelo:'Core i3-7100',plat:'LGA1151v1',nuc:'2/4',preco:65},
+    {id:'cpu04',marca:'Intel',linha:'i3',modelo:'Core i3-8100',plat:'LGA1151v2',nuc:'4/4',preco:null},
+    {id:'cpu05',marca:'Intel',linha:'i3',modelo:'Core i3-9100',plat:'LGA1151v2',nuc:'4/4',preco:168},
+    {id:'cpu06',marca:'Intel',linha:'i3',modelo:'Core i3-10105',plat:'LGA1200',nuc:'4/8',preco:630},
+    {id:'cpu07',marca:'Intel',linha:'i3',modelo:'Core i3-12100',plat:'LGA1700',nuc:'4/8',preco:685},
+    {id:'cpu08',marca:'Intel',linha:'i3',modelo:'Core i3-13100',plat:'LGA1700',nuc:'4/8',preco:720},
+    {id:'cpu09',marca:'Intel',linha:'i3',modelo:'Core i3-14100',plat:'LGA1700',nuc:'4/8',preco:1600},
+    {id:'cpu10',marca:'Intel',linha:'i5',modelo:'Core i5-4670',plat:'LGA1150',nuc:'4/4',preco:90},
+    {id:'cpu11',marca:'Intel',linha:'i5',modelo:'Core i5-6500',plat:'LGA1151v1',nuc:'4/4',preco:140},
+    {id:'cpu12',marca:'Intel',linha:'i5',modelo:'Core i5-7600',plat:'LGA1151v1',nuc:'4/4',preco:200},
+    {id:'cpu13',marca:'Intel',linha:'i5',modelo:'Core i5-8400',plat:'LGA1151v2',nuc:'6/6',preco:352},
+    {id:'cpu14',marca:'Intel',linha:'i5',modelo:'Core i5-9500',plat:'LGA1151v2',nuc:'6/6',preco:435},
+    {id:'cpu15',marca:'Intel',linha:'i5',modelo:'Core i5-10400',plat:'LGA1200',nuc:'6/12',preco:832},
+    {id:'cpu16',marca:'Intel',linha:'i5',modelo:'Core i5-11400',plat:'LGA1200',nuc:'6/12',preco:995},
+    {id:'cpu17',marca:'Intel',linha:'i5',modelo:'Core i5-12400',plat:'LGA1700',nuc:'6/12',preco:710},
+    {id:'cpu18',marca:'Intel',linha:'i5',modelo:'Core i5-13400',plat:'LGA1700',nuc:'10/16',preco:1000},
+    {id:'cpu19',marca:'Intel',linha:'i5',modelo:'Core i5-14400',plat:'LGA1700',nuc:'10/16',preco:1320},
+    {id:'cpu20',marca:'Intel',linha:'i7',modelo:'Core i7-4770',plat:'LGA1150',nuc:'4/8',preco:null},
+    {id:'cpu21',marca:'Intel',linha:'i7',modelo:'Core i7-6700',plat:'LGA1151v1',nuc:'4/8',preco:352},
+    {id:'cpu22',marca:'Intel',linha:'i7',modelo:'Core i7-7700',plat:'LGA1151v1',nuc:'4/8',preco:410},
+    {id:'cpu23',marca:'Intel',linha:'i7',modelo:'Core i7-8700',plat:'LGA1151v2',nuc:'6/12',preco:630},
+    {id:'cpu24',marca:'Intel',linha:'i7',modelo:'Core i7-9700',plat:'LGA1151v2',nuc:'8/8',preco:720},
+    {id:'cpu25',marca:'Intel',linha:'i7',modelo:'Core i7-10700',plat:'LGA1200',nuc:'8/16',preco:1900},
+    {id:'cpu26',marca:'Intel',linha:'i7',modelo:'Core i7-11700',plat:'LGA1200',nuc:'8/16',preco:null},
+    {id:'cpu27',marca:'Intel',linha:'i7',modelo:'Core i7-12700',plat:'LGA1700',nuc:'12/20',preco:1912},
+    {id:'cpu28',marca:'Intel',linha:'i7',modelo:'Core i7-13700',plat:'LGA1700',nuc:'16/24',preco:null},
+    {id:'cpu29',marca:'Intel',linha:'i7',modelo:'Core i7-14700K',plat:'LGA1700',nuc:'20/28',preco:1920},
+    {id:'cpu30',marca:'Intel',linha:'i9',modelo:'Core i9-9900',plat:'LGA1151v2',nuc:'8/16',preco:null},
+    {id:'cpu31',marca:'Intel',linha:'i9',modelo:'Core i9-10900',plat:'LGA1200',nuc:'10/20',preco:null},
+    {id:'cpu32',marca:'Intel',linha:'i9',modelo:'Core i9-11900K',plat:'LGA1200',nuc:'8/16',preco:698},
+    {id:'cpu33',marca:'Intel',linha:'i9',modelo:'Core i9-12900',plat:'LGA1700',nuc:'16/24',preco:2111},
+    {id:'cpu34',marca:'Intel',linha:'i9',modelo:'Core i9-13900',plat:'LGA1700',nuc:'24/32',preco:1876},
+    {id:'cpu35',marca:'Intel',linha:'i9',modelo:'Core i9-14900',plat:'LGA1700',nuc:'24/32',preco:3075},
+    {id:'cpu36',marca:'AMD',linha:'Ryzen 3',modelo:'Ryzen 3 3200G',plat:'AM4',nuc:'4/4',preco:null},
+    {id:'cpu37',marca:'AMD',linha:'Ryzen 3',modelo:'Ryzen 3 5300G',plat:'AM4',nuc:'4/8',preco:null},
+    {id:'cpu38',marca:'AMD',linha:'Ryzen 5',modelo:'Ryzen 5 3400G',plat:'AM4',nuc:'4/8',preco:370},
+    {id:'cpu39',marca:'AMD',linha:'Ryzen 5',modelo:'Ryzen 5 5600G',plat:'AM4',nuc:'6/12',preco:805},
+    {id:'cpu40',marca:'AMD',linha:'Ryzen 5',modelo:'Ryzen 5 7600',plat:'AM5',nuc:'6/12',preco:null},
+    {id:'cpu41',marca:'AMD',linha:'Ryzen 7',modelo:'Ryzen 7 5700G',plat:'AM4',nuc:'8/16',preco:930},
+    {id:'cpu42',marca:'AMD',linha:'Ryzen 7',modelo:'Ryzen 7 7700',plat:'AM5',nuc:'8/16',preco:null}
+  ],
+  memorias:[
+    {id:'ram01',tipo:'DDR3',cap:'4 GB',freq:'1600 MHz',preco:50},
+    {id:'ram02',tipo:'DDR4',cap:'4 GB',freq:'2666 MHz',preco:127},
+    {id:'ram03',tipo:'DDR4',cap:'4 GB',freq:'3200 MHz',preco:140},
+    {id:'ram04',tipo:'DDR3',cap:'8 GB',freq:'1600 MHz',preco:102},
+    {id:'ram05',tipo:'DDR4',cap:'8 GB',freq:'2666 MHz',preco:325},
+    {id:'ram06',tipo:'DDR4',cap:'8 GB',freq:'3200 MHz',preco:240},
+    {id:'ram07',tipo:'DDR5',cap:'8 GB',freq:'4800 MHz',preco:480},
+    {id:'ram08',tipo:'DDR4',cap:'16 GB',freq:'2666 MHz',preco:453},
+    {id:'ram09',tipo:'DDR4',cap:'16 GB',freq:'3200 MHz',preco:420},
+    {id:'ram10',tipo:'DDR5',cap:'16 GB',freq:'4800 MHz',preco:970}
+  ],
+  placas:[
+    {id:'mb01',plat:'LGA1150',socket:'LGA1150',chipset:'H81',tipoRAM:'DDR3',m2:false,ger:'Intel 4ª/5ª',preco:120},
+    {id:'mb02',plat:'LGA1151v1',socket:'LGA1151',chipset:'H110',tipoRAM:'DDR4',m2:true,ger:'Intel 6ª/7ª',preco:220},
+    {id:'mb03',plat:'LGA1151v2',socket:'LGA1151',chipset:'H310',tipoRAM:'DDR4',m2:true,ger:'Intel 8ª/9ª',preco:200},
+    {id:'mb04',plat:'LGA1200',socket:'LGA1200',chipset:'H510',tipoRAM:'DDR4',m2:true,ger:'Intel 10ª/11ª',preco:280},
+    {id:'mb05',plat:'LGA1700',socket:'LGA1700',chipset:'H610',tipoRAM:'DDR4',m2:true,ger:'Intel 12ª/13ª/14ª',preco:280},
+    {id:'mb06',plat:'AM4',socket:'AM4',chipset:'A520',tipoRAM:'DDR4',m2:true,ger:'AMD AM4',preco:220},
+    {id:'mb07',plat:'AM5',socket:'AM5',chipset:'A620',tipoRAM:'DDR5',m2:true,ger:'AMD AM5',preco:370}
+  ],
+  armazenamento:[
+    {id:'st01',tipo:'SSD',cap:'240 GB',iface:'SATA III',nvme:false,preco:180},
+    {id:'st02',tipo:'SSD',cap:'480 GB',iface:'SATA III',nvme:false,preco:300},
+    {id:'st03',tipo:'SSD',cap:'1 TB',iface:'SATA III',nvme:false,preco:510},
+    {id:'st04',tipo:'SSD NVMe',cap:'256 GB',iface:'PCIe M.2',nvme:true,preco:220},
+    {id:'st05',tipo:'SSD NVMe',cap:'512 GB',iface:'PCIe M.2',nvme:true,preco:360},
+    {id:'st06',tipo:'SSD NVMe',cap:'1 TB',iface:'PCIe M.2',nvme:true,preco:600},
+    {id:'st07',tipo:'HD',cap:'500 GB',iface:'SATA III',nvme:false,preco:70},
+    {id:'st08',tipo:'HD',cap:'1 TB',iface:'SATA III',nvme:false,preco:200}
+  ],
+  fixos:[
+    {id:'fx01',item:'Gabinete ATX',regra:'sempre',preco:100},
+    {id:'fx02',item:'Fonte 450W',regra:'sempre',preco:200},
+    {id:'fx03',item:'Pasta térmica',regra:'sempre',preco:20},
+    {id:'fx04',item:'Cabo de vídeo HDMI',regra:'sempre',preco:15},
+    {id:'fx05',item:'Cooler CPU básico',regra:'cooler',preco:50},
+    {id:'fx06',item:'Cabo de força',regra:'forca',preco:20}
+  ]
 };
 
-const sb = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+/* índice id -> item */
+const IDX={};
+['processadores','memorias','placas','armazenamento','fixos'].forEach(g=>CAT[g].forEach(it=>IDX[it.id]=it));
 
-// =====================================================================
-// ESTADO
-// =====================================================================
-const state = {
-  user: null,
-  page: 0,
-  total: 0,
-  filters: { search: '', prefixo: '', marca: '', fornecedor: '' },
-  cart: JSON.parse(localStorage.getItem('selecta_cart_licitacao') || '{}'),
-  apple: {
-    categorias: [],
-    produtos: [],
-    config: null,
-    saldoEsperado: 0,
-    subtab: 'catalogo',
-  },
-};
+/* ===================== ESTADO / STORAGE ===================== */
+let PRECOS={}, HIST=[], LS_OK=true;
+const K_PRE='selecta_montador_precos', K_HIS='selecta_montador_historico';
 
-// =====================================================================
-// HELPERS DE UI
-// =====================================================================
-const $ = sel => document.querySelector(sel);
-const $$ = sel => document.querySelectorAll(sel);
-
-function show(el) { if (typeof el === 'string') el = $(el); el.classList.remove('hidden-section'); }
-function hide(el) { if (typeof el === 'string') el = $(el); el.classList.add('hidden-section'); }
-
-function fmtBRL(v) {
-  if (v == null || isNaN(v)) return '—';
-  return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function lsLoad(){
+  try{
+    PRECOS=JSON.parse(localStorage.getItem(K_PRE)||'{}');
+    HIST=JSON.parse(localStorage.getItem(K_HIS)||'[]');
+  }catch(e){ LS_OK=false; PRECOS={}; HIST=[]; }
 }
-function fmtUSD(v) {
-  if (v == null || isNaN(v)) return '—';
-  return Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-function fmtData(d) {
-  if (!d) return '—';
-  const [y, m, day] = d.split('-');
-  return `${day}/${m}/${y}`;
-}
+function lsSavePre(){ try{ localStorage.setItem(K_PRE,JSON.stringify(PRECOS)); }catch(e){ LS_OK=false; } }
+function lsSaveHis(){ try{ localStorage.setItem(K_HIS,JSON.stringify(HIST)); }catch(e){ LS_OK=false; } }
 
-// =====================================================================
-// AUTH
-// =====================================================================
-async function tryLogin() {
-  const email = $('#login-email').value.trim();
-  const password = $('#login-password').value;
-  hide('#login-error');
-  if (!email || !password) return showLoginError('Preencha email e senha.');
-
-  const btn = $('#login-btn');
-  btn.disabled = true; btn.textContent = 'Entrando...';
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
-  btn.disabled = false; btn.textContent = 'Entrar';
-
-  if (error) {
-    showLoginError(error.message === 'Invalid login credentials' ? 'Email ou senha incorretos.' : error.message);
-    return;
+/* ===================== SINCRONIZAÇÃO SUPABASE (preços) ===================== */
+/* Mantém a compatibilidade intacta: só os PREÇOS passam a viver no servidor,
+   com o localStorage atuando como cache offline. Leitura é pública (anon);
+   gravação exige login (reaproveita a sessão do app, mesma origem). */
+const SB_URL='https://odamfhflldygdfrnnjzu.supabase.co';
+const SB_KEY='sb_publishable_7q_884vzxsdTLOIw7ZMx7A_qiUuUc-n';
+let SB=null, SB_OK=false;
+async function sbInit(){
+  try{
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    SB = createClient(SB_URL, SB_KEY);   // pega a sessão de login já existente no navegador
+    SB_OK = true;
+    await sbLoadPrecos();
+  }catch(e){
+    SB_OK = false;
+    console.warn('[montador] Supabase indisponível — usando preços salvos neste navegador.', e);
+    toast('Sem conexão com o servidor: usando cache local.', true);
   }
-  state.user = data.user;
-  enterApp();
 }
-
-function showLoginError(msg) {
-  const el = $('#login-error');
-  el.textContent = msg;
-  show(el);
+async function sbLoadPrecos(){
+  if(!SB) return;
+  try{
+    const { data, error } = await SB.from('montador_precos').select('component_id, preco');
+    if(error) throw error;
+    (data||[]).forEach(r=>{ if(r.preco!=null && IDX[r.component_id]) PRECOS[r.component_id]=Number(r.preco); });
+    lsSavePre();                          // espelha no cache offline
+    fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento(); renderCatalogo(); renderRanking();
+  }catch(e){
+    console.warn('[montador] Falha ao ler preços do servidor.', e);
+  }
 }
-
-async function logout() {
-  await sb.auth.signOut();
-  state.user = null;
-  hide('#app');
-  show('#login-screen');
-  $('#login-password').value = '';
-}
-
-async function checkSession() {
-  const { data } = await sb.auth.getSession();
-  if (data.session) {
-    state.user = data.session.user;
-    enterApp();
+async function sbSavePreco(id, val){
+  if(!SB) return false;
+  try{
+    if(val===null || val===undefined || isNaN(val)){
+      const { error } = await SB.from('montador_precos').delete().eq('component_id', id);
+      if(error) throw error;
+    }else{
+      const { error } = await SB.from('montador_precos')
+        .upsert({ component_id:id, preco:val, updated_at:new Date().toISOString() }, { onConflict:'component_id' });
+      if(error) throw error;
+    }
+    return true;
+  }catch(e){
+    console.warn('[montador] Falha ao sincronizar preço.', e);
+    return false;
   }
 }
 
-function enterApp() {
-  hide('#login-screen');
-  show('#app');
-  $('#user-email').textContent = state.user.email;
-  switchTab('catalogo');
-  loadFilters();
-  loadCatalog();
-  updateCartUI();
+function preco(id){ return (PRECOS[id]!==undefined && PRECOS[id]!==null) ? PRECOS[id] : IDX[id].preco; }
+
+const estado={cpu:null,ram:null,ramq:1,arm:null,cooler:true,forca:false,man:{}};
+
+/* ===================== HELPERS ===================== */
+function fmt(n){
+  if(n===null||n===undefined||isNaN(n)) return '—';
+  return 'R$ '+Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function placaDoCpu(cpu){ return CAT.placas.find(p=>p.plat===cpu.plat); }
+function el(id){ return document.getElementById(id); }
+let toastT;
+function toast(msg,err){
+  const t=el('toast'); t.textContent=msg; t.className='show'+(err?' err':'');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.className='',2600);
 }
 
-// =====================================================================
-// MAPEAMENTO DE PREFIXOS (abreviação → nome completo)
-// =====================================================================
-const PREFIXOS_LABELS = {
-  'ACS': 'Acessórios',
-  'ADP': 'Adaptador',
-  'AIO': 'All-in-One (Desktop)',
-  'AIR': 'AirTag / Localizador',
-  'AP':  'Access Point (Wi-Fi)',
-  'BAL': 'Balança Digital',
-  'CB':  'Cabo',
-  'CCP': 'Cooler de CPU',
-  'CEL': 'Celular',
-  'CPU': 'Processador',
-  'CRG': 'Carregador',
-  'CRJ': 'Conector RJ45',
-  'CRT': 'Cartucho',
-  'DRN': 'Drone',
-  'DSK': 'Desktop / PC Montado',
-  'FLM': 'Filamento 3D',
-  'FLT': 'Filtro de Linha',
-  'FNB': 'Fonte de Notebook',
-  'FNT': 'Fonte ATX',
-  'GAB': 'Gabinete',
-  'GAV': 'Gaveta (HD/SSD Externo)',
-  'HD':  'HD (Disco Rígido)',
-  'HST': 'Headset / Fone',
-  'HUB': 'Hub USB',
-  'IM3': 'Impressora 3D',
-  'IMP': 'Impressora',
-  'KTM': 'Kit Mouse + Teclado',
-  'LCB': 'Leitor de Código de Barras',
-  'MCH': 'Mochila Notebook',
-  'MDM': 'Modem',
-  'MEM': 'Memória RAM',
-  'MIC': 'Microfone',
-  'MN':  'Monitor',
-  'MPC': 'Mini PC',
-  'MS':  'Mouse',
-  'NAS': 'NAS / Storage de Rede',
-  'NB':  'Notebook',
-  'NBK': 'Nobreak (UPS)',
-  'NVR': 'Gravador de Vídeo (CFTV)',
-  'PCI': 'Placa PCI',
-  'PEN': 'Caneta Stylus',
-  'PMA': 'Placa-Mãe',
-  'PPT': 'Papel Térmico',
-  'PRJ': 'Projetor',
-  'PTM': 'Pasta Térmica',
-  'RBT': 'Fita de Rotuladora',
-  'RDE': 'Equipamento de Rede',
-  'RFL': 'Refil de Tinta',
-  'RTR': 'Roteador',
-  'SCN': 'Scanner',
-  'SDC': 'Cartão SD/Memória',
-  'SPK': 'Speaker / Caixa de Som',
-  'SSD': 'SSD',
-  'SW':  'Switch de Rede',
-  'TB':  'Tablet / E-reader',
-  'TCL': 'Teclado',
-  'TLF': 'Telefone',
-  'TNR': 'Toner',
-  'TV':  'TV',
-  'VGA': 'Placa de Vídeo',
-  'WAD': 'Adaptador Wi-Fi USB',
-  'WBC': 'Webcam',
-  'WTC': 'Smartwatch',
-};
-
-// =====================================================================
-// TAB: CATÁLOGO (licitação) — código existente
-// =====================================================================
-async function loadFilters() {
-  // Prefixos (usa view com DISTINCT pra evitar limite de 1000 linhas do Supabase)
-  const { data: prefixosData } = await sb.from('prefixos_distintos').select('prefixo');
-  if (prefixosData) {
-    const prefixos = prefixosData.map(r => r.prefixo);
-    $('#filter-prefixo').innerHTML = '<option value="">Todos</option>' + prefixos.map(p => {
-      const nome = PREFIXOS_LABELS[p];
-      const label = nome ? `${p} — ${nome}` : p;
-      return `<option value="${p}">${label}</option>`;
-    }).join('');
-  }
-  // Marcas (usa view que já vem ordenada por contagem desc)
-  const { data: marcasData } = await sb.from('marcas_contagem').select('marca');
-  if (marcasData) {
-    const top = marcasData.map(r => r.marca);
-    $('#filter-marca').innerHTML = '<option value="">Todas</option>' + top.map(m => `<option value="${m}">${m}</option>`).join('');
-  }
-  // Fornecedores (dinâmico, vem da tabela fornecedores)
-  const { data: fornData } = await sb.from('fornecedores').select('nome_curto').order('nome_curto');
-  if (fornData) {
-    $('#filter-fornecedor').innerHTML = '<option value="">Todos</option>' +
-      fornData.map(f => `<option value="${f.nome_curto}">${f.nome_curto}</option>`).join('');
-  }
+/* ===================== MONTAR: selects ===================== */
+function fillCpu(){
+  const s=el('s_cpu'); s.innerHTML='<option value="">— escolha o processador —</option>';
+  const linhas=['i3','i5','i7','i9','Ryzen 3','Ryzen 5','Ryzen 7'];
+  linhas.forEach(ln=>{
+    const grp=document.createElement('optgroup'); grp.label=ln;
+    CAT.processadores.filter(c=>c.linha===ln).forEach(c=>{
+      const p=preco(c.id);
+      const o=document.createElement('option'); o.value=c.id;
+      o.textContent=c.marca+' '+c.modelo+'  ·  '+(p?fmt(p):'sem preço');
+      grp.appendChild(o);
+    });
+    s.appendChild(grp);
+  });
+}
+function fillRam(){
+  const s=el('s_ram');
+  if(!estado.cpu){ s.innerHTML='<option>— trava: escolha o processador —</option>'; s.disabled=true; el('s_ramq').disabled=true; return; }
+  const mb=placaDoCpu(estado.cpu);
+  s.disabled=false; el('s_ramq').disabled=false;
+  s.innerHTML='<option value="">— escolha a memória ('+mb.tipoRAM+') —</option>';
+  CAT.memorias.filter(m=>m.tipo===mb.tipoRAM).forEach(m=>{
+    const p=preco(m.id);
+    const o=document.createElement('option'); o.value=m.id;
+    o.textContent=m.tipo+' '+m.cap+' '+m.freq+'  ·  '+(p?fmt(p):'sem preço');
+    s.appendChild(o);
+  });
+  if(estado.ram && estado.ram.tipo===mb.tipoRAM){ s.value=estado.ram.id; } else { estado.ram=null; }
+}
+function fillArm(){
+  const s=el('s_arm');
+  if(!estado.cpu){ s.innerHTML='<option>— trava: escolha o processador —</option>'; s.disabled=true; return; }
+  const mb=placaDoCpu(estado.cpu);
+  s.disabled=false;
+  s.innerHTML='<option value="">— escolha o armazenamento —</option>';
+  CAT.armazenamento.forEach(a=>{
+    if(a.nvme && !mb.m2) return; // trava: placa sem M.2
+    const p=preco(a.id);
+    const o=document.createElement('option'); o.value=a.id;
+    o.textContent=a.tipo+' '+a.cap+' '+a.iface+'  ·  '+(p?fmt(p):'sem preço');
+    s.appendChild(o);
+  });
+  if(estado.arm && !(estado.arm.nvme && !mb.m2)){ s.value=estado.arm.id; } else { estado.arm=null; }
+}
+function renderAutoMb(){
+  const box=el('autoMb'), ch=el('chain');
+  if(!estado.cpu){ box.innerHTML=''; ch.innerHTML=''; return; }
+  const mb=placaDoCpu(estado.cpu);
+  box.innerHTML='<div class="auto-mb"><div class="lbl">Placa-mãe — definida automaticamente</div>'+
+    '<div class="val">Placa '+mb.chipset+' · '+mb.socket+' · '+mb.tipoRAM+' · '+fmt(preco(mb.id))+'</div></div>';
+  ch.innerHTML=
+    '<span class="chip">'+estado.cpu.modelo+'</span>'+
+    '<span class="chip">› '+mb.socket+'</span>'+
+    '<span class="chip">› Placa '+mb.chipset+'</span>'+
+    '<span class="chip">› RAM '+mb.tipoRAM+'</span>'+
+    '<span class="chip">› '+(mb.m2?'M.2 disponível':'sem M.2 (só SATA)')+'</span>';
 }
 
-async function loadCatalog() {
-  show('#catalog-loader');
-  const start = state.page * CONFIG.PER_PAGE;
-  const end = start + CONFIG.PER_PAGE - 1;
-  let q = sb.from('produtos_com_ofertas').select('*', { count: 'exact' }).range(start, end);
-  if (state.filters.prefixo) q = q.eq('prefixo', state.filters.prefixo);
-  if (state.filters.marca) q = q.eq('marca', state.filters.marca);
-  if (state.filters.fornecedor) q = q.contains('fornecedores_disponiveis', [state.filters.fornecedor]);
-  if (state.filters.search) {
-    const s = state.filters.search.trim();
-    // Busca em código SLC ou descrição ou marca
-    q = q.or(`codigo_slc.ilike.%${s}%,descricao.ilike.%${s}%,marca.ilike.%${s}%`);
-  }
-
-  // Ordenação: com filtro/busca → menor preço primeiro; sem filtro → código
-  const hasFilter = state.filters.search || state.filters.prefixo || state.filters.marca || state.filters.fornecedor;
-  if (hasFilter) {
-    q = q.order('menor_brl', { ascending: true, nullsFirst: false });
-  } else {
-    q = q.order('codigo_slc');
-  }
-  const { data, count, error } = await q;
-  hide('#catalog-loader');
-  if (error) {
-    $('#catalog-tbody').innerHTML = `<tr><td colspan="7" class="px-3 py-6 text-center text-red-400">Erro: ${error.message}</td></tr>`;
-    return;
-  }
-  state.total = count || 0;
-  renderCatalog(data || []);
+/* ===================== MONTAR: orçamento ===================== */
+function linhasOrcamento(){
+  const L=[];
+  if(estado.cpu){ L.push({cat:'Processador',nome:estado.cpu.marca+' '+estado.cpu.modelo,preco:preco(estado.cpu.id),qtd:1}); }
+  if(estado.cpu){ const mb=placaDoCpu(estado.cpu); L.push({cat:'Placa-mãe',nome:'Placa '+mb.chipset+' ('+mb.socket+')',preco:preco(mb.id),qtd:1}); }
+  if(estado.ram){ L.push({cat:'Memória',nome:estado.ram.tipo+' '+estado.ram.cap+' '+estado.ram.freq,preco:preco(estado.ram.id),qtd:estado.ramq}); }
+  if(estado.arm){ L.push({cat:'Armazenamento',nome:estado.arm.tipo+' '+estado.arm.cap,preco:preco(estado.arm.id),qtd:1}); }
+  CAT.fixos.forEach(f=>{
+    if(f.regra==='sempre') L.push({cat:'Fixo',nome:f.item,preco:preco(f.id),qtd:1});
+    else if(f.regra==='cooler'&&estado.cooler) L.push({cat:'Fixo',nome:f.item,preco:preco(f.id),qtd:1});
+    else if(f.regra==='forca'&&estado.forca) L.push({cat:'Fixo',nome:f.item,preco:preco(f.id),qtd:1});
+  });
+  Object.keys(estado.man).forEach(k=>{
+    const v=estado.man[k];
+    if(v>0) L.push({cat:'Adicional',nome:k,preco:v,qtd:1});
+  });
+  return L;
+}
+function renderOrcamento(){
+  const L=linhasOrcamento(), box=el('bdItems');
+  if(L.length===0){ box.innerHTML='<div class="empty">Escolha um processador para começar.</div>';
+    el('bdTotal').textContent='—'; el('bdWarn').innerHTML=''; el('btnApr').disabled=true; return; }
+  let html='', total=0, semPreco=0, lastCat='';
+  L.forEach(l=>{
+    if(l.cat!==lastCat){ lastCat=l.cat; }
+    const sub=(l.preco===null||l.preco===undefined)?null:l.preco*l.qtd;
+    if(sub===null) semPreco++; else total+=sub;
+    const q=l.qtd>1?' <small>×'+l.qtd+'</small>':'';
+    html+='<div class="li"><span class="nm">'+l.nome+q+'<span class="tag">'+l.cat+'</span></span>'+
+          '<span class="pr">'+(sub===null?'sem preço':fmt(sub))+'</span></div>';
+  });
+  box.innerHTML=html;
+  el('bdTotal').textContent=fmt(total);
+  el('bdWarn').innerHTML = semPreco>0
+    ? '<div class="warn">Orçamento incompleto: '+semPreco+' item(ns) sem preço cadastrado. Cadastre na aba Catálogo.</div>' : '';
+  el('btnApr').disabled = !(estado.cpu && estado.ram && estado.arm);
 }
 
-function renderCatalog(items) {
-  const tbody = $('#catalog-tbody');
-  if (items.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="px-3 py-8 text-center text-gray-500">Nenhum produto encontrado.</td></tr>`;
-  } else {
-    tbody.innerHTML = items.map(p => `
-      <tr class="product-row hover:bg-gray-700/50 cursor-pointer" data-id="${p.id}">
-        <td class="px-3 py-2 font-mono text-xs text-primary-500">${p.codigo_slc}</td>
-        <td class="px-3 py-2"><span class="bg-gray-700 text-xs px-1.5 py-0.5 rounded">${p.prefixo}</span></td>
-        <td class="px-3 py-2 font-medium">${p.marca || '—'}</td>
-        <td class="px-3 py-2 text-gray-300 max-w-xl truncate" title="${(p.descricao || '').replace(/"/g, '&quot;')}">${p.descricao || '—'}</td>
-        <td class="px-3 py-2 text-right font-mono text-sm">$ ${fmtUSD(p.menor_usd)}</td>
-        <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(p.menor_brl)}</td>
-        <td class="px-3 py-2 text-center text-xs text-gray-400">${(p.fornecedores_disponiveis || []).join(' + ') || '—'}</td>
-      </tr>
-    `).join('');
-    $$('#catalog-tbody tr[data-id]').forEach(tr => tr.addEventListener('click', () => openProductDetail(tr.dataset.id)));
-  }
-  const from = items.length > 0 ? state.page * CONFIG.PER_PAGE + 1 : 0;
-  const to = state.page * CONFIG.PER_PAGE + items.length;
-  const hasFilter = state.filters.search || state.filters.prefixo || state.filters.marca || state.filters.fornecedor;
-  const sortHint = hasFilter ? ' · <span class="text-primary-500">ordenado por menor preço</span>' : '';
-  $('#catalog-info').innerHTML = `${state.total.toLocaleString('pt-BR')} produto(s) encontrado(s)${sortHint}`;
-  $('#page-info').textContent = `${from}–${to} de ${state.total.toLocaleString('pt-BR')}`;
-  $('#page-prev').disabled = state.page === 0;
-  $('#page-next').disabled = (state.page + 1) * CONFIG.PER_PAGE >= state.total;
+/* ===================== APROVAR ===================== */
+function aprovar(){
+  const cliente=el('f_cliente').value.trim(), edital=el('f_edital').value.trim();
+  if(!estado.cpu||!estado.ram||!estado.arm){ toast('Faltam itens: processador, memória e armazenamento.',true); return; }
+  if(!cliente && !edital){ toast('Preencha Cliente ou Edital para registrar a origem.',true); return; }
+  const L=linhasOrcamento();
+  const semPreco=L.some(l=>l.preco===null||l.preco===undefined);
+  if(semPreco && !confirm('Há itens sem preço. Salvar a consulta mesmo assim?')) return;
+  let total=0; L.forEach(l=>{ if(l.preco) total+=l.preco*l.qtd; });
+  HIST.unshift({
+    id:Date.now(), cliente:cliente||'—', edital:edital||'—', data:el('f_data').value,
+    itens:L, total:total, incompleto:semPreco
+  });
+  lsSaveHis(); renderHistorico(); renderRanking();
+  toast('Consulta salva no histórico.');
+}
+function limpar(){
+  estado.cpu=estado.ram=estado.arm=null; estado.ramq=1; estado.cooler=true; estado.forca=false; estado.man={};
+  el('s_cpu').value=''; el('s_ramq').value=1; el('c_cooler').checked=true; el('c_forca').checked=false;
+  document.querySelectorAll('.man').forEach(i=>i.value='');
+  fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
 }
 
-function applyFilters() {
-  state.filters.search = $('#filter-search').value;
-  state.filters.prefixo = $('#filter-prefixo').value;
-  state.filters.marca = $('#filter-marca').value;
-  state.filters.fornecedor = $('#filter-fornecedor').value;
-  state.page = 0;
-  loadCatalog();
+/* ===================== CATÁLOGO ===================== */
+function catTable(titulo,itens,nomeFn){
+  let h='<table><tr class="grp"><td colspan="2">'+titulo+'</td></tr>';
+  itens.forEach(it=>{
+    const p=preco(it.id);
+    h+='<tr><td>'+nomeFn(it)+'</td><td class="right">'+
+       '<input class="pin precoEdit" data-id="'+it.id+'" type="number" min="0" step="0.01" value="'+(p!==null&&p!==undefined?p:'')+'" placeholder="sem preço"></td></tr>';
+  });
+  return h+'</table>';
 }
-
-function clearFilters() {
-  $('#filter-search').value = ''; $('#filter-prefixo').value = '';
-  $('#filter-marca').value = ''; $('#filter-fornecedor').value = '';
-  applyFilters();
-}
-
-// =====================================================================
-// CRUD ITEM no catálogo (criar/editar produto, criar/editar/apagar oferta)
-// =====================================================================
-let nextCodigoCache = {};
-let fornecedoresCache = null;
-let modalState = { mode: null, produtoId: null, ofertaId: null };
-// modes: 'new-item' | 'edit-produto' | 'new-oferta' | 'edit-oferta'
-
-const COND_OPTS = ['novo', 'novo_oem', 'recondicionado', 'usado', 'swap'];
-const GAR_OPTS  = ['py', 'br', 'fabricante', 'sem_garantia', 'nao_declarada'];
-
-async function populatePrefixos() {
-  const { data } = await sb.from('prefixos_distintos').select('prefixo');
-  if (!data) return;
-  const opts = data.map(r => r.prefixo).map(p => {
-    const nome = PREFIXOS_LABELS[p];
-    const label = nome ? `${p} — ${nome}` : p;
-    return `<option value="${p}">${label}</option>`;
-  }).join('');
-  $('#add-prefixo').innerHTML = '<option value="">— selecione —</option>' + opts;
-}
-
-async function populateFornecedores() {
-  if (!fornecedoresCache) {
-    const { data } = await sb.from('fornecedores').select('id, nome_curto, nome').order('nome_curto');
-    fornecedoresCache = data || [];
-  }
-  $('#add-fornecedor').innerHTML = '<option value="">— selecione —</option>' +
-    fornecedoresCache.map(f => `<option value="${f.id}">${f.nome_curto} (${f.nome})</option>`).join('');
-}
-
-async function addNewFornecedor() {
-  const nomeCurto = prompt('Nome curto do fornecedor (ex: "Visão", "Atacado"):\nUsado em filtros e tabelas. Deve ser único.');
-  if (!nomeCurto || !nomeCurto.trim()) return;
-  const nc = nomeCurto.trim();
-
-  const nome = prompt(`Nome completo do fornecedor:\n(razão social ou nome comercial completo)`, nc);
-  if (!nome || !nome.trim()) return;
-  const nm = nome.trim();
-
-  try {
-    const { data, error } = await sb.from('fornecedores')
-      .insert({ nome_curto: nc, nome: nm })
-      .select('id, nome_curto, nome')
-      .single();
-
-    if (error) {
-      if ((error.message || '').match(/duplicate|unique/i)) {
-        alert(`Já existe fornecedor com nome curto "${nc}". Escolha outro.`);
-      } else {
-        alert('Erro: ' + error.message);
+function renderCatalogo(){
+  let h='';
+  h+=catTable('Processadores',CAT.processadores,it=>it.marca+' '+it.modelo+' <span class="det">'+it.plat+' · '+it.nuc+'</span>');
+  h+=catTable('Memórias',CAT.memorias,it=>it.tipo+' '+it.cap+' '+it.freq);
+  h+=catTable('Placas-mãe',CAT.placas,it=>'Placa '+it.chipset+' <span class="det">'+it.socket+' · '+it.tipoRAM+'</span>');
+  h+=catTable('Armazenamento',CAT.armazenamento,it=>it.tipo+' '+it.cap+' <span class="det">'+it.iface+'</span>');
+  h+=catTable('Fixos e Consumíveis',CAT.fixos,it=>it.item);
+  el('catBody').innerHTML=h;
+  document.querySelectorAll('.precoEdit').forEach(inp=>{
+    inp.addEventListener('change',()=>{
+      const v=inp.value.trim();
+      const id=inp.dataset.id;
+      const val=(v==='')?null:parseFloat(v);
+      if(val===null||isNaN(val)) delete PRECOS[id];
+      else PRECOS[id]=val;
+      lsSavePre(); fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
+      if(SB_OK){
+        sbSavePreco(id, val).then(ok=>{
+          toast(ok ? 'Preço atualizado e sincronizado.'
+                   : 'Salvo localmente — NÃO sincronizou (verifique se está logado).', !ok);
+        });
+      }else{
+        toast('Preço salvo localmente (sem sincronização).');
       }
-      return;
-    }
-
-    // Invalida caches e re-popula
-    fornecedoresCache = null;
-    await populateFornecedores();
-    $('#add-fornecedor').value = data.id; // já seleciona o recém-criado
-
-    // Atualiza também o filter da página principal
-    loadFilters();
-
-    alert(`✓ Fornecedor "${data.nome_curto}" cadastrado e selecionado.`);
-  } catch (e) {
-    alert('Erro: ' + (e.message || JSON.stringify(e)));
-  }
-}
-
-function resetItemForm() {
-  ['add-marca','add-descricao','add-modelo','add-categoria','add-sku-fornecedor',
-   'add-preco-usd','add-preco-brl','add-garantia-tempo','add-observacoes','add-desc-original']
-    .forEach(id => { $('#'+id).value = ''; });
-  $('#add-prefixo').value = '';
-  $('#add-fornecedor').value = '';
-  $('#add-codigo-preview').textContent = '—';
-  $('#add-taxa').value = '5.40';
-  $('#add-condicao').value = 'novo';
-  $('#add-garantia').value = 'py';
-  $('#add-ativo').checked = true;
-  $('#add-disponivel').checked = true;
-  $('#add-error').classList.add('hidden-section');
-}
-
-async function openItemModal(mode, params = {}) {
-  resetItemForm();
-  modalState = { mode, produtoId: params.produtoId || null, ofertaId: params.ofertaId || null };
-  await populatePrefixos();
-  await populateFornecedores();
-
-  // Visibilidade dos blocos + título + label do botão
-  if (mode === 'new-item') {
-    $('#modal-item-title').textContent = 'Adicionar item ao catálogo';
-    $('#modal-item-subtitle').textContent = 'Cria 1 produto + 1 oferta. Mantém padrão do banco.';
-    show('#block-produto'); show('#block-oferta');
-    $('#add-salvar').textContent = 'Salvar item';
-  } else if (mode === 'edit-produto') {
-    $('#modal-item-title').textContent = 'Editar produto';
-    $('#modal-item-subtitle').textContent = 'Edita apenas os campos do produto. Ofertas não são alteradas.';
-    show('#block-produto'); hide('#block-oferta');
-    $('#add-salvar').textContent = 'Salvar alterações';
-    await fillProdutoFields(params.produtoId);
-  } else if (mode === 'new-oferta') {
-    $('#modal-item-title').textContent = 'Nova oferta';
-    $('#modal-item-subtitle').textContent = 'Adiciona nova oferta ao produto atual.';
-    hide('#block-produto'); show('#block-oferta');
-    $('#add-salvar').textContent = 'Salvar oferta';
-  } else if (mode === 'edit-oferta') {
-    $('#modal-item-title').textContent = 'Editar oferta';
-    $('#modal-item-subtitle').textContent = 'Altera dados da oferta selecionada.';
-    hide('#block-produto'); show('#block-oferta');
-    $('#add-salvar').textContent = 'Salvar alterações';
-    await fillOfertaFields(params.ofertaId);
-  }
-
-  show('#modal-item');
-}
-
-async function fillProdutoFields(produtoId) {
-  const { data: p, error } = await sb.from('produtos').select('*').eq('id', produtoId).single();
-  if (error || !p) return showAddError('Não foi possível carregar o produto.');
-  $('#add-prefixo').value = p.prefixo || '';
-  $('#add-codigo-preview').textContent = p.codigo_slc || '—';
-  $('#add-marca').value = p.marca || '';
-  $('#add-descricao').value = p.descricao || '';
-  $('#add-modelo').value = p.modelo || '';
-  $('#add-categoria').value = p.categoria || '';
-  $('#add-ativo').checked = !!p.ativo;
-}
-
-async function fillOfertaFields(ofertaId) {
-  const { data: o, error } = await sb.from('ofertas').select('*').eq('id', ofertaId).single();
-  if (error || !o) return showAddError('Não foi possível carregar a oferta.');
-  $('#add-fornecedor').value = o.fornecedor_id || '';
-  $('#add-sku-fornecedor').value = o.sku_fornecedor || '';
-  $('#add-preco-usd').value = o.preco_usd || '';
-  $('#add-taxa').value = o.taxa_cambio || '5.40';
-  $('#add-preco-brl').value = o.preco_brl || '';
-  $('#add-condicao').value = o.condicao || 'novo';
-  $('#add-garantia').value = o.garantia || 'py';
-  $('#add-garantia-tempo').value = o.garantia_tempo || '';
-  $('#add-observacoes').value = o.observacoes || '';
-  $('#add-desc-original').value = o.desc_original || '';
-  $('#add-disponivel').checked = !!o.disponivel;
-}
-
-function closeItemModal() { hide('#modal-item'); }
-
-async function getNextCodigoSlc(prefixo) {
-  if (nextCodigoCache[prefixo]) return nextCodigoCache[prefixo];
-
-  // Considera AMBOS padrões: legacy "SLC-PREFIX-NNNN" + novo "PREFIX-NNNN"
-  // Garante continuidade total da numeração (sem reiniciar)
-  const { data } = await sb.from('produtos')
-    .select('codigo_slc')
-    .eq('prefixo', prefixo);
-
-  let maxNum = 0;
-  const reNew = new RegExp(`^${prefixo}-(\\d+)$`);
-  const reLeg = new RegExp(`^SLC-${prefixo}-(\\d+)$`);
-  for (const r of data || []) {
-    let m = r.codigo_slc.match(reNew);
-    if (m) { maxNum = Math.max(maxNum, parseInt(m[1], 10)); continue; }
-    m = r.codigo_slc.match(reLeg);
-    if (m) { maxNum = Math.max(maxNum, parseInt(m[1], 10)); }
-  }
-
-  const codigo = `${prefixo}-${String(maxNum + 1).padStart(4, '0')}`;
-  nextCodigoCache[prefixo] = codigo;
-  return codigo;
-}
-
-function calcPrecoBRL() {
-  const usd = parseFloat($('#add-preco-usd').value) || 0;
-  const taxa = parseFloat($('#add-taxa').value) || 5.4;
-  $('#add-preco-brl').value = (usd * taxa).toFixed(2);
-}
-
-function showAddError(msg) {
-  const el = $('#add-error');
-  el.textContent = msg;
-  el.classList.remove('hidden-section');
-}
-
-async function submitItemModal() {
-  $('#add-error').classList.add('hidden-section');
-  const btn = $('#add-salvar');
-  const originalLabel = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Salvando...';
-
-  try {
-    if (modalState.mode === 'new-item') {
-      await submitNewItemAction();
-    } else if (modalState.mode === 'edit-produto') {
-      await submitEditProdutoAction();
-    } else if (modalState.mode === 'new-oferta') {
-      await submitNewOfertaAction();
-    } else if (modalState.mode === 'edit-oferta') {
-      await submitEditOfertaAction();
-    }
-  } catch (e) {
-    const msg = e.message || JSON.stringify(e);
-    if (msg.includes('duplicate') || msg.includes('unique')) {
-      showAddError(`Conflito de unicidade. Já existe registro com esses dados. Mensagem: ${msg}`);
-    } else {
-      showAddError('Erro: ' + msg);
-    }
-  } finally {
-    btn.disabled = false; btn.textContent = originalLabel;
-  }
-}
-
-// ---------- ACTIONS ----------
-
-function readProdutoFields() {
-  return {
-    prefixo: $('#add-prefixo').value,
-    descricao: $('#add-descricao').value.trim().toUpperCase(),
-    marca: $('#add-marca').value.trim().toUpperCase() || null,
-    modelo: $('#add-modelo').value.trim() || null,
-    categoria: $('#add-categoria').value.trim() || null,
-    ativo: $('#add-ativo').checked
-  };
-}
-
-function readOfertaFields() {
-  const precoUsd = parseFloat($('#add-preco-usd').value);
-  const taxa = parseFloat($('#add-taxa').value);
-  return {
-    fornecedor_id: $('#add-fornecedor').value,
-    sku_fornecedor: $('#add-sku-fornecedor').value.trim(),
-    preco_usd: precoUsd,
-    taxa_cambio: taxa,
-    preco_brl: parseFloat((precoUsd * taxa).toFixed(2)),
-    condicao: $('#add-condicao').value,
-    garantia: $('#add-garantia').value,
-    garantia_tempo: $('#add-garantia-tempo').value.trim() || null,
-    observacoes: $('#add-observacoes').value.trim() || null,
-    desc_original: $('#add-desc-original').value.trim() || null,
-    disponivel: $('#add-disponivel').checked,
-    ativo: true
-  };
-}
-
-function validateProduto(p) {
-  if (!p.prefixo) return 'Selecione o prefixo.';
-  if (!p.descricao || p.descricao.length < 10) return 'Descrição muito curta (mínimo 10 caracteres).';
-  return null;
-}
-
-function validateOferta(o) {
-  if (!o.fornecedor_id) return 'Selecione o fornecedor.';
-  // SKU é opcional — se vazio, será gerado automaticamente como MAN-{codigo_slc}
-  if (!o.preco_usd || o.preco_usd <= 0) return 'Preço USD inválido.';
-  if (!o.taxa_cambio || o.taxa_cambio <= 0) return 'Taxa de câmbio inválida.';
-  if (!COND_OPTS.includes(o.condicao)) return 'Condição inválida.';
-  if (!GAR_OPTS.includes(o.garantia)) return 'Garantia inválida.';
-  return null;
-}
-
-async function submitNewItemAction() {
-  const prod = readProdutoFields();
-  let err = validateProduto(prod); if (err) return showAddError(err);
-  const ofr = readOfertaFields();
-  err = validateOferta(ofr); if (err) return showAddError(err);
-
-  const codigoSlc = await getNextCodigoSlc(prod.prefixo);
-  // Auto-gera SKU se vazio: prefixo "MAN-" identifica cadastro manual
-  if (!ofr.sku_fornecedor) ofr.sku_fornecedor = `MAN-${codigoSlc}`;
-
-  const { data: novoProduto, error: errP } = await sb.from('produtos').insert({
-    codigo_slc: codigoSlc, ...prod
-  }).select('id').single();
-  if (errP) throw errP;
-
-  ofr.desc_original = ofr.desc_original || prod.descricao;
-  const { error: errO } = await sb.from('ofertas').insert({ produto_id: novoProduto.id, ...ofr });
-  if (errO) {
-    await sb.from('produtos').delete().eq('id', novoProduto.id); // rollback manual
-    throw errO;
-  }
-
-  delete nextCodigoCache[prod.prefixo];
-  closeItemModal();
-  alert(`✓ Item ${codigoSlc} cadastrado.${ofr.sku_fornecedor.startsWith('MAN-') ? `\nSKU auto-gerado: ${ofr.sku_fornecedor}` : ''}`);
-  loadCatalog(); loadFilters();
-}
-
-async function submitEditProdutoAction() {
-  const prod = readProdutoFields();
-  const err = validateProduto(prod); if (err) return showAddError(err);
-
-  const { error } = await sb.from('produtos').update({
-    ...prod, updated_at: new Date().toISOString()
-  }).eq('id', modalState.produtoId);
-  if (error) throw error;
-
-  closeItemModal();
-  alert('✓ Produto atualizado.');
-  loadCatalog(); loadFilters();
-  openProductDetail(modalState.produtoId); // re-abre detalhe atualizado
-}
-
-async function submitNewOfertaAction() {
-  const ofr = readOfertaFields();
-  const err = validateOferta(ofr); if (err) return showAddError(err);
-
-  // Busca descricao + codigo_slc do produto pai (pra desc_original e SKU automático)
-  const { data: p } = await sb.from('produtos').select('descricao, codigo_slc').eq('id', modalState.produtoId).single();
-  if (!ofr.desc_original) ofr.desc_original = (p && p.descricao) || '';
-  if (!ofr.sku_fornecedor && p) ofr.sku_fornecedor = `MAN-${p.codigo_slc}`;
-
-  const { error } = await sb.from('ofertas').insert({ produto_id: modalState.produtoId, ...ofr });
-  if (error) throw error;
-
-  closeItemModal();
-  alert(`✓ Oferta adicionada.${ofr.sku_fornecedor.startsWith('MAN-') ? `\nSKU auto-gerado: ${ofr.sku_fornecedor}` : ''}`);
-  loadCatalog();
-  openProductDetail(modalState.produtoId); // re-abre detalhe com a oferta nova
-}
-
-async function submitEditOfertaAction() {
-  const ofr = readOfertaFields();
-  const err = validateOferta(ofr); if (err) return showAddError(err);
-
-  const { data: ofertaAntes } = await sb.from('ofertas').select('produto_id').eq('id', modalState.ofertaId).single();
-  const { error } = await sb.from('ofertas').update({
-    ...ofr, updated_at: new Date().toISOString()
-  }).eq('id', modalState.ofertaId);
-  if (error) throw error;
-
-  closeItemModal();
-  alert('✓ Oferta atualizada.');
-  loadCatalog();
-  if (ofertaAntes && ofertaAntes.produto_id) openProductDetail(ofertaAntes.produto_id);
-}
-
-// ---------- DELETE ----------
-
-async function deleteProdutoAction(produtoId) {
-  const { data: p } = await sb.from('produtos').select('codigo_slc, descricao').eq('id', produtoId).single();
-  if (!p) return alert('Produto não encontrado.');
-  const ok = confirm(`Apagar o produto "${p.codigo_slc}" — ${p.descricao.substring(0, 60)}...?\n\nTODAS as ofertas associadas também serão removidas. Esta ação não pode ser desfeita.`);
-  if (!ok) return;
-
-  // Apaga ofertas primeiro (caso a FK não tenha CASCADE)
-  const { error: errO } = await sb.from('ofertas').delete().eq('produto_id', produtoId);
-  if (errO) return alert('Erro ao apagar ofertas: ' + errO.message);
-  const { error: errP } = await sb.from('produtos').delete().eq('id', produtoId);
-  if (errP) return alert('Erro ao apagar produto: ' + errP.message);
-
-  closeModal(); // fecha modal de detalhe
-  alert(`✓ Produto ${p.codigo_slc} apagado.`);
-  loadCatalog();
-}
-
-async function deleteOfertaAction(ofertaId) {
-  const { data: o } = await sb.from('ofertas').select('produto_id, sku_fornecedor, fornecedores(nome_curto)').eq('id', ofertaId).single();
-  if (!o) return alert('Oferta não encontrada.');
-  const ok = confirm(`Apagar a oferta SKU "${o.sku_fornecedor}" (${o.fornecedores?.nome_curto || ''})?\n\nO produto continua existindo. Esta ação não pode ser desfeita.`);
-  if (!ok) return;
-
-  // Verifica se é a última oferta — se for, alerta
-  const { count } = await sb.from('ofertas').select('id', { count: 'exact', head: true }).eq('produto_id', o.produto_id);
-  if (count <= 1) {
-    const proceed = confirm('⚠ Esta é a ÚLTIMA oferta do produto. Após apagar, o produto vai ficar órfão (sem ofertas) no catálogo. Continuar?');
-    if (!proceed) return;
-  }
-
-  const { error } = await sb.from('ofertas').delete().eq('id', ofertaId);
-  if (error) return alert('Erro ao apagar oferta: ' + error.message);
-
-  alert('✓ Oferta apagada.');
-  loadCatalog();
-  openProductDetail(o.produto_id); // re-abre detalhe atualizado
-}
-
-// Detalhe produto (modal existente)
-async function openProductDetail(produtoId) {
-  const { data: produto } = await sb.from('produtos').select('*').eq('id', produtoId).single();
-  if (!produto) return;
-  const { data: ofertas } = await sb.from('ofertas').select(`*, fornecedores ( nome_curto, nome )`).eq('produto_id', produtoId).order('preco_usd');
-
-  $('#modal-codigo').textContent = produto.codigo_slc;
-  $('#modal-prefixo').textContent = produto.prefixo;
-  $('#modal-categoria').textContent = produto.categoria || '';
-  $('#modal-marca').textContent = produto.marca || '—';
-  $('#modal-descricao').textContent = produto.descricao || '';
-  $('#modal-atributos').textContent = produto.atributos_tecnicos || '(Sem atributos cadastrados)';
-
-  if (produto.tags && produto.tags.length > 0) {
-    $('#modal-tags').innerHTML = produto.tags.map(t => `<span class="bg-primary-900 text-primary-300 text-xs px-2 py-1 rounded">${t}</span>`).join('');
-    show('#modal-tags-wrapper');
-  } else hide('#modal-tags-wrapper');
-
-  const condPT = { novo: 'Novo', novo_oem: 'Novo OEM', recondicionado: 'Recondicionado', usado: 'Usado', swap: 'Swap' };
-  const garPT = { br: 'BR', py: 'PY', fabricante: 'Fabricante', sem_garantia: 'Sem garantia', nao_declarada: '—' };
-
-  // Guarda contexto do produto pra usar no addToCart e nos botões CRUD
-  state.modalProdutoAtual = produto;
-  $('#modal-product').dataset.produtoId = produtoId;
-
-  $('#modal-ofertas-tbody').innerHTML = (ofertas || []).map(o => `
-    <tr>
-      <td class="px-3 py-2 font-medium">${o.fornecedores.nome_curto}</td>
-      <td class="px-3 py-2 font-mono text-xs text-gray-400">${o.sku_fornecedor}</td>
-      <td class="px-3 py-2 text-right font-mono">$ ${fmtUSD(o.preco_usd)}</td>
-      <td class="px-3 py-2 text-right font-mono">R$ ${fmtBRL(o.preco_brl)}</td>
-      <td class="px-3 py-2 text-xs">${condPT[o.condicao] || o.condicao}</td>
-      <td class="px-3 py-2 text-xs">${garPT[o.garantia] || o.garantia}</td>
-      <td class="px-3 py-2 text-center">${o.disponivel ? '✓' : '✗'}</td>
-      <td class="px-3 py-2 text-center">
-        <div class="inline-flex items-center gap-1">
-          <button class="edit-oferta-btn text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded" title="Editar oferta" data-oferta-id="${o.id}">✏</button>
-          <button class="del-oferta-btn text-xs bg-red-900 hover:bg-red-800 text-white px-2 py-1 rounded" title="Apagar oferta" data-oferta-id="${o.id}">🗑</button>
-          <button class="add-to-cart-btn text-xs bg-primary-600 hover:bg-primary-700 text-white px-2 py-1 rounded font-medium"
-                  data-oferta-id="${o.id}"
-                  data-sku="${(o.sku_fornecedor || '').replace(/"/g, '&quot;')}"
-                  data-desc="${(o.desc_original || '').replace(/"/g, '&quot;')}"
-                  data-fornecedor-id="${o.fornecedor_id}"
-                  data-fornecedor-nome="${o.fornecedores.nome_curto.replace(/"/g, '&quot;')}">
-            + Add
-          </button>
-        </div>
-      </td>
-    </tr>`).join('');
-
-  // Listener nos botões de adicionar ao orçamento
-  $$('#modal-ofertas-tbody .add-to-cart-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const fallbackDesc = `${state.modalProdutoAtual.marca || ''} ${state.modalProdutoAtual.descricao || ''}`.trim();
-      addToCart({
-        oferta_id: btn.dataset.ofertaId,
-        sku: btn.dataset.sku,
-        descricao: btn.dataset.desc || fallbackDesc,
-        fornecedor_id: btn.dataset.fornecedorId,
-        fornecedor_nome: btn.dataset.fornecedorNome,
-      });
     });
   });
+}
 
-  // Listeners CRUD por oferta
-  $$('#modal-ofertas-tbody .edit-oferta-btn').forEach(btn => {
-    btn.addEventListener('click', () => openItemModal('edit-oferta', { ofertaId: btn.dataset.ofertaId }));
+/* ===================== HISTÓRICO ===================== */
+function renderHistorico(){
+  const box=el('histBody');
+  if(HIST.length===0){ box.innerHTML='<div class="empty">Nenhuma consulta salva ainda.</div>'; return; }
+  let h='<table><tr><th>Data</th><th>Cliente</th><th>Edital</th><th>Processador</th><th class="right">Total</th><th></th><th></th></tr>';
+  HIST.forEach(c=>{
+    const cpu=(c.itens.find(i=>i.cat==='Processador')||{}).nome||'—';
+    h+='<tr><td class="det">'+c.data+'</td><td>'+c.cliente+'</td><td>'+c.edital+'</td><td>'+cpu+
+       '</td><td class="right mono">'+fmt(c.total)+(c.incompleto?' *':'')+
+       '</td><td><span class="mini" data-det="'+c.id+'">ver</span></td>'+
+       '<td><span class="x" data-del="'+c.id+'">excluir</span></td></tr>';
+    h+='<tr id="det'+c.id+'" style="display:none"><td colspan="7" style="background:var(--soft)">'+
+       c.itens.map(i=>'· '+i.nome+(i.qtd>1?' ×'+i.qtd:'')+' — '+(i.preco?fmt(i.preco*i.qtd):'sem preço')).join('<br>')+
+       '</td></tr>';
   });
-  $$('#modal-ofertas-tbody .del-oferta-btn').forEach(btn => {
-    btn.addEventListener('click', () => deleteOfertaAction(btn.dataset.ofertaId));
+  box.innerHTML=h+'</table><div class="det" style="margin-top:8px">* total parcial — havia item sem preço</div>';
+  document.querySelectorAll('[data-det]').forEach(b=>b.addEventListener('click',()=>{
+    const r=el('det'+b.dataset.det); r.style.display=r.style.display==='none'?'':'none';
+  }));
+  document.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
+    if(!confirm('Excluir esta consulta do histórico?')) return;
+    HIST=HIST.filter(c=>String(c.id)!==b.dataset.del);
+    lsSaveHis(); renderHistorico(); renderRanking();
+  }));
+}
+
+/* ===================== RANKING ===================== */
+function renderRanking(){
+  const box=el('rankBody');
+  if(HIST.length===0){ box.innerHTML='<div class="empty">Sem dados — aprove consultas para alimentar o ranking.</div>'; return; }
+  const cats=['Processador','Memória','Armazenamento','Placa-mãe'];
+  const mapa={}; cats.forEach(c=>mapa[c]={});
+  HIST.forEach(c=>c.itens.forEach(i=>{
+    if(!mapa[i.cat]) return;
+    if(!mapa[i.cat][i.nome]) mapa[i.cat][i.nome]={vezes:0,qtd:0};
+    mapa[i.cat][i.nome].vezes++; mapa[i.cat][i.nome].qtd+=i.qtd;
+  }));
+  let h='';
+  cats.forEach(cat=>{
+    const arr=Object.keys(mapa[cat]).map(n=>({nome:n,...mapa[cat][n]})).sort((a,b)=>b.vezes-a.vezes);
+    if(arr.length===0) return;
+    h+='<table style="margin-bottom:18px"><tr class="grp"><td colspan="3">'+cat+'</td></tr>'+
+       '<tr><th>Peça</th><th class="right">Consultas</th><th class="right">Qtd total</th></tr>';
+    arr.forEach(r=>{ h+='<tr><td>'+r.nome+'</td><td class="right mono">'+r.vezes+'</td><td class="right mono">'+r.qtd+'</td></tr>'; });
+    h+='</table>';
   });
-
-  $('#modal-desc-originais').innerHTML = (ofertas || []).map(o => `<div><span class="text-primary-500">[${o.fornecedores.nome_curto}]</span> ${o.desc_original || '(sem descrição original)'}</div>`).join('');
-  show('#modal-product');
+  box.innerHTML=h;
 }
 
-function closeModal() { hide('#modal-product'); }
-
-// =====================================================================
-// CARRINHO DE ORÇAMENTO (gera PDF para fornecedor confirmar preço)
-// =====================================================================
-function saveCart() {
-  localStorage.setItem('selecta_cart_licitacao', JSON.stringify(state.cart));
+/* ===================== EXPORT CSV ===================== */
+function download(name,txt){
+  const b=new Blob(['\ufeff'+txt],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.click();
+  URL.revokeObjectURL(a.href);
+}
+function expHist(){
+  if(HIST.length===0){ toast('Nada para exportar.',true); return; }
+  let r='Data;Cliente;Edital;Categoria;Peca;Preco unit;Qtd;Subtotal\n';
+  HIST.forEach(c=>c.itens.forEach(i=>{
+    const sub=i.preco?i.preco*i.qtd:'';
+    r+=[c.data,c.cliente,c.edital,i.cat,i.nome,(i.preco||''),i.qtd,sub].join(';')+'\n';
+  }));
+  download('historico_orcamentos.csv',r);
+}
+function expRank(){
+  if(HIST.length===0){ toast('Nada para exportar.',true); return; }
+  const cats=['Processador','Memória','Armazenamento','Placa-mãe']; const mapa={};
+  HIST.forEach(c=>c.itens.forEach(i=>{
+    if(cats.indexOf(i.cat)<0) return;
+    const k=i.cat+'|'+i.nome;
+    if(!mapa[k]) mapa[k]={cat:i.cat,nome:i.nome,vezes:0,qtd:0};
+    mapa[k].vezes++; mapa[k].qtd+=i.qtd;
+  }));
+  let r='Categoria;Peca;Consultas;Qtd total\n';
+  Object.values(mapa).sort((a,b)=>b.vezes-a.vezes).forEach(x=>{ r+=[x.cat,x.nome,x.vezes,x.qtd].join(';')+'\n'; });
+  download('ranking_pecas.csv',r);
 }
 
-function updateCartUI() {
-  const count = Object.keys(state.cart).length;
-  if (count === 0) {
-    hide('#cart-floating');
-  } else {
-    $('#cart-count').textContent = count;
-    show('#cart-floating');
-  }
-}
-
-function addToCart(item) {
-  const existing = state.cart[item.oferta_id];
-  const defaultQty = existing ? existing.qty : 1;
-  const qtyStr = prompt(`Quantidade desejada para "${item.descricao || item.sku}":`, defaultQty);
-  if (qtyStr === null) return;
-  const qty = parseInt(qtyStr);
-  if (!qty || qty < 1) { alert('Quantidade inválida.'); return; }
-  state.cart[item.oferta_id] = { ...item, qty };
-  saveCart();
-  updateCartUI();
-  // Feedback visual leve: troca cor do botão por 1s
-  const btn = document.querySelector(`.add-to-cart-btn[data-oferta-id="${item.oferta_id}"]`);
-  if (btn) {
-    const original = btn.textContent;
-    btn.textContent = '✓ Adicionado';
-    btn.classList.add('bg-primary-700');
-    setTimeout(() => { btn.textContent = original; btn.classList.remove('bg-primary-700'); }, 1200);
-  }
-}
-
-function removeFromCart(ofertaId) {
-  delete state.cart[ofertaId];
-  saveCart();
-  updateCartUI();
-  renderCartModal();
-}
-
-function clearCart() {
-  if (!confirm('Limpar todos os itens do orçamento?')) return;
-  state.cart = {};
-  saveCart();
-  updateCartUI();
-  hide('#modal-cart');
-}
-
-function openCartModal() {
-  renderCartModal();
-  show('#modal-cart');
-}
-
-function renderCartModal() {
-  const items = Object.values(state.cart);
-  if (items.length === 0) {
-    $('#cart-body').innerHTML = '';
-    show('#cart-empty');
-    $('#cart-generate-pdf').disabled = true;
-    $('#cart-generate-pdf').classList.add('opacity-50', 'cursor-not-allowed');
-    return;
-  }
-  hide('#cart-empty');
-  $('#cart-generate-pdf').disabled = false;
-  $('#cart-generate-pdf').classList.remove('opacity-50', 'cursor-not-allowed');
-
-  // Agrupar por fornecedor
-  const groups = {};
-  items.forEach(it => {
-    if (!groups[it.fornecedor_id]) groups[it.fornecedor_id] = { nome: it.fornecedor_nome, items: [] };
-    groups[it.fornecedor_id].items.push(it);
-  });
-
-  $('#cart-body').innerHTML = Object.entries(groups).map(([fid, g]) => `
-    <div class="bg-gray-900 rounded-md border border-gray-700 overflow-hidden">
-      <div class="bg-gray-800 px-3 py-2 font-medium text-sm flex justify-between items-center">
-        <span>${g.nome}</span>
-        <span class="text-gray-400 text-xs">${g.items.length} ${g.items.length === 1 ? 'item' : 'itens'}</span>
-      </div>
-      <table class="w-full text-sm">
-        <thead class="bg-gray-800/50 text-xs uppercase text-gray-400">
-          <tr>
-            <th class="px-3 py-1.5 text-left font-medium">SKU</th>
-            <th class="px-3 py-1.5 text-left font-medium">Descrição</th>
-            <th class="px-3 py-1.5 text-center font-medium">Qtd</th>
-            <th class="px-3 py-1.5"></th>
-          </tr>
-        </thead>
-        <tbody>
-          ${g.items.map(it => `
-            <tr class="border-t border-gray-700">
-              <td class="px-3 py-2 font-mono text-xs text-gray-400">${it.sku || '—'}</td>
-              <td class="px-3 py-2 text-gray-200 max-w-md">${it.descricao || '—'}</td>
-              <td class="px-3 py-2 text-center font-mono">${it.qty}</td>
-              <td class="px-3 py-2 text-center">
-                <button class="cart-remove text-red-400 hover:text-red-300 text-xs" data-id="${it.oferta_id}">Remover</button>
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `).join('');
-
-  $$('.cart-remove').forEach(b => b.addEventListener('click', e => removeFromCart(e.target.dataset.id)));
-}
-
-function generatePDFs() {
-  const items = Object.values(state.cart);
-  if (items.length === 0) return;
-
-  if (!window.jspdf || !window.jspdf.jsPDF) {
-    alert('Biblioteca de PDF ainda carregando. Tente novamente em alguns segundos.');
-    return;
-  }
-
-  const { jsPDF } = window.jspdf;
-  const hoje = new Date();
-  const dataPT = hoje.toLocaleDateString('pt-BR');
-  const dataFile = hoje.toISOString().slice(0, 10);
-
-  // Agrupar por fornecedor
-  const groups = {};
-  items.forEach(it => {
-    if (!groups[it.fornecedor_id]) groups[it.fornecedor_id] = { nome: it.fornecedor_nome, items: [] };
-    groups[it.fornecedor_id].items.push(it);
-  });
-
-  Object.entries(groups).forEach(([fid, g]) => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
-
-    // Título
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ORÇAMENTO', pageWidth / 2, 22, { align: 'center' });
-
-    // Linha verde
-    doc.setDrawColor(16, 185, 129);
-    doc.setLineWidth(0.8);
-    doc.line(14, 28, pageWidth - 14, 28);
-
-    // Cabeçalho
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Data: ${dataPT}`, 14, 38);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Fornecedor: ${g.nome}`, 14, 46);
-
-    // Texto orientativo
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(70);
-    doc.text('Solicitamos cotação dos itens abaixo. Favor confirmar preço e disponibilidade.', 14, 56);
-    doc.setTextColor(0);
-
-    // Tabela
-    doc.autoTable({
-      startY: 64,
-      head: [['SKU', 'Descrição', 'Qtd', 'Preço unit. (R$)']],
-      body: g.items.map(it => [it.sku || '—', it.descricao || '—', String(it.qty), '']),
-      styles: { fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [245, 247, 250] },
-      columnStyles: {
-        0: { cellWidth: 32 },
-        1: { cellWidth: 'auto' },
-        2: { cellWidth: 16, halign: 'center' },
-        3: { cellWidth: 42, halign: 'right' },
-      },
-      margin: { left: 14, right: 14 },
-    });
-
-    // Rodapé
-    const pageHeight = doc.internal.pageSize.height;
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text('Solicitado via SELECTA · Banco de Preço', pageWidth / 2, pageHeight - 10, { align: 'center' });
-
-    // Nome do arquivo: orcamento_FORNECEDOR_AAAA-MM-DD.pdf
-    const slug = g.nome.replace(/[^a-zA-Z0-9]/g, '_');
-    doc.save(`orcamento_${slug}_${dataFile}.pdf`);
-  });
-}
-
-
-// =====================================================================
-// TABS PRINCIPAIS
-// =====================================================================
-function switchTab(tabName) {
-  $$('.tab-btn').forEach(btn => {
-    if (btn.dataset.tab === tabName) {
-      btn.classList.add('bg-primary-600', 'text-white');
-      btn.classList.remove('text-gray-400', 'hover:bg-gray-700');
-    } else {
-      btn.classList.remove('bg-primary-600', 'text-white');
-      btn.classList.add('text-gray-400', 'hover:bg-gray-700');
-    }
-  });
-  hide('#tab-catalogo'); hide('#tab-apple'); hide('#tab-simulador');
-  show(`#tab-${tabName}`);
-  if (tabName === 'apple') enterAppleTab();
-}
-
-// =====================================================================
-// APPLE: ENTRADA NA ABA
-// =====================================================================
-async function enterAppleTab() {
-  // Carrega config + categorias na primeira entrada
-  if (!state.apple.config) await loadAppleConfig();
-  if (state.apple.categorias.length === 0) await loadAppleCategorias();
-  switchAppleSubtab(state.apple.subtab);
-}
-
-async function loadAppleConfig() {
-  const { data } = await sb.from('configuracoes_apple').select('*').eq('id', 1).single();
-  state.apple.config = data || { saldo_inicial: 0, percentual_provisao_viagem: 5, tolerancia_conciliacao: 5 };
-}
-
-async function loadAppleCategorias() {
-  const { data } = await sb.from('categorias_apple').select('*').order('ordem');
-  state.apple.categorias = data || [];
-
-  // Popular dropdowns de categoria
-  const optsTodas = '<option value="">Todas categorias</option>' + state.apple.categorias.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
-  const optsObrig = state.apple.categorias.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
-  $('#apple-cat-categoria').innerHTML = optsTodas;
-  $('#ap-prod-categoria').innerHTML = optsObrig;
-}
-
-function switchAppleSubtab(name) {
-  state.apple.subtab = name;
-  $$('.apple-subtab-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.subtab === name);
-  });
-  hide('#apple-sub-catalogo'); hide('#apple-sub-vendas'); hide('#apple-sub-compras');
-  show(`#apple-sub-${name}`);
-
-  if (name === 'catalogo') loadAppleProdutos();
-  else if (name === 'vendas') loadAppleVendas();
-  else if (name === 'compras') loadAppleCompras();
-}
-
-// =====================================================================
-// APPLE: SALDO ESPERADO (computado)
-// =====================================================================
-async function computeSaldoEsperado() {
-  const { data: vendas } = await sb.from('vendas_apple').select('total');
-  const { data: compras } = await sb.from('compras_apple').select('total');
-  const totV = (vendas || []).reduce((s, v) => s + Number(v.total), 0);
-  const totC = (compras || []).reduce((s, c) => s + Number(c.total), 0);
-  const saldoInicial = Number(state.apple.config?.saldo_inicial || 0);
-  state.apple.saldoEsperado = saldoInicial + totV - totC;
-  return state.apple.saldoEsperado;
-}
-
-// =====================================================================
-// APPLE: CATÁLOGO
-// =====================================================================
-async function loadAppleProdutos() {
-  const search = $('#apple-cat-search').value.trim().toLowerCase();
-  const catId = $('#apple-cat-categoria').value;
-
-  let q = sb.from('produtos_apple_completo').select('*').order('categoria_ordem').order('modelo_sku');
-  if (catId) q = q.eq('categoria_id', catId);
-
-  const { data, error } = await q;
-  if (error) {
-    $('#apple-cat-tbody').innerHTML = `<tr><td colspan="7" class="px-3 py-6 text-center text-red-400">Erro: ${error.message}</td></tr>`;
-    return;
-  }
-
-  let produtos = data || [];
-  if (search) {
-    produtos = produtos.filter(p =>
-      (p.modelo_sku || '').toLowerCase().includes(search) ||
-      (p.observacao || '').toLowerCase().includes(search)
-    );
-  }
-  state.apple.produtos = produtos;
-  renderAppleProdutos(produtos);
-}
-
-function renderAppleProdutos(items) {
-  const tbody = $('#apple-cat-tbody');
-  if (items.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="px-3 py-8 text-center text-gray-500">Nenhum produto cadastrado. Clique em "+ Novo produto" para começar.</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = items.map(p => {
-    const margem = Number(p.preco_venda_alvo) - Number(p.custo_medio);
-    const margemPct = p.custo_medio > 0 ? (margem / Number(p.custo_medio)) * 100 : 0;
-    const margemCor = margem >= 0 ? 'text-primary-500' : 'text-red-400';
-    const estoque = Number(p.estoque_atual);
-    const estoqueBaixo = estoque <= Number(p.estoque_minimo) && estoque > 0;
-    const estoqueZero = estoque === 0;
-    let estoqueBadge = `<span class="font-mono text-sm">${estoque}</span>`;
-    if (estoqueZero) estoqueBadge = `<span class="text-red-400 font-mono text-sm">${estoque}</span>`;
-    else if (estoqueBaixo) estoqueBadge = `<span class="text-yellow-500 font-mono text-sm">${estoque} ⚠</span>`;
-
-    return `
-    <tr class="product-row hover:bg-gray-700/50 cursor-pointer" data-id="${p.id}">
-      <td class="px-3 py-2"><span class="bg-gray-700 text-xs px-1.5 py-0.5 rounded">${p.categoria_nome || '—'}</span></td>
-      <td class="px-3 py-2 font-medium">${p.modelo_sku}${p.observacao ? `<div class="text-xs text-gray-500 mt-0.5 truncate max-w-md">${p.observacao}</div>` : ''}</td>
-      <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(p.custo_medio)}</td>
-      <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(p.preco_venda_alvo)}</td>
-      <td class="px-3 py-2 text-right font-mono text-sm ${margemCor}">R$ ${fmtBRL(margem)} (${margemPct.toFixed(1)}%)</td>
-      <td class="px-3 py-2 text-center">${estoqueBadge}</td>
-      <td class="px-3 py-2 text-center">${p.ativo ? '<span class="text-xs text-primary-500">●</span>' : '<span class="text-xs text-gray-600">○</span>'}</td>
-    </tr>`;
-  }).join('');
-  $$('#apple-cat-tbody tr[data-id]').forEach(tr => tr.addEventListener('click', () => openAppleProdutoModal(tr.dataset.id)));
-}
-
-// =====================================================================
-// APPLE: MODAL PRODUTO (criar/editar)
-// =====================================================================
-function openAppleProdutoModal(id) {
-  hide('#ap-prod-erro');
-  $('#ap-prod-id').value = id || '';
-  $('#modal-ap-produto-titulo').textContent = id ? 'Editar produto Apple' : 'Novo produto Apple';
-
-  if (id) {
-    const p = state.apple.produtos.find(x => x.id === id);
-    if (!p) return;
-    $('#ap-prod-categoria').value = p.categoria_id || '';
-    $('#ap-prod-modelo').value = p.modelo_sku || '';
-    $('#ap-prod-pcompra').value = p.preco_compra || '';
-    $('#ap-prod-pvenda').value = p.preco_venda_alvo || '';
-    $('#ap-prod-pmin').value = p.preco_minimo_venda || '';
-    $('#ap-prod-emin').value = p.estoque_minimo || 0;
-    $('#ap-prod-foto').value = p.foto_url || '';
-    $('#ap-prod-obs').value = p.observacao || '';
-  } else {
-    ['ap-prod-modelo','ap-prod-pcompra','ap-prod-pvenda','ap-prod-pmin','ap-prod-foto','ap-prod-obs'].forEach(i => $('#' + i).value = '');
-    $('#ap-prod-emin').value = 0;
-    if (state.apple.categorias[0]) $('#ap-prod-categoria').value = state.apple.categorias[0].id;
-  }
-  updateMargemDisplay();
-  show('#modal-apple-produto');
-}
-
-function updateMargemDisplay() {
-  const c = Number($('#ap-prod-pcompra').value) || 0;
-  const v = Number($('#ap-prod-pvenda').value) || 0;
-  const m = v - c;
-  const pct = c > 0 ? (m / c) * 100 : 0;
-  $('#ap-prod-margem').innerHTML = `Margem unitária: <span class="${m >= 0 ? 'text-primary-500' : 'text-red-400'}">R$ ${fmtBRL(m)} (${pct.toFixed(1)}%)</span>`;
-}
-
-async function saveAppleProduto() {
-  const id = $('#ap-prod-id').value;
-  const payload = {
-    categoria_id: $('#ap-prod-categoria').value || null,
-    modelo_sku: $('#ap-prod-modelo').value.trim(),
-    preco_compra: parseFloat($('#ap-prod-pcompra').value) || 0,
-    preco_venda_alvo: parseFloat($('#ap-prod-pvenda').value) || 0,
-    preco_minimo_venda: $('#ap-prod-pmin').value ? parseFloat($('#ap-prod-pmin').value) : null,
-    estoque_minimo: parseInt($('#ap-prod-emin').value) || 0,
-    foto_url: $('#ap-prod-foto').value.trim() || null,
-    observacao: $('#ap-prod-obs').value.trim() || null,
-  };
-  if (!payload.modelo_sku) return showApErr('#ap-prod-erro', 'Modelo/SKU é obrigatório.');
-  if (!payload.preco_compra || !payload.preco_venda_alvo) return showApErr('#ap-prod-erro', 'Preço compra e preço venda alvo são obrigatórios.');
-
-  const btn = $('#ap-prod-salvar');
-  btn.disabled = true; btn.textContent = 'Salvando...';
-  let res;
-  if (id) {
-    payload.updated_at = new Date().toISOString();
-    res = await sb.from('produtos_apple').update(payload).eq('id', id);
-  } else {
-    res = await sb.from('produtos_apple').insert(payload);
-  }
-  btn.disabled = false; btn.textContent = 'Salvar';
-
-  if (res.error) return showApErr('#ap-prod-erro', res.error.message);
-  hide('#modal-apple-produto');
-  loadAppleProdutos();
-}
-
-function showApErr(sel, msg) {
-  const el = $(sel);
-  el.textContent = msg;
-  show(el);
-}
-
-// =====================================================================
-// APPLE: VENDAS
-// =====================================================================
-async function loadAppleVendas() {
-  const de = $('#apple-vendas-de').value;
-  const ate = $('#apple-vendas-ate').value;
-  let q = sb.from('vendas_apple').select(`*, produtos_apple ( modelo_sku, categoria_id )`).order('data', { ascending: false }).order('created_at', { ascending: false });
-  if (de) q = q.gte('data', de);
-  if (ate) q = q.lte('data', ate);
-  const { data, error } = await q;
-  if (error) {
-    $('#apple-vendas-tbody').innerHTML = `<tr><td colspan="9" class="px-3 py-6 text-center text-red-400">Erro: ${error.message}</td></tr>`;
-    return;
-  }
-  renderAppleVendas(data || []);
-  renderVendasResumo(data || []);
-}
-
-function renderAppleVendas(vendas) {
-  const tbody = $('#apple-vendas-tbody');
-  if (vendas.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="px-3 py-8 text-center text-gray-500">Nenhuma venda no período. Clique em "+ Nova venda" para registrar.</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = vendas.map(v => `
-    <tr class="hover:bg-gray-700/30">
-      <td class="px-3 py-2 text-xs">${fmtData(v.data)}</td>
-      <td class="px-3 py-2 font-medium">${v.produtos_apple?.modelo_sku || '—'}</td>
-      <td class="px-3 py-2 text-center">${v.quantidade}</td>
-      <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(v.preco_unitario)}</td>
-      <td class="px-3 py-2 text-right font-mono text-sm font-medium">R$ ${fmtBRL(v.total)}</td>
-      <td class="px-3 py-2 text-xs">${v.canal}</td>
-      <td class="px-3 py-2 text-xs">${v.forma_pagamento}</td>
-      <td class="px-3 py-2 text-xs text-gray-400">${v.cliente || '—'}</td>
-      <td class="px-3 py-2 text-center">
-        <button class="del-venda text-red-400 hover:text-red-300 text-xs" data-id="${v.id}">Excluir</button>
-      </td>
-    </tr>`).join('');
-  $$('#apple-vendas-tbody .del-venda').forEach(b => b.addEventListener('click', e => deleteVenda(e.target.dataset.id)));
-}
-
-function renderVendasResumo(vendas) {
-  const totalReceita = vendas.reduce((s, v) => s + Number(v.total), 0);
-  const totalLucro = vendas.reduce((s, v) => {
-    const custo = v.custo_unitario_snapshot ? Number(v.custo_unitario_snapshot) * v.quantidade : 0;
-    return s + (Number(v.total) - custo);
-  }, 0);
-  const qtdUnidades = vendas.reduce((s, v) => s + v.quantidade, 0);
-  const qtdVendas = vendas.length;
-
-  $('#apple-vendas-resumo').innerHTML = `
-    ${cardResumo('Vendas', qtdVendas)}
-    ${cardResumo('Unidades', qtdUnidades)}
-    ${cardResumo('Receita', 'R$ ' + fmtBRL(totalReceita))}
-    ${cardResumo('Lucro bruto', 'R$ ' + fmtBRL(totalLucro), totalLucro >= 0 ? 'text-primary-500' : 'text-red-400')}
-  `;
-}
-
-function cardResumo(label, valor, cor = 'text-gray-100') {
-  return `<div class="bg-gray-800 border border-gray-700 rounded-md p-3">
-    <div class="text-xs text-gray-400 mb-1">${label}</div>
-    <div class="text-lg font-semibold ${cor}">${valor}</div>
-  </div>`;
-}
-
-async function deleteVenda(id) {
-  if (!confirm('Excluir esta venda? O estoque do produto será restaurado.')) return;
-  const { error } = await sb.from('vendas_apple').delete().eq('id', id);
-  if (error) return alert('Erro: ' + error.message);
-  loadAppleVendas();
-}
-
-// Modal Nova Venda
-async function openAppleVendaModal() {
-  hide('#ap-vend-erro');
-  await loadAppleProdutos(); // garante state.apple.produtos atualizado
-
-  const produtosComEstoque = state.apple.produtos.filter(p => p.ativo && Number(p.estoque_atual) > 0);
-  if (produtosComEstoque.length === 0) {
-    alert('Não há produtos com estoque para vender. Cadastre uma compra primeiro.');
-    return;
-  }
-
-  $('#ap-vend-produto').innerHTML = produtosComEstoque.map(p =>
-    `<option value="${p.id}" data-custo="${p.custo_medio}">${p.modelo_sku} (estoque: ${p.estoque_atual} · custo R$ ${fmtBRL(p.custo_medio)})</option>`
-  ).join('');
-
-  $('#ap-vend-data').value = new Date().toISOString().slice(0, 10);
-  $('#ap-vend-qtd').value = 1;
-  $('#ap-vend-preco').value = '';
-  $('#ap-vend-cliente').value = '';
-  $('#ap-vend-obs').value = '';
-  $('#ap-vend-saldo').value = '';
-
-  // sugere preço de venda alvo
-  onVendaProdutoChange();
-
-  await computeSaldoEsperado();
-  updateVendaCalc();
-  show('#modal-apple-venda');
-}
-
-function onVendaProdutoChange() {
-  const opt = $('#ap-vend-produto').selectedOptions[0];
-  if (!opt) return;
-  const prod = state.apple.produtos.find(p => p.id === opt.value);
-  if (prod && !$('#ap-vend-preco').value) {
-    $('#ap-vend-preco').value = Number(prod.preco_venda_alvo).toFixed(2);
-  }
-  updateVendaCalc();
-}
-
-function updateVendaCalc() {
-  const qtd = parseInt($('#ap-vend-qtd').value) || 0;
-  const preco = parseFloat($('#ap-vend-preco').value) || 0;
-  const total = qtd * preco;
-  $('#ap-vend-total').textContent = 'R$ ' + fmtBRL(total);
-
-  const opt = $('#ap-vend-produto').selectedOptions[0];
-  const custo = opt ? Number(opt.dataset.custo) : 0;
-  const margem = preco - custo;
-  const provPct = Number(state.apple.config?.percentual_provisao_viagem || 5) / 100;
-  const provisao = custo * provPct * qtd;
-  const lucro = (margem * qtd) - provisao;
-
-  $('#ap-vend-margem').innerHTML = `<span class="${margem >= 0 ? 'text-primary-500' : 'text-red-400'}">R$ ${fmtBRL(margem)} unit.</span>`;
-  $('#ap-vend-prov').textContent = 'R$ ' + fmtBRL(provisao);
-  $('#ap-vend-lucro').innerHTML = `<span class="${lucro >= 0 ? 'text-primary-500' : 'text-red-400'}">R$ ${fmtBRL(lucro)}</span>`;
-
-  // Esperado após
-  const saldoEsperadoApos = state.apple.saldoEsperado + total;
-  $('#ap-vend-esperado').textContent = 'R$ ' + fmtBRL(saldoEsperadoApos);
-  checkVendaDivergencia(saldoEsperadoApos);
-}
-
-function checkVendaDivergencia(esperado) {
-  const informado = parseFloat($('#ap-vend-saldo').value);
-  if (isNaN(informado)) { hide('#ap-vend-divergencia'); return; }
-  const tol = Number(state.apple.config?.tolerancia_conciliacao || 5);
-  const diff = informado - esperado;
-  if (Math.abs(diff) > tol) {
-    $('#ap-vend-divergencia').textContent = `⚠ Divergência de R$ ${fmtBRL(diff)} (tolerância: R$ ${fmtBRL(tol)})`;
-    show('#ap-vend-divergencia');
-  } else hide('#ap-vend-divergencia');
-}
-
-async function saveAppleVenda() {
-  hide('#ap-vend-erro');
-  const opt = $('#ap-vend-produto').selectedOptions[0];
-  if (!opt) return showApErr('#ap-vend-erro', 'Selecione um produto.');
-  const qtd = parseInt($('#ap-vend-qtd').value);
-  const preco = parseFloat($('#ap-vend-preco').value);
-  const saldo = parseFloat($('#ap-vend-saldo').value);
-  if (!qtd || qtd < 1) return showApErr('#ap-vend-erro', 'Quantidade inválida.');
-  if (!preco || preco < 0) return showApErr('#ap-vend-erro', 'Preço unitário inválido.');
-  if (isNaN(saldo)) return showApErr('#ap-vend-erro', 'Informe o saldo da conta após a venda.');
-
-  const prod = state.apple.produtos.find(p => p.id === opt.value);
-  if (Number(prod.estoque_atual) < qtd) return showApErr('#ap-vend-erro', `Estoque insuficiente. Disponível: ${prod.estoque_atual}`);
-
-  const payload = {
-    data: $('#ap-vend-data').value,
-    produto_id: opt.value,
-    quantidade: qtd,
-    preco_unitario: preco,
-    canal: $('#ap-vend-canal').value,
-    forma_pagamento: $('#ap-vend-pgto').value,
-    cliente: $('#ap-vend-cliente').value.trim() || null,
-    saldo_conta_apos: saldo,
-    observacao: $('#ap-vend-obs').value.trim() || null,
-    custo_unitario_snapshot: Number(opt.dataset.custo),
-  };
-
-  const btn = $('#ap-vend-salvar');
-  btn.disabled = true; btn.textContent = 'Registrando...';
-  const { error } = await sb.from('vendas_apple').insert(payload);
-  btn.disabled = false; btn.textContent = 'Registrar venda';
-
-  if (error) return showApErr('#ap-vend-erro', error.message);
-  hide('#modal-apple-venda');
-  loadAppleVendas();
-}
-
-// =====================================================================
-// APPLE: COMPRAS
-// =====================================================================
-async function loadAppleCompras() {
-  const viagem = $('#apple-compras-viagem').value;
-  let q = sb.from('compras_apple').select(`*, produtos_apple ( modelo_sku )`).order('data', { ascending: false }).order('created_at', { ascending: false });
-  if (viagem) q = q.eq('viagem_numero', parseInt(viagem));
-  const { data, error } = await q;
-  if (error) {
-    $('#apple-compras-tbody').innerHTML = `<tr><td colspan="7" class="px-3 py-6 text-center text-red-400">Erro: ${error.message}</td></tr>`;
-    return;
-  }
-
-  // popular filtro de viagens
-  const { data: viagensRaw } = await sb.from('compras_apple').select('viagem_numero');
-  const viagens = [...new Set((viagensRaw || []).map(v => v.viagem_numero))].sort((a, b) => b - a);
-  $('#apple-compras-viagem').innerHTML = '<option value="">Todas viagens</option>' + viagens.map(v => `<option value="${v}" ${String(v) === viagem ? 'selected' : ''}>Viagem ${v}</option>`).join('');
-
-  renderAppleCompras(data || []);
-  renderComprasResumo(data || []);
-}
-
-function renderAppleCompras(compras) {
-  const tbody = $('#apple-compras-tbody');
-  if (compras.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="px-3 py-8 text-center text-gray-500">Nenhuma compra registrada. Clique em "+ Nova compra" para começar.</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = compras.map(c => `
-    <tr class="hover:bg-gray-700/30">
-      <td class="px-3 py-2 text-xs">${fmtData(c.data)}</td>
-      <td class="px-3 py-2 text-center"><span class="bg-gray-700 text-xs px-1.5 py-0.5 rounded">V${c.viagem_numero}</span></td>
-      <td class="px-3 py-2 font-medium">${c.produtos_apple?.modelo_sku || '—'}</td>
-      <td class="px-3 py-2 text-center">${c.quantidade}</td>
-      <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(c.custo_unitario)}</td>
-      <td class="px-3 py-2 text-right font-mono text-sm font-medium">R$ ${fmtBRL(c.total)}</td>
-      <td class="px-3 py-2 text-center">
-        <button class="del-compra text-red-400 hover:text-red-300 text-xs" data-id="${c.id}">Excluir</button>
-      </td>
-    </tr>`).join('');
-  $$('#apple-compras-tbody .del-compra').forEach(b => b.addEventListener('click', e => deleteCompra(e.target.dataset.id)));
-}
-
-function renderComprasResumo(compras) {
-  const total = compras.reduce((s, c) => s + Number(c.total), 0);
-  const qtd = compras.reduce((s, c) => s + c.quantidade, 0);
-  $('#apple-compras-resumo').innerHTML = `
-    ${cardResumo('Compras', compras.length)}
-    ${cardResumo('Unidades', qtd)}
-    ${cardResumo('Investido', 'R$ ' + fmtBRL(total))}
-  `;
-}
-
-async function deleteCompra(id) {
-  if (!confirm('Excluir esta compra? O estoque e o custo médio serão recalculados.')) return;
-  const { error } = await sb.from('compras_apple').delete().eq('id', id);
-  if (error) return alert('Erro: ' + error.message);
-  loadAppleCompras();
-}
-
-// Modal Nova Compra
-async function openAppleCompraModal() {
-  hide('#ap-comp-erro');
-  if (state.apple.produtos.length === 0) await loadAppleProdutos();
-
-  const produtosAtivos = state.apple.produtos.filter(p => p.ativo);
-  if (produtosAtivos.length === 0) {
-    alert('Cadastre um produto antes de registrar compras.');
-    return;
-  }
-
-  $('#ap-comp-produto').innerHTML = produtosAtivos.map(p =>
-    `<option value="${p.id}" data-estoque="${p.estoque_atual}" data-custo="${p.custo_medio}">${p.modelo_sku} (estoque atual: ${p.estoque_atual})</option>`
-  ).join('');
-
-  $('#ap-comp-data').value = new Date().toISOString().slice(0, 10);
-  $('#ap-comp-qtd').value = 1;
-  $('#ap-comp-custo').value = '';
-  $('#ap-comp-obs').value = '';
-  $('#ap-comp-saldo').value = '';
-
-  // sugere última viagem +1 (ou 1)
-  const { data: maxV } = await sb.from('compras_apple').select('viagem_numero').order('viagem_numero', { ascending: false }).limit(1);
-  $('#ap-comp-viagem').value = maxV && maxV[0] ? maxV[0].viagem_numero : 1;
-
-  await computeSaldoEsperado();
-  updateCompraCalc();
-  show('#modal-apple-compra');
-}
-
-function updateCompraCalc() {
-  const qtd = parseInt($('#ap-comp-qtd').value) || 0;
-  const custo = parseFloat($('#ap-comp-custo').value) || 0;
-  const total = qtd * custo;
-  $('#ap-comp-total').textContent = 'R$ ' + fmtBRL(total);
-
-  // Novo custo médio = (estoque_atual * custo_medio_atual + qtd * custo_novo) / (estoque_atual + qtd)
-  const opt = $('#ap-comp-produto').selectedOptions[0];
-  if (opt && qtd > 0 && custo > 0) {
-    const estAtual = Number(opt.dataset.estoque);
-    const custoAtual = Number(opt.dataset.custo);
-    const novoCusto = (estAtual * custoAtual + qtd * custo) / (estAtual + qtd);
-    $('#ap-comp-novocusto').textContent = 'R$ ' + fmtBRL(novoCusto);
-  } else $('#ap-comp-novocusto').textContent = '—';
-
-  const saldoEsperadoApos = state.apple.saldoEsperado - total;
-  $('#ap-comp-esperado').textContent = 'R$ ' + fmtBRL(saldoEsperadoApos);
-  checkCompraDivergencia(saldoEsperadoApos);
-}
-
-function checkCompraDivergencia(esperado) {
-  const informado = parseFloat($('#ap-comp-saldo').value);
-  if (isNaN(informado)) { hide('#ap-comp-divergencia'); return; }
-  const tol = Number(state.apple.config?.tolerancia_conciliacao || 5);
-  const diff = informado - esperado;
-  if (Math.abs(diff) > tol) {
-    $('#ap-comp-divergencia').textContent = `⚠ Divergência de R$ ${fmtBRL(diff)} (tolerância: R$ ${fmtBRL(tol)})`;
-    show('#ap-comp-divergencia');
-  } else hide('#ap-comp-divergencia');
-}
-
-async function saveAppleCompra() {
-  hide('#ap-comp-erro');
-  const opt = $('#ap-comp-produto').selectedOptions[0];
-  if (!opt) return showApErr('#ap-comp-erro', 'Selecione um produto.');
-  const qtd = parseInt($('#ap-comp-qtd').value);
-  const custo = parseFloat($('#ap-comp-custo').value);
-  const viagem = parseInt($('#ap-comp-viagem').value);
-  const saldo = parseFloat($('#ap-comp-saldo').value);
-  if (!qtd || qtd < 1) return showApErr('#ap-comp-erro', 'Quantidade inválida.');
-  if (!custo || custo < 0) return showApErr('#ap-comp-erro', 'Custo unitário inválido.');
-  if (!viagem || viagem < 1) return showApErr('#ap-comp-erro', 'Número da viagem inválido.');
-  if (isNaN(saldo)) return showApErr('#ap-comp-erro', 'Informe o saldo da conta após a compra.');
-
-  const payload = {
-    data: $('#ap-comp-data').value,
-    viagem_numero: viagem,
-    produto_id: opt.value,
-    quantidade: qtd,
-    custo_unitario: custo,
-    saldo_conta_apos: saldo,
-    observacao: $('#ap-comp-obs').value.trim() || null,
-  };
-
-  const btn = $('#ap-comp-salvar');
-  btn.disabled = true; btn.textContent = 'Registrando...';
-  const { error } = await sb.from('compras_apple').insert(payload);
-  btn.disabled = false; btn.textContent = 'Registrar compra';
-
-  if (error) return showApErr('#ap-comp-erro', error.message);
-  hide('#modal-apple-compra');
-  loadAppleCompras();
-}
-
-// =====================================================================
-// EVENT LISTENERS
-// =====================================================================
-$('#login-btn').addEventListener('click', tryLogin);
-$('#login-password').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
-$('#login-email').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
-$('#logout-btn').addEventListener('click', logout);
-
-$$('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-
-// =====================================================================
-// EXPORT PARA AGENTE DE COTAÇÃO — gera banco_padrao.json
-// =====================================================================
-async function exportarBancoCotacao() {
-  const btn = $('#export-cotacao-btn');
-  const textoOriginal = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Exportando...';
-
-  try {
-    const PAGE = 1000;
-    let offset = 0;
-    let todos = [];
-
-    while (true) {
-      const { data, error } = await sb
-        .from('produtos_com_ofertas')
-        .select('codigo_slc, prefixo, marca, descricao, menor_usd, menor_brl, fornecedores_disponiveis')
-        .range(offset, offset + PAGE - 1)
-        .order('codigo_slc');
-
-      if (error) throw error;
-      if (!data || data.length === 0) break;
-
-      todos = todos.concat(data);
-      if (data.length < PAGE) break;
-      offset += PAGE;
-    }
-
-    const itens = todos
-      .filter(p => p.prefixo !== 'DSK' && p.prefixo !== 'NB')
-      .map(p => ({
-        codigo_slc: p.codigo_slc,
-        prefixo: p.prefixo,
-        marca: p.marca || '',
-        descricao: p.descricao || '',
-        menor_brl: p.menor_brl,
-        menor_usd: p.menor_usd,
-        fornecedores: p.fornecedores_disponiveis || []
-      }));
-
-    const payload = {
-      versao: new Date().toISOString(),
-      total_itens: itens.length,
-      itens: itens
-    };
-
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'banco_padrao.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    btn.textContent = `✓ ${itens.length} itens`;
-    setTimeout(() => { btn.textContent = textoOriginal; btn.disabled = false; }, 2500);
-  } catch (e) {
-    alert('Erro ao exportar: ' + e.message);
-    btn.textContent = textoOriginal;
-    btn.disabled = false;
-  }
-}
-
-$('#export-cotacao-btn').addEventListener('click', exportarBancoCotacao);
-
-// Filtros catálogo (licitação)
-let searchTimer;
-$('#filter-search').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(applyFilters, 300); });
-$('#filter-prefixo').addEventListener('change', () => {
-  // Prefixo é o filtro mestre: ao mudar, zera busca/marca/fornecedor pra não arrastar resíduo da consulta anterior
-  $('#filter-search').value = '';
-  $('#filter-marca').value = '';
-  $('#filter-fornecedor').value = '';
-  applyFilters();
+/* ===================== EVENTOS ===================== */
+el('s_cpu').addEventListener('change',e=>{
+  estado.cpu=e.target.value?IDX[e.target.value]:null;
+  fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
 });
-$('#filter-marca').addEventListener('change', applyFilters);
-$('#filter-fornecedor').addEventListener('change', applyFilters);
-$('#clear-filters').addEventListener('click', clearFilters);
-
-// CRUD itens (criar/editar produto/oferta + apagar)
-$('#add-item-btn').addEventListener('click', () => openItemModal('new-item'));
-$('#add-modal-close').addEventListener('click', closeItemModal);
-$('#add-cancel').addEventListener('click', closeItemModal);
-$('#add-salvar').addEventListener('click', submitItemModal);
-$('#add-prefixo').addEventListener('change', async () => {
-  // Atualiza preview do codigo_slc apenas em modo new-item (em edit-produto o código é fixo)
-  if (modalState.mode !== 'new-item') return;
-  const p = $('#add-prefixo').value;
-  if (p) {
-    $('#add-codigo-preview').textContent = '...';
-    $('#add-codigo-preview').textContent = await getNextCodigoSlc(p);
-  } else {
-    $('#add-codigo-preview').textContent = '—';
-  }
+el('s_ram').addEventListener('change',e=>{ estado.ram=e.target.value?IDX[e.target.value]:null; renderOrcamento(); });
+el('s_ramq').addEventListener('input',e=>{ estado.ramq=Math.max(1,parseInt(e.target.value)||1); renderOrcamento(); });
+el('s_arm').addEventListener('change',e=>{ estado.arm=e.target.value?IDX[e.target.value]:null; renderOrcamento(); });
+el('c_cooler').addEventListener('change',e=>{ estado.cooler=e.target.checked; renderOrcamento(); });
+el('c_forca').addEventListener('change',e=>{ estado.forca=e.target.checked; renderOrcamento(); });
+document.querySelectorAll('.man').forEach(inp=>{
+  inp.addEventListener('input',()=>{ estado.man[inp.dataset.k]=parseFloat(inp.value)||0; renderOrcamento(); });
 });
-$('#add-preco-usd').addEventListener('input', calcPrecoBRL);
-$('#add-taxa').addEventListener('input', calcPrecoBRL);
-$('#add-novo-fornecedor-btn').addEventListener('click', addNewFornecedor);
-$('#modal-edit-produto').addEventListener('click', () => {
-  const pid = $('#modal-product').dataset.produtoId;
-  if (pid) openItemModal('edit-produto', { produtoId: pid });
+el('btnApr').addEventListener('click',aprovar);
+el('btnClr').addEventListener('click',limpar);
+el('btnExpHist').addEventListener('click',expHist);
+el('btnExpRank').addEventListener('click',expRank);
+el('btnResetPrec').addEventListener('click',()=>{
+  if(!confirm('Recarregar os preços do servidor?\n\nDescarta edições locais ainda não sincronizadas e volta ao último valor do servidor (ou ao valor original, onde não houver preço cadastrado no servidor).')) return;
+  PRECOS={}; lsSavePre(); renderCatalogo(); fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
+  if(SB_OK){ sbLoadPrecos().then(()=>toast('Preços recarregados do servidor.')); }
+  else { toast('Sem servidor: preços voltaram aos valores originais.'); }
 });
-$('#modal-delete-produto').addEventListener('click', () => {
-  const pid = $('#modal-product').dataset.produtoId;
-  if (pid) deleteProdutoAction(pid);
-});
-$('#modal-add-oferta').addEventListener('click', () => {
-  const pid = $('#modal-product').dataset.produtoId;
-  if (pid) openItemModal('new-oferta', { produtoId: pid });
-});
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on'); el(t.dataset.tab).classList.add('on');
+}));
 
-$('#page-prev').addEventListener('click', () => { if (state.page > 0) { state.page--; loadCatalog(); window.scrollTo(0, 0); } });
-$('#page-next').addEventListener('click', () => { state.page++; loadCatalog(); window.scrollTo(0, 0); });
-
-// Modal catálogo
-$('#modal-close').addEventListener('click', closeModal);
-$('#modal-product').addEventListener('click', e => { if (e.target === $('#modal-product')) closeModal(); });
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    if (!$('#modal-item').classList.contains('hidden-section')) { closeItemModal(); return; }
-    if (!$('#modal-product').classList.contains('hidden-section')) closeModal();
-    if (!$('#modal-apple-produto').classList.contains('hidden-section')) hide('#modal-apple-produto');
-    if (!$('#modal-apple-venda').classList.contains('hidden-section')) hide('#modal-apple-venda');
-    if (!$('#modal-apple-compra').classList.contains('hidden-section')) hide('#modal-apple-compra');
-    if (!$('#modal-cart').classList.contains('hidden-section')) hide('#modal-cart');
-  }
-});
-
-// Apple — sub-tabs
-$$('.apple-subtab-btn').forEach(btn => btn.addEventListener('click', () => switchAppleSubtab(btn.dataset.subtab)));
-
-// Apple — Catálogo
-let appleCatTimer;
-$('#apple-cat-search').addEventListener('input', () => { clearTimeout(appleCatTimer); appleCatTimer = setTimeout(loadAppleProdutos, 300); });
-$('#apple-cat-categoria').addEventListener('change', loadAppleProdutos);
-$('#btn-novo-produto').addEventListener('click', () => openAppleProdutoModal(null));
-$('#ap-prod-pcompra').addEventListener('input', updateMargemDisplay);
-$('#ap-prod-pvenda').addEventListener('input', updateMargemDisplay);
-$('#ap-prod-salvar').addEventListener('click', saveAppleProduto);
-
-// Apple — Vendas
-$('#apple-vendas-de').addEventListener('change', loadAppleVendas);
-$('#apple-vendas-ate').addEventListener('change', loadAppleVendas);
-$('#btn-nova-venda').addEventListener('click', openAppleVendaModal);
-$('#ap-vend-produto').addEventListener('change', onVendaProdutoChange);
-$('#ap-vend-qtd').addEventListener('input', updateVendaCalc);
-$('#ap-vend-preco').addEventListener('input', updateVendaCalc);
-$('#ap-vend-saldo').addEventListener('input', updateVendaCalc);
-$('#ap-vend-salvar').addEventListener('click', saveAppleVenda);
-
-// Apple — Compras
-$('#apple-compras-viagem').addEventListener('change', loadAppleCompras);
-$('#btn-nova-compra').addEventListener('click', openAppleCompraModal);
-$('#ap-comp-produto').addEventListener('change', updateCompraCalc);
-$('#ap-comp-qtd').addEventListener('input', updateCompraCalc);
-$('#ap-comp-custo').addEventListener('input', updateCompraCalc);
-$('#ap-comp-saldo').addEventListener('input', updateCompraCalc);
-$('#ap-comp-salvar').addEventListener('click', saveAppleCompra);
-
-// Apple — fechar modais
-$$('.ap-modal-close').forEach(btn => btn.addEventListener('click', () => hide('#' + btn.dataset.target)));
-['modal-apple-produto', 'modal-apple-venda', 'modal-apple-compra'].forEach(mid => {
-  const m = $('#' + mid);
-  m.addEventListener('click', e => { if (e.target === m) hide(m); });
-});
-
-// Carrinho de orçamento
-$('#cart-floating').addEventListener('click', openCartModal);
-$('#cart-close').addEventListener('click', () => hide('#modal-cart'));
-$('#cart-close-2').addEventListener('click', () => hide('#modal-cart'));
-$('#cart-clear').addEventListener('click', clearCart);
-$('#cart-generate-pdf').addEventListener('click', generatePDFs);
-$('#modal-cart').addEventListener('click', e => { if (e.target === $('#modal-cart')) hide('#modal-cart'); });
-
-// =====================================================================
-// INICIALIZAÇÃO
-// =====================================================================
-checkSession();
-
+/* ===================== INIT ===================== */
+function init(){
+  lsLoad();
+  if(!LS_OK) el('lsNotice').style.display='';
+  const d=new Date();
+  el('f_data').value=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+  fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
+  renderCatalogo(); renderHistorico(); renderRanking();
+  sbInit();   // carrega/segue sincronizando os preços do servidor em segundo plano
+}
+init();
 </script>
-
 </body>
 </html>
