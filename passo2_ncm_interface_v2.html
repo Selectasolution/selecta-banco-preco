@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SELECTA — Determinação de NCM (protótipo)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{primary:{500:'#10b981',600:'#059669',700:'#047857'}}}}}</script>
+<style>
+  body{font-family:ui-sans-serif,system-ui,-apple-system,sans-serif}
+  .conf-bar{height:6px;border-radius:3px;background:#374151;overflow:hidden}
+  .conf-fill{height:100%;background:#10b981}
+  .badge{font-size:.7rem;padding:2px 8px;border-radius:9999px;font-weight:600}
+</style>
+</head>
+<body class="bg-gray-950 text-gray-200 min-h-screen">
+<div class="max-w-3xl mx-auto px-4 py-8">
+
+  <div class="flex items-center justify-between mb-1">
+    <h1 class="text-xl font-bold text-white">Determinação de NCM</h1>
+    <label class="flex items-center gap-2 text-xs text-gray-400">
+      <input type="checkbox" id="demo" class="accent-emerald-500"> modo demonstração (sem Edge Function)
+    </label>
+  </div>
+  <p class="text-sm text-gray-500 mb-6">
+    A IA pesquisa (RGI → NESH → Soluções de Consulta → CARF) e propõe candidatos com justificativa.
+    Você trava um como <span class="text-emerald-400">padrão</span>. Protótipo — provar o fluxo antes de fundir ao app.
+  </p>
+
+  <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-6">
+    <label class="block text-xs text-gray-400 mb-1">Produto (digite como se estivesse na China)</label>
+    <textarea id="descricao" rows="2" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm mb-3"
+      placeholder="ex.: SSD NVMe 256GB M.2 PCIe Gen3"></textarea>
+    <label class="block text-xs text-gray-400 mb-1">Atributos/specs (opcional, ajuda a exatidão)</label>
+    <input id="atributos" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm mb-3"
+      placeholder="ex.: material, função, tensão, com/sem microfone..." />
+    <button id="btn" class="bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium px-4 py-2 rounded-md">
+      Determinar NCM
+    </button>
+    <span id="status" class="text-xs text-gray-500 ml-3"></span>
+  </div>
+
+  <div id="obs" class="hidden text-sm bg-amber-950/40 border border-amber-800/50 text-amber-200 rounded-md px-3 py-2 mb-4"></div>
+  <div id="resultados" class="space-y-4"></div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const CONFIG = {
+  SUPABASE_URL: 'https://odamfhflldygdfrnnjzu.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_7q_884vzxsdTLOIw7ZMx7A_qiUuUc-n',
+};
+const EDGE = `${CONFIG.SUPABASE_URL}/functions/v1/claude-proxy/classificar-ncm`;
+const sb = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+const MODELO_IA = 'claude-sonnet-4-5';
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtNcm = (n) => String(n).replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3');
+
+const DEMO = {
+  candidatos: [{
+    ncm:'84717040', confianca:80,
+    rgi_justificativa:'RGI 1: SSD é unidade de memória/armazenamento de máquina automática de processamento de dados, posição 8471; subitem 7040 cobre unidades de memória.',
+    fontes:[{tipo:'NESH',ref:'Nota Explicativa 84.71',url:'https://www.gov.br'},
+            {tipo:'TEC',ref:'TEC 8471.70',url:'https://www.gov.br'}],
+    anuencias:[], por_que_nao_vizinho:'Não é 8523 (suporte gravado): SSD é unidade funcional de armazenamento, não mídia gravada.'
+  }],
+  observacao:'EXEMPLO FIXO (modo demonstração). Desmarque para classificar de verdade via Edge Function.'
+};
+
+async function determinar() {
+  const descricao = $('descricao').value.trim();
+  if (!descricao) { $('status').textContent = 'digite o produto'; return; }
+  const atributos = $('atributos').value.trim() || null;
+  $('status').textContent = $('demo').checked ? 'carregando exemplo...' : 'pesquisando (pode levar alguns segundos)...';
+  $('btn').disabled = true;
+  $('resultados').innerHTML = ''; $('obs').classList.add('hidden');
+
+  try {
+    let result;
+    if ($('demo').checked) {
+      await new Promise(r => setTimeout(r, 400)); result = DEMO;
+    } else {
+      const session = (await sb.auth.getSession()).data.session;
+      const token = session?.access_token || CONFIG.SUPABASE_ANON_KEY; // <- sempre manda bearer
+      const resp = await fetch(EDGE, {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          apikey: CONFIG.SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ descricao, atributos })
+      });
+      const data = await resp.json();
+      if (!data.success) throw new Error(data.error || `HTTP ${resp.status}`);
+      result = data.result;
+    }
+    render(result, descricao, atributos);
+    $('status').textContent = '';
+  } catch (e) {
+    $('status').textContent = '✗ ' + e.message;
+  } finally { $('btn').disabled = false; }
+}
+
+function render(result, descricao, atributos) {
+  if (result.observacao) { $('obs').textContent = '⚠ ' + result.observacao; $('obs').classList.remove('hidden'); }
+  $('resultados').innerHTML = (result.candidatos || []).map((c, i) => {
+    const conf = Number(c.confianca) || 0;
+    const cor = conf >= 85 ? '#10b981' : conf >= 60 ? '#f59e0b' : '#ef4444';
+    const fontes = (c.fontes || []).map(f =>
+      `<a href="${esc(f.url)}" target="_blank" class="badge bg-gray-800 text-gray-300 hover:text-white">${esc(f.tipo)}: ${esc(f.ref)}</a>`).join(' ');
+    const anu = (c.anuencias || []).map(a => `<span class="badge bg-red-900/60 text-red-300">⚠ ${esc(a)}</span>`).join(' ');
+    return `
+    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <div class="font-mono text-lg text-white">${fmtNcm(c.ncm)}</div>
+          ${c.ncm_descricao_oficial ? `<div class="text-xs text-gray-500">${esc(c.ncm_descricao_oficial)}</div>` : ''}
+        </div>
+        <div class="text-right">
+          <div class="text-xs text-gray-400 mb-1">confiança ${conf}</div>
+          <div class="conf-bar w-28"><div class="conf-fill" style="width:${conf}%;background:${cor}"></div></div>
+        </div>
+      </div>
+      <p class="text-sm text-gray-300 mb-2"><span class="text-emerald-400 font-medium">RGI:</span> ${esc(c.rgi_justificativa)}</p>
+      ${c.por_que_nao_vizinho ? `<p class="text-xs text-gray-500 mb-2">vs. vizinho: ${esc(c.por_que_nao_vizinho)}</p>` : ''}
+      <div class="flex flex-wrap gap-1 mb-3">${fontes} ${anu}</div>
+      <button data-i="${i}" class="travar bg-primary-700 hover:bg-primary-600 text-white text-xs font-medium px-3 py-1.5 rounded-md">
+        Travar como padrão (validado)
+      </button>
+    </div>`;
+  }).join('');
+
+  document.querySelectorAll('.travar').forEach(b => b.addEventListener('click', () =>
+    travar(result.candidatos[+b.dataset.i], result.candidatos, descricao, atributos, b)));
+}
+
+async function travar(cand, todos, descricao, atributos, btn) {
+  btn.disabled = true; btn.textContent = 'gravando...';
+  const alternativos = todos.filter(x => x !== cand);
+  const { error } = await sb.from('imp_ncm_determinacao').insert({
+    produto_id: null,
+    descricao_input: descricao,
+    atributos_input: atributos ? { specs: atributos } : null,
+    ncm_codigo: String(cand.ncm),
+    status: 'validado_humano',
+    confianca: Number(cand.confianca) || null,
+    rgi_justificativa: cand.rgi_justificativa,
+    fontes: cand.fontes || [],
+    candidatos_alternativos: alternativos,
+    anuencias: cand.anuencias || [],
+    modelo_ia: MODELO_IA,
+    determinado_por: (await sb.auth.getSession()).data.session?.user?.email || 'protótipo',
+    ativo: true
+  });
+  if (error) { btn.disabled = false; btn.textContent = '✗ ' + (error.message.includes('row-level') ? 'faça login / RLS' : error.message); }
+  else { btn.textContent = '✓ travado como padrão'; btn.classList.replace('bg-primary-700','bg-emerald-800'); }
+}
+
+$('btn').addEventListener('click', determinar);
+</script>
+</body>
+</html>
