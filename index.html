@@ -2675,6 +2675,7 @@ window.importacao = (function () {
       p.classList.toggle('active', p.id === `imp-pane-${paneId}`);
     });
     if (paneId === 'fornecedores') listarFornecedores();
+    if (paneId === 'simulacao') simCarregarCatalogo();
     if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
   }
 
@@ -2750,6 +2751,11 @@ window.importacao = (function () {
         (data || []).map((p) =>
           `<option value="${impEsc(p.ncm || '')}">${impEsc(p.nome || '(sem nome)')} — ${impEsc(p.ncm || 's/ NCM')}</option>`
         ).join('');
+      // pré-preenche o câmbio com a PTAX mais recente sincronizada (se houver)
+      const { data: cambio } = await impState.sb
+        .from('imp_vw_cambio_atual').select('ptax_venda').limit(1).maybeSingle();
+      const inpCambio = document.getElementById('sim-cambio');
+      if (cambio && cambio.ptax_venda && inpCambio) inpCambio.value = cambio.ptax_venda;
     } catch (e) {
       console.warn('[importacao] catálogo:', e.message);
     }
