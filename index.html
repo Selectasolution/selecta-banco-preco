@@ -436,35 +436,7 @@
     </nav>
 
     <div class="imp-pane active" id="imp-pane-simulacao">
-      <style>
-        #imp-pane-simulacao .si{width:100%;background:#1f2937;border:1px solid #374151;border-radius:6px;padding:8px;color:#e5e7eb;font-size:14px;box-sizing:border-box;}
-        #imp-pane-simulacao .sl{font-size:12px;color:#9ca3af;display:block;margin-bottom:3px;}
-      </style>
-      <div style="max-width:760px;">
-        <h3 class="text-base font-semibold mb-3">Simulação de custo landed</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#111827;border:1px solid #1f2937;border-radius:10px;padding:14px;">
-          <div style="grid-column:1/3;">
-            <label class="sl">Produto (do catálogo)</label>
-            <select id="sim-produto" class="si" onchange="importacao.simSelecionarProduto()">
-              <option value="">— selecione um produto cadastrado —</option>
-            </select>
-          </div>
-          <div style="grid-column:1/3;">
-            <label class="sl">NCM (8 dígitos, sem ponto)</label>
-            <input id="sim-ncm" class="si" style="font-family:monospace;" placeholder="ou digite manualmente" />
-          </div>
-          <div><label class="sl">FOB total (USD)</label><input id="sim-fob" class="si" type="number" value="1000" /></div>
-          <div><label class="sl">Frete (USD)</label><input id="sim-frete" class="si" type="number" value="80" /></div>
-          <div><label class="sl">Seguro (USD)</label><input id="sim-seguro" class="si" type="number" value="5" /></div>
-          <div><label class="sl">Câmbio (R$/US$)</label><input id="sim-cambio" class="si" type="number" step="0.01" value="5.40" /></div>
-          <div><label class="sl">Quantidade</label><input id="sim-qtd" class="si" type="number" value="20" /></div>
-          <div style="display:flex;align-items:end;">
-            <button class="imp-btn-primary" onclick="importacao.simularCusto()">Calcular custo landed</button>
-            <span id="sim-status" style="font-size:12px;color:#9ca3af;margin-left:10px;"></span>
-          </div>
-        </div>
-        <div id="sim-resultado" style="margin-top:14px;"></div>
-      </div>
+      <iframe src="simulador.html" title="Simulador de Custo Landed" style="width:100%;height:calc(100vh - 64px);border:0;"></iframe>
     </div>
 
     <div class="imp-pane" id="imp-pane-operacoes">
