@@ -2,680 +2,342 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Montador de Desktop — Selecta</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selecta Import OS — Simulador de Custo Landed</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
-
-:root{
-  --ink:#1F2830; --bg:#EBEEEF; --card:#FFFFFF; --green:#00B377; --green-d:#00845A;
-  --line:#D6DBDD; --muted:#69737B; --amber:#B9791A; --red:#C0392B; --lock:#A9B1B6;
-  --soft:#F2F4F5;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
-.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
-
-/* header */
-header{background:var(--ink);color:#fff;padding:14px 22px}
-.brand{display:flex;align-items:baseline;gap:10px}
-.brand b{font-size:18px;font-weight:700;letter-spacing:-.3px}
-.brand span{font-size:11px;color:#8B97A0;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px}
-.tabs{display:flex;gap:2px;margin-top:12px;flex-wrap:wrap}
-.tab{background:#2E3942;color:#AEB8BF;border:0;padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border-radius:5px 5px 0 0}
-.tab.on{background:var(--bg);color:var(--ink)}
-.tab:hover:not(.on){color:#fff}
-
-main{max-width:1180px;margin:0 auto;padding:20px}
-.panel{display:none}
-.panel.on{display:block}
-
-/* layout */
-.grid{display:grid;grid-template-columns:1fr 380px;gap:18px;align-items:start}
-@media(max-width:880px){.grid{grid-template-columns:1fr}}
-
-.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px;margin-bottom:16px}
-.card h2{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:14px;font-family:'JetBrains Mono',monospace}
-.card h2 .n{color:var(--green);margin-right:6px}
-
-label{display:block;font-size:12px;font-weight:600;color:var(--ink);margin-bottom:5px}
-.hint{font-size:11px;color:var(--muted);font-weight:400;margin-top:4px}
-input,select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:5px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:#fff}
-input:focus,select:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:var(--green)}
-select:disabled,input:disabled{background:var(--soft);color:var(--lock);cursor:not-allowed}
-.row{margin-bottom:14px}
-.row2{display:grid;grid-template-columns:1fr 110px;gap:10px}
-.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-@media(max-width:560px){.row3{grid-template-columns:1fr}}
-
-.locked{display:flex;align-items:center;gap:8px;background:var(--soft);border:1px dashed var(--line);border-radius:5px;padding:9px 10px;color:var(--lock);font-size:13px}
-.locked b{font-family:'JetBrains Mono',monospace;font-size:11px}
-
-.auto-mb{background:var(--soft);border:1px solid var(--line);border-left:3px solid var(--green);border-radius:5px;padding:10px 12px;font-size:13px}
-.auto-mb .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-family:'JetBrains Mono',monospace;margin-bottom:3px}
-.auto-mb .val{font-weight:600}
-
-.chain{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.chip{background:#E7F6F0;color:var(--green-d);border:1px solid #BEE6D6;border-radius:4px;padding:3px 8px;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace}
-
-.check{display:flex;align-items:center;gap:9px;padding:8px 0;cursor:pointer;font-weight:500}
-.check input{width:auto}
-
-/* orçamento */
-.budget{position:sticky;top:16px}
-.budget .li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--soft);font-size:13px}
-.budget .li .nm{color:var(--ink)}
-.budget .li .nm small{color:var(--muted);font-weight:400}
-.budget .li .pr{font-family:'JetBrains Mono',monospace;font-weight:500;white-space:nowrap}
-.budget .li.cat{margin-top:8px}
-.budget .li .tag{font-size:9px;background:var(--soft);color:var(--muted);padding:1px 5px;border-radius:3px;margin-left:6px;text-transform:uppercase;letter-spacing:.5px;font-family:'JetBrains Mono',monospace}
-.total{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:2px solid var(--ink)}
-.total .t1{font-size:12px;text-transform:uppercase;letter-spacing:1px;font-weight:700;color:var(--muted);font-family:'JetBrains Mono',monospace}
-.total .t2{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--ink)}
-.warn{background:#FBF1DF;border:1px solid #E8D49E;color:var(--amber);border-radius:5px;padding:8px 10px;font-size:12px;font-weight:600;margin-top:10px}
-.empty{color:var(--lock);font-size:13px;text-align:center;padding:20px 0}
-
-button.act{width:100%;background:var(--green);color:#fff;border:0;padding:12px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:12px}
-button.act:hover{background:var(--green-d)}
-button.act:disabled{background:var(--lock);cursor:not-allowed}
-button.ghost{width:100%;background:#fff;color:var(--muted);border:1px solid var(--line);padding:9px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px}
-button.ghost:hover{border-color:var(--muted);color:var(--ink)}
-.mini{display:inline-block;background:#fff;border:1px solid var(--line);color:var(--muted);padding:5px 11px;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer}
-.mini:hover{border-color:var(--green);color:var(--green-d)}
-
-/* tables */
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 8px;border-bottom:2px solid var(--line)}
-td{padding:8px 8px;border-bottom:1px solid var(--soft);vertical-align:middle}
-tr.grp td{background:var(--ink);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:5px 8px;font-weight:700}
-td .pin{width:104px;padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;background:#FFFBEC;border-color:#E8D49E}
-td.np{color:var(--lock);font-style:italic}
-.right{text-align:right}
-.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
-.bar h2{margin:0}
-
-/* toast */
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:8px;font-weight:600;font-size:13px;transition:transform .3s;z-index:99;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-#toast.show{transform:translateX(-50%) translateY(0)}
-#toast.err{background:var(--red)}
-
-.notice{background:#FBF1DF;border:1px solid #E8D49E;color:var(--amber);border-radius:6px;padding:8px 14px;font-size:12px;font-weight:600;margin:0 0 14px}
-.det{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace}
-.x{color:var(--red);cursor:pointer;font-weight:700;font-family:'JetBrains Mono',monospace}
-.x:hover{text-decoration:underline}
+  :root{
+    --bg:#0a0e0c; --panel:#0f1411; --panel-2:#131a16; --card:#0d1310;
+    --border:#1f2937; --border-soft:#2b3640; --border-accent:#14532d;
+    --text:#e5e7eb; --dim:#9ca3af; --faint:#6b7280;
+    --accent:#10b981; --accent-2:#34d399; --accent-deep:#064e3b;
+    --va:#3b82f6; --trib:#f59e0b; --op:#6b7280;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.45}
+  body{padding:24px;max-width:1320px;margin:0 auto}
+  .hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+  .hdr-left{display:flex;align-items:center;gap:12px}
+  .logo{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:grid;place-items:center;font-weight:800;color:#04130c}
+  .hdr h1{font-size:18px;font-weight:700;margin:0;letter-spacing:-.01em}
+  .hdr .sub{font-size:11px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase}
+  .badge{font-family:var(--mono);font-size:11px;color:var(--accent-2);background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:999px;padding:5px 12px}
+  .grid{display:grid;grid-template-columns:420px 1fr;gap:22px;align-items:start}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 18px 20px}
+  .panel + .panel{margin-top:16px}
+  .step{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .step .n{width:22px;height:22px;border-radius:6px;background:var(--accent);color:#04130c;font-weight:800;font-size:12px;display:grid;place-items:center}
+  .step .t{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:600}
+  label{display:block;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin:0 0 5px 1px}
+  input,select{width:100%;background:#0a0f0c;border:1px solid var(--border-soft);border-radius:8px;color:var(--text);padding:9px 11px;font-family:var(--mono);font-size:13.5px;outline:none;transition:border-color .15s,box-shadow .15s}
+  input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(16,185,129,.12)}
+  select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%239ca3af' stroke-width='2'><path d='M2 4l4 4 4-4'/></svg>");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
+  .row{display:grid;gap:12px}
+  .row.c2{grid-template-columns:1fr 1fr}
+  .row.c3{grid-template-columns:1fr 1fr 1fr}
+  .row + .row{margin-top:12px}
+  .hint{font-size:11px;color:var(--faint);margin-top:11px;line-height:1.5}
+  .op-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .btn{width:100%;margin-top:16px;background:linear-gradient(180deg,var(--accent),var(--accent-deep));color:#03120b;font-weight:700;border:0;border-radius:9px;padding:13px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:filter .15s,transform .05s}
+  .btn:hover{filter:brightness(1.07)}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .item{border:1px solid var(--border-soft);border-radius:9px;padding:12px;background:#0a0f0c}
+  .ncm-desc{margin-top:9px;font-size:12px;line-height:1.5}
+  .ncm-desc .pname{color:var(--accent-2);font-family:var(--mono);font-size:12.5px}
+  .ncm-desc .ddesc{color:var(--dim);display:block;margin-top:2px}
+  .hbadge{display:inline-flex;gap:6px;align-items:center;margin-top:8px;font-size:11px;padding:4px 9px;border-radius:999px}
+  .hbadge.warn{color:#fcd34d;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3)}
+  .hbadge.ok{color:var(--dim);background:rgba(255,255,255,.03);border:1px solid var(--border-soft)}
+  .res-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;gap:10px}
+  .res-head h2{margin:0;font-size:20px;font-weight:700}
+  .res-head .meta{font-family:var(--mono);font-size:12px;color:var(--faint);white-space:nowrap}
+  .res-sub{font-family:var(--mono);font-size:12px;color:var(--dim);margin-bottom:14px}
+  .line{display:flex;align-items:flex-start;justify-content:space-between;padding:8px 2px;border-top:1px solid var(--border)}
+  .line:first-of-type{border-top:0}
+  .line .lbl{color:var(--dim)}
+  .line .lbl .pct{color:var(--faint);font-size:11.5px;margin-left:6px}
+  .line .lbl .note{display:block;font-size:11px;color:var(--faint);line-height:1.35;margin-top:2px}
+  .line .val{font-family:var(--mono);text-align:right;white-space:nowrap;color:var(--text)}
+  .line.va{border-top:1px solid var(--border-soft)}
+  .line.va .lbl{color:var(--text);font-weight:600;letter-spacing:.02em;text-transform:uppercase;font-size:12.5px}
+  .line.va .val{color:var(--accent-2);font-weight:700;font-size:15px}
+  .line.total{border-top:1px solid var(--border-soft)}
+  .line.total .lbl{color:var(--text);font-weight:700;text-transform:uppercase;font-size:12.5px;letter-spacing:.02em}
+  .line.total .val{color:var(--accent-2);font-weight:700;font-size:15px}
+  .line.usd .val{color:var(--dim)}
+  .section-tag{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:16px 0 2px;font-weight:600}
+  .bar{display:flex;height:9px;border-radius:5px;overflow:hidden;margin:16px 0 9px}
+  .bar i{display:block;height:100%}
+  .legend{display:flex;gap:18px;font-size:11.5px;color:var(--dim);flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:9px;height:9px;border-radius:3px;display:inline-block}
+  .cards3{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:14px;margin-top:18px}
+  @media(max-width:680px){.cards3{grid-template-columns:1fr}}
+  .sc{border:1px solid var(--border-soft);border-radius:11px;padding:14px 16px;background:var(--card)}
+  .sc .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+  .sc .big{font-family:var(--mono);font-size:24px;font-weight:700}
+  .sc .small{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:5px}
+  .sc.total{border-color:var(--border-accent);background:linear-gradient(180deg,#0f1f17,#0c1611)}
+  .sc.total .k{color:var(--accent-2)}
+  .sc.total .big{color:var(--accent-2);font-size:28px}
+  .sc.cost .big{color:var(--text)}
+  .sc.mult .big{color:var(--trib)}
+  .avisos{margin-top:16px;border:1px solid var(--border);border-radius:9px;padding:11px 13px;background:rgba(245,158,11,.04)}
+  .avisos .tt{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--trib);font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .avisos li{font-size:11.5px;color:var(--dim);margin:3px 0;line-height:1.4}
+  details.fund{margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
+  details.fund summary{cursor:pointer;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;list-style:none;display:flex;align-items:center;gap:6px}
+  details.fund summary::-webkit-details-marker{display:none}
+  .fund-item{font-size:11.5px;margin:9px 0;padding-left:10px;border-left:2px solid var(--border-accent)}
+  .fund-item .ft{font-family:var(--mono);color:var(--accent-2)}
+  .fund-item .fl{color:var(--faint);line-height:1.45;display:block;margin-top:2px}
+  .placeholder{display:grid;place-items:center;text-align:center;color:var(--faint);min-height:420px;border:1px dashed var(--border-soft);border-radius:12px;padding:30px}
+  .status{font-family:var(--mono);font-size:12px;margin-top:10px;min-height:16px}
+  .status.err{color:#f87171}
+  .status.ok{color:var(--accent-2)}
+  .lucide{width:1em;height:1em;vertical-align:-2px}
 </style>
 </head>
 <body>
-
-<header>
-  <div class="brand"><b>Montador de Desktop</b><span>Selecta · orçamento por compatibilidade</span></div>
-  <div class="tabs">
-    <button class="tab on" data-tab="montar">Montar Orçamento</button>
-    <button class="tab" data-tab="catalogo">Catálogo / Preços</button>
-    <button class="tab" data-tab="historico">Histórico</button>
-    <button class="tab" data-tab="ranking">Ranking de Peças</button>
-  </div>
-</header>
-
-<main>
-<div id="lsNotice" class="notice" style="display:none">Modo prévia: o navegador aqui não salva dados. Baixe o arquivo e abra no Chrome para o histórico e a edição de preços ficarem salvos.</div>
-
-<!-- ============ MONTAR ============ -->
-<div class="panel on" id="montar">
-<div class="grid">
-  <div>
-    <div class="card">
-      <h2><span class="n">01</span>Origem do Orçamento</h2>
-      <div class="row3">
-        <div><label>Cliente</label><input id="f_cliente" placeholder="Ex.: Prefeitura de..."></div>
-        <div><label>Edital / Pregão</label><input id="f_edital" placeholder="Ex.: PE 045/2026"></div>
-        <div><label>Data</label><input id="f_data"></div>
-      </div>
+  <header class="hdr">
+    <div class="hdr-left">
+      <div class="logo">S</div>
+      <div><h1>Selecta Import OS</h1><div class="sub">Simulador de Custo Landed</div></div>
     </div>
+    <div class="badge">● cálculo no banco · <span style="font-family:var(--mono)">imp_fn_custo_landed</span></div>
+  </header>
 
-    <div class="card">
-      <h2><span class="n">02</span>Processador</h2>
-      <div class="row">
-        <label>Selecione o processador</label>
-        <select id="s_cpu"></select>
-        <div class="hint">Ao escolher, o sistema trava placa-mãe e memória compatíveis automaticamente.</div>
-      </div>
-      <div id="autoMb"></div>
-      <div id="chain" class="chain"></div>
-    </div>
-
-    <div class="card">
-      <h2><span class="n">03</span>Memória e Armazenamento</h2>
-      <div class="row">
-        <label>Memória RAM</label>
-        <div class="row2">
-          <select id="s_ram" disabled></select>
-          <input id="s_ramq" type="number" min="1" value="1" title="Quantidade de pentes" disabled>
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <div class="step"><span class="n">1</span><span class="t">Embarque</span></div>
+        <div class="row"><div><label>Fornecedor</label><input id="fornecedor" type="text" value="Shenzhen Larix Technology Co., Ltd." /></div></div>
+        <div class="row c2">
+          <div><label>Incoterm</label>
+            <select id="incoterm">
+              <option>EXW</option><option selected>FCA</option><option>FOB</option>
+              <option>FAS</option><option>CFR</option><option>CPT</option><option>CIF</option><option>CIP</option>
+            </select>
+          </div>
+          <div><label>Câmbio R$/US$</label><input id="cambio" type="number" step="0.0001" value="5.05" /></div>
         </div>
-        <div class="hint">Quantidade de pentes à direita.</div>
+        <div class="row c2">
+          <div><label>Frete int. US$</label><input id="frete" type="number" step="0.01" value="130" /></div>
+          <div><label>Seguro int. US$</label><input id="seguro" type="number" step="0.01" value="20" /></div>
+        </div>
+        <p class="hint">O frete internacional é informado por você (cotação do forwarder); o sistema não estima. Conforme o incoterm, frete e seguro entram ou não no VA: CFR/CPT já trazem o frete; CIF/CIP trazem frete e seguro.</p>
       </div>
-      <div class="row">
-        <label>Armazenamento</label>
-        <select id="s_arm" disabled></select>
+
+      <div class="panel">
+        <div class="step"><span class="n">2</span><span class="t">Item da carga</span></div>
+        <div class="item">
+          <div class="row"><div>
+            <label>Produto (catálogo · imp_produto)</label>
+            <select id="produto" onchange="selecionarProduto()"><option value="">— carregando catálogo… —</option></select>
+          </div></div>
+          <div class="row" style="margin-top:12px"><div>
+            <label>NCM</label>
+            <input id="ncm" list="ncm-list" type="text" value="84717040" placeholder="8 dígitos" oninput="lookupNcm()" />
+            <datalist id="ncm-list">
+              <option value="84717040">SSD</option><option value="84733042">Memória RAM</option>
+              <option value="84733041">Placa-mãe</option><option value="84716052">Teclado</option>
+              <option value="84716053">Mouse</option><option value="84718000">Periférico</option>
+              <option value="85183000">Headset</option><option value="85044090">Fonte</option>
+              <option value="84145990">Cooler</option>
+            </datalist>
+            <div id="ncm-desc" class="ncm-desc"></div>
+          </div></div>
+          <div class="row c3" style="margin-top:12px">
+            <div><label>Qtd</label><input id="qtd" type="number" step="1" value="200" /></div>
+            <div><label>FOB un. US$</label><input id="fob" type="number" step="0.01" value="12.50" /></div>
+            <div><label>Peso br. kg</label><input id="peso" type="number" step="0.001" value="0.065" /></div>
+          </div>
+        </div>
+        <p class="hint">FOB é unitário; o total (FOB un. × qtd) é montado e enviado ao banco automaticamente. Selecione um produto para puxar descrição e homologação, ou informe o NCM manualmente.</p>
+      </div>
+
+      <div class="panel">
+        <div class="step"><span class="n">3</span><span class="t">Operacional · estimativa</span></div>
+        <div class="op-grid">
+          <div><label>Armazenagem (% VA)</label><input id="op-armaz" type="number" step="0.01" value="1.0" /></div>
+          <div><label>Spread cambial (% VA)</label><input id="op-spread" type="number" step="0.01" value="2.0" /></div>
+          <div><label>Capatazia (R$/kg)</label><input id="op-capat" type="number" step="0.0001" value="1.0742" /></div>
+          <div><label>Frete nac. (R$/kg)</label><input id="op-frenac" type="number" step="0.01" value="3.50" /></div>
+        </div>
+        <p class="hint">Parâmetros VCP→THE pré-preenchidos. Não são calculados pelo banco (a função os declara como “a cotar”); ajuste quando tiver cotação real.</p>
+        <button class="btn" id="btn-calc" onclick="calcular()"><i data-lucide="calculator"></i> Calcular custo landed →</button>
+        <div class="status" id="status"></div>
       </div>
     </div>
 
-    <div class="card">
-      <h2><span class="n">04</span>Itens de Montagem</h2>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Gabinete, fonte, pasta térmica e cabo HDMI entram sempre.</div>
-      <label class="check"><input type="checkbox" id="c_cooler" checked> Incluir cooler — CPU OEM/tray</label>
-      <label class="check"><input type="checkbox" id="c_forca"> Incluir cabo de força (se a fonte não vier com)</label>
-    </div>
-
-    <div class="card">
-      <h2><span class="n">05</span>Adicionais (valor manual)</h2>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Sem banco de preço — digite o valor. Em branco = não soma.</div>
-      <div class="row3">
-        <div><label>Monitor</label><input class="man" data-k="Monitor" type="number" min="0" placeholder="R$"></div>
-        <div><label>Teclado</label><input class="man" data-k="Teclado" type="number" min="0" placeholder="R$"></div>
-        <div><label>Mouse</label><input class="man" data-k="Mouse" type="number" min="0" placeholder="R$"></div>
+    <div class="panel" style="min-height:520px">
+      <div id="placeholder" class="placeholder">
+        <div>
+          <i data-lucide="ship" style="width:34px;height:34px;opacity:.4"></i>
+          <div style="margin-top:10px">Preencha o embarque e clique em <b style="color:var(--dim)">Calcular custo landed</b>.</div>
+          <div style="font-size:11.5px;margin-top:6px">VA e tributos vêm direto da função no Supabase.</div>
+        </div>
       </div>
-      <div class="row3" style="margin-top:10px">
-        <div><label>Placa de vídeo</label><input class="man" data-k="Placa de vídeo" type="number" min="0" placeholder="R$"></div>
-        <div><label>Placa de rede</label><input class="man" data-k="Placa de rede" type="number" min="0" placeholder="R$"></div>
-        <div><label>Sistema operacional</label><input class="man" data-k="Sistema operacional" type="number" min="0" placeholder="R$"></div>
-      </div>
+      <div id="resultado" style="display:none"></div>
     </div>
   </div>
 
-  <div>
-    <div class="card budget">
-      <h2><span class="n">06</span>Orçamento</h2>
-      <div id="bdItems"></div>
-      <div class="total"><span class="t1">Total / máquina</span><span class="t2 mono" id="bdTotal">—</span></div>
-      <div id="bdWarn"></div>
-      <button class="act" id="btnApr">Aprovar e salvar consulta</button>
-      <button class="ghost" id="btnClr">Limpar e começar outro</button>
-    </div>
-  </div>
-</div>
-</div>
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  const SUPABASE_URL='https://odamfhflldygdfrnnjzu.supabase.co';
+  const SUPABASE_ANON_KEY='sb_publishable_7q_884vzxsdTLOIw7ZMx7A_qiUuUc-n';
+  const sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
-<!-- ============ CATALOGO ============ -->
-<div class="panel" id="catalogo">
-  <div class="card">
-    <div class="bar"><h2><span class="n">·</span>Catálogo de Peças — edite os preços</h2>
-      <span class="det">os preços são salvos no servidor e sincronizam entre aparelhos</span></div>
-    <div id="catBody"></div>
-    <button class="ghost" id="btnResetPrec" style="max-width:260px">Restaurar preços originais</button>
-  </div>
-</div>
+  const $=(id)=>document.getElementById(id);
+  const num=(id)=>Number($(id).value)||0;
+  const esc=(s)=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const fmtBRL=(n)=>Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtUSD=(n)=>Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 
-<!-- ============ HISTORICO ============ -->
-<div class="panel" id="historico">
-  <div class="card">
-    <div class="bar"><h2><span class="n">·</span>Histórico de Consultas Salvas</h2>
-      <span><button class="mini" id="btnExpHist">Exportar CSV</button></span></div>
-    <div id="histBody"></div>
-  </div>
-</div>
+  const SEM_FRETE=['CFR','CPT','CIF','CIP'];
+  const SEM_SEGURO=['CIF','CIP'];
 
-<!-- ============ RANKING ============ -->
-<div class="panel" id="ranking">
-  <div class="card">
-    <div class="bar"><h2><span class="n">·</span>Ranking de Peças Mais Solicitadas</h2>
-      <span><button class="mini" id="btnExpRank">Exportar CSV</button></span></div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Contado a partir das consultas aprovadas. Base para o planejamento de importação.</div>
-    <div id="rankBody"></div>
-  </div>
-</div>
+  let CATALOGO={}, PORNCM={};
 
-</main>
-<div id="toast"></div>
-
-<script>
-"use strict";
-
-/* ===================== CATÁLOGO ===================== */
-const CAT = {
-  processadores:[
-    {id:'cpu01',marca:'Intel',linha:'i3',modelo:'Core i3-4350',plat:'LGA1150',nuc:'2/4',preco:30},
-    {id:'cpu02',marca:'Intel',linha:'i3',modelo:'Core i3-6100',plat:'LGA1151v1',nuc:'2/4',preco:66.30},
-    {id:'cpu03',marca:'Intel',linha:'i3',modelo:'Core i3-7100',plat:'LGA1151v1',nuc:'2/4',preco:65},
-    {id:'cpu04',marca:'Intel',linha:'i3',modelo:'Core i3-8100',plat:'LGA1151v2',nuc:'4/4',preco:null},
-    {id:'cpu05',marca:'Intel',linha:'i3',modelo:'Core i3-9100',plat:'LGA1151v2',nuc:'4/4',preco:168},
-    {id:'cpu06',marca:'Intel',linha:'i3',modelo:'Core i3-10105',plat:'LGA1200',nuc:'4/8',preco:630},
-    {id:'cpu07',marca:'Intel',linha:'i3',modelo:'Core i3-12100',plat:'LGA1700',nuc:'4/8',preco:685},
-    {id:'cpu08',marca:'Intel',linha:'i3',modelo:'Core i3-13100',plat:'LGA1700',nuc:'4/8',preco:720},
-    {id:'cpu09',marca:'Intel',linha:'i3',modelo:'Core i3-14100',plat:'LGA1700',nuc:'4/8',preco:1600},
-    {id:'cpu10',marca:'Intel',linha:'i5',modelo:'Core i5-4670',plat:'LGA1150',nuc:'4/4',preco:90},
-    {id:'cpu11',marca:'Intel',linha:'i5',modelo:'Core i5-6500',plat:'LGA1151v1',nuc:'4/4',preco:140},
-    {id:'cpu12',marca:'Intel',linha:'i5',modelo:'Core i5-7600',plat:'LGA1151v1',nuc:'4/4',preco:200},
-    {id:'cpu13',marca:'Intel',linha:'i5',modelo:'Core i5-8400',plat:'LGA1151v2',nuc:'6/6',preco:352},
-    {id:'cpu14',marca:'Intel',linha:'i5',modelo:'Core i5-9500',plat:'LGA1151v2',nuc:'6/6',preco:435},
-    {id:'cpu15',marca:'Intel',linha:'i5',modelo:'Core i5-10400',plat:'LGA1200',nuc:'6/12',preco:832},
-    {id:'cpu16',marca:'Intel',linha:'i5',modelo:'Core i5-11400',plat:'LGA1200',nuc:'6/12',preco:995},
-    {id:'cpu17',marca:'Intel',linha:'i5',modelo:'Core i5-12400',plat:'LGA1700',nuc:'6/12',preco:710},
-    {id:'cpu18',marca:'Intel',linha:'i5',modelo:'Core i5-13400',plat:'LGA1700',nuc:'10/16',preco:1000},
-    {id:'cpu19',marca:'Intel',linha:'i5',modelo:'Core i5-14400',plat:'LGA1700',nuc:'10/16',preco:1320},
-    {id:'cpu20',marca:'Intel',linha:'i7',modelo:'Core i7-4770',plat:'LGA1150',nuc:'4/8',preco:null},
-    {id:'cpu21',marca:'Intel',linha:'i7',modelo:'Core i7-6700',plat:'LGA1151v1',nuc:'4/8',preco:352},
-    {id:'cpu22',marca:'Intel',linha:'i7',modelo:'Core i7-7700',plat:'LGA1151v1',nuc:'4/8',preco:410},
-    {id:'cpu23',marca:'Intel',linha:'i7',modelo:'Core i7-8700',plat:'LGA1151v2',nuc:'6/12',preco:630},
-    {id:'cpu24',marca:'Intel',linha:'i7',modelo:'Core i7-9700',plat:'LGA1151v2',nuc:'8/8',preco:720},
-    {id:'cpu25',marca:'Intel',linha:'i7',modelo:'Core i7-10700',plat:'LGA1200',nuc:'8/16',preco:1900},
-    {id:'cpu26',marca:'Intel',linha:'i7',modelo:'Core i7-11700',plat:'LGA1200',nuc:'8/16',preco:null},
-    {id:'cpu27',marca:'Intel',linha:'i7',modelo:'Core i7-12700',plat:'LGA1700',nuc:'12/20',preco:1912},
-    {id:'cpu28',marca:'Intel',linha:'i7',modelo:'Core i7-13700',plat:'LGA1700',nuc:'16/24',preco:null},
-    {id:'cpu29',marca:'Intel',linha:'i7',modelo:'Core i7-14700K',plat:'LGA1700',nuc:'20/28',preco:1920},
-    {id:'cpu30',marca:'Intel',linha:'i9',modelo:'Core i9-9900',plat:'LGA1151v2',nuc:'8/16',preco:null},
-    {id:'cpu31',marca:'Intel',linha:'i9',modelo:'Core i9-10900',plat:'LGA1200',nuc:'10/20',preco:null},
-    {id:'cpu32',marca:'Intel',linha:'i9',modelo:'Core i9-11900K',plat:'LGA1200',nuc:'8/16',preco:698},
-    {id:'cpu33',marca:'Intel',linha:'i9',modelo:'Core i9-12900',plat:'LGA1700',nuc:'16/24',preco:2111},
-    {id:'cpu34',marca:'Intel',linha:'i9',modelo:'Core i9-13900',plat:'LGA1700',nuc:'24/32',preco:1876},
-    {id:'cpu35',marca:'Intel',linha:'i9',modelo:'Core i9-14900',plat:'LGA1700',nuc:'24/32',preco:3075},
-    {id:'cpu36',marca:'AMD',linha:'Ryzen 3',modelo:'Ryzen 3 3200G',plat:'AM4',nuc:'4/4',preco:null},
-    {id:'cpu37',marca:'AMD',linha:'Ryzen 3',modelo:'Ryzen 3 5300G',plat:'AM4',nuc:'4/8',preco:null},
-    {id:'cpu38',marca:'AMD',linha:'Ryzen 5',modelo:'Ryzen 5 3400G',plat:'AM4',nuc:'4/8',preco:370},
-    {id:'cpu39',marca:'AMD',linha:'Ryzen 5',modelo:'Ryzen 5 5600G',plat:'AM4',nuc:'6/12',preco:805},
-    {id:'cpu40',marca:'AMD',linha:'Ryzen 5',modelo:'Ryzen 5 7600',plat:'AM5',nuc:'6/12',preco:null},
-    {id:'cpu41',marca:'AMD',linha:'Ryzen 7',modelo:'Ryzen 7 5700G',plat:'AM4',nuc:'8/16',preco:930},
-    {id:'cpu42',marca:'AMD',linha:'Ryzen 7',modelo:'Ryzen 7 7700',plat:'AM5',nuc:'8/16',preco:null}
-  ],
-  memorias:[
-    {id:'ram01',tipo:'DDR3',cap:'4 GB',freq:'1600 MHz',preco:50},
-    {id:'ram02',tipo:'DDR4',cap:'4 GB',freq:'2666 MHz',preco:127},
-    {id:'ram03',tipo:'DDR4',cap:'4 GB',freq:'3200 MHz',preco:140},
-    {id:'ram04',tipo:'DDR3',cap:'8 GB',freq:'1600 MHz',preco:102},
-    {id:'ram05',tipo:'DDR4',cap:'8 GB',freq:'2666 MHz',preco:325},
-    {id:'ram06',tipo:'DDR4',cap:'8 GB',freq:'3200 MHz',preco:240},
-    {id:'ram07',tipo:'DDR5',cap:'8 GB',freq:'4800 MHz',preco:480},
-    {id:'ram08',tipo:'DDR4',cap:'16 GB',freq:'2666 MHz',preco:453},
-    {id:'ram09',tipo:'DDR4',cap:'16 GB',freq:'3200 MHz',preco:420},
-    {id:'ram10',tipo:'DDR5',cap:'16 GB',freq:'4800 MHz',preco:970}
-  ],
-  placas:[
-    {id:'mb01',plat:'LGA1150',socket:'LGA1150',chipset:'H81',tipoRAM:'DDR3',m2:false,ger:'Intel 4ª/5ª',preco:120},
-    {id:'mb02',plat:'LGA1151v1',socket:'LGA1151',chipset:'H110',tipoRAM:'DDR4',m2:true,ger:'Intel 6ª/7ª',preco:220},
-    {id:'mb03',plat:'LGA1151v2',socket:'LGA1151',chipset:'H310',tipoRAM:'DDR4',m2:true,ger:'Intel 8ª/9ª',preco:200},
-    {id:'mb04',plat:'LGA1200',socket:'LGA1200',chipset:'H510',tipoRAM:'DDR4',m2:true,ger:'Intel 10ª/11ª',preco:280},
-    {id:'mb05',plat:'LGA1700',socket:'LGA1700',chipset:'H610',tipoRAM:'DDR4',m2:true,ger:'Intel 12ª/13ª/14ª',preco:280},
-    {id:'mb06',plat:'AM4',socket:'AM4',chipset:'A520',tipoRAM:'DDR4',m2:true,ger:'AMD AM4',preco:220},
-    {id:'mb07',plat:'AM5',socket:'AM5',chipset:'A620',tipoRAM:'DDR5',m2:true,ger:'AMD AM5',preco:370}
-  ],
-  armazenamento:[
-    {id:'st01',tipo:'SSD',cap:'240 GB',iface:'SATA III',nvme:false,preco:180},
-    {id:'st02',tipo:'SSD',cap:'480 GB',iface:'SATA III',nvme:false,preco:300},
-    {id:'st03',tipo:'SSD',cap:'1 TB',iface:'SATA III',nvme:false,preco:510},
-    {id:'st04',tipo:'SSD NVMe',cap:'256 GB',iface:'PCIe M.2',nvme:true,preco:220},
-    {id:'st05',tipo:'SSD NVMe',cap:'512 GB',iface:'PCIe M.2',nvme:true,preco:360},
-    {id:'st06',tipo:'SSD NVMe',cap:'1 TB',iface:'PCIe M.2',nvme:true,preco:600},
-    {id:'st07',tipo:'HD',cap:'500 GB',iface:'SATA III',nvme:false,preco:70},
-    {id:'st08',tipo:'HD',cap:'1 TB',iface:'SATA III',nvme:false,preco:200}
-  ],
-  fixos:[
-    {id:'fx01',item:'Gabinete ATX',regra:'sempre',preco:100},
-    {id:'fx02',item:'Fonte 450W',regra:'sempre',preco:200},
-    {id:'fx03',item:'Pasta térmica',regra:'sempre',preco:20},
-    {id:'fx04',item:'Cabo de vídeo HDMI',regra:'sempre',preco:15},
-    {id:'fx05',item:'Cooler CPU básico',regra:'cooler',preco:50},
-    {id:'fx06',item:'Cabo de força',regra:'forca',preco:20}
-  ]
-};
-
-/* índice id -> item */
-const IDX={};
-['processadores','memorias','placas','armazenamento','fixos'].forEach(g=>CAT[g].forEach(it=>IDX[it.id]=it));
-
-/* ===================== ESTADO / STORAGE ===================== */
-let PRECOS={}, HIST=[], LS_OK=true;
-const K_PRE='selecta_montador_precos', K_HIS='selecta_montador_historico';
-
-function lsLoad(){
-  try{
-    PRECOS=JSON.parse(localStorage.getItem(K_PRE)||'{}');
-    HIST=JSON.parse(localStorage.getItem(K_HIS)||'[]');
-  }catch(e){ LS_OK=false; PRECOS={}; HIST=[]; }
-}
-function lsSavePre(){ try{ localStorage.setItem(K_PRE,JSON.stringify(PRECOS)); }catch(e){ LS_OK=false; } }
-function lsSaveHis(){ try{ localStorage.setItem(K_HIS,JSON.stringify(HIST)); }catch(e){ LS_OK=false; } }
-
-/* ===================== SINCRONIZAÇÃO SUPABASE (preços) ===================== */
-/* Mantém a compatibilidade intacta: só os PREÇOS passam a viver no servidor,
-   com o localStorage atuando como cache offline. Leitura é pública (anon);
-   gravação exige login (reaproveita a sessão do app, mesma origem). */
-const SB_URL='https://odamfhflldygdfrnnjzu.supabase.co';
-const SB_KEY='sb_publishable_7q_884vzxsdTLOIw7ZMx7A_qiUuUc-n';
-let SB=null, SB_OK=false;
-async function sbInit(){
-  try{
-    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-    SB = createClient(SB_URL, SB_KEY);   // pega a sessão de login já existente no navegador
-    SB_OK = true;
-    await sbLoadPrecos();
-  }catch(e){
-    SB_OK = false;
-    console.warn('[montador] Supabase indisponível — usando preços salvos neste navegador.', e);
-    toast('Sem conexão com o servidor: usando cache local.', true);
-  }
-}
-async function sbLoadPrecos(){
-  if(!SB) return;
-  try{
-    const { data, error } = await SB.from('montador_precos').select('component_id, preco');
-    if(error) throw error;
-    (data||[]).forEach(r=>{ if(r.preco!=null && IDX[r.component_id]) PRECOS[r.component_id]=Number(r.preco); });
-    lsSavePre();                          // espelha no cache offline
-    fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento(); renderCatalogo(); renderRanking();
-  }catch(e){
-    console.warn('[montador] Falha ao ler preços do servidor.', e);
-  }
-}
-async function sbSavePreco(id, val){
-  if(!SB) return false;
-  try{
-    if(val===null || val===undefined || isNaN(val)){
-      const { error } = await SB.from('montador_precos').delete().eq('component_id', id);
+  async function carregarCatalogo(){
+    const sel=$('produto');
+    try{
+      const {data,error}=await sb.from('imp_produto')
+        .select('chave,nome_comercial,ncm,descricao_duimp,possui_radio,categoria')
+        .order('nome_comercial');
       if(error) throw error;
-    }else{
-      const { error } = await SB.from('montador_precos')
-        .upsert({ component_id:id, preco:val, updated_at:new Date().toISOString() }, { onConflict:'component_id' });
-      if(error) throw error;
+      if(!data||!data.length){ sel.innerHTML='<option value="">— catálogo vazio · informe o NCM manual —</option>'; lookupNcm(); return; }
+      CATALOGO={}; PORNCM={};
+      sel.innerHTML='<option value="">— selecione (ou informe NCM manual) —</option>'+
+        data.map(r=>{CATALOGO[r.chave]=r; const n=(r.ncm||'').trim(); if(n&&!PORNCM[n])PORNCM[n]=r;
+          return `<option value="${esc(r.chave)}">${esc(r.nome_comercial||r.chave)} — ${esc(n)}</option>`;}).join('');
+      lookupNcm();
+    }catch(e){
+      sel.innerHTML='<option value="">— catálogo indisponível · informe o NCM manual —</option>';
+      console.warn('[catálogo]',e.message);
     }
-    return true;
-  }catch(e){
-    console.warn('[montador] Falha ao sincronizar preço.', e);
-    return false;
   }
-}
 
-function preco(id){ return (PRECOS[id]!==undefined && PRECOS[id]!==null) ? PRECOS[id] : IDX[id].preco; }
+  window.selecionarProduto=function(){
+    const r=CATALOGO[$('produto').value];
+    if(!r) { renderDesc(null); return; }
+    if(r.ncm) $('ncm').value=(r.ncm||'').trim();
+    renderDesc(r);
+  };
+  window.lookupNcm=function(){
+    if($('produto').value && CATALOGO[$('produto').value]) return; // produto selecionado manda
+    renderDesc(PORNCM[$('ncm').value.trim()]||null);
+  };
+  function renderDesc(r){
+    const el=$('ncm-desc');
+    if(!r){ el.innerHTML='<span style="color:var(--faint)">NCM não vinculado a produto do catálogo (digitação manual).</span>'; return; }
+    const homolog = r.possui_radio
+      ? '<div class="hbadge warn"><i data-lucide="radio"></i> Produto com rádio — exige homologação ANATEL</div>'
+      : '<div class="hbadge ok"><i data-lucide="check"></i> Sem rádio — sem exigência ANATEL por radiofrequência</div>';
+    el.innerHTML=`<span class="pname">${esc(r.nome_comercial||r.chave)}</span>`
+      +(r.descricao_duimp?`<span class="ddesc">Descrição DUIMP: ${esc(r.descricao_duimp)}</span>`:'')
+      +(r.categoria?`<span class="ddesc">Categoria: ${esc(r.categoria)}</span>`:'')
+      +homolog;
+    if(window.lucide?.createIcons) window.lucide.createIcons();
+  }
 
-const estado={cpu:null,ram:null,ramq:1,arm:null,cooler:true,forca:false,man:{}};
+  function nomeAtual(){
+    if($('produto').value && CATALOGO[$('produto').value]) return CATALOGO[$('produto').value].nome_comercial;
+    const r=PORNCM[$('ncm').value.trim()]; return r? r.nome_comercial : null;
+  }
 
-/* ===================== HELPERS ===================== */
-function fmt(n){
-  if(n===null||n===undefined||isNaN(n)) return '—';
-  return 'R$ '+Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-}
-function placaDoCpu(cpu){ return CAT.placas.find(p=>p.plat===cpu.plat); }
-function el(id){ return document.getElementById(id); }
-let toastT;
-function toast(msg,err){
-  const t=el('toast'); t.textContent=msg; t.className='show'+(err?' err':'');
-  clearTimeout(toastT); toastT=setTimeout(()=>t.className='',2600);
-}
+  window.calcular=async function(){
+    const st=$('status'), btn=$('btn-calc');
+    st.className='status'; st.textContent='calculando...'; btn.disabled=true;
+    const incoterm=$('incoterm').value, cambio=num('cambio'), qtd=num('qtd'), fobUn=num('fob'), pesoUn=num('peso');
+    const ncm=$('ncm').value.trim();
+    const freteEff=SEM_FRETE.includes(incoterm)?0:num('frete');
+    const seguroEff=SEM_SEGURO.includes(incoterm)?0:num('seguro');
+    const fobTotalUsd=+(fobUn*qtd).toFixed(2);
+    if(!ncm){st.className='status err';st.textContent='✗ informe o NCM';btn.disabled=false;return;}
+    if(!cambio||!qtd||!fobUn){st.className='status err';st.textContent='✗ câmbio, qtd e FOB são obrigatórios';btn.disabled=false;return;}
+    try{
+      const {data,error}=await sb.rpc('imp_fn_custo_landed',{
+        p_ncm:ncm, p_fob_usd:fobTotalUsd, p_frete_usd:freteEff, p_seguro_usd:seguroEff,
+        p_cambio:cambio, p_data:new Date().toISOString().slice(0,10), p_num_adicoes:1, p_quantidade:qtd
+      });
+      if(error) throw error;
+      if(!data) throw new Error('retorno vazio da função');
+      if(data.erro) throw new Error(data.erro);
+      if(data.ncm_encontrado===false) throw new Error('NCM '+ncm+' não cadastrado no banco de alíquotas');
+      render(data,{incoterm,fobUn,qtd,pesoUn,freteEff,seguroEff,nome:nomeAtual()});
+      st.className='status ok'; st.textContent='✓ calculado no banco';
+    }catch(e){ st.className='status err'; st.textContent='✗ '+(e.message||e); }
+    finally{ btn.disabled=false; }
+  };
 
-/* ===================== MONTAR: selects ===================== */
-function fillCpu(){
-  const s=el('s_cpu'); s.innerHTML='<option value="">— escolha o processador —</option>';
-  const linhas=['i3','i5','i7','i9','Ryzen 3','Ryzen 5','Ryzen 7'];
-  linhas.forEach(ln=>{
-    const grp=document.createElement('optgroup'); grp.label=ln;
-    CAT.processadores.filter(c=>c.linha===ln).forEach(c=>{
-      const p=preco(c.id);
-      const o=document.createElement('option'); o.value=c.id;
-      o.textContent=c.marca+' '+c.modelo+'  ·  '+(p?fmt(p):'sem preço');
-      grp.appendChild(o);
-    });
-    s.appendChild(grp);
-  });
-}
-function fillRam(){
-  const s=el('s_ram');
-  if(!estado.cpu){ s.innerHTML='<option>— trava: escolha o processador —</option>'; s.disabled=true; el('s_ramq').disabled=true; return; }
-  const mb=placaDoCpu(estado.cpu);
-  s.disabled=false; el('s_ramq').disabled=false;
-  s.innerHTML='<option value="">— escolha a memória ('+mb.tipoRAM+') —</option>';
-  CAT.memorias.filter(m=>m.tipo===mb.tipoRAM).forEach(m=>{
-    const p=preco(m.id);
-    const o=document.createElement('option'); o.value=m.id;
-    o.textContent=m.tipo+' '+m.cap+' '+m.freq+'  ·  '+(p?fmt(p):'sem preço');
-    s.appendChild(o);
-  });
-  if(estado.ram && estado.ram.tipo===mb.tipoRAM){ s.value=estado.ram.id; } else { estado.ram=null; }
-}
-function fillArm(){
-  const s=el('s_arm');
-  if(!estado.cpu){ s.innerHTML='<option>— trava: escolha o processador —</option>'; s.disabled=true; return; }
-  const mb=placaDoCpu(estado.cpu);
-  s.disabled=false;
-  s.innerHTML='<option value="">— escolha o armazenamento —</option>';
-  CAT.armazenamento.forEach(a=>{
-    if(a.nvme && !mb.m2) return; // trava: placa sem M.2
-    const p=preco(a.id);
-    const o=document.createElement('option'); o.value=a.id;
-    o.textContent=a.tipo+' '+a.cap+' '+a.iface+'  ·  '+(p?fmt(p):'sem preço');
-    s.appendChild(o);
-  });
-  if(estado.arm && !(estado.arm.nvme && !mb.m2)){ s.value=estado.arm.id; } else { estado.arm=null; }
-}
-function renderAutoMb(){
-  const box=el('autoMb'), ch=el('chain');
-  if(!estado.cpu){ box.innerHTML=''; ch.innerHTML=''; return; }
-  const mb=placaDoCpu(estado.cpu);
-  box.innerHTML='<div class="auto-mb"><div class="lbl">Placa-mãe — definida automaticamente</div>'+
-    '<div class="val">Placa '+mb.chipset+' · '+mb.socket+' · '+mb.tipoRAM+' · '+fmt(preco(mb.id))+'</div></div>';
-  ch.innerHTML=
-    '<span class="chip">'+estado.cpu.modelo+'</span>'+
-    '<span class="chip">› '+mb.socket+'</span>'+
-    '<span class="chip">› Placa '+mb.chipset+'</span>'+
-    '<span class="chip">› RAM '+mb.tipoRAM+'</span>'+
-    '<span class="chip">› '+(mb.m2?'M.2 disponível':'sem M.2 (só SATA)')+'</span>';
-}
+  function render(d,ctx){
+    const v=d.valores_brl, t=d.totais;
+    const fob_un_brl=v.fob/ctx.qtd;
+    const pesoTotal=ctx.qtd*ctx.pesoUn;
+    const armaz=v.valor_aduaneiro*(num('op-armaz')/100);
+    const spread=v.valor_aduaneiro*(num('op-spread')/100);
+    const capat=num('op-capat')*pesoTotal;
+    const freNac=num('op-frenac')*pesoTotal;
+    const operacional=armaz+spread+capat+freNac;
+    const tributos=t.carga_tributaria_brl;
+    const totalCheio=t.total_landed_caixa_brl+operacional;
+    const unit=totalCheio/ctx.qtd;
+    const mult=totalCheio/v.fob;
+    const pVA=v.valor_aduaneiro/totalCheio*100, pTR=tributos/totalCheio*100, pOP=operacional/totalCheio*100;
+    const F={}; (d.aliquotas_aplicadas||[]).forEach(a=>F[a.tributo]=a);
+    const pctOf=(k)=>F[k]?`<span class="pct">${Number(F[k].aliquota_pct).toFixed(2).replace('.',',')}%</span>`:'';
+    const lineUSD=(lbl,val,sub)=>`<div class="line usd"><div class="lbl">${lbl}${sub?`<span class="note">${sub}</span>`:''}</div><div class="val">US$ ${fmtUSD(val)}</div></div>`;
+    const lineBRL=(lbl,val,cls='',sub='')=>`<div class="line ${cls}"><div class="lbl">${lbl}${sub?`<span class="note">${sub}</span>`:''}</div><div class="val">R$ ${fmtBRL(val)}</div></div>`;
+    const cbsIbsCalc=(v.cbs_calculado||0)+(v.ibs_calculado||0);
+    const fundHtml=(d.aliquotas_aplicadas||[]).slice().sort((a,b)=>a.tributo.localeCompare(b.tributo))
+      .map(a=>`<div class="fund-item"><span class="ft">${esc(a.tributo)} · ${Number(a.aliquota_pct).toFixed(2).replace('.',',')}% · base ${esc(a.base_calculo)}</span><span class="fl">${esc(a.fundamento_legal)}</span></div>`).join('');
+    const avisosHtml=(d.avisos||[]).map(x=>`<li>• ${esc(x)}</li>`).join('');
 
-/* ===================== MONTAR: orçamento ===================== */
-function linhasOrcamento(){
-  const L=[];
-  if(estado.cpu){ L.push({cat:'Processador',nome:estado.cpu.marca+' '+estado.cpu.modelo,preco:preco(estado.cpu.id),qtd:1}); }
-  if(estado.cpu){ const mb=placaDoCpu(estado.cpu); L.push({cat:'Placa-mãe',nome:'Placa '+mb.chipset+' ('+mb.socket+')',preco:preco(mb.id),qtd:1}); }
-  if(estado.ram){ L.push({cat:'Memória',nome:estado.ram.tipo+' '+estado.ram.cap+' '+estado.ram.freq,preco:preco(estado.ram.id),qtd:estado.ramq}); }
-  if(estado.arm){ L.push({cat:'Armazenamento',nome:estado.arm.tipo+' '+estado.arm.cap,preco:preco(estado.arm.id),qtd:1}); }
-  CAT.fixos.forEach(f=>{
-    if(f.regra==='sempre') L.push({cat:'Fixo',nome:f.item,preco:preco(f.id),qtd:1});
-    else if(f.regra==='cooler'&&estado.cooler) L.push({cat:'Fixo',nome:f.item,preco:preco(f.id),qtd:1});
-    else if(f.regra==='forca'&&estado.forca) L.push({cat:'Fixo',nome:f.item,preco:preco(f.id),qtd:1});
-  });
-  Object.keys(estado.man).forEach(k=>{
-    const v=estado.man[k];
-    if(v>0) L.push({cat:'Adicional',nome:k,preco:v,qtd:1});
-  });
-  return L;
-}
-function renderOrcamento(){
-  const L=linhasOrcamento(), box=el('bdItems');
-  if(L.length===0){ box.innerHTML='<div class="empty">Escolha um processador para começar.</div>';
-    el('bdTotal').textContent='—'; el('bdWarn').innerHTML=''; el('btnApr').disabled=true; return; }
-  let html='', total=0, semPreco=0, lastCat='';
-  L.forEach(l=>{
-    if(l.cat!==lastCat){ lastCat=l.cat; }
-    const sub=(l.preco===null||l.preco===undefined)?null:l.preco*l.qtd;
-    if(sub===null) semPreco++; else total+=sub;
-    const q=l.qtd>1?' <small>×'+l.qtd+'</small>':'';
-    html+='<div class="li"><span class="nm">'+l.nome+q+'<span class="tag">'+l.cat+'</span></span>'+
-          '<span class="pr">'+(sub===null?'sem preço':fmt(sub))+'</span></div>';
-  });
-  box.innerHTML=html;
-  el('bdTotal').textContent=fmt(total);
-  el('bdWarn').innerHTML = semPreco>0
-    ? '<div class="warn">Orçamento incompleto: '+semPreco+' item(ns) sem preço cadastrado. Cadastre na aba Catálogo.</div>' : '';
-  el('btnApr').disabled = !(estado.cpu && estado.ram && estado.arm);
-}
+    $('resultado').innerHTML=`
+      <div class="res-head"><h2>${esc(ctx.nome||'Item')}</h2><div class="meta">NCM ${esc(d.ncm)} · adição 1</div></div>
+      <div class="res-sub">${ctx.qtd} un × US$ ${fmtUSD(ctx.fobUn)} FOB · ${String(ctx.pesoUn).replace('.',',')} kg/un</div>
+      ${lineUSD(`FOB <span class="pct">${ctx.qtd} × US$ ${fmtUSD(ctx.fobUn)}</span>`, ctx.fobUn*ctx.qtd)}
+      ${lineUSD('Frete rateado', ctx.freteEff, ctx.freteEff===0?'incluído no preço (incoterm '+ctx.incoterm+')':'')}
+      ${lineUSD('Seguro rateado', ctx.seguroEff, ctx.seguroEff===0?'incluído no preço (incoterm '+ctx.incoterm+')':'')}
+      ${lineBRL(`Valor aduaneiro · câmbio ${String(d.cambio_usado).replace('.',',')}`, v.valor_aduaneiro, 'va')}
+      ${lineBRL('II '+pctOf('II'), v.ii)}
+      ${lineBRL('IPI '+pctOf('IPI'), v.ipi)}
+      ${lineBRL('PIS-Imp. '+pctOf('PIS_IMP'), v.pis_imp)}
+      ${lineBRL('COFINS-Imp. '+pctOf('COFINS_IMP'), v.cofins_imp)}
+      ${lineBRL('ICMS-PI <span class="pct">'+(F['ICMS']?Number(F['ICMS'].aliquota_pct).toFixed(1).replace('.',',')+'% por dentro':'')+'</span>', v.icms)}
+      ${lineBRL('CBS / IBS <span class="pct">2026</span>', 0, '', 'calculado R$ '+fmtBRL(cbsIbsCalc)+' — dispensado e fora do caixa em 2026 (LC 214/2025)')}
+      ${lineBRL('Taxa Siscomex', v.siscomex)}
+      ${lineBRL('Tributos', tributos, 'total')}
+      <div class="section-tag">Operacional · estimativa</div>
+      ${lineBRL('Armazenagem <span class="pct">'+String(num('op-armaz')).replace('.',',')+'% VA</span>', armaz)}
+      ${lineBRL('Capatazia <span class="pct">R$ '+String(num('op-capat')).replace('.',',')+'/kg</span>', capat)}
+      ${lineBRL('Frete nacional <span class="pct">R$ '+String(num('op-frenac')).replace('.',',')+'/kg</span>', freNac)}
+      ${lineBRL('Spread cambial <span class="pct">'+String(num('op-spread')).replace('.',',')+'%</span>', spread)}
+      <div class="bar"><i style="width:${pVA}%;background:var(--va)"></i><i style="width:${pTR}%;background:var(--trib)"></i><i style="width:${pOP}%;background:var(--op)"></i></div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--va)"></i> Valor aduaneiro ${Math.round(pVA)}%</span>
+        <span><i class="dot" style="background:var(--trib)"></i> Tributos ${Math.round(pTR)}%</span>
+        <span><i class="dot" style="background:var(--op)"></i> Operacional ${Math.round(pOP)}%</span>
+      </div>
+      <div class="cards3">
+        <div class="sc total"><div class="k">Custo total da importação</div><div class="big">R$ ${fmtBRL(totalCheio)}</div><div class="small">${ctx.qtd} un · ${esc(ctx.incoterm)}</div></div>
+        <div class="sc cost"><div class="k">Custo unitário landed</div><div class="big">R$ ${fmtBRL(unit)}</div><div class="small">por unidade</div></div>
+        <div class="sc mult"><div class="k">Multiplicador s/ FOB</div><div class="big">${mult.toFixed(2).replace('.',',')}×</div><div class="small">FOB un. R$ ${fmtBRL(fob_un_brl)}</div></div>
+      </div>
+      ${avisosHtml?`<div class="avisos"><div class="tt"><i data-lucide="alert-triangle"></i> Não incluso no caixa</div><ul style="margin:0;padding:0;list-style:none">${avisosHtml}</ul></div>`:''}
+      <details class="fund"><summary><i data-lucide="scale"></i> Fundamentos legais das alíquotas</summary>${fundHtml}</details>
+    `;
+    $('placeholder').style.display='none'; $('resultado').style.display='block';
+    if(window.lucide?.createIcons) window.lucide.createIcons();
+  }
 
-/* ===================== APROVAR ===================== */
-function aprovar(){
-  const cliente=el('f_cliente').value.trim(), edital=el('f_edital').value.trim();
-  if(!estado.cpu||!estado.ram||!estado.arm){ toast('Faltam itens: processador, memória e armazenamento.',true); return; }
-  if(!cliente && !edital){ toast('Preencha Cliente ou Edital para registrar a origem.',true); return; }
-  const L=linhasOrcamento();
-  const semPreco=L.some(l=>l.preco===null||l.preco===undefined);
-  if(semPreco && !confirm('Há itens sem preço. Salvar a consulta mesmo assim?')) return;
-  let total=0; L.forEach(l=>{ if(l.preco) total+=l.preco*l.qtd; });
-  HIST.unshift({
-    id:Date.now(), cliente:cliente||'—', edital:edital||'—', data:el('f_data').value,
-    itens:L, total:total, incompleto:semPreco
-  });
-  lsSaveHis(); renderHistorico(); renderRanking();
-  toast('Consulta salva no histórico.');
-}
-function limpar(){
-  estado.cpu=estado.ram=estado.arm=null; estado.ramq=1; estado.cooler=true; estado.forca=false; estado.man={};
-  el('s_cpu').value=''; el('s_ramq').value=1; el('c_cooler').checked=true; el('c_forca').checked=false;
-  document.querySelectorAll('.man').forEach(i=>i.value='');
-  fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
-}
-
-/* ===================== CATÁLOGO ===================== */
-function catTable(titulo,itens,nomeFn){
-  let h='<table><tr class="grp"><td colspan="2">'+titulo+'</td></tr>';
-  itens.forEach(it=>{
-    const p=preco(it.id);
-    h+='<tr><td>'+nomeFn(it)+'</td><td class="right">'+
-       '<input class="pin precoEdit" data-id="'+it.id+'" type="number" min="0" step="0.01" value="'+(p!==null&&p!==undefined?p:'')+'" placeholder="sem preço"></td></tr>';
-  });
-  return h+'</table>';
-}
-function renderCatalogo(){
-  let h='';
-  h+=catTable('Processadores',CAT.processadores,it=>it.marca+' '+it.modelo+' <span class="det">'+it.plat+' · '+it.nuc+'</span>');
-  h+=catTable('Memórias',CAT.memorias,it=>it.tipo+' '+it.cap+' '+it.freq);
-  h+=catTable('Placas-mãe',CAT.placas,it=>'Placa '+it.chipset+' <span class="det">'+it.socket+' · '+it.tipoRAM+'</span>');
-  h+=catTable('Armazenamento',CAT.armazenamento,it=>it.tipo+' '+it.cap+' <span class="det">'+it.iface+'</span>');
-  h+=catTable('Fixos e Consumíveis',CAT.fixos,it=>it.item);
-  el('catBody').innerHTML=h;
-  document.querySelectorAll('.precoEdit').forEach(inp=>{
-    inp.addEventListener('change',()=>{
-      const v=inp.value.trim();
-      const id=inp.dataset.id;
-      const val=(v==='')?null:parseFloat(v);
-      if(val===null||isNaN(val)) delete PRECOS[id];
-      else PRECOS[id]=val;
-      lsSavePre(); fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
-      if(SB_OK){
-        sbSavePreco(id, val).then(ok=>{
-          toast(ok ? 'Preço atualizado e sincronizado.'
-                   : 'Salvo localmente — NÃO sincronizou (verifique se está logado).', !ok);
-        });
-      }else{
-        toast('Preço salvo localmente (sem sincronização).');
-      }
-    });
-  });
-}
-
-/* ===================== HISTÓRICO ===================== */
-function renderHistorico(){
-  const box=el('histBody');
-  if(HIST.length===0){ box.innerHTML='<div class="empty">Nenhuma consulta salva ainda.</div>'; return; }
-  let h='<table><tr><th>Data</th><th>Cliente</th><th>Edital</th><th>Processador</th><th class="right">Total</th><th></th><th></th></tr>';
-  HIST.forEach(c=>{
-    const cpu=(c.itens.find(i=>i.cat==='Processador')||{}).nome||'—';
-    h+='<tr><td class="det">'+c.data+'</td><td>'+c.cliente+'</td><td>'+c.edital+'</td><td>'+cpu+
-       '</td><td class="right mono">'+fmt(c.total)+(c.incompleto?' *':'')+
-       '</td><td><span class="mini" data-det="'+c.id+'">ver</span></td>'+
-       '<td><span class="x" data-del="'+c.id+'">excluir</span></td></tr>';
-    h+='<tr id="det'+c.id+'" style="display:none"><td colspan="7" style="background:var(--soft)">'+
-       c.itens.map(i=>'· '+i.nome+(i.qtd>1?' ×'+i.qtd:'')+' — '+(i.preco?fmt(i.preco*i.qtd):'sem preço')).join('<br>')+
-       '</td></tr>';
-  });
-  box.innerHTML=h+'</table><div class="det" style="margin-top:8px">* total parcial — havia item sem preço</div>';
-  document.querySelectorAll('[data-det]').forEach(b=>b.addEventListener('click',()=>{
-    const r=el('det'+b.dataset.det); r.style.display=r.style.display==='none'?'':'none';
-  }));
-  document.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
-    if(!confirm('Excluir esta consulta do histórico?')) return;
-    HIST=HIST.filter(c=>String(c.id)!==b.dataset.del);
-    lsSaveHis(); renderHistorico(); renderRanking();
-  }));
-}
-
-/* ===================== RANKING ===================== */
-function renderRanking(){
-  const box=el('rankBody');
-  if(HIST.length===0){ box.innerHTML='<div class="empty">Sem dados — aprove consultas para alimentar o ranking.</div>'; return; }
-  const cats=['Processador','Memória','Armazenamento','Placa-mãe'];
-  const mapa={}; cats.forEach(c=>mapa[c]={});
-  HIST.forEach(c=>c.itens.forEach(i=>{
-    if(!mapa[i.cat]) return;
-    if(!mapa[i.cat][i.nome]) mapa[i.cat][i.nome]={vezes:0,qtd:0};
-    mapa[i.cat][i.nome].vezes++; mapa[i.cat][i.nome].qtd+=i.qtd;
-  }));
-  let h='';
-  cats.forEach(cat=>{
-    const arr=Object.keys(mapa[cat]).map(n=>({nome:n,...mapa[cat][n]})).sort((a,b)=>b.vezes-a.vezes);
-    if(arr.length===0) return;
-    h+='<table style="margin-bottom:18px"><tr class="grp"><td colspan="3">'+cat+'</td></tr>'+
-       '<tr><th>Peça</th><th class="right">Consultas</th><th class="right">Qtd total</th></tr>';
-    arr.forEach(r=>{ h+='<tr><td>'+r.nome+'</td><td class="right mono">'+r.vezes+'</td><td class="right mono">'+r.qtd+'</td></tr>'; });
-    h+='</table>';
-  });
-  box.innerHTML=h;
-}
-
-/* ===================== EXPORT CSV ===================== */
-function download(name,txt){
-  const b=new Blob(['\ufeff'+txt],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.click();
-  URL.revokeObjectURL(a.href);
-}
-function expHist(){
-  if(HIST.length===0){ toast('Nada para exportar.',true); return; }
-  let r='Data;Cliente;Edital;Categoria;Peca;Preco unit;Qtd;Subtotal\n';
-  HIST.forEach(c=>c.itens.forEach(i=>{
-    const sub=i.preco?i.preco*i.qtd:'';
-    r+=[c.data,c.cliente,c.edital,i.cat,i.nome,(i.preco||''),i.qtd,sub].join(';')+'\n';
-  }));
-  download('historico_orcamentos.csv',r);
-}
-function expRank(){
-  if(HIST.length===0){ toast('Nada para exportar.',true); return; }
-  const cats=['Processador','Memória','Armazenamento','Placa-mãe']; const mapa={};
-  HIST.forEach(c=>c.itens.forEach(i=>{
-    if(cats.indexOf(i.cat)<0) return;
-    const k=i.cat+'|'+i.nome;
-    if(!mapa[k]) mapa[k]={cat:i.cat,nome:i.nome,vezes:0,qtd:0};
-    mapa[k].vezes++; mapa[k].qtd+=i.qtd;
-  }));
-  let r='Categoria;Peca;Consultas;Qtd total\n';
-  Object.values(mapa).sort((a,b)=>b.vezes-a.vezes).forEach(x=>{ r+=[x.cat,x.nome,x.vezes,x.qtd].join(';')+'\n'; });
-  download('ranking_pecas.csv',r);
-}
-
-/* ===================== EVENTOS ===================== */
-el('s_cpu').addEventListener('change',e=>{
-  estado.cpu=e.target.value?IDX[e.target.value]:null;
-  fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
-});
-el('s_ram').addEventListener('change',e=>{ estado.ram=e.target.value?IDX[e.target.value]:null; renderOrcamento(); });
-el('s_ramq').addEventListener('input',e=>{ estado.ramq=Math.max(1,parseInt(e.target.value)||1); renderOrcamento(); });
-el('s_arm').addEventListener('change',e=>{ estado.arm=e.target.value?IDX[e.target.value]:null; renderOrcamento(); });
-el('c_cooler').addEventListener('change',e=>{ estado.cooler=e.target.checked; renderOrcamento(); });
-el('c_forca').addEventListener('change',e=>{ estado.forca=e.target.checked; renderOrcamento(); });
-document.querySelectorAll('.man').forEach(inp=>{
-  inp.addEventListener('input',()=>{ estado.man[inp.dataset.k]=parseFloat(inp.value)||0; renderOrcamento(); });
-});
-el('btnApr').addEventListener('click',aprovar);
-el('btnClr').addEventListener('click',limpar);
-el('btnExpHist').addEventListener('click',expHist);
-el('btnExpRank').addEventListener('click',expRank);
-el('btnResetPrec').addEventListener('click',()=>{
-  if(!confirm('Recarregar os preços do servidor?\n\nDescarta edições locais ainda não sincronizadas e volta ao último valor do servidor (ou ao valor original, onde não houver preço cadastrado no servidor).')) return;
-  PRECOS={}; lsSavePre(); renderCatalogo(); fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
-  if(SB_OK){ sbLoadPrecos().then(()=>toast('Preços recarregados do servidor.')); }
-  else { toast('Sem servidor: preços voltaram aos valores originais.'); }
-});
-document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
-  t.classList.add('on'); el(t.dataset.tab).classList.add('on');
-}));
-
-/* ===================== INIT ===================== */
-function init(){
-  lsLoad();
-  if(!LS_OK) el('lsNotice').style.display='';
-  const d=new Date();
-  el('f_data').value=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
-  fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
-  renderCatalogo(); renderHistorico(); renderRanking();
-  sbInit();   // carrega/segue sincronizando os preços do servidor em segundo plano
-}
-init();
+  carregarCatalogo();
+  if(window.lucide?.createIcons) window.lucide.createIcons();
 </script>
 </body>
 </html>
