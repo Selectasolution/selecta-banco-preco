@@ -18,16 +18,12 @@
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.45}
   body{padding:24px;max-width:1320px;margin:0 auto}
-  a{color:var(--accent)}
-  /* header */
   .hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:22px;flex-wrap:wrap;gap:12px}
   .hdr-left{display:flex;align-items:center;gap:12px}
   .logo{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:grid;place-items:center;font-weight:800;color:#04130c}
   .hdr h1{font-size:18px;font-weight:700;margin:0;letter-spacing:-.01em}
   .hdr .sub{font-size:11px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase}
   .badge{font-family:var(--mono);font-size:11px;color:var(--accent-2);background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:999px;padding:5px 12px}
-  .badge b{color:#a7f3d0;font-weight:600}
-  /* layout */
   .grid{display:grid;grid-template-columns:420px 1fr;gap:22px;align-items:start}
   @media(max-width:980px){.grid{grid-template-columns:1fr}}
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 18px 20px}
@@ -38,7 +34,6 @@
   label{display:block;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin:0 0 5px 1px}
   input,select{width:100%;background:#0a0f0c;border:1px solid var(--border-soft);border-radius:8px;color:var(--text);padding:9px 11px;font-family:var(--mono);font-size:13.5px;outline:none;transition:border-color .15s,box-shadow .15s}
   input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(16,185,129,.12)}
-  input::placeholder{color:#4b5563}
   select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%239ca3af' stroke-width='2'><path d='M2 4l4 4 4-4'/></svg>");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
   .row{display:grid;gap:12px}
   .row.c2{grid-template-columns:1fr 1fr}
@@ -50,12 +45,16 @@
   .btn:hover{filter:brightness(1.07)}
   .btn:active{transform:translateY(1px)}
   .btn:disabled{opacity:.55;cursor:not-allowed}
-  /* item card */
   .item{border:1px solid var(--border-soft);border-radius:9px;padding:12px;background:#0a0f0c}
-  /* results */
-  .res-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px}
+  .ncm-desc{margin-top:9px;font-size:12px;line-height:1.5}
+  .ncm-desc .pname{color:var(--accent-2);font-family:var(--mono);font-size:12.5px}
+  .ncm-desc .ddesc{color:var(--dim);display:block;margin-top:2px}
+  .hbadge{display:inline-flex;gap:6px;align-items:center;margin-top:8px;font-size:11px;padding:4px 9px;border-radius:999px}
+  .hbadge.warn{color:#fcd34d;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3)}
+  .hbadge.ok{color:var(--dim);background:rgba(255,255,255,.03);border:1px solid var(--border-soft)}
+  .res-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;gap:10px}
   .res-head h2{margin:0;font-size:20px;font-weight:700}
-  .res-head .meta{font-family:var(--mono);font-size:12px;color:var(--faint)}
+  .res-head .meta{font-family:var(--mono);font-size:12px;color:var(--faint);white-space:nowrap}
   .res-sub{font-family:var(--mono);font-size:12px;color:var(--dim);margin-bottom:14px}
   .line{display:flex;align-items:flex-start;justify-content:space-between;padding:8px 2px;border-top:1px solid var(--border)}
   .line:first-of-type{border-top:0}
@@ -71,21 +70,22 @@
   .line.total .val{color:var(--accent-2);font-weight:700;font-size:15px}
   .line.usd .val{color:var(--dim)}
   .section-tag{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:16px 0 2px;font-weight:600}
-  /* bar */
   .bar{display:flex;height:9px;border-radius:5px;overflow:hidden;margin:16px 0 9px}
   .bar i{display:block;height:100%}
   .legend{display:flex;gap:18px;font-size:11.5px;color:var(--dim);flex-wrap:wrap}
   .legend span{display:inline-flex;align-items:center;gap:6px}
   .dot{width:9px;height:9px;border-radius:3px;display:inline-block}
-  /* summary cards */
-  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+  .cards3{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:14px;margin-top:18px}
+  @media(max-width:680px){.cards3{grid-template-columns:1fr}}
   .sc{border:1px solid var(--border-soft);border-radius:11px;padding:14px 16px;background:var(--card)}
   .sc .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:7px}
-  .sc .big{font-family:var(--mono);font-size:26px;font-weight:700}
-  .sc.cost .big{color:var(--accent-2)}
-  .sc.mult .big{color:var(--trib)}
+  .sc .big{font-family:var(--mono);font-size:24px;font-weight:700}
   .sc .small{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:5px}
-  /* avisos + fundamentos */
+  .sc.total{border-color:var(--border-accent);background:linear-gradient(180deg,#0f1f17,#0c1611)}
+  .sc.total .k{color:var(--accent-2)}
+  .sc.total .big{color:var(--accent-2);font-size:28px}
+  .sc.cost .big{color:var(--text)}
+  .sc.mult .big{color:var(--trib)}
   .avisos{margin-top:16px;border:1px solid var(--border);border-radius:9px;padding:11px 13px;background:rgba(245,158,11,.04)}
   .avisos .tt{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--trib);font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px}
   .avisos li{font-size:11.5px;color:var(--dim);margin:3px 0;line-height:1.4}
@@ -96,7 +96,6 @@
   .fund-item .ft{font-family:var(--mono);color:var(--accent-2)}
   .fund-item .fl{color:var(--faint);line-height:1.45;display:block;margin-top:2px}
   .placeholder{display:grid;place-items:center;text-align:center;color:var(--faint);min-height:420px;border:1px dashed var(--border-soft);border-radius:12px;padding:30px}
-  .placeholder .ic{opacity:.4;margin-bottom:10px}
   .status{font-family:var(--mono);font-size:12px;margin-top:10px;min-height:16px}
   .status.err{color:#f87171}
   .status.ok{color:var(--accent-2)}
@@ -107,73 +106,58 @@
   <header class="hdr">
     <div class="hdr-left">
       <div class="logo">S</div>
-      <div>
-        <h1>Selecta Import OS</h1>
-        <div class="sub">Simulador de Custo Landed</div>
-      </div>
+      <div><h1>Selecta Import OS</h1><div class="sub">Simulador de Custo Landed</div></div>
     </div>
-    <div class="badge"><b>●</b> cálculo no banco · <span style="font-family:var(--mono)">imp_fn_custo_landed</span></div>
+    <div class="badge">● cálculo no banco · <span style="font-family:var(--mono)">imp_fn_custo_landed</span></div>
   </header>
 
   <div class="grid">
-    <!-- ===== COLUNA ESQUERDA — ENTRADAS ===== -->
     <div>
       <div class="panel">
         <div class="step"><span class="n">1</span><span class="t">Embarque</span></div>
-        <div class="row">
-          <div>
-            <label>Fornecedor</label>
-            <input id="fornecedor" type="text" value="Shenzhen Larix Technology Co., Ltd." />
-          </div>
-        </div>
+        <div class="row"><div><label>Fornecedor</label><input id="fornecedor" type="text" value="Shenzhen Larix Technology Co., Ltd." /></div></div>
         <div class="row c2">
-          <div>
-            <label>Incoterm</label>
+          <div><label>Incoterm</label>
             <select id="incoterm">
               <option>EXW</option><option selected>FCA</option><option>FOB</option>
-              <option>FAS</option><option>CFR</option><option>CPT</option>
-              <option>CIF</option><option>CIP</option>
+              <option>FAS</option><option>CFR</option><option>CPT</option><option>CIF</option><option>CIP</option>
             </select>
           </div>
-          <div>
-            <label>Câmbio R$/US$</label>
-            <input id="cambio" type="number" step="0.0001" value="5.05" />
-          </div>
+          <div><label>Câmbio R$/US$</label><input id="cambio" type="number" step="0.0001" value="5.05" /></div>
         </div>
         <div class="row c2">
           <div><label>Frete int. US$</label><input id="frete" type="number" step="0.01" value="130" /></div>
           <div><label>Seguro int. US$</label><input id="seguro" type="number" step="0.01" value="20" /></div>
         </div>
-        <p class="hint">Conforme o incoterm, frete e seguro entram ou não no valor aduaneiro automaticamente: CFR/CPT já trazem o frete; CIF/CIP trazem frete e seguro.</p>
+        <p class="hint">O frete internacional é informado por você (cotação do forwarder); o sistema não estima. Conforme o incoterm, frete e seguro entram ou não no VA: CFR/CPT já trazem o frete; CIF/CIP trazem frete e seguro.</p>
       </div>
 
       <div class="panel">
         <div class="step"><span class="n">2</span><span class="t">Item da carga</span></div>
         <div class="item">
-          <div class="row">
-            <div>
-              <label>NCM</label>
-              <input id="ncm" list="ncm-list" type="text" value="84717040" placeholder="ex.: 84717040" />
-              <datalist id="ncm-list">
-                <option value="84717040">SSD</option>
-                <option value="84733042">Memória RAM</option>
-                <option value="84733041">Placa-mãe</option>
-                <option value="84716052">Teclado</option>
-                <option value="84716053">Mouse</option>
-                <option value="84718000">Periférico</option>
-                <option value="85183000">Headset</option>
-                <option value="85044090">Fonte</option>
-                <option value="84145990">Cooler</option>
-              </datalist>
-            </div>
-          </div>
+          <div class="row"><div>
+            <label>Produto (catálogo · imp_produto)</label>
+            <select id="produto" onchange="selecionarProduto()"><option value="">— carregando catálogo… —</option></select>
+          </div></div>
+          <div class="row" style="margin-top:12px"><div>
+            <label>NCM</label>
+            <input id="ncm" list="ncm-list" type="text" value="84717040" placeholder="8 dígitos" oninput="lookupNcm()" />
+            <datalist id="ncm-list">
+              <option value="84717040">SSD</option><option value="84733042">Memória RAM</option>
+              <option value="84733041">Placa-mãe</option><option value="84716052">Teclado</option>
+              <option value="84716053">Mouse</option><option value="84718000">Periférico</option>
+              <option value="85183000">Headset</option><option value="85044090">Fonte</option>
+              <option value="84145990">Cooler</option>
+            </datalist>
+            <div id="ncm-desc" class="ncm-desc"></div>
+          </div></div>
           <div class="row c3" style="margin-top:12px">
             <div><label>Qtd</label><input id="qtd" type="number" step="1" value="200" /></div>
             <div><label>FOB un. US$</label><input id="fob" type="number" step="0.01" value="12.50" /></div>
             <div><label>Peso br. kg</label><input id="peso" type="number" step="0.001" value="0.065" /></div>
           </div>
         </div>
-        <p class="hint">FOB é unitário; o total (FOB un. × qtd) é montado e enviado ao banco automaticamente.</p>
+        <p class="hint">FOB é unitário; o total (FOB un. × qtd) é montado e enviado ao banco automaticamente. Selecione um produto para puxar descrição e homologação, ou informe o NCM manualmente.</p>
       </div>
 
       <div class="panel">
@@ -190,12 +174,11 @@
       </div>
     </div>
 
-    <!-- ===== COLUNA DIREITA — RESULTADO ===== -->
     <div class="panel" style="min-height:520px">
       <div id="placeholder" class="placeholder">
         <div>
-          <i class="ic" data-lucide="ship" style="width:34px;height:34px"></i>
-          <div>Preencha o embarque e clique em <b style="color:var(--dim)">Calcular custo landed</b>.</div>
+          <i data-lucide="ship" style="width:34px;height:34px;opacity:.4"></i>
+          <div style="margin-top:10px">Preencha o embarque e clique em <b style="color:var(--dim)">Calcular custo landed</b>.</div>
           <div style="font-size:11.5px;margin-top:6px">VA e tributos vêm direto da função no Supabase.</div>
         </div>
       </div>
@@ -205,115 +188,123 @@
 
 <script type="module">
   import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  const SUPABASE_URL='https://odamfhflldygdfrnnjzu.supabase.co';
+  const SUPABASE_ANON_KEY='sb_publishable_7q_884vzxsdTLOIw7ZMx7A_qiUuUc-n';
+  const sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
-  // Mesma instância pública do app selecta-banco-preco (anon/publishable — segura no cliente)
-  const SUPABASE_URL = 'https://odamfhflldygdfrnnjzu.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_7q_884vzxsdTLOIw7ZMx7A_qiUuUc-n';
-  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const $=(id)=>document.getElementById(id);
+  const num=(id)=>Number($(id).value)||0;
+  const esc=(s)=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const fmtBRL=(n)=>Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtUSD=(n)=>Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 
-  const $ = (id) => document.getElementById(id);
-  const num = (id) => Number($(id).value) || 0;
-  const fmtBRL = (n) => Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const fmtUSD = (n) => Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const SEM_FRETE=['CFR','CPT','CIF','CIP'];
+  const SEM_SEGURO=['CIF','CIP'];
 
-  // Incoterm: define se frete/seguro são somados ao VA (espelha a regra do pipeline imp_fn_valor_aduaneiro)
-  const SEM_FRETE = ['CFR','CPT','CIF','CIP'];   // já embutem o frete
-  const SEM_SEGURO = ['CIF','CIP'];              // já embutem o seguro
+  let CATALOGO={}, PORNCM={};
 
-  window.calcular = async function () {
-    const st = $('status'); const btn = $('btn-calc');
-    st.className = 'status'; st.textContent = 'calculando...';
-    btn.disabled = true;
-
-    const incoterm = $('incoterm').value;
-    const cambio = num('cambio');
-    const qtd = num('qtd');
-    const fobUn = num('fob');
-    const pesoUn = num('peso');
-    const ncm = $('ncm').value.trim();
-
-    const freteEff  = SEM_FRETE.includes(incoterm)  ? 0 : num('frete');
-    const seguroEff = SEM_SEGURO.includes(incoterm) ? 0 : num('seguro');
-    const fobTotalUsd = +(fobUn * qtd).toFixed(2);
-
-    if (!ncm) { st.className='status err'; st.textContent='✗ informe o NCM'; btn.disabled=false; return; }
-    if (!cambio || !qtd || !fobUn) { st.className='status err'; st.textContent='✗ câmbio, qtd e FOB são obrigatórios'; btn.disabled=false; return; }
-
-    try {
-      const { data, error } = await sb.rpc('imp_fn_custo_landed', {
-        p_ncm:         ncm,
-        p_fob_usd:     fobTotalUsd,     // FOB TOTAL (un × qtd) — a função espera total
-        p_frete_usd:   freteEff,
-        p_seguro_usd:  seguroEff,
-        p_cambio:      cambio,
-        p_data:        new Date().toISOString().slice(0,10),
-        p_num_adicoes: 1,
-        p_quantidade:  qtd,
-      });
-      if (error) throw error;
-      if (!data) throw new Error('retorno vazio da função');
-      if (data.erro) throw new Error(data.erro);
-      if (data.ncm_encontrado === false) throw new Error('NCM '+ncm+' não cadastrado no banco de alíquotas');
-
-      render(data, { incoterm, fobUn, qtd, pesoUn, freteEff, seguroEff });
-      st.className='status ok'; st.textContent='✓ calculado no banco';
-    } catch (e) {
-      st.className='status err'; st.textContent='✗ ' + (e.message || e);
-    } finally {
-      btn.disabled = false;
+  async function carregarCatalogo(){
+    const sel=$('produto');
+    try{
+      const {data,error}=await sb.from('imp_produto')
+        .select('chave,nome_comercial,ncm,descricao_duimp,possui_radio,categoria')
+        .order('nome_comercial');
+      if(error) throw error;
+      if(!data||!data.length){ sel.innerHTML='<option value="">— catálogo vazio · informe o NCM manual —</option>'; lookupNcm(); return; }
+      CATALOGO={}; PORNCM={};
+      sel.innerHTML='<option value="">— selecione (ou informe NCM manual) —</option>'+
+        data.map(r=>{CATALOGO[r.chave]=r; const n=(r.ncm||'').trim(); if(n&&!PORNCM[n])PORNCM[n]=r;
+          return `<option value="${esc(r.chave)}">${esc(r.nome_comercial||r.chave)} — ${esc(n)}</option>`;}).join('');
+      lookupNcm();
+    }catch(e){
+      sel.innerHTML='<option value="">— catálogo indisponível · informe o NCM manual —</option>';
+      console.warn('[catálogo]',e.message);
     }
+  }
+
+  window.selecionarProduto=function(){
+    const r=CATALOGO[$('produto').value];
+    if(!r) { renderDesc(null); return; }
+    if(r.ncm) $('ncm').value=(r.ncm||'').trim();
+    renderDesc(r);
+  };
+  window.lookupNcm=function(){
+    if($('produto').value && CATALOGO[$('produto').value]) return; // produto selecionado manda
+    renderDesc(PORNCM[$('ncm').value.trim()]||null);
+  };
+  function renderDesc(r){
+    const el=$('ncm-desc');
+    if(!r){ el.innerHTML='<span style="color:var(--faint)">NCM não vinculado a produto do catálogo (digitação manual).</span>'; return; }
+    const homolog = r.possui_radio
+      ? '<div class="hbadge warn"><i data-lucide="radio"></i> Produto com rádio — exige homologação ANATEL</div>'
+      : '<div class="hbadge ok"><i data-lucide="check"></i> Sem rádio — sem exigência ANATEL por radiofrequência</div>';
+    el.innerHTML=`<span class="pname">${esc(r.nome_comercial||r.chave)}</span>`
+      +(r.descricao_duimp?`<span class="ddesc">Descrição DUIMP: ${esc(r.descricao_duimp)}</span>`:'')
+      +(r.categoria?`<span class="ddesc">Categoria: ${esc(r.categoria)}</span>`:'')
+      +homolog;
+    if(window.lucide?.createIcons) window.lucide.createIcons();
+  }
+
+  function nomeAtual(){
+    if($('produto').value && CATALOGO[$('produto').value]) return CATALOGO[$('produto').value].nome_comercial;
+    const r=PORNCM[$('ncm').value.trim()]; return r? r.nome_comercial : null;
+  }
+
+  window.calcular=async function(){
+    const st=$('status'), btn=$('btn-calc');
+    st.className='status'; st.textContent='calculando...'; btn.disabled=true;
+    const incoterm=$('incoterm').value, cambio=num('cambio'), qtd=num('qtd'), fobUn=num('fob'), pesoUn=num('peso');
+    const ncm=$('ncm').value.trim();
+    const freteEff=SEM_FRETE.includes(incoterm)?0:num('frete');
+    const seguroEff=SEM_SEGURO.includes(incoterm)?0:num('seguro');
+    const fobTotalUsd=+(fobUn*qtd).toFixed(2);
+    if(!ncm){st.className='status err';st.textContent='✗ informe o NCM';btn.disabled=false;return;}
+    if(!cambio||!qtd||!fobUn){st.className='status err';st.textContent='✗ câmbio, qtd e FOB são obrigatórios';btn.disabled=false;return;}
+    try{
+      const {data,error}=await sb.rpc('imp_fn_custo_landed',{
+        p_ncm:ncm, p_fob_usd:fobTotalUsd, p_frete_usd:freteEff, p_seguro_usd:seguroEff,
+        p_cambio:cambio, p_data:new Date().toISOString().slice(0,10), p_num_adicoes:1, p_quantidade:qtd
+      });
+      if(error) throw error;
+      if(!data) throw new Error('retorno vazio da função');
+      if(data.erro) throw new Error(data.erro);
+      if(data.ncm_encontrado===false) throw new Error('NCM '+ncm+' não cadastrado no banco de alíquotas');
+      render(data,{incoterm,fobUn,qtd,pesoUn,freteEff,seguroEff,nome:nomeAtual()});
+      st.className='status ok'; st.textContent='✓ calculado no banco';
+    }catch(e){ st.className='status err'; st.textContent='✗ '+(e.message||e); }
+    finally{ btn.disabled=false; }
   };
 
-  function render(d, ctx) {
-    const v = d.valores_brl, t = d.totais;
-    const fob_un_brl = v.fob / ctx.qtd;
+  function render(d,ctx){
+    const v=d.valores_brl, t=d.totais;
+    const fob_un_brl=v.fob/ctx.qtd;
+    const pesoTotal=ctx.qtd*ctx.pesoUn;
+    const armaz=v.valor_aduaneiro*(num('op-armaz')/100);
+    const spread=v.valor_aduaneiro*(num('op-spread')/100);
+    const capat=num('op-capat')*pesoTotal;
+    const freNac=num('op-frenac')*pesoTotal;
+    const operacional=armaz+spread+capat+freNac;
+    const tributos=t.carga_tributaria_brl;
+    const totalCheio=t.total_landed_caixa_brl+operacional;
+    const unit=totalCheio/ctx.qtd;
+    const mult=totalCheio/v.fob;
+    const pVA=v.valor_aduaneiro/totalCheio*100, pTR=tributos/totalCheio*100, pOP=operacional/totalCheio*100;
+    const F={}; (d.aliquotas_aplicadas||[]).forEach(a=>F[a.tributo]=a);
+    const pctOf=(k)=>F[k]?`<span class="pct">${Number(F[k].aliquota_pct).toFixed(2).replace('.',',')}%</span>`:'';
+    const lineUSD=(lbl,val,sub)=>`<div class="line usd"><div class="lbl">${lbl}${sub?`<span class="note">${sub}</span>`:''}</div><div class="val">US$ ${fmtUSD(val)}</div></div>`;
+    const lineBRL=(lbl,val,cls='',sub='')=>`<div class="line ${cls}"><div class="lbl">${lbl}${sub?`<span class="note">${sub}</span>`:''}</div><div class="val">R$ ${fmtBRL(val)}</div></div>`;
+    const cbsIbsCalc=(v.cbs_calculado||0)+(v.ibs_calculado||0);
+    const fundHtml=(d.aliquotas_aplicadas||[]).slice().sort((a,b)=>a.tributo.localeCompare(b.tributo))
+      .map(a=>`<div class="fund-item"><span class="ft">${esc(a.tributo)} · ${Number(a.aliquota_pct).toFixed(2).replace('.',',')}% · base ${esc(a.base_calculo)}</span><span class="fl">${esc(a.fundamento_legal)}</span></div>`).join('');
+    const avisosHtml=(d.avisos||[]).map(x=>`<li>• ${esc(x)}</li>`).join('');
 
-    // ---- Operacional (estimativa no front; fora da base do ICMS, igual ao pipeline) ----
-    const pesoTotal = ctx.qtd * ctx.pesoUn;
-    const armaz   = v.valor_aduaneiro * (num('op-armaz')/100);
-    const spread  = v.valor_aduaneiro * (num('op-spread')/100);
-    const capat   = num('op-capat')  * pesoTotal;
-    const freNac  = num('op-frenac') * pesoTotal;
-    const operacional = armaz + spread + capat + freNac;
-
-    const tributos = t.carga_tributaria_brl;                 // exato, do banco (sem CBS/IBS — dispensados em 2026)
-    const totalCheio = t.total_landed_caixa_brl + operacional; // VA + tributos + operacional
-    const unit = totalCheio / ctx.qtd;
-    const mult = totalCheio / v.fob;
-
-    // barra
-    const pVA = v.valor_aduaneiro/totalCheio*100;
-    const pTR = tributos/totalCheio*100;
-    const pOP = operacional/totalCheio*100;
-
-    // fundamentos por tributo
-    const F = {}; (d.aliquotas_aplicadas||[]).forEach(a => F[a.tributo]=a);
-    const pctOf = (k) => F[k] ? `<span class="pct">${Number(F[k].aliquota_pct).toFixed(2).replace('.',',')}%</span>` : '';
-
-    const lineUSD = (lbl,val,sub) => `<div class="line usd"><div class="lbl">${lbl}${sub?`<span class="note">${sub}</span>`:''}</div><div class="val">US$ ${fmtUSD(val)}</div></div>`;
-    const lineBRL = (lbl,val,extraCls='',sub='') => `<div class="line ${extraCls}"><div class="lbl">${lbl}${sub?`<span class="note">${sub}</span>`:''}</div><div class="val">R$ ${fmtBRL(val)}</div></div>`;
-
-    const cbsIbsCalc = (v.cbs_calculado||0) + (v.ibs_calculado||0);
-
-    const fundHtml = (d.aliquotas_aplicadas||[])
-      .sort((a,b)=>a.tributo.localeCompare(b.tributo))
-      .map(a => `<div class="fund-item"><span class="ft">${a.tributo} · ${Number(a.aliquota_pct).toFixed(2).replace('.',',')}% · base ${a.base_calculo}</span><span class="fl">${a.fundamento_legal}</span></div>`).join('');
-
-    const avisosHtml = (d.avisos||[]).map(x=>`<li>• ${x}</li>`).join('');
-
-    $('resultado').innerHTML = `
-      <div class="res-head">
-        <h2>${ctx_nomeNCM(ctx)}</h2>
-        <div class="meta">NCM ${d.ncm} · adição 1</div>
-      </div>
+    $('resultado').innerHTML=`
+      <div class="res-head"><h2>${esc(ctx.nome||'Item')}</h2><div class="meta">NCM ${esc(d.ncm)} · adição 1</div></div>
       <div class="res-sub">${ctx.qtd} un × US$ ${fmtUSD(ctx.fobUn)} FOB · ${String(ctx.pesoUn).replace('.',',')} kg/un</div>
-
       ${lineUSD(`FOB <span class="pct">${ctx.qtd} × US$ ${fmtUSD(ctx.fobUn)}</span>`, ctx.fobUn*ctx.qtd)}
       ${lineUSD('Frete rateado', ctx.freteEff, ctx.freteEff===0?'incluído no preço (incoterm '+ctx.incoterm+')':'')}
       ${lineUSD('Seguro rateado', ctx.seguroEff, ctx.seguroEff===0?'incluído no preço (incoterm '+ctx.incoterm+')':'')}
-
       ${lineBRL(`Valor aduaneiro · câmbio ${String(d.cambio_usado).replace('.',',')}`, v.valor_aduaneiro, 'va')}
-
       ${lineBRL('II '+pctOf('II'), v.ii)}
       ${lineBRL('IPI '+pctOf('IPI'), v.ipi)}
       ${lineBRL('PIS-Imp. '+pctOf('PIS_IMP'), v.pis_imp)}
@@ -321,54 +312,32 @@
       ${lineBRL('ICMS-PI <span class="pct">'+(F['ICMS']?Number(F['ICMS'].aliquota_pct).toFixed(1).replace('.',',')+'% por dentro':'')+'</span>', v.icms)}
       ${lineBRL('CBS / IBS <span class="pct">2026</span>', 0, '', 'calculado R$ '+fmtBRL(cbsIbsCalc)+' — dispensado e fora do caixa em 2026 (LC 214/2025)')}
       ${lineBRL('Taxa Siscomex', v.siscomex)}
-
       ${lineBRL('Tributos', tributos, 'total')}
-
       <div class="section-tag">Operacional · estimativa</div>
       ${lineBRL('Armazenagem <span class="pct">'+String(num('op-armaz')).replace('.',',')+'% VA</span>', armaz)}
       ${lineBRL('Capatazia <span class="pct">R$ '+String(num('op-capat')).replace('.',',')+'/kg</span>', capat)}
       ${lineBRL('Frete nacional <span class="pct">R$ '+String(num('op-frenac')).replace('.',',')+'/kg</span>', freNac)}
       ${lineBRL('Spread cambial <span class="pct">'+String(num('op-spread')).replace('.',',')+'%</span>', spread)}
-
-      <div class="bar">
-        <i style="width:${pVA}%;background:var(--va)"></i>
-        <i style="width:${pTR}%;background:var(--trib)"></i>
-        <i style="width:${pOP}%;background:var(--op)"></i>
-      </div>
+      <div class="bar"><i style="width:${pVA}%;background:var(--va)"></i><i style="width:${pTR}%;background:var(--trib)"></i><i style="width:${pOP}%;background:var(--op)"></i></div>
       <div class="legend">
         <span><i class="dot" style="background:var(--va)"></i> Valor aduaneiro ${Math.round(pVA)}%</span>
         <span><i class="dot" style="background:var(--trib)"></i> Tributos ${Math.round(pTR)}%</span>
         <span><i class="dot" style="background:var(--op)"></i> Operacional ${Math.round(pOP)}%</span>
       </div>
-
-      <div class="cards">
-        <div class="sc cost">
-          <div class="k">Custo unitário landed</div>
-          <div class="big">R$ ${fmtBRL(unit)}</div>
-          <div class="small">custo total R$ ${fmtBRL(totalCheio)}</div>
-        </div>
-        <div class="sc mult">
-          <div class="k">Multiplicador s/ FOB</div>
-          <div class="big">${mult.toFixed(2).replace('.',',')}×</div>
-          <div class="small">FOB un. R$ ${fmtBRL(fob_un_brl)}</div>
-        </div>
+      <div class="cards3">
+        <div class="sc total"><div class="k">Custo total da importação</div><div class="big">R$ ${fmtBRL(totalCheio)}</div><div class="small">${ctx.qtd} un · ${esc(ctx.incoterm)}</div></div>
+        <div class="sc cost"><div class="k">Custo unitário landed</div><div class="big">R$ ${fmtBRL(unit)}</div><div class="small">por unidade</div></div>
+        <div class="sc mult"><div class="k">Multiplicador s/ FOB</div><div class="big">${mult.toFixed(2).replace('.',',')}×</div><div class="small">FOB un. R$ ${fmtBRL(fob_un_brl)}</div></div>
       </div>
-
-      ${avisosHtml ? `<div class="avisos"><div class="tt"><i data-lucide="alert-triangle"></i> Não incluso no caixa</div><ul style="margin:0;padding:0;list-style:none">${avisosHtml}</ul></div>`:''}
-
+      ${avisosHtml?`<div class="avisos"><div class="tt"><i data-lucide="alert-triangle"></i> Não incluso no caixa</div><ul style="margin:0;padding:0;list-style:none">${avisosHtml}</ul></div>`:''}
       <details class="fund"><summary><i data-lucide="scale"></i> Fundamentos legais das alíquotas</summary>${fundHtml}</details>
     `;
-    $('placeholder').style.display='none';
-    $('resultado').style.display='block';
-    if (window.lucide?.createIcons) window.lucide.createIcons();
+    $('placeholder').style.display='none'; $('resultado').style.display='block';
+    if(window.lucide?.createIcons) window.lucide.createIcons();
   }
 
-  function ctx_nomeNCM(ctx){
-    const map={'84717040':'SSD','84733042':'Memória RAM','84733041':'Placa-mãe','84716052':'Teclado','84716053':'Mouse','84718000':'Periférico','85183000':'Headset','85044090':'Fonte','84145990':'Cooler'};
-    return map[$('ncm').value.trim()] || 'Item';
-  }
-
-  if (window.lucide?.createIcons) window.lucide.createIcons();
+  carregarCatalogo();
+  if(window.lucide?.createIcons) window.lucide.createIcons();
 </script>
 </body>
 </html>
