@@ -135,7 +135,7 @@
     if(window.lucide) lucide.createIcons();
     try{
       const {data,error}=await sb.from('imp_vw_cambio_atual')
-        .select('data,ptax_venda,ptax_compra,caixa_venda,itau_venda,caixa_spread_pct,itau_spread_pct,banco_melhor_spread')
+        .select('data,ptax_venda,caixa_venda,itau_venda,caixa_spread_pct,itau_spread_pct,banco_melhor_spread')
         .maybeSingle();
       if(error) throw error;
       if(!data){ render_vazio(); return; }
@@ -174,7 +174,6 @@
     }
 
     html += `<div class="det">
-      ${cell('PTAX compra', fmt4(d.ptax_compra), d.ptax_compra==null)}
       ${cell('Caixa venda', fmt4(d.caixa_venda), d.caixa_venda==null)}
       ${cell('Itaú venda', fmt4(d.itau_venda), d.itau_venda==null)}
       ${cell('Melhor spread', melhor, melhor==='—'||melhor==='empate / sem dado')}
