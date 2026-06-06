@@ -199,7 +199,7 @@
     html += `<div class="foot">
       Fonte: view <code>imp_vw_cambio_atual</code> (linha mais recente de <code>imp_cambio_historico</code>).
       Spreads Caixa/Itaú aparecem como “—” enquanto não houver registro.
-      Registro/atualização de PTAX e sincronização automática com o BACEN entram na próxima camada.
+      Use “Puxar PTAX do BACEN” para sincronizar agora (fonte: BACEN/Olinda, cotação de fechamento). A automação diária entra em seguida.
     </div>`;
 
     $('painel').innerHTML=html;
@@ -226,7 +226,7 @@
     msg.className='sync-msg'; msg.innerHTML='';
     if(window.lucide) lucide.createIcons();
     try{
-      const {data,error}=await sb.functions.invoke('sync-ptax',{method:'POST'});
+      const {data,error}=await sb.rpc('imp_fn_sync_ptax');
       if(error) throw new Error(error.message||'falha ao chamar a função');
       if(data && data.ok===false) throw new Error(data.erro||'a função retornou erro');
       const g=(data&&data.gravado)||{};
