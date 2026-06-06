@@ -109,7 +109,7 @@
       <p>Estas são as decisões de base. O sistema é construído em cima delas e não muda sozinho:</p>
       <table class="k">
         <tr><th>Premissa</th><th>O que significa</th></tr>
-        <tr><td>RADAR Limitado</td><td>A habilitação da Selecta no comércio exterior (faixa de até US$ 150 mil/semestre).</td></tr>
+        <tr><td>RADAR Limitado</td><td>A habilitação da Selecta no comércio exterior — submodalidade <strong>Limitada</strong>, faixa de até <strong>US$ 50 mil/semestre</strong>. O teto conta pelo valor aduaneiro (mercadoria + frete + seguro), e cada importação volta como crédito 6 meses após o registro da DI.</td></tr>
         <tr><td>Modal aéreo</td><td>A carga vem de avião (hoje). Plano: aéreo → híbrido → marítimo conforme a escala crescer.</td></tr>
         <tr><td>Recinto: Viracopos (VCP)</td><td>O desembaraço acontece em Campinas/SP.</td></tr>
         <tr><td>Autodespacho</td><td>Você mesmo faz o desembaraço — por isso o sistema precisa ser exato.</td></tr>
@@ -213,16 +213,51 @@
 
     <section id="glossario">
       <h2>9. Glossário rápido</h2>
+      <p>Os termos que aparecem na operação, agrupados por assunto.</p>
+
+      <h3>Habilitação e despacho</h3>
       <table class="k">
-        <tr><td>DUIMP</td><td>Declaração Única de Importação — o documento eletrônico do despacho moderno.</td></tr>
-        <tr><td>PTAX</td><td>Taxa de câmbio oficial de referência divulgada pelo Banco Central.</td></tr>
-        <tr><td>Valor aduaneiro (VA)</td><td>Base de cálculo dos tributos: mercadoria + frete + seguro, em reais.</td></tr>
-        <tr><td>FOB</td><td>Preço da mercadoria sem frete nem seguro.</td></tr>
-        <tr><td>Incoterm</td><td>Regra que define quem paga frete/seguro e até onde (FCA, CFR, CIF...).</td></tr>
-        <tr><td>NCM</td><td>Código de classificação da mercadoria que define as alíquotas.</td></tr>
-        <tr><td>Adição</td><td>Cada item/fatura distinta dentro de uma declaração de importação.</td></tr>
-        <tr><td>Canal verde</td><td>Liberação automática, sem conferência física ou documental.</td></tr>
+        <tr><td>RADAR</td><td>Registro e Rastreamento da Atuação dos Intervenientes Aduaneiros — a habilitação que libera operar no comércio exterior. A Selecta é Limitada, faixa US$ 50 mil/semestre.</td></tr>
+        <tr><td>Siscomex</td><td>Sistema Integrado de Comércio Exterior — a plataforma onde toda importação é registrada e controlada.</td></tr>
+        <tr><td>Portal Único</td><td>O ambiente moderno do Siscomex, onde vive a DUIMP e o Catálogo de Produtos.</td></tr>
+        <tr><td>DUIMP</td><td>Declaração Única de Importação — o documento eletrônico do despacho moderno, que substitui a antiga DI.</td></tr>
+        <tr><td>LI / LPCO</td><td>Licença de Importação / Licença, Permissão, Certificado e Outros — autorizações de órgãos anuentes exigidas para certas mercadorias antes do despacho.</td></tr>
+        <tr><td>Recinto alfandegado</td><td>Local autorizado onde a carga fica sob controle aduaneiro até liberar. No nosso caso, Viracopos (VCP).</td></tr>
+        <tr><td>Capatazia</td><td>Manuseio e movimentação da carga dentro do recinto — é um custo da operação.</td></tr>
+        <tr><td>Autodespacho</td><td>Fazer o próprio desembaraço, sem contratar despachante.</td></tr>
+        <tr><td>Parametrização (canal)</td><td>Após o registro, a Receita classifica a declaração: <strong>verde</strong> (libera direto), <strong>amarelo</strong> (confere documentos), <strong>vermelho</strong> (documentos + conferência física), <strong>cinza</strong> (suspeita de fraude/valoração).</td></tr>
+        <tr><td>Desembaraço</td><td>O ato final que libera a mercadoria depois da conferência.</td></tr>
+      </table>
+
+      <h3>Classificação e valores</h3>
+      <table class="k">
+        <tr><td>NCM</td><td>Nomenclatura Comum do Mercosul — código de 8 dígitos que classifica a mercadoria e define as alíquotas.</td></tr>
+        <tr><td>TEC</td><td>Tarifa Externa Comum — a tabela de alíquotas de II por NCM, comum ao Mercosul.</td></tr>
+        <tr><td>Ex-tarifário</td><td>Redução temporária de II para bens de capital/informática sem produção nacional equivalente.</td></tr>
+        <tr><td>Valor aduaneiro (VA)</td><td>Base de cálculo dos tributos: mercadoria + frete + seguro internacionais, convertidos a reais pela PTAX.</td></tr>
+        <tr><td>FOB</td><td>Preço da mercadoria, sem frete nem seguro.</td></tr>
+        <tr><td>Incoterm</td><td>Regra que define quem paga o quê e até onde: EXW (você assume tudo na origem), FCA, FOB, CFR (inclui frete), CIF (frete + seguro).</td></tr>
+        <tr><td>Adição</td><td>Cada conjunto homogêneo (mesmo NCM, fornecedor e condições) dentro de uma declaração. Mais adições = mais Taxa Siscomex.</td></tr>
+      </table>
+
+      <h3>Tributos</h3>
+      <table class="k">
+        <tr><td>II</td><td>Imposto de Importação — federal, incide sobre o valor aduaneiro.</td></tr>
+        <tr><td>IPI</td><td>Imposto sobre Produtos Industrializados, na importação — federal.</td></tr>
+        <tr><td>PIS / COFINS-Imp.</td><td>Contribuições federais sobre a importação. Viram crédito no regime não-cumulativo (Lucro Real) — daí a migração planejada para 2027.</td></tr>
+        <tr><td>ICMS-Imp.</td><td>Imposto estadual sobre a importação — devido ao Piauí (destino), não ao estado de entrada.</td></tr>
+        <tr><td>DIFAL</td><td>Diferencial de alíquota — incide em vendas interestaduais a consumidor final não contribuinte.</td></tr>
+        <tr><td>GLME</td><td>Guia de Liberação de Mercadoria Estrangeira sem Comprovação do ICMS — emitida pela SEFAZ quando o ICMS não é pago no desembaraço (caso do PI).</td></tr>
+        <tr><td>Taxa Siscomex</td><td>Taxa de utilização do sistema, cobrada por adição em faixas regressivas.</td></tr>
+      </table>
+
+      <h3>Câmbio e sistema</h3>
+      <table class="k">
+        <tr><td>PTAX</td><td>Taxa de câmbio oficial de referência do Banco Central. A de <strong>venda</strong> é a base dos tributos.</td></tr>
+        <tr><td>Spread</td><td>Diferença entre a PTAX e a taxa que o banco efetivamente cobra na remessa ao fornecedor.</td></tr>
         <tr><td>RLS</td><td>Regras de segurança no banco que controlam quem lê/grava cada linha.</td></tr>
+        <tr><td>View</td><td>"Tabela virtual" que mostra um recorte ou cálculo sobre tabelas reais (ex.: a cotação vigente).</td></tr>
+        <tr><td>Função / RPC</td><td>Rotina que roda dentro do banco e devolve um resultado (ex.: o sync da PTAX, o cálculo de custo landed).</td></tr>
       </table>
     </section>
 
