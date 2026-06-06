@@ -27,6 +27,16 @@
   .btn-refresh:hover{filter:brightness(1.15)}
   .btn-refresh:disabled{opacity:.5;cursor:not-allowed}
   .btn-refresh i{width:15px;height:15px}
+  .hdr-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .btn-sync{font-family:var(--sans);font-size:12.5px;font-weight:600;color:#03120b;background:linear-gradient(180deg,var(--accent),var(--accent-deep));border:0;border-radius:8px;padding:9px 15px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:filter .15s}
+  .btn-sync:hover{filter:brightness(1.08)}
+  .btn-sync:disabled{opacity:.6;cursor:not-allowed}
+  .btn-sync i{width:15px;height:15px}
+  .sync-msg{margin-bottom:14px;border-radius:9px;padding:10px 14px;font-size:12.5px;display:none;align-items:center;gap:9px;line-height:1.45}
+  .sync-msg.show{display:flex}
+  .sync-msg.ok{color:var(--ok);background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3)}
+  .sync-msg.err{color:#fca5a5;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.4)}
+  .sync-msg i{width:16px;height:16px;flex:0 0 auto}
 
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px}
   .panel + .panel{margin-top:16px}
@@ -79,10 +89,17 @@
         <div class="sub">Selecta Import OS</div>
       </div>
     </div>
-    <button class="btn-refresh" id="btn-refresh" onclick="carregar()">
-      <i data-lucide="refresh-cw"></i> Atualizar
-    </button>
+    <div class="hdr-actions">
+      <button class="btn-sync" id="btn-sync" onclick="sincronizar()">
+        <i data-lucide="download-cloud"></i> Puxar PTAX do BACEN
+      </button>
+      <button class="btn-refresh" id="btn-refresh" onclick="carregar()">
+        <i data-lucide="refresh-cw"></i> Atualizar
+      </button>
+    </div>
   </div>
+
+  <div class="sync-msg" id="sync-msg"></div>
 
   <div class="panel" id="painel">
     <div class="state" id="loading">
@@ -201,6 +218,31 @@
       <code>grant select on imp_vw_cambio_atual to anon;</code></div></div>`;
     if(window.lucide) lucide.createIcons();
   }
+
+  window.sincronizar=async function(){
+    const btn=$('btn-sync'); const msg=$('sync-msg'); const orig=btn.innerHTML;
+    btn.disabled=true;
+    btn.innerHTML='<i data-lucide="loader" class="spin"></i> Buscando no BACEN…';
+    msg.className='sync-msg'; msg.innerHTML='';
+    if(window.lucide) lucide.createIcons();
+    try{
+      const {data,error}=await sb.functions.invoke('sync-ptax',{method:'POST'});
+      if(error) throw new Error(error.message||'falha ao chamar a função');
+      if(data && data.ok===false) throw new Error(data.erro||'a função retornou erro');
+      const g=(data&&data.gravado)||{};
+      msg.className='sync-msg ok show';
+      msg.innerHTML='<i data-lucide="check-circle"></i> PTAX sincronizada: R$ '+
+        (g.ptax_venda!=null?Number(g.ptax_venda).toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4}):'—')+
+        ' &middot; referência '+(g.data||'—')+'.';
+      await carregar();
+    }catch(e){
+      msg.className='sync-msg err show';
+      msg.innerHTML='<i data-lucide="alert-octagon"></i> Falha ao sincronizar: '+esc(e.message||String(e));
+    }finally{
+      btn.disabled=false; btn.innerHTML=orig;
+      if(window.lucide) lucide.createIcons();
+    }
+  };
 
   carregar();
 </script>
