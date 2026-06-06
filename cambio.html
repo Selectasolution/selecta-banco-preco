@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selecta Import OS — Câmbio · PTAX</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root{
+    --bg:#0a0e0c; --panel:#0f1411; --panel-2:#131a16; --card:#0d1310;
+    --border:#1f2937; --border-soft:#2b3640; --border-accent:#14532d;
+    --text:#e5e7eb; --dim:#9ca3af; --faint:#6b7280;
+    --accent:#10b981; --accent-2:#34d399; --accent-deep:#064e3b;
+    --ok:#10b981; --warn:#f59e0b; --stale:#ef4444;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.45}
+  body{padding:24px;max-width:1100px;margin:0 auto}
+  .hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+  .hdr-left{display:flex;align-items:center;gap:12px}
+  .logo{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:grid;place-items:center;font-weight:800;color:#04130c}
+  .hdr h1{font-size:18px;font-weight:700;margin:0;letter-spacing:-.01em}
+  .hdr .sub{font-size:11px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase}
+  .btn-refresh{font-family:var(--sans);font-size:12.5px;color:var(--accent-2);background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:8px;padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:filter .15s}
+  .btn-refresh:hover{filter:brightness(1.15)}
+  .btn-refresh:disabled{opacity:.5;cursor:not-allowed}
+  .btn-refresh i{width:15px;height:15px}
+
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px}
+  .panel + .panel{margin-top:16px}
+
+  /* card principal da PTAX */
+  .ptax-card{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
+  .ptax-main .lbl{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+  .ptax-main .val{font-family:var(--mono);font-size:44px;font-weight:700;line-height:1;color:var(--text)}
+  .ptax-main .val .cur{font-size:20px;color:var(--dim);font-weight:500;margin-right:8px}
+  .ptax-main .data{font-family:var(--mono);font-size:13px;color:var(--dim);margin-top:10px}
+
+  /* selo de idade */
+  .age{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px;padding:9px 15px;border-radius:999px;white-space:nowrap}
+  .age i{width:16px;height:16px}
+  .age.ok{color:var(--ok);background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.35)}
+  .age.warn{color:var(--warn);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.35)}
+  .age.stale{color:#fff;background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.6)}
+
+  /* faixa de aviso forte quando vencida */
+  .alerta{margin-top:18px;border-radius:10px;padding:13px 16px;font-size:13px;line-height:1.5;display:none;align-items:flex-start;gap:10px}
+  .alerta i{width:18px;height:18px;flex:0 0 auto;margin-top:1px}
+  .alerta.show{display:flex}
+  .alerta.warn{color:#fcd34d;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3)}
+  .alerta.stale{color:#fca5a5;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.4)}
+
+  /* grade de detalhes secundários */
+  .det{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}
+  .det .cell .l{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+  .det .cell .v{font-family:var(--mono);font-size:16px;color:var(--text)}
+  .det .cell .v.muted{color:var(--faint)}
+
+  .foot{margin-top:18px;font-size:11.5px;color:var(--faint);line-height:1.6}
+  .foot code{font-family:var(--mono);color:var(--dim);background:rgba(255,255,255,.04);padding:1px 5px;border-radius:4px}
+
+  .state{text-align:center;padding:50px 20px;color:var(--dim)}
+  .state i{width:30px;height:30px;color:var(--faint);margin-bottom:10px}
+  .state.err i{color:var(--stale)}
+  .state .msg{font-size:13.5px;line-height:1.6;max-width:560px;margin:0 auto}
+  .state code{font-family:var(--mono);font-size:12px;color:var(--accent-2);background:rgba(16,185,129,.07);padding:2px 7px;border-radius:5px}
+  .spin{animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+  <div class="hdr">
+    <div class="hdr-left">
+      <div class="logo">$</div>
+      <div>
+        <h1>Câmbio · PTAX</h1>
+        <div class="sub">Selecta Import OS</div>
+      </div>
+    </div>
+    <button class="btn-refresh" id="btn-refresh" onclick="carregar()">
+      <i data-lucide="refresh-cw"></i> Atualizar
+    </button>
+  </div>
+
+  <div class="panel" id="painel">
+    <div class="state" id="loading">
+      <i data-lucide="loader" class="spin"></i>
+      <div class="msg">Consultando PTAX vigente…</div>
+    </div>
+  </div>
+
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  const SUPABASE_URL='https://odamfhflldygdfrnnjzu.supabase.co';
+  const SUPABASE_ANON_KEY='sb_publishable_7q_884vzxsdTLOIw7ZMx7A_qiUuUc-n';
+  const sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+  const $=(id)=>document.getElementById(id);
+  const esc=(s)=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const fmt4=(n)=>n==null?null:Number(n).toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4});
+  const fmt2=(n)=>n==null?null:Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // dias corridos entre a data da PTAX e hoje (ambos zerados em 00:00 local)
+  function diasDesde(dataStr){
+    if(!dataStr) return null;
+    const d=new Date(String(dataStr).slice(0,10)+'T00:00:00');
+    const h=new Date(); h.setHours(0,0,0,0);
+    return Math.round((h-d)/86400000);
+  }
+  function dataBR(dataStr){
+    if(!dataStr) return '—';
+    const [y,m,dd]=String(dataStr).slice(0,10).split('-');
+    return `${dd}/${m}/${y}`;
+  }
+  // classifica a idade -> {cls, rotulo, alerta}
+  function classifica(dias){
+    if(dias==null) return {cls:'stale',rotulo:'sem data',alerta:null};
+    if(dias<=1)  return {cls:'ok',   rotulo: dias===0?'atualizada hoje':'de ontem', alerta:null};
+    if(dias<=4)  return {cls:'warn', rotulo:`há ${dias} dias`,
+                         alerta:{cls:'warn',txt:`PTAX com ${dias} dias. Confirme se houve pregão depois desta data antes de usar no cálculo.`}};
+    return {cls:'stale', rotulo:`desatualizada há ${dias} dias`,
+            alerta:{cls:'stale',txt:`PTAX desatualizada há ${dias} dias. NÃO use este câmbio sem reconfirmar a taxa do dia — o resultado do cálculo de custo está comprometido.`}};
+  }
+
+  function cell(label,valor,muted){
+    return `<div class="cell"><div class="l">${esc(label)}</div>`
+         + `<div class="v${muted?' muted':''}">${valor==null?'—':esc(valor)}</div></div>`;
+  }
+
+  window.carregar=async function(){
+    const btn=$('btn-refresh'); btn.disabled=true;
+    $('painel').innerHTML='<div class="state" id="loading"><i data-lucide="loader" class="spin"></i><div class="msg">Consultando PTAX vigente…</div></div>';
+    if(window.lucide) lucide.createIcons();
+    try{
+      const {data,error}=await sb.from('imp_vw_cambio_atual')
+        .select('data,ptax_venda,ptax_compra,caixa_venda,itau_venda,caixa_spread_pct,itau_spread_pct,banco_melhor_spread')
+        .maybeSingle();
+      if(error) throw error;
+      if(!data){ render_vazio(); return; }
+      render(data);
+    }catch(e){
+      render_erro(e.message||String(e));
+    }finally{
+      btn.disabled=false;
+    }
+  };
+
+  function render(d){
+    const dias=diasDesde(d.data);
+    const c=classifica(dias);
+    const melhor = d.banco_melhor_spread && d.banco_melhor_spread!=='empate'
+      ? d.banco_melhor_spread.toUpperCase()
+      : (d.banco_melhor_spread==='empate' ? 'empate / sem dado' : '—');
+
+    let html = `
+      <div class="ptax-card">
+        <div class="ptax-main">
+          <div class="lbl">PTAX venda · BACEN</div>
+          <div class="val"><span class="cur">R$</span>${fmt4(d.ptax_venda)??'—'}</div>
+          <div class="data">referência: ${dataBR(d.data)}</div>
+        </div>
+        <div class="age ${c.cls}">
+          <i data-lucide="${c.cls==='ok'?'check-circle':(c.cls==='warn'?'alert-triangle':'alert-octagon')}"></i>
+          ${esc(c.rotulo)}
+        </div>
+      </div>`;
+
+    if(c.alerta){
+      html += `<div class="alerta ${c.alerta.cls} show">
+        <i data-lucide="${c.alerta.cls==='stale'?'alert-octagon':'alert-triangle'}"></i>
+        <div>${esc(c.alerta.txt)}</div></div>`;
+    }
+
+    html += `<div class="det">
+      ${cell('PTAX compra', fmt4(d.ptax_compra), d.ptax_compra==null)}
+      ${cell('Caixa venda', fmt4(d.caixa_venda), d.caixa_venda==null)}
+      ${cell('Itaú venda', fmt4(d.itau_venda), d.itau_venda==null)}
+      ${cell('Melhor spread', melhor, melhor==='—'||melhor==='empate / sem dado')}
+    </div>`;
+
+    html += `<div class="foot">
+      Fonte: view <code>imp_vw_cambio_atual</code> (linha mais recente de <code>imp_cambio_historico</code>).
+      Spreads Caixa/Itaú aparecem como “—” enquanto não houver registro.
+      Registro/atualização de PTAX e sincronização automática com o BACEN entram na próxima camada.
+    </div>`;
+
+    $('painel').innerHTML=html;
+    if(window.lucide) lucide.createIcons();
+  }
+
+  function render_vazio(){
+    $('painel').innerHTML=`<div class="state"><i data-lucide="database"></i>
+      <div class="msg">A view <code>imp_vw_cambio_atual</code> não retornou nenhuma linha — não há PTAX registrada em <code>imp_cambio_historico</code>.</div></div>`;
+    if(window.lucide) lucide.createIcons();
+  }
+  function render_erro(msg){
+    $('painel').innerHTML=`<div class="state err"><i data-lucide="alert-octagon"></i>
+      <div class="msg"><strong>Não foi possível ler o câmbio.</strong><br>${esc(msg)}<br><br>
+      Se o erro for de permissão, o <code>anon</code> não tem SELECT na view. Aplicar:
+      <code>grant select on imp_vw_cambio_atual to anon;</code></div></div>`;
+    if(window.lucide) lucide.createIcons();
+  }
+
+  carregar();
+</script>
+</body>
+</html>
