@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual do Sistema — Selecta Import OS</title>
+<style>
+  :root{
+    --bg:#0a0e0c; --panel:#0f1411; --panel-2:#131a16; --card:#0d1310;
+    --border:#1f2937; --border-soft:#2b3640; --border-accent:#14532d;
+    --text:#e5e7eb; --dim:#9ca3af; --faint:#6b7280;
+    --accent:#10b981; --accent-2:#34d399; --accent-deep:#064e3b;
+    --warn:#f59e0b; --stale:#ef4444;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14.5px;line-height:1.6}
+  a{color:var(--accent-2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font-family:var(--mono);font-size:.88em;color:var(--accent-2);background:rgba(16,185,129,.07);padding:1px 6px;border-radius:5px}
+
+  .wrap{display:flex;gap:0;max-width:1180px;margin:0 auto;min-height:100vh}
+  /* navegação lateral */
+  nav{width:260px;flex:0 0 260px;border-right:1px solid var(--border);padding:26px 18px;position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto}
+  nav .brand{display:flex;align-items:center;gap:11px;margin-bottom:22px}
+  nav .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:grid;place-items:center;font-weight:800;color:#04130c}
+  nav .brand h1{font-size:15px;margin:0;font-weight:700;line-height:1.2}
+  nav .brand .sub{font-size:10px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase}
+  nav ol{list-style:none;margin:0;padding:0;counter-reset:s}
+  nav ol li{counter-increment:s;margin:2px 0}
+  nav ol li a{display:block;padding:7px 10px;border-radius:7px;color:var(--dim);font-size:13px}
+  nav ol li a::before{content:counter(s) ". ";color:var(--faint)}
+  nav ol li a:hover{background:rgba(255,255,255,.03);color:var(--text);text-decoration:none}
+
+  main{flex:1;padding:34px 40px;max-width:860px}
+  .doc-head{border-bottom:1px solid var(--border);padding-bottom:18px;margin-bottom:8px}
+  .doc-head h1{font-size:23px;margin:0 0 4px}
+  .doc-head p{margin:0;color:var(--dim);font-size:13px}
+  .ver{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+
+  section{padding:30px 0;border-bottom:1px solid var(--border)}
+  section:last-child{border-bottom:0}
+  section h2{font-size:18px;margin:0 0 14px;color:var(--accent-2);scroll-margin-top:20px}
+  section h3{font-size:14.5px;margin:20px 0 8px;color:var(--text)}
+  p{margin:0 0 12px}
+  ul{margin:0 0 12px;padding-left:20px}
+  li{margin:5px 0}
+
+  .box{border:1px solid var(--border-soft);border-radius:10px;padding:14px 16px;margin:14px 0;background:var(--panel)}
+  .box.key{border-color:var(--border-accent);background:rgba(16,185,129,.05)}
+  .box.warn{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.06)}
+  .box .t{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.05em;vertical-align:middle}
+  .tag.ok{color:var(--accent);background:rgba(16,185,129,.12)}
+  .tag.wip{color:var(--warn);background:rgba(245,158,11,.12)}
+  table.k{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+  table.k th,table.k td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)}
+  table.k th{color:var(--faint);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  table.k td:first-child{font-family:var(--mono);color:var(--accent-2);white-space:nowrap}
+
+  @media (max-width:820px){
+    .wrap{flex-direction:column}
+    nav{width:auto;flex:none;height:auto;position:static;border-right:0;border-bottom:1px solid var(--border)}
+    nav ol{columns:2}
+    main{padding:24px 18px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav>
+    <div class="brand">
+      <div class="logo">S</div>
+      <div>
+        <h1>Manual do Sistema</h1>
+        <div class="sub">Selecta Import OS</div>
+      </div>
+    </div>
+    <ol>
+      <li><a href="#visao">O que é o sistema</a></li>
+      <li><a href="#premissas">Premissas fixas</a></li>
+      <li><a href="#arquitetura">Como é montado</a></li>
+      <li><a href="#cambio">Módulo Câmbio</a></li>
+      <li><a href="#simulacao">Módulo Simulação</a></li>
+      <li><a href="#tributos">Tributação</a></li>
+      <li><a href="#seguranca">Segurança e acesso</a></li>
+      <li><a href="#regulatoria">Base Regulatória</a></li>
+      <li><a href="#glossario">Glossário</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <div class="doc-head">
+      <h1>Manual do Sistema — Selecta Import OS</h1>
+      <p>Guia de operação e referência, escrito pra consulta rápida.</p>
+      <p class="ver">versão viva &middot; cresce a cada sessão &middot; última atualização: 06/06/2026</p>
+    </div>
+
+    <section id="visao">
+      <h2>1. O que é o sistema</h2>
+      <p>O <strong>Selecta Import OS</strong> é o sistema que apoia a importação direta de hardware de TI da China para o Brasil — da cotação inicial até o desembaraço aduaneiro. Ele vive como o módulo <strong>Importação</strong> dentro do app de banco de preço da Selecta, e tem dados próprios, separados dos dados de licitação.</p>
+      <p>O objetivo dele é simples de enunciar e exigente de cumprir: <strong>saber, antes de comprar, quanto cada item vai custar posto no Brasil</strong> — com tributo calculado do jeito que a Receita calcula — e dar visibilidade de cada peça da operação (câmbio, fornecedores, embarques, regras).</p>
+    </section>
+
+    <section id="premissas">
+      <h2>2. Premissas fixas da operação</h2>
+      <p>Estas são as decisões de base. O sistema é construído em cima delas e não muda sozinho:</p>
+      <table class="k">
+        <tr><th>Premissa</th><th>O que significa</th></tr>
+        <tr><td>RADAR Limitado</td><td>A habilitação da Selecta no comércio exterior (faixa de até US$ 150 mil/semestre).</td></tr>
+        <tr><td>Modal aéreo</td><td>A carga vem de avião (hoje). Plano: aéreo → híbrido → marítimo conforme a escala crescer.</td></tr>
+        <tr><td>Recinto: Viracopos (VCP)</td><td>O desembaraço acontece em Campinas/SP.</td></tr>
+        <tr><td>Autodespacho</td><td>Você mesmo faz o desembaraço — por isso o sistema precisa ser exato.</td></tr>
+        <tr><td>Padrão DUIMP</td><td>O sistema sempre se molda ao padrão da Receita/DUIMP, nunca o contrário.</td></tr>
+        <tr><td>Canal verde</td><td>Objetivo permanente: organizar tudo pra cair no canal verde (liberação sem conferência física).</td></tr>
+        <tr><td>Portfólio</td><td>RAM, SSD, placas-mãe, GPU, periféricos. Nunca Apple.</td></tr>
+        <tr><td>ICMS na importação</td><td>Devido ao Piauí (destino), não ao estado de entrada.</td></tr>
+      </table>
+    </section>
+
+    <section id="arquitetura">
+      <h2>3. Como o sistema é montado</h2>
+      <p>Em duas camadas:</p>
+      <h3>Frente (o que você vê)</h3>
+      <p>Páginas HTML hospedadas no GitHub Pages, sem nenhum processo de compilação — é só subir o arquivo e está no ar. Cada aba pesada (Simulador, Câmbio) é uma página própria embutida via <code>iframe</code>.</p>
+      <h3>Fundo (onde os dados vivem)</h3>
+      <p>Um banco de dados Postgres no Supabase. Toda conta importante — converter moeda, calcular tributo — é feita <strong>dentro do banco</strong>, por funções, e não no navegador. Assim o cálculo é o mesmo não importa de onde se chame.</p>
+      <div class="box warn">
+        <div class="t">Cuidado — tabelas legadas</div>
+        As tabelas vivas têm nomes no singular e IDs numéricos (ex.: <code>imp_produto</code>, <code>imp_embarque</code>). Existe um modelo antigo com nomes no plural e IDs em formato UUID (ex.: <code>imp_produtos</code>, <code>imp_operacoes</code>) que <strong>não deve ser usado</strong> — está aposentado.
+      </div>
+    </section>
+
+    <section id="cambio">
+      <h2>4. Módulo Câmbio <span class="tag ok">pronto</span></h2>
+      <p>O câmbio é a fundação de todo cálculo de custo: tudo é multiplicado por ele. Um câmbio errado erra 100% do resultado. Por isso ele tem módulo próprio.</p>
+
+      <h3>As duas taxas (não confundir)</h3>
+      <table class="k">
+        <tr><th>Taxa</th><th>Pra que serve</th></tr>
+        <tr><td>Aduaneira (PTAX venda)</td><td>Define o valor da mercadoria em reais e a base de <strong>todos os tributos</strong>. É a PTAX de venda do <strong>último dia útil antes do registro</strong> — a que o Siscomex aplica. Você não escolhe nem negocia.</td></tr>
+        <tr><td>Banco (Itaú + spread)</td><td>É o que sai da sua conta pra pagar o fornecedor em dólar. É maior que a PTAX. Afeta seu <strong>caixa</strong>, não a base do imposto.</td></tr>
+      </table>
+      <div class="box key">
+        <div class="t">Regra de ouro</div>
+        O imposto é calculado sobre a <strong>PTAX de venda oficial</strong>. O dinheiro que você remete usa a <strong>taxa do banco</strong>. São dois números, dois propósitos.
+      </div>
+
+      <h3>Como funciona por dentro</h3>
+      <ul>
+        <li><strong>Fonte:</strong> Banco Central (API Olinda), cotação de <strong>fechamento</strong> do dólar.</li>
+        <li><strong>A função <code>imp_fn_sync_ptax()</code></strong> busca a PTAX no BACEN e grava na tabela <code>imp_cambio_historico</code>.</li>
+        <li><strong>A view <code>imp_vw_cambio_atual</code></strong> sempre mostra a cotação mais recente — é o que o painel lê.</li>
+        <li><strong>Automação:</strong> o agendador (<code>pg_cron</code>, job <code>sync-ptax-diario</code>) roda a função sozinho de segunda a sexta às <strong>14h30 (BRT)</strong>, depois do fechamento da PTAX.</li>
+      </ul>
+
+      <h3>Como usar o painel</h3>
+      <ul>
+        <li>O painel mostra a PTAX vigente, a data, e um <strong>selo de idade</strong>: verde (de hoje/ontem), amarelo (alguns dias), vermelho (vencida — não use sem reconfirmar).</li>
+        <li>Normalmente você não precisa fazer nada — a PTAX entra sozinha.</li>
+        <li>Se quiser forçar a atualização na hora, clique em <strong>"Puxar PTAX do BACEN"</strong>.</li>
+        <li>Os campos Caixa/Itaú aparecem como "—" até você registrar a taxa efetiva do banco (entrada manual, fruto da negociação).</li>
+      </ul>
+    </section>
+
+    <section id="simulacao">
+      <h2>5. Módulo Simulação <span class="tag ok">pronto</span></h2>
+      <p>Calcula o <strong>custo total de importar um item</strong> (custo "landed"). Você informa: fornecedor, incoterm, câmbio, FOB unitário e quantidade, frete e seguro internacionais. O sistema devolve o valor aduaneiro, cada tributo, e o custo total, unitário e o multiplicador sobre o FOB.</p>
+      <ul>
+        <li>O cálculo roda no banco, na função <code>imp_fn_custo_landed</code> — os tributos vêm direto das alíquotas vigentes por NCM.</li>
+        <li>O <strong>incoterm</strong> controla o que entra no valor aduaneiro: CFR/CPT já incluem o frete; CIF/CIP incluem frete e seguro.</li>
+        <li>Os custos operacionais (capatazia em Viracopos, frete interno até Teresina, despacho) entram como <strong>estimativa editável</strong> — são substituídos pelos números reais quando cotados.</li>
+      </ul>
+    </section>
+
+    <section id="tributos">
+      <h2>6. Tributação <span class="tag ok">base pronta</span></h2>
+      <p>As alíquotas de cada tributo (II, IPI, PIS, COFINS, ICMS) ficam na tabela <code>imp_tributo_aliquota</code>, organizadas por NCM e com <strong>fundamento legal rastreável</strong> (cada linha aponta para o ato legal que a sustenta).</p>
+      <ul>
+        <li><strong>Taxa Siscomex:</strong> cobrada por adição, em <strong>faixas regressivas</strong> (quanto mais adições, menor o valor de cada uma). 1 adição = R$ 154,23.</li>
+        <li><strong>CBS/IBS:</strong> em 2026 são calculados (obrigação acessória) mas <strong>não recolhidos</strong>, e não entram na base do ICMS.</li>
+        <li>As alíquotas são datadas — perto da data real do registro, vale reconsultar o Classif/Simulador da Receita, porque mudanças (ex.: resoluções GECEX) acontecem.</li>
+      </ul>
+    </section>
+
+    <section id="seguranca">
+      <h2>7. Segurança e acesso <span class="tag ok">auditado</span></h2>
+      <ul>
+        <li><strong>Escrita protegida:</strong> nenhuma tabela aceita gravação pela chave pública (<code>anon</code>). Alterar ou apagar dados exige estar logado. Suas alíquotas e parâmetros não podem ser mexidos por fora.</li>
+        <li><strong>Leitura controlada:</strong> a chave pública só lê o necessário (o câmbio). As views que expõem dados sensíveis — fornecedores, preços de compra, embarques, operações — foram <strong>fechadas</strong> à chave pública.</li>
+        <li><strong>A chave pública é pública mesmo</strong> (fica no código do site). Ela não guarda segredo; quem segura tudo é o RLS (regras de acesso por linha) no banco.</li>
+      </ul>
+      <div class="box">
+        <div class="t">Direção (futuro)</div>
+        O acesso de escrita vai ser amarrado a <strong>um único dono — você</strong>, e o app caminha para exigir login só seu. O sistema é valioso e fica fechado.
+      </div>
+    </section>
+
+    <section id="regulatoria">
+      <h2>8. Base Regulatória <span class="tag wip">a construir</span></h2>
+      <p>Esta aba vai guardar a <strong>cópia das legislações</strong> que fundamentam o projeto — leis, decretos, portarias, instruções normativas, resoluções — pra você consultar a fonte direto, sem caçar na internet. Textos de leis e atos oficiais são domínio público, então podem ser copiados na íntegra.</p>
+      <p>Conforme cada norma é usada no sistema, ela é catalogada com a referência completa e o que embasa. Algumas já mapeadas:</p>
+      <table class="k">
+        <tr><th>Norma</th><th>Embasa</th></tr>
+        <tr><td>Portaria MF 6/99</td><td>Taxa de câmbio dos tributos = PTAX venda, efeitos no dia seguinte.</td></tr>
+        <tr><td>Portaria ME 4.131/2021 + IN RFB 2.024/2021</td><td>Taxa Siscomex e suas faixas regressivas.</td></tr>
+        <tr><td>Lei 14.973/2024</td><td>Alíquota de COFINS-Importação (adicional).</td></tr>
+        <tr><td>Súmula Vinculante STF 48</td><td>ICMS na importação devido ao estado de destino (PI).</td></tr>
+      </table>
+    </section>
+
+    <section id="glossario">
+      <h2>9. Glossário rápido</h2>
+      <table class="k">
+        <tr><td>DUIMP</td><td>Declaração Única de Importação — o documento eletrônico do despacho moderno.</td></tr>
+        <tr><td>PTAX</td><td>Taxa de câmbio oficial de referência divulgada pelo Banco Central.</td></tr>
+        <tr><td>Valor aduaneiro (VA)</td><td>Base de cálculo dos tributos: mercadoria + frete + seguro, em reais.</td></tr>
+        <tr><td>FOB</td><td>Preço da mercadoria sem frete nem seguro.</td></tr>
+        <tr><td>Incoterm</td><td>Regra que define quem paga frete/seguro e até onde (FCA, CFR, CIF...).</td></tr>
+        <tr><td>NCM</td><td>Código de classificação da mercadoria que define as alíquotas.</td></tr>
+        <tr><td>Adição</td><td>Cada item/fatura distinta dentro de uma declaração de importação.</td></tr>
+        <tr><td>Canal verde</td><td>Liberação automática, sem conferência física ou documental.</td></tr>
+        <tr><td>RLS</td><td>Regras de segurança no banco que controlam quem lê/grava cada linha.</td></tr>
+      </table>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>
