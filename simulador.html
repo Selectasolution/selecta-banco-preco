@@ -40,7 +40,7 @@
   .row.c3{grid-template-columns:1fr 1fr 1fr}
   .row + .row{margin-top:12px}
   .hint{font-size:11px;color:var(--faint);margin-top:11px;line-height:1.5}
-  .op-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .hint b{color:var(--accent-2)}
   .btn{width:100%;margin-top:16px;background:linear-gradient(180deg,var(--accent),var(--accent-deep));color:#03120b;font-weight:700;border:0;border-radius:9px;padding:13px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:filter .15s,transform .05s}
   .btn:hover{filter:brightness(1.07)}
   .btn:active{transform:translateY(1px)}
@@ -60,16 +60,21 @@
   .line:first-of-type{border-top:0}
   .line .lbl{color:var(--dim)}
   .line .lbl .pct{color:var(--faint);font-size:11.5px;margin-left:6px}
+  .line .lbl .star{color:var(--accent-2);font-weight:700;margin-left:4px}
   .line .lbl .note{display:block;font-size:11px;color:var(--faint);line-height:1.35;margin-top:2px}
   .line .val{font-family:var(--mono);text-align:right;white-space:nowrap;color:var(--text)}
   .line.va{border-top:1px solid var(--border-soft)}
   .line.va .lbl{color:var(--text);font-weight:600;letter-spacing:.02em;text-transform:uppercase;font-size:12.5px}
   .line.va .val{color:var(--accent-2);font-weight:700;font-size:15px}
+  .line.bc{background:rgba(59,130,246,.05)}
+  .line.bc .lbl{color:var(--va);font-weight:600;font-size:12px}
+  .line.bc .val{color:var(--va);font-weight:700}
   .line.total{border-top:1px solid var(--border-soft)}
   .line.total .lbl{color:var(--text);font-weight:700;text-transform:uppercase;font-size:12.5px;letter-spacing:.02em}
   .line.total .val{color:var(--accent-2);font-weight:700;font-size:15px}
   .line.usd .val{color:var(--dim)}
   .section-tag{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:16px 0 2px;font-weight:600}
+  .section-tag.adu{color:#60a5fa}
   .bar{display:flex;height:9px;border-radius:5px;overflow:hidden;margin:16px 0 9px}
   .bar i{display:block;height:100%}
   .legend{display:flex;gap:18px;font-size:11.5px;color:var(--dim);flex-wrap:wrap}
@@ -89,6 +94,9 @@
   .avisos{margin-top:16px;border:1px solid var(--border);border-radius:9px;padding:11px 13px;background:rgba(245,158,11,.04)}
   .avisos .tt{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--trib);font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px}
   .avisos li{font-size:11.5px;color:var(--dim);margin:3px 0;line-height:1.4}
+  .estim{margin-top:12px;border:1px solid rgba(52,211,153,.25);border-radius:9px;padding:11px 13px;background:rgba(16,185,129,.04)}
+  .estim .tt{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-2);font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .estim li{font-size:11.5px;color:var(--dim);margin:3px 0;line-height:1.4;font-family:var(--mono)}
   details.fund{margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
   details.fund summary{cursor:pointer;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;list-style:none;display:flex;align-items:center;gap:6px}
   details.fund summary::-webkit-details-marker{display:none}
@@ -108,7 +116,7 @@
       <div class="logo">S</div>
       <div><h1>Selecta Import OS</h1><div class="sub">Simulador de Custo Landed</div></div>
     </div>
-    <div class="badge">● cálculo no banco · <span style="font-family:var(--mono)">imp_fn_custo_landed</span></div>
+    <div class="badge">● cálculo no banco · <span style="font-family:var(--mono)">imp_fn_custo_landed v2</span></div>
   </header>
 
   <div class="grid">
@@ -154,21 +162,15 @@
           <div class="row c3" style="margin-top:12px">
             <div><label>Qtd</label><input id="qtd" type="number" step="1" value="200" /></div>
             <div><label>FOB un. US$</label><input id="fob" type="number" step="0.01" value="12.50" /></div>
-            <div><label>Peso br. kg</label><input id="peso" type="number" step="0.001" value="0.065" /></div>
+            <div><label>Peso br. un. kg</label><input id="peso" type="number" step="0.001" value="0.060" /></div>
           </div>
         </div>
-        <p class="hint">FOB é unitário; o total (FOB un. × qtd) é montado e enviado ao banco automaticamente. Selecione um produto para puxar descrição e homologação, ou informe o NCM manualmente.</p>
+        <p class="hint">FOB é unitário; o total (FOB un. × qtd) é montado e enviado ao banco automaticamente. O <b>peso bruto unitário</b> × qtd vira o peso total (kg) enviado à função — é o que mede capatazia e frete nacional. Selecione um produto para puxar descrição e homologação, ou informe o NCM manualmente.</p>
       </div>
 
       <div class="panel">
-        <div class="step"><span class="n">3</span><span class="t">Operacional · estimativa</span></div>
-        <div class="op-grid">
-          <div><label>Armazenagem (% VA)</label><input id="op-armaz" type="number" step="0.01" value="1.0" /></div>
-          <div><label>Spread cambial (% VA)</label><input id="op-spread" type="number" step="0.01" value="2.0" /></div>
-          <div><label>Capatazia (R$/kg)</label><input id="op-capat" type="number" step="0.0001" value="1.0742" /></div>
-          <div><label>Frete nac. (R$/kg)</label><input id="op-frenac" type="number" step="0.01" value="3.50" /></div>
-        </div>
-        <p class="hint">Parâmetros VCP→THE pré-preenchidos. Não são calculados pelo banco (a função os declara como “a cotar”); ajuste quando tiver cotação real.</p>
+        <div class="step"><span class="n">3</span><span class="t">Despesas · estimadas pelo banco</span></div>
+        <p class="hint" style="margin-top:0">Armazenagem, capatazia, frete nacional e spread são estimados pela função a partir de <span style="font-family:var(--mono)">imp_parametro_custo</span> e marcados com <b>*</b> no resultado — valores a confirmar na Tarifação Online do Viracopos (armazenagem/capatazia) e no Itaú (spread). <b>Armazenagem e capatazia entram na base do ICMS</b> (RICMS-PI Dec. 21.866/2023 §10); frete nacional e spread ficam fora da base, mas compõem o caixa.</p>
         <button class="btn" id="btn-calc" onclick="calcular()"><i data-lucide="calculator"></i> Calcular custo landed →</button>
         <div class="status" id="status"></div>
       </div>
@@ -179,7 +181,7 @@
         <div>
           <i data-lucide="ship" style="width:34px;height:34px;opacity:.4"></i>
           <div style="margin-top:10px">Preencha o embarque e clique em <b style="color:var(--dim)">Calcular custo landed</b>.</div>
-          <div style="font-size:11.5px;margin-top:6px">VA e tributos vêm direto da função no Supabase.</div>
+          <div style="font-size:11.5px;margin-top:6px">VA, tributos e despesas vêm direto da função no Supabase.</div>
         </div>
       </div>
       <div id="resultado" style="display:none"></div>
@@ -195,8 +197,8 @@
   const $=(id)=>document.getElementById(id);
   const num=(id)=>Number($(id).value)||0;
   const esc=(s)=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const fmtBRL=(n)=>Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const fmtUSD=(n)=>Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtBRL=(n)=>Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtUSD=(n)=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 
   const SEM_FRETE=['CFR','CPT','CIF','CIP'];
   const SEM_SEGURO=['CIF','CIP'];
@@ -258,12 +260,14 @@
     const freteEff=SEM_FRETE.includes(incoterm)?0:num('frete');
     const seguroEff=SEM_SEGURO.includes(incoterm)?0:num('seguro');
     const fobTotalUsd=+(fobUn*qtd).toFixed(2);
+    const pesoTotal=+(qtd*pesoUn).toFixed(3);   // peso BRUTO total (kg) → capatazia e frete nacional
     if(!ncm){st.className='status err';st.textContent='✗ informe o NCM';btn.disabled=false;return;}
     if(!cambio||!qtd||!fobUn){st.className='status err';st.textContent='✗ câmbio, qtd e FOB são obrigatórios';btn.disabled=false;return;}
     try{
       const {data,error}=await sb.rpc('imp_fn_custo_landed',{
         p_ncm:ncm, p_fob_usd:fobTotalUsd, p_frete_usd:freteEff, p_seguro_usd:seguroEff,
-        p_cambio:cambio, p_data:new Date().toISOString().slice(0,10), p_num_adicoes:1, p_quantidade:qtd
+        p_cambio:cambio, p_data:new Date().toISOString().slice(0,10),
+        p_num_adicoes:1, p_quantidade:qtd, p_peso_kg:pesoTotal
       });
       if(error) throw error;
       if(!data) throw new Error('retorno vazio da função');
@@ -277,30 +281,30 @@
 
   function render(d,ctx){
     const v=d.valores_brl, t=d.totais;
+    const dA=d.despesas_na_bc_icms||{}, dF=d.despesas_fora_bc_icms||{};
     const fob_un_brl=v.fob/ctx.qtd;
-    const pesoTotal=ctx.qtd*ctx.pesoUn;
-    const armaz=v.valor_aduaneiro*(num('op-armaz')/100);
-    const spread=v.valor_aduaneiro*(num('op-spread')/100);
-    const capat=num('op-capat')*pesoTotal;
-    const freNac=num('op-frenac')*pesoTotal;
-    const operacional=armaz+spread+capat+freNac;
     const tributos=t.carga_tributaria_brl;
-    const totalCheio=t.total_landed_caixa_brl+operacional;
-    const unit=totalCheio/ctx.qtd;
-    const mult=totalCheio/v.fob;
+    const despAduaneiras=dA.total||0;
+    const despPos=dF.total||0;
+    const operacional=despAduaneiras+despPos;
+    const totalCheio=t.total_landed_caixa_brl;     // já inclui VA + tributos + todas as despesas
+    const unit=t.custo_unitario_brl;
+    const mult=t.markup_sobre_fob;
     const pVA=v.valor_aduaneiro/totalCheio*100, pTR=tributos/totalCheio*100, pOP=operacional/totalCheio*100;
     const F={}; (d.aliquotas_aplicadas||[]).forEach(a=>F[a.tributo]=a);
     const pctOf=(k)=>F[k]?`<span class="pct">${Number(F[k].aliquota_pct).toFixed(2).replace('.',',')}%</span>`:'';
+    const star='<span class="star">*</span>';
     const lineUSD=(lbl,val,sub)=>`<div class="line usd"><div class="lbl">${lbl}${sub?`<span class="note">${sub}</span>`:''}</div><div class="val">US$ ${fmtUSD(val)}</div></div>`;
     const lineBRL=(lbl,val,cls='',sub='')=>`<div class="line ${cls}"><div class="lbl">${lbl}${sub?`<span class="note">${sub}</span>`:''}</div><div class="val">R$ ${fmtBRL(val)}</div></div>`;
     const cbsIbsCalc=(v.cbs_calculado||0)+(v.ibs_calculado||0);
     const fundHtml=(d.aliquotas_aplicadas||[]).slice().sort((a,b)=>a.tributo.localeCompare(b.tributo))
       .map(a=>`<div class="fund-item"><span class="ft">${esc(a.tributo)} · ${Number(a.aliquota_pct).toFixed(2).replace('.',',')}% · base ${esc(a.base_calculo)}</span><span class="fl">${esc(a.fundamento_legal)}</span></div>`).join('');
     const avisosHtml=(d.avisos||[]).map(x=>`<li>• ${esc(x)}</li>`).join('');
+    const confHtml=(d.confirmar_na_operacao||[]).map(x=>`<li>${esc(x)}</li>`).join('');
 
     $('resultado').innerHTML=`
       <div class="res-head"><h2>${esc(ctx.nome||'Item')}</h2><div class="meta">NCM ${esc(d.ncm)} · adição 1</div></div>
-      <div class="res-sub">${ctx.qtd} un × US$ ${fmtUSD(ctx.fobUn)} FOB · ${String(ctx.pesoUn).replace('.',',')} kg/un</div>
+      <div class="res-sub">${ctx.qtd} un × US$ ${fmtUSD(ctx.fobUn)} FOB · ${String(ctx.pesoUn).replace('.',',')} kg/un · ${String(d.peso_kg).replace('.',',')} kg bruto total</div>
       ${lineUSD(`FOB <span class="pct">${ctx.qtd} × US$ ${fmtUSD(ctx.fobUn)}</span>`, ctx.fobUn*ctx.qtd)}
       ${lineUSD('Frete rateado', ctx.freteEff, ctx.freteEff===0?'incluído no preço (incoterm '+ctx.incoterm+')':'')}
       ${lineUSD('Seguro rateado', ctx.seguroEff, ctx.seguroEff===0?'incluído no preço (incoterm '+ctx.incoterm+')':'')}
@@ -309,27 +313,30 @@
       ${lineBRL('IPI '+pctOf('IPI'), v.ipi)}
       ${lineBRL('PIS-Imp. '+pctOf('PIS_IMP'), v.pis_imp)}
       ${lineBRL('COFINS-Imp. '+pctOf('COFINS_IMP'), v.cofins_imp)}
-      ${lineBRL('ICMS-PI <span class="pct">'+(F['ICMS']?Number(F['ICMS'].aliquota_pct).toFixed(1).replace('.',',')+'% por dentro':'')+'</span>', v.icms)}
-      ${lineBRL('CBS / IBS <span class="pct">2026</span>', 0, '', 'calculado R$ '+fmtBRL(cbsIbsCalc)+' — dispensado e fora do caixa em 2026 (LC 214/2025)')}
       ${lineBRL('Taxa Siscomex', v.siscomex)}
+      <div class="section-tag adu">Despesas aduaneiras · entram na base do ICMS ${star}</div>
+      ${lineBRL('Armazenagem '+star, dA.armazenagem)}
+      ${lineBRL('Capatazia '+star, dA.capatazia)}
+      ${lineBRL('Base de cálculo do ICMS', v.bc_icms, 'bc', 'VA + II + IPI + PIS + COFINS + Siscomex + armazenagem + capatazia (RICMS-PI §10) — cálculo por dentro')}
+      ${lineBRL('ICMS-PI <span class="pct">'+(F['ICMS']?Number(F['ICMS'].aliquota_pct).toFixed(1).replace('.',',')+'% por dentro':'')+'</span>', v.icms)}
+      ${lineBRL('CBS / IBS <span class="pct">2026</span>', 0, '', 'calculado R$ '+fmtBRL(cbsIbsCalc)+' — apurado, dispensado e fora do caixa em 2026 (LC 214/2025)')}
       ${lineBRL('Tributos', tributos, 'total')}
-      <div class="section-tag">Operacional · estimativa</div>
-      ${lineBRL('Armazenagem <span class="pct">'+String(num('op-armaz')).replace('.',',')+'% VA</span>', armaz)}
-      ${lineBRL('Capatazia <span class="pct">R$ '+String(num('op-capat')).replace('.',',')+'/kg</span>', capat)}
-      ${lineBRL('Frete nacional <span class="pct">R$ '+String(num('op-frenac')).replace('.',',')+'/kg</span>', freNac)}
-      ${lineBRL('Spread cambial <span class="pct">'+String(num('op-spread')).replace('.',',')+'%</span>', spread)}
+      <div class="section-tag">Despesas pós-desembaraço · fora da base do ICMS ${star}</div>
+      ${lineBRL('Frete nacional VCP→THE '+star, dF.frete_nacional)}
+      ${lineBRL('Spread cambial '+star, dF.spread_cambial)}
       <div class="bar"><i style="width:${pVA}%;background:var(--va)"></i><i style="width:${pTR}%;background:var(--trib)"></i><i style="width:${pOP}%;background:var(--op)"></i></div>
       <div class="legend">
         <span><i class="dot" style="background:var(--va)"></i> Valor aduaneiro ${Math.round(pVA)}%</span>
         <span><i class="dot" style="background:var(--trib)"></i> Tributos ${Math.round(pTR)}%</span>
-        <span><i class="dot" style="background:var(--op)"></i> Operacional ${Math.round(pOP)}%</span>
+        <span><i class="dot" style="background:var(--op)"></i> Despesas ${Math.round(pOP)}%</span>
       </div>
       <div class="cards3">
         <div class="sc total"><div class="k">Custo total da importação</div><div class="big">R$ ${fmtBRL(totalCheio)}</div><div class="small">${ctx.qtd} un · ${esc(ctx.incoterm)}</div></div>
         <div class="sc cost"><div class="k">Custo unitário landed</div><div class="big">R$ ${fmtBRL(unit)}</div><div class="small">por unidade</div></div>
-        <div class="sc mult"><div class="k">Multiplicador s/ FOB</div><div class="big">${mult.toFixed(2).replace('.',',')}×</div><div class="small">FOB un. R$ ${fmtBRL(fob_un_brl)}</div></div>
+        <div class="sc mult"><div class="k">Multiplicador s/ FOB</div><div class="big">${Number(mult||0).toFixed(2).replace('.',',')}×</div><div class="small">FOB un. R$ ${fmtBRL(fob_un_brl)}</div></div>
       </div>
-      ${avisosHtml?`<div class="avisos"><div class="tt"><i data-lucide="alert-triangle"></i> Não incluso no caixa</div><ul style="margin:0;padding:0;list-style:none">${avisosHtml}</ul></div>`:''}
+      ${confHtml?`<div class="estim"><div class="tt"><i data-lucide="asterisk"></i> Valores a confirmar na operação (estimativas)</div><ul style="margin:0;padding:0;list-style:none">${confHtml}</ul></div>`:''}
+      ${avisosHtml?`<div class="avisos"><div class="tt"><i data-lucide="alert-triangle"></i> Notas do motor fiscal</div><ul style="margin:0;padding:0;list-style:none">${avisosHtml}</ul></div>`:''}
       <details class="fund"><summary><i data-lucide="scale"></i> Fundamentos legais das alíquotas</summary>${fundHtml}</details>
     `;
     $('placeholder').style.display='none'; $('resultado').style.display='block';
