@@ -500,14 +500,28 @@
     </div>
 
     <div class="imp-pane" id="imp-pane-regulatorio">
-      <div class="imp-empty">
-        <i data-lucide="scale"></i>
-        <h3 class="text-base font-semibold mb-1">Base Regulatória</h3>
-        <p class="text-sm max-w-md mx-auto">
-          Admin das fontes de dados: tabela NCM (TEC/TIPI), alíquotas ICMS-PI,
-          caches Anatel/INMETRO/INPI, legislação aduaneira monitorada.
-        </p>
-        <p class="text-xs mt-3 text-gray-500">A ser construído na <strong>Fase 1</strong>.</p>
+      <div class="mb-4">
+        <h3 class="text-base font-semibold">Base Regulatória — consulta legal por NCM</h3>
+        <p class="text-xs text-gray-500">Selecione um NCM e veja o tratamento legal completo, com a fonte ao lado de cada item. Somente consulta.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <!-- Coluna esquerda: busca + lista de NCMs -->
+        <div class="lg:col-span-4">
+          <input id="reg-busca" type="search" placeholder="Buscar por código ou descrição..."
+                 class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm mb-2">
+          <div id="reg-lista" class="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden max-h-[60vh] overflow-y-auto divide-y divide-gray-700/50"></div>
+        </div>
+        <!-- Coluna direita: dossiê do NCM -->
+        <div class="lg:col-span-8">
+          <div id="reg-dossie" class="bg-gray-800 border border-gray-700 rounded-lg p-4 min-h-[200px]">
+            <div class="imp-empty">
+              <i data-lucide="scale"></i>
+              <h3 class="text-base font-semibold mb-1">Selecione um NCM</h3>
+              <p class="text-sm max-w-md mx-auto">Escolha um código na lista ao lado para abrir alíquotas, anuências, atributos da DUIMP e notas regulatórias — cada um com o ato legal que o fundamenta.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2623,6 +2637,15 @@ window.importacao = (function () {
       btn.addEventListener('click', () => showPane(btn.dataset.pane));
     });
 
+    // Base Regulatória — listeners
+    const _regBusca = document.getElementById('reg-busca');
+    if (_regBusca) _regBusca.addEventListener('input', regRenderLista);
+    const _regLista = document.getElementById('reg-lista');
+    if (_regLista) _regLista.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-ncm]');
+      if (b) regAbrirDossie(b.getAttribute('data-ncm'));
+    });
+
     if (window.lucide && window.lucide.createIcons) {
       window.lucide.createIcons();
     }
@@ -2647,6 +2670,7 @@ window.importacao = (function () {
     });
     if (paneId === 'fornecedores') listarFornecedores();
     if (paneId === 'simulacao') simCarregarCatalogo();
+    if (paneId === 'regulatorio') regCarregar();
     if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
   }
 
@@ -3014,6 +3038,254 @@ window.importacao = (function () {
     } catch (e) {
       box.innerHTML = '<div style="color:#ef4444;font-size:0.85rem;">Erro ao carregar: ' + impEsc(e.message) + '</div>';
     }
+  }
+
+  // ===================================================================
+  // BASE REGULATÓRIA — consulta legal por NCM (somente leitura)
+  // ===================================================================
+  async function regCarregar() {
+    const lista = document.getElementById('reg-lista');
+    if (!lista || !impState.sb) return;
+    lista.innerHTML = '<div class="text-gray-500 text-sm p-3">Carregando NCMs...</div>';
+    try {
+      const { data, error } = await impState.sb
+        .from('imp_ncm_tabela')
+        .select('ncm, descricao, capitulo, requer_anatel, requer_inmetro, requer_li, extinta')
+        .order('ncm');
+      if (error) throw error;
+      impState.regNcms = data || [];
+      regRenderLista();
+    } catch (e) {
+      lista.innerHTML = '<div class="text-red-400 text-sm p-3">Erro ao carregar NCMs: ' + impEsc(e.message) + '</div>';
+    }
+  }
+
+  function regRenderLista() {
+    const lista = document.getElementById('reg-lista');
+    if (!lista) return;
+    const termo = (document.getElementById('reg-busca') ? document.getElementById('reg-busca').value : '').toLowerCase().trim();
+    const td = termo.replace(/\D/g, '');
+    let arr = impState.regNcms || [];
+    if (termo) {
+      arr = arr.filter((n) =>
+        (n.descricao || '').toLowerCase().includes(termo) ||
+        (n.ncm || '').includes(td || termo));
+    }
+    if (!arr.length) { lista.innerHTML = '<div class="text-gray-500 text-sm p-3">Nenhum NCM encontrado.</div>'; return; }
+    lista.innerHTML = arr.map((n) => {
+      const flags = [];
+      if (n.requer_anatel) flags.push('ANATEL');
+      if (n.requer_inmetro) flags.push('INMETRO');
+      if (n.requer_li) flags.push('LI');
+      const badge = flags.length ? '<span class="text-amber-400 text-xs whitespace-nowrap">' + flags.join(' · ') + '</span>' : '';
+      const ext = n.extinta ? '<span class="text-red-400 text-xs ml-1">EXTINTA</span>' : '';
+      return '<button data-ncm="' + impEsc(n.ncm) + '" class="reg-item w-full text-left px-3 py-2 hover:bg-gray-700/40 flex items-center justify-between gap-2">'
+        + '<span class="min-w-0"><span class="font-mono text-gray-200">' + impEsc(n.ncm) + '</span> <span class="text-gray-400 text-sm">' + impEsc(n.descricao || '') + '</span></span>'
+        + '<span class="flex items-center shrink-0">' + badge + ext + '</span>'
+        + '</button>';
+    }).join('');
+  }
+
+  async function regAbrirDossie(ncm) {
+    const box = document.getElementById('reg-dossie');
+    if (!box || !impState.sb) return;
+    box.innerHTML = '<div class="text-gray-400 text-sm">Consultando a lei para o NCM ' + impEsc(ncm) + '...</div>';
+    try {
+      const ano = new Date().getFullYear();
+      const [tab, aliq, icms, anu, atr, notas, trans] = await Promise.all([
+        impState.sb.from('imp_ncm_tabela').select('*').eq('ncm', ncm).maybeSingle(),
+        impState.sb.from('imp_vw_aliquota_atual').select('*').eq('ncm', ncm),
+        impState.sb.from('imp_aliquotas_icms_pi').select('*').eq('ativo', true),
+        impState.sb.from('imp_ncm_anuencia').select('*').eq('ncm', ncm),
+        impState.sb.from('imp_ncm_atributo').select('*').eq('ncm', ncm),
+        impState.sb.from('imp_ncm_nota_regulatoria').select('*').eq('ncm', ncm),
+        impState.sb.from('imp_aliquotas_transicao').select('*').eq('ano', ano).order('regime'),
+      ]);
+      // ICMS-PI: filtra a faixa que contém o NCM (comparação numérica)
+      const ncmN = Number(String(ncm).replace(/\D/g, ''));
+      const icmsMatch = (icms.data || []).filter((r) => {
+        const a = Number(String(r.ncm_inicio || '').replace(/\D/g, ''));
+        const b = Number(String(r.ncm_fim || '').replace(/\D/g, ''));
+        return !isNaN(a) && !isNaN(b) && ncmN >= a && ncmN <= b;
+      });
+      // Atos legais referenciados por anuências e notas
+      const atoIds = [];
+      (anu.data || []).forEach((x) => { if (x.ato_legal_id) atoIds.push(x.ato_legal_id); });
+      (notas.data || []).forEach((x) => { if (x.ato_legal_id) atoIds.push(x.ato_legal_id); });
+      const atosMap = {};
+      if (atoIds.length) {
+        const { data: atos } = await impState.sb
+          .from('imp_ato_legal')
+          .select('id, chave, tipo, numero, ano, ementa, url_oficial, status')
+          .in('id', atoIds);
+        (atos || []).forEach((a) => { atosMap[a.id] = a; });
+      }
+      regRenderDossie(ncm, {
+        tab: tab.data, aliq: aliq.data || [], icms: icmsMatch,
+        anu: anu.data || [], atr: atr.data || [], notas: notas.data || [],
+        trans: trans.data || [], atos: atosMap, ano: ano
+      });
+    } catch (e) {
+      box.innerHTML = '<div class="text-red-400 text-sm">Erro na consulta: ' + impEsc(e.message) + '</div>';
+    }
+  }
+
+  function regPct(v) {
+    if (v === null || v === undefined || v === '') return '—';
+    return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+  }
+  function regData(d) {
+    if (!d) return '—';
+    const p = String(d).slice(0, 10).split('-');
+    return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : String(d);
+  }
+  function regAtoHtml(id, atosMap) {
+    const a = atosMap[id];
+    if (!a) return '<span class="text-gray-600">—</span>';
+    const label = impEsc((a.tipo || '') + ' ' + (a.numero || '') + (a.ano ? '/' + a.ano : ''));
+    const rev = (a.status && a.status.toLowerCase().indexOf('revog') >= 0) ? ' <span class="text-red-400">(revogado)</span>' : '';
+    if (a.url_oficial) return '<a href="' + impEsc(a.url_oficial) + '" target="_blank" rel="noopener" class="text-primary-400 hover:text-primary-300 underline">' + label + '</a>' + rev;
+    return '<span class="text-gray-300">' + label + '</span>' + rev;
+  }
+  function regSecao(titulo, inner) {
+    return '<div class="mb-4"><h4 class="text-sm font-semibold text-gray-200 border-b border-gray-700 pb-1 mb-2">' + titulo + '</h4>' + inner + '</div>';
+  }
+
+  function regRenderDossie(ncm, d) {
+    const box = document.getElementById('reg-dossie');
+    if (!box) return;
+    const t = d.tab;
+    let html = '';
+
+    // Cabeçalho
+    let statusBadge = '';
+    if (t && t.extinta) statusBadge = '<span class="text-xs bg-red-900/40 text-red-300 border border-red-800 rounded px-2 py-0.5 ml-2">EXTINTA ' + regData(t.data_extincao) + '</span>';
+    else if (t) statusBadge = '<span class="text-xs bg-green-900/40 text-green-300 border border-green-800 rounded px-2 py-0.5 ml-2">vigente</span>';
+    html += '<div class="mb-4">'
+      + '<div class="flex items-center flex-wrap"><span class="font-mono text-lg text-white">' + impEsc(ncm) + '</span>' + statusBadge + '</div>'
+      + '<p class="text-sm text-gray-300 mt-1">' + impEsc(t ? (t.descricao || '') : 'NCM não consta na tabela regulatória (imp_ncm_tabela).') + '</p>';
+    if (t && t.data_validade_classificacao) html += '<p class="text-xs text-gray-500 mt-1">Validade da classificação: ' + regData(t.data_validade_classificacao) + '</p>';
+    if (t && (t.fonte || t.versao_fonte)) html += '<p class="text-xs text-gray-600 mt-0.5">Fonte: ' + impEsc(t.fonte || '') + (t.versao_fonte ? ' · ' + impEsc(t.versao_fonte) : '') + '</p>';
+    html += '</div>';
+
+    // Tributos na importação
+    let trib = '';
+    if (d.aliq.length) {
+      trib += '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="text-xs uppercase text-gray-500"><tr>'
+        + '<th class="text-left py-1 pr-2">Tributo</th><th class="text-right py-1 px-2">Alíquota</th><th class="text-left py-1 px-2">Base</th><th class="text-left py-1 px-2">Fundamento</th></tr></thead><tbody class="divide-y divide-gray-700/50">';
+      d.aliq.forEach((r) => {
+        trib += '<tr><td class="py-1 pr-2 text-gray-200">' + impEsc(r.tributo) + (r.uf ? ' <span class="text-gray-500">(' + impEsc(r.uf) + ')</span>' : '') + '</td>'
+          + '<td class="py-1 px-2 text-right font-medium text-gray-100">' + regPct(r.aliquota_pct) + (r.valor_minimo_brl ? '<span class="text-gray-500 text-xs"> · mín R$ ' + impEsc(r.valor_minimo_brl) + '</span>' : '') + '</td>'
+          + '<td class="py-1 px-2 text-gray-400 text-xs">' + impEsc(r.base_calculo || '—') + '</td>'
+          + '<td class="py-1 px-2 text-gray-400 text-xs">' + impEsc(r.fundamento_legal || '—') + '</td></tr>';
+      });
+      trib += '</tbody></table></div>';
+    } else if (t) {
+      trib += '<div class="text-sm text-gray-400">Sem linhas em imp_vw_aliquota_atual. Resumo da tabela NCM: '
+        + 'II ' + regPct(t.aliq_ii) + ' · IPI ' + regPct(t.aliq_ipi) + ' · PIS-Imp ' + regPct(t.aliq_pis_imp) + ' · COFINS-Imp ' + regPct(t.aliq_cofins_imp) + '.</div>';
+    } else {
+      trib += '<div class="text-sm text-gray-500">Sem alíquotas cadastradas para este NCM.</div>';
+    }
+    if (d.icms.length) {
+      d.icms.forEach((r) => {
+        trib += '<div class="mt-2 text-sm text-gray-300">ICMS-PI: <span class="font-medium text-gray-100">' + regPct(r.aliq_icms) + '</span>'
+          + (r.aliq_fecop ? ' + FECOP ' + regPct(r.aliq_fecop) : '')
+          + (r.base_calculo_modo ? ' <span class="text-gray-500 text-xs">(' + impEsc(r.base_calculo_modo) + ')</span>' : '')
+          + (r.descricao ? ' <span class="text-gray-500 text-xs">— ' + impEsc(r.descricao) + '</span>' : '')
+          + (r.fonte ? '<span class="block text-xs text-gray-600">Fonte: ' + impEsc(r.fonte) + '</span>' : '') + '</div>';
+      });
+    }
+    html += regSecao('Tributos na importação', trib);
+
+    // Anuências / LPCO
+    let anuH = '';
+    if (t) {
+      const flags = [];
+      if (t.requer_anatel) flags.push('ANATEL');
+      if (t.requer_inmetro) flags.push('INMETRO');
+      if (t.requer_anvisa) flags.push('ANVISA');
+      if (t.requer_mapa) flags.push('MAPA');
+      if (t.requer_exercito) flags.push('Exército');
+      if (t.requer_li) flags.push('LI');
+      if (flags.length) anuH += '<div class="flex flex-wrap gap-1 mb-2">' + flags.map((f) => '<span class="text-xs bg-amber-900/40 text-amber-300 border border-amber-800 rounded px-2 py-0.5">' + f + '</span>').join('') + '</div>';
+      else anuH += '<div class="text-sm text-gray-400 mb-2">Nenhum órgão anuente / LI exigido pela tabela NCM.</div>';
+    }
+    if (d.anu.length) {
+      anuH += '<div class="space-y-1">';
+      d.anu.forEach((a) => {
+        anuH += '<div class="text-sm text-gray-300">'
+          + '<span class="font-medium text-gray-200">' + impEsc(a.orgao || '') + '</span>'
+          + (a.tipo_lpco ? ' · LPCO ' + impEsc(a.tipo_lpco) : '')
+          + (a.condicao ? ' · ' + impEsc(a.condicao) : '')
+          + ' <span class="text-gray-500 text-xs">[base: ' + regAtoHtml(a.ato_legal_id, d.atos) + ']</span>'
+          + (a.observacao ? '<span class="block text-xs text-gray-500">' + impEsc(a.observacao) + '</span>' : '')
+          + '</div>';
+      });
+      anuH += '</div>';
+    }
+    html += regSecao('Anuências / LPCO', anuH || '<div class="text-sm text-gray-500">—</div>');
+
+    // Atributos DUIMP
+    let atrH = '';
+    if (d.atr.length) {
+      atrH += '<div class="space-y-1">';
+      d.atr.forEach((a) => {
+        let vals = '';
+        if (a.valores_permitidos) { try { const v = typeof a.valores_permitidos === 'string' ? JSON.parse(a.valores_permitidos) : a.valores_permitidos; vals = Array.isArray(v) ? v.join(', ') : JSON.stringify(v); } catch (_) { vals = ''; } }
+        atrH += '<div class="text-sm text-gray-300">'
+          + (a.obrigatorio ? '<span class="text-red-400 text-xs mr-1">obrigatório</span>' : '<span class="text-gray-500 text-xs mr-1">opcional</span>')
+          + '<span class="font-medium text-gray-200">' + impEsc(a.nome || a.codigo_atributo || '') + '</span>'
+          + (a.codigo_atributo ? ' <span class="text-gray-500 text-xs font-mono">' + impEsc(a.codigo_atributo) + '</span>' : '')
+          + (a.tipo ? ' <span class="text-gray-500 text-xs">· ' + impEsc(a.tipo) + '</span>' : '')
+          + (vals ? '<span class="block text-xs text-gray-500">valores: ' + impEsc(vals) + '</span>' : '')
+          + '</div>';
+      });
+      atrH += '</div>';
+    } else {
+      atrH = '<div class="text-sm text-gray-500">Nenhum atributo DUIMP cadastrado para este NCM.</div>';
+    }
+    html += regSecao('Atributos exigidos na DUIMP', atrH);
+
+    // Notas regulatórias
+    let notH = '';
+    if (d.notas.length) {
+      const ordem = { 'alta': 0, 'alto': 0, 'media': 1, 'média': 1, 'medio': 1, 'baixa': 2, 'baixo': 2 };
+      const sorted = d.notas.slice().sort((x, y) => ((ordem[(x.criticidade || '').toLowerCase()] != null ? ordem[(x.criticidade || '').toLowerCase()] : 9) - (ordem[(y.criticidade || '').toLowerCase()] != null ? ordem[(y.criticidade || '').toLowerCase()] : 9)));
+      notH += '<div class="space-y-2">';
+      sorted.forEach((n) => {
+        const crit = (n.criticidade || '').toLowerCase();
+        const cor = (crit.indexOf('alt') >= 0) ? 'text-red-300 border-red-800 bg-red-900/30' : (crit.indexOf('med') >= 0 || crit.indexOf('méd') >= 0) ? 'text-amber-300 border-amber-800 bg-amber-900/30' : 'text-gray-300 border-gray-700 bg-gray-900/40';
+        notH += '<div class="border ' + cor + ' rounded-md p-2">'
+          + '<div class="flex items-center justify-between gap-2"><span class="font-medium text-sm">' + impEsc(n.titulo || '') + '</span>'
+          + (n.criticidade ? '<span class="text-xs uppercase">' + impEsc(n.criticidade) + '</span>' : '') + '</div>'
+          + (n.conteudo ? '<p class="text-xs mt-1 text-gray-400">' + impEsc(n.conteudo) + '</p>' : '')
+          + '<p class="text-xs mt-1 text-gray-500">Base: ' + regAtoHtml(n.ato_legal_id, d.atos) + (n.data_fim_vigencia ? ' · vigência até ' + regData(n.data_fim_vigencia) : '') + '</p>'
+          + '</div>';
+      });
+      notH += '</div>';
+    } else {
+      notH = '<div class="text-sm text-gray-500">Nenhuma nota regulatória para este NCM.</div>';
+    }
+    html += regSecao('Notas regulatórias', notH);
+
+    // Transição CBS/IBS (referência por ano/regime)
+    if (d.trans.length) {
+      let tr = '<p class="text-xs text-gray-500 mb-1">Referência geral por regime (não específica do NCM) — ano ' + d.ano + '.</p>'
+        + '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="text-xs uppercase text-gray-500"><tr>'
+        + '<th class="text-left py-1 pr-2">Regime</th><th class="text-right py-1 px-2">CBS</th><th class="text-right py-1 px-2">IBS</th><th class="text-right py-1 px-2">PIS</th><th class="text-right py-1 px-2">COFINS</th><th class="text-left py-1 px-2">Base legal</th></tr></thead><tbody class="divide-y divide-gray-700/50">';
+      d.trans.forEach((r) => {
+        tr += '<tr><td class="py-1 pr-2 text-gray-200">' + impEsc(r.regime || '') + (r.oficial ? '' : ' <span class="text-amber-500 text-xs">(estim.)</span>') + '</td>'
+          + '<td class="py-1 px-2 text-right">' + regPct(r.cbs_percentual) + '</td>'
+          + '<td class="py-1 px-2 text-right">' + regPct(r.ibs_percentual) + '</td>'
+          + '<td class="py-1 px-2 text-right">' + regPct(r.pis_percentual) + '</td>'
+          + '<td class="py-1 px-2 text-right">' + regPct(r.cofins_percentual) + '</td>'
+          + '<td class="py-1 px-2 text-gray-500 text-xs">' + impEsc(r.base_legal || '—') + '</td></tr>';
+      });
+      tr += '</tbody></table></div>';
+      html += regSecao('Transição CBS/IBS', tr);
+    }
+
+    box.innerHTML = html;
   }
 
   return {
