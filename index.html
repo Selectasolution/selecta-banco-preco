@@ -3231,7 +3231,32 @@ window.importacao = (function () {
       atrH += '<div class="space-y-1">';
       d.atr.forEach((a) => {
         let vals = '';
-        if (a.valores_permitidos) { try { const v = typeof a.valores_permitidos === 'string' ? JSON.parse(a.valores_permitidos) : a.valores_permitidos; vals = Array.isArray(v) ? v.join(', ') : JSON.stringify(v); } catch (_) { vals = ''; } }
+        if (a.valores_permitidos) {
+          try {
+            const v = typeof a.valores_permitidos === 'string' ? JSON.parse(a.valores_permitidos) : a.valores_permitidos;
+            const fmtItem = (x) => {
+              if (x === null || x === undefined) return '';
+              if (typeof x === 'object') {
+                const cod = x.codigo != null ? x.codigo : (x.code != null ? x.code : (x.valor != null ? x.valor : (x.value != null ? x.value : x.id)));
+                const desc = x.descricao != null ? x.descricao : (x.description != null ? x.description : (x.label != null ? x.label : (x.nome != null ? x.nome : x.texto)));
+                if (cod != null && desc != null) return cod + ' — ' + desc;
+                if (cod != null) return String(cod);
+                if (desc != null) return String(desc);
+                return JSON.stringify(x);
+              }
+              return String(x);
+            };
+            if (Array.isArray(v)) {
+              const itens = v.map(fmtItem).filter(Boolean);
+              const MAX = 8;
+              vals = itens.slice(0, MAX).join(' · ') + (itens.length > MAX ? ' · …(+' + (itens.length - MAX) + ')' : '');
+            } else if (typeof v === 'object') {
+              vals = fmtItem(v);
+            } else {
+              vals = String(v);
+            }
+          } catch (_) { vals = ''; }
+        }
         atrH += '<div class="text-sm text-gray-300">'
           + (a.obrigatorio ? '<span class="text-red-400 text-xs mr-1">obrigatório</span>' : '<span class="text-gray-500 text-xs mr-1">opcional</span>')
           + '<span class="font-medium text-gray-200">' + impEsc(a.nome || a.codigo_atributo || '') + '</span>'
