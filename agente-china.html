@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selecta Import OS — Agente China</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root{
+    --bg:#0a0e0c; --panel:#0f1411; --panel-2:#131a16; --card:#0d1310;
+    --border:#1f2937; --border-soft:#2b3640; --border-accent:#14532d;
+    --text:#e5e7eb; --dim:#9ca3af; --faint:#6b7280;
+    --accent:#10b981; --accent-2:#34d399; --accent-deep:#064e3b;
+    --va:#3b82f6; --trib:#f59e0b; --op:#6b7280; --red:#f87171; --red-deep:#7f1d1d;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.45}
+  body{padding:24px;max-width:1320px;margin:0 auto}
+  .hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+  .hdr-left{display:flex;align-items:center;gap:12px}
+  .logo{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:grid;place-items:center;font-weight:800;color:#04130c}
+  .hdr h1{font-size:18px;font-weight:700;margin:0;letter-spacing:-.01em}
+  .hdr .sub{font-size:11px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase}
+  .badge{font-family:var(--mono);font-size:11px;color:var(--accent-2);background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:999px;padding:5px 12px}
+  .truth{font-family:var(--mono);font-size:10.5px;color:var(--dim);border:1px solid var(--border);border-radius:8px;padding:7px 11px;max-width:340px;line-height:1.5}
+  .truth b{color:var(--accent-2);font-weight:600}
+  .grid{display:grid;grid-template-columns:420px 1fr;gap:22px;align-items:start}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 18px 20px}
+  .panel + .panel{margin-top:16px}
+  .panel.neg{border-color:var(--border-accent)}
+  .step{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .step .n{width:22px;height:22px;border-radius:6px;background:var(--accent);color:#04130c;font-weight:800;font-size:12px;display:grid;place-items:center}
+  .step .t{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:600}
+  label{display:block;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin:0 0 5px 1px}
+  input,select{width:100%;background:#0a0f0c;border:1px solid var(--border-soft);border-radius:8px;color:var(--text);padding:9px 11px;font-family:var(--mono);font-size:13.5px;outline:none;transition:border-color .15s,box-shadow .15s}
+  input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(16,185,129,.12)}
+  select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%239ca3af' stroke-width='2'><path d='M2 4l4 4 4-4'/></svg>");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
+  .row{display:grid;gap:12px}
+  .row.c2{grid-template-columns:1fr 1fr}
+  .row.c3{grid-template-columns:1fr 1fr 1fr}
+  .row + .row{margin-top:12px}
+  .hint{font-size:11px;color:var(--faint);margin-top:11px;line-height:1.5}
+  .hint b{color:var(--accent-2)}
+  .hint.warn{color:#fcd34d}
+  .btn{width:100%;margin-top:16px;background:linear-gradient(180deg,var(--accent),var(--accent-deep));color:#03120b;font-weight:700;border:0;border-radius:9px;padding:13px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:filter .15s,transform .05s}
+  .btn:hover{filter:brightness(1.07)}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .btn-sm{display:inline-flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--border-soft);color:var(--text);border-radius:7px;padding:7px 11px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans)}
+  .btn-sm:hover{border-color:var(--accent);color:var(--accent-2)}
+  .btn-sm.danger:hover{border-color:var(--red);color:var(--red)}
+  .ag-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .fob-readout{display:flex;gap:20px;margin-top:9px;align-items:flex-end}
+  .fob-readout .blk{display:flex;flex-direction:column;gap:2px}
+  .fob-readout .blk .l{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .fob-readout .blk .v{font-family:var(--mono);font-size:14px;color:var(--text)}
+  .fob-readout .empty{font-family:var(--mono);color:var(--faint);font-size:12px}
+
+  .placeholder{display:grid;place-items:center;text-align:center;color:var(--faint);min-height:480px;border:1px dashed var(--border-soft);border-radius:12px;padding:30px}
+
+  /* Veredito + termômetro */
+  .verdict{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+  .verdict-top{padding:18px 18px 4px}
+  .verdict .status{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+  .verdict .dot{width:9px;height:9px;border-radius:50%;background:var(--faint)}
+  .verdict h2{margin:2px 0 0;font-size:18px;font-weight:700;line-height:1.3}
+  .verdict .sub{font-size:12.5px;color:var(--dim);margin-top:6px;line-height:1.5}
+  .thermo{padding:14px 18px 18px}
+  .thermo-scale{position:relative;height:44px;margin:26px 0 6px}
+  .thermo-track{position:absolute;left:0;right:0;top:16px;height:12px;border-radius:7px;border:1px solid var(--border-soft);overflow:hidden;background:#0a0f0c}
+  .thermo-fill{position:absolute;inset:0}
+  .piso-line{position:absolute;top:7px;bottom:13px;width:2px;background:var(--text);transform:translateX(-1px);transition:left .35s ease}
+  .piso-flag{position:absolute;top:-15px;transform:translateX(-50%);font-family:var(--mono);font-size:10px;color:var(--dim);white-space:nowrap;transition:left .35s ease}
+  .needle{position:absolute;top:8px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:11px solid var(--text);transform:translateX(-7px);transition:left .35s ease,border-top-color .2s}
+  .needle-val{position:absolute;top:30px;transform:translateX(-50%);font-family:var(--mono);font-size:13px;font-weight:700;white-space:nowrap;transition:left .35s ease,color .2s}
+  .thermo-axis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:2px}
+
+  .cards3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px}
+  @media(max-width:680px){.cards3{grid-template-columns:1fr}}
+  .sc{border:1px solid var(--border-soft);border-radius:11px;padding:14px 16px;background:var(--card)}
+  .sc .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+  .sc .big{font-family:var(--mono);font-size:22px;font-weight:700}
+  .sc .small{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:5px}
+  .sc.accent .big{color:var(--accent-2)}
+  .sc.amber .big{color:var(--trib)}
+
+  table.bd{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px;margin-top:4px}
+  table.bd th,table.bd td{padding:6px 6px;text-align:right;white-space:nowrap}
+  table.bd th:first-child,table.bd td:first-child{text-align:left;font-family:var(--sans);color:var(--dim);font-size:12px}
+  table.bd thead th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);border-bottom:1px solid var(--border);padding-bottom:8px;font-family:var(--sans)}
+  table.bd tbody tr{border-bottom:1px solid rgba(31,41,55,.5)}
+  table.bd tr.tot td{border-top:1px solid var(--border-soft);font-weight:700;color:var(--text);padding-top:9px}
+  table.bd tr.comm td{color:var(--trib)}
+  table.bd tr.comm td:first-child{color:var(--trib)}
+  table.bd .cb{color:var(--accent-2)}
+
+  .sect{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:20px 0 8px;display:flex;align-items:center;gap:7px}
+  .proj{border:1px solid var(--border-soft);border-radius:11px;padding:14px 16px;background:var(--card)}
+  .proj .row.c2{margin-top:0}
+  .proj .chao{font-family:var(--mono);font-size:13px;color:var(--dim);margin-top:10px;line-height:1.6}
+  .proj .chao b{color:var(--accent-2)}
+
+  /* tabela de agentes */
+  table.ag{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+  table.ag th,table.ag td{padding:8px 8px;text-align:right;white-space:nowrap}
+  table.ag th:first-child,table.ag td:first-child{text-align:left}
+  table.ag thead th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);border-bottom:1px solid var(--border);padding-bottom:8px}
+  table.ag tbody tr{border-bottom:1px solid rgba(31,41,55,.5)}
+  table.ag tbody tr.sel{background:rgba(16,185,129,.06)}
+  table.ag .piso{font-family:var(--mono);font-weight:700;color:var(--accent-2)}
+  table.ag .nome{font-weight:600}
+  table.ag .meta{font-family:var(--mono);color:var(--dim)}
+
+  .status-line{font-family:var(--mono);font-size:12px;margin-top:10px;min-height:16px}
+  .status-line.err{color:var(--red)}
+  .status-line.ok{color:var(--accent-2)}
+  .lucide{width:1em;height:1em;vertical-align:-2px}
+</style>
+</head>
+<body>
+  <header class="hdr">
+    <div class="hdr-left">
+      <div class="logo">S</div>
+      <div><h1>Agente China</h1><div class="sub">Termômetro de negociação · uso interno</div></div>
+    </div>
+    <div class="truth">Custo vem da RPC <b>imp_fn_custo_landed</b> (Import OS). Esta aba não toca na operação real — só decide. O agente não vê isto.</div>
+  </header>
+
+  <div class="grid">
+    <!-- ENTRADA -->
+    <div>
+      <!-- 1. Agente -->
+      <div class="panel">
+        <div class="step"><span class="n">1</span><span class="t">Agente</span></div>
+        <div class="row"><div>
+          <label>Perfil salvo</label>
+          <select id="ag-select" onchange="carregarAgente()"><option value="">— novo agente —</option></select>
+        </div></div>
+        <div class="row c2" style="margin-top:12px">
+          <div><label>Nome / apelido</label><input id="ag-nome" type="text" placeholder="Ex: Agente SC 3%"></div>
+          <div><label>Comissão %</label><input id="ag-com" type="number" step="0.1" value="20" oninput="onAgenteChange()"></div>
+        </div>
+        <div class="row" style="margin-top:12px"><div>
+          <label>Taxa fixa anual R$ <span style="text-transform:none;letter-spacing:0;color:var(--faint)">(opcional · overhead)</span></label>
+          <input id="ag-fixo" type="number" step="0.01" value="0">
+        </div></div>
+        <div class="ag-actions">
+          <button class="btn-sm" onclick="salvarAgente()"><i data-lucide="save"></i> Salvar perfil</button>
+          <button class="btn-sm danger" onclick="excluirAgente()"><i data-lucide="trash-2"></i> Excluir</button>
+        </div>
+        <p class="hint">A comissão entra no custo (por fora da base tributária). A taxa fixa é overhead anual — <b>não entra no custo do produto</b>, só na comparação entre agentes.</p>
+      </div>
+
+      <!-- 2. Produto / embarque -->
+      <div class="panel">
+        <div class="step"><span class="n">2</span><span class="t">Produto &amp; embarque</span></div>
+        <div class="row"><div>
+          <label>Produto (catálogo · imp_produto)</label>
+          <select id="produto" onchange="selecionarProduto()"><option value="">— carregando catálogo… —</option></select>
+        </div></div>
+        <div class="row" style="margin-top:12px"><div>
+          <label>NCM</label>
+          <input id="ncm" list="ncm-list" type="text" value="84717040" placeholder="8 dígitos" oninput="lookupNcm()">
+          <datalist id="ncm-list">
+            <option value="84717040">SSD</option><option value="84733042">Memória RAM</option>
+            <option value="84733041">Placa-mãe</option><option value="84716052">Teclado</option>
+            <option value="84716053">Mouse</option><option value="84718000">Periférico</option>
+            <option value="85183000">Headset</option><option value="85044090">Fonte</option>
+            <option value="84145990">Cooler</option>
+          </datalist>
+          <div id="ncm-desc" class="hint" style="margin-top:6px"></div>
+        </div></div>
+        <div class="row c3" style="margin-top:12px">
+          <div><label>Qtd</label><input id="qtd" type="number" step="1" value="200" oninput="recalcFob()"></div>
+          <div><label>Peso br. un. kg</label><input id="peso" type="number" step="0.001" value="0.060"></div>
+          <div><label>Incoterm</label>
+            <select id="incoterm">
+              <option>EXW</option><option selected>FCA</option><option>FOB</option>
+              <option>FAS</option><option>CFR</option><option>CPT</option><option>CIF</option><option>CIP</option>
+            </select>
+          </div>
+        </div>
+        <div class="row c3" style="margin-top:12px">
+          <div><label>Câmbio R$/US$</label><input id="cambio" type="number" step="0.0001" value="5.05"></div>
+          <div><label>Frete int. US$</label><input id="frete" type="number" step="0.01" value="130"></div>
+          <div><label>Seguro int. US$</label><input id="seguro" type="number" step="0.01" value="20"></div>
+        </div>
+      </div>
+
+      <!-- 3. Negociação -->
+      <div class="panel neg">
+        <div class="step"><span class="n">3</span><span class="t">Negociação</span></div>
+        <div class="row"><div>
+          <label>Preço que achei no 1688 · referência (FOB un. US$)</label>
+          <input id="fob-ref" type="number" step="0.0001" value="12.50" oninput="recalcFob()">
+          <div class="fob-readout" id="ro-ref"></div>
+          <div class="hint">Tua régua. O ganho real e o piso se medem contra este preço — nunca contra a tabela que o agente apresenta.</div>
+        </div></div>
+        <div class="row" style="margin-top:14px"><div>
+          <label>Preço que o agente negociou (FOB un. US$) <span style="text-transform:none;letter-spacing:0;color:var(--faint)">— deixe vazio para ver só a meta</span></label>
+          <input id="fob-neg" type="number" step="0.0001" placeholder="0" oninput="recalcFob()">
+          <div class="fob-readout" id="ro-neg"></div>
+        </div></div>
+        <button class="btn" id="btn-calc" onclick="calcular()"><i data-lucide="gauge"></i> Calcular piso &amp; custo →</button>
+        <div class="status-line" id="status"></div>
+      </div>
+    </div>
+
+    <!-- RESULTADO -->
+    <div class="panel" style="min-height:560px">
+      <div id="placeholder" class="placeholder">
+        <div>
+          <i data-lucide="handshake" style="width:34px;height:34px;opacity:.4"></i>
+          <div style="margin-top:10px">Escolha o agente, o produto e os preços, e clique em <b style="color:var(--dim)">Calcular piso &amp; custo</b>.</div>
+          <div style="font-size:11.5px;margin-top:6px">O custo landed vem da mesma função do Import OS.</div>
+        </div>
+      </div>
+      <div id="resultado" style="display:none"></div>
+    </div>
+  </div>
+
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  const SUPABASE_URL='https://odamfhflldygdfrnnjzu.supabase.co';
+  const SUPABASE_ANON_KEY='sb_publishable_7q_884vzxsdTLOIw7ZMx7A_qiUuUc-n';
+  const sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+  const $=(id)=>document.getElementById(id);
+  const num=(id)=>Number($(id).value)||0;
+  const esc=(s)=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const fmtBRL=(n)=>Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtUSD=(n)=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const pct=(x)=>(x*100).toFixed(1).replace('.',',')+'%';
+
+  const SEM_FRETE=['CFR','CPT','CIF','CIP'];
+  const SEM_SEGURO=['CIF','CIP'];
+  const AG_KEY='selecta_agentes_china_v1';
+
+  let CATALOGO={}, PORNCM={};
+
+  // ---------- AGENTES (localStorage) ----------
+  function lerAgentes(){try{return JSON.parse(localStorage.getItem(AG_KEY))||[]}catch(e){return[]}}
+  function salvarAgentes(a){try{localStorage.setItem(AG_KEY,JSON.stringify(a))}catch(e){}}
+  function renderAgenteSelect(){
+    const sel=$('ag-select'); const ags=lerAgentes(); const cur=sel.value;
+    sel.innerHTML='<option value="">— novo agente —</option>'+ags.map(a=>`<option value="${esc(a.id)}">${esc(a.nome)} · ${a.com}%${a.fixo>0?' + R$'+fmtBRL(a.fixo)+'/ano':''}</option>`).join('');
+    if(cur && ags.some(a=>a.id===cur)) sel.value=cur;
+  }
+  window.carregarAgente=function(){
+    const id=$('ag-select').value;
+    const a=lerAgentes().find(x=>x.id===id);
+    if(a){ $('ag-nome').value=a.nome; $('ag-com').value=a.com; $('ag-fixo').value=a.fixo||0; }
+    else { $('ag-nome').value=''; $('ag-com').value=20; $('ag-fixo').value=0; }
+  };
+  window.salvarAgente=function(){
+    const nome=$('ag-nome').value.trim();
+    if(!nome){ alert('Dê um nome ao agente antes de salvar.'); $('ag-nome').focus(); return; }
+    const com=num('ag-com'), fixo=num('ag-fixo');
+    const ags=lerAgentes();
+    const id=$('ag-select').value || ('ag_'+Date.now());
+    const idx=ags.findIndex(a=>a.id===id);
+    const rec={id,nome,com,fixo};
+    if(idx>=0) ags[idx]=rec; else ags.push(rec);
+    salvarAgentes(ags); renderAgenteSelect(); $('ag-select').value=id;
+  };
+  window.excluirAgente=function(){
+    const id=$('ag-select').value;
+    if(!id){ alert('Selecione um perfil salvo para excluir.'); return; }
+    if(!confirm('Excluir este perfil de agente?')) return;
+    salvarAgentes(lerAgentes().filter(a=>a.id!==id));
+    $('ag-select').value=''; carregarAgente(); renderAgenteSelect();
+  };
+  window.onAgenteChange=function(){ /* recálculo do piso por agente é feito no calcular() */ };
+
+  // ---------- FOB readout ----------
+  window.recalcFob=function(){
+    const qtd=num('qtd'); const ref=num('fob-ref'); const neg=num('fob-neg');
+    const ro=(unit)=> unit>0
+      ? `<div class="blk"><span class="l">unitário</span><span class="v">US$ ${fmtUSD(unit)}</span></div>`
+        +`<div class="blk"><span class="l">compra total</span><span class="v">US$ ${fmtUSD(unit*qtd)}</span></div>`
+      : '<span class="empty">—</span>';
+    $('ro-ref').innerHTML=ro(ref);
+    $('ro-neg').innerHTML=ro(neg);
+  };
+
+  // ---------- CATÁLOGO ----------
+  async function carregarCatalogo(){
+    const sel=$('produto');
+    try{
+      const {data,error}=await sb.from('imp_produto')
+        .select('chave,nome_comercial,ncm,descricao_duimp,possui_radio,categoria').order('nome_comercial');
+      if(error) throw error;
+      if(!data||!data.length){ sel.innerHTML='<option value="">— catálogo vazio · informe o NCM manual —</option>'; lookupNcm(); return; }
+      CATALOGO={}; PORNCM={};
+      sel.innerHTML='<option value="">— selecione (ou informe NCM manual) —</option>'+
+        data.map(r=>{CATALOGO[r.chave]=r; const n=(r.ncm||'').trim(); if(n&&!PORNCM[n])PORNCM[n]=r;
+          return `<option value="${esc(r.chave)}">${esc(r.nome_comercial||r.chave)} — ${esc(n)}</option>`;}).join('');
+      lookupNcm();
+    }catch(e){ sel.innerHTML='<option value="">— catálogo indisponível · informe o NCM manual —</option>'; console.warn('[catálogo]',e.message); }
+  }
+  window.selecionarProduto=function(){
+    const r=CATALOGO[$('produto').value];
+    if(!r){ renderDesc(null); return; }
+    if(r.ncm) $('ncm').value=(r.ncm||'').trim();
+    renderDesc(r);
+  };
+  window.lookupNcm=function(){
+    if($('produto').value && CATALOGO[$('produto').value]) return;
+    renderDesc(PORNCM[$('ncm').value.trim()]||null);
+  };
+  function renderDesc(r){
+    const el=$('ncm-desc');
+    if(!r){ el.innerHTML='<span style="color:var(--faint)">NCM não vinculado a produto do catálogo (digitação manual).</span>'; return; }
+    const homo = r.possui_radio ? ' · <span style="color:#fcd34d">rádio: exige ANATEL</span>' : ' · sem rádio';
+    el.innerHTML=`<b>${esc(r.nome_comercial||r.chave)}</b>${homo}`;
+  }
+  function nomeAtual(){
+    if($('produto').value && CATALOGO[$('produto').value]) return CATALOGO[$('produto').value].nome_comercial;
+    const r=PORNCM[$('ncm').value.trim()]; return r? r.nome_comercial : null;
+  }
+
+  // ---------- RPC ----------
+  async function rpcLanded(fobTotalUsd, ctx){
+    const {data,error}=await sb.rpc('imp_fn_custo_landed',{
+      p_ncm:ctx.ncm, p_fob_usd:+fobTotalUsd.toFixed(2), p_frete_usd:ctx.freteEff, p_seguro_usd:ctx.seguroEff,
+      p_cambio:ctx.cambio, p_data:new Date().toISOString().slice(0,10),
+      p_num_adicoes:1, p_quantidade:ctx.qtd, p_peso_kg:ctx.pesoTotal
+    });
+    if(error) throw error;
+    if(!data) throw new Error('retorno vazio da função');
+    if(data.erro) throw new Error(data.erro);
+    if(data.ncm_encontrado===false) throw new Error('NCM '+ctx.ncm+' não cadastrado no banco de alíquotas');
+    return data;
+  }
+
+  // ---------- CALCULAR ----------
+  window.calcular=async function(){
+    const st=$('status'), btn=$('btn-calc');
+    st.className='status-line'; st.textContent='consultando o motor do Import OS...'; btn.disabled=true;
+    try{
+      const incoterm=$('incoterm').value;
+      const ctx={
+        ncm:$('ncm').value.trim(),
+        cambio:num('cambio'), qtd:num('qtd'), pesoTotal:+(num('qtd')*num('peso')).toFixed(3),
+        freteEff:SEM_FRETE.includes(incoterm)?0:num('frete'),
+        seguroEff:SEM_SEGURO.includes(incoterm)?0:num('seguro'),
+        incoterm
+      };
+      const fobRefUn=num('fob-ref'), fobNegUn=num('fob-neg');
+      const com=num('ag-com')/100, fixo=num('ag-fixo');
+      if(!ctx.ncm){ throw new Error('informe o NCM'); }
+      if(!ctx.cambio||!ctx.qtd||!fobRefUn){ throw new Error('câmbio, qtd e FOB de referência são obrigatórios'); }
+
+      // chamada de referência (sempre)
+      const dRef=await rpcLanded(fobRefUn*ctx.qtd, ctx);
+      const custoRef=dRef.totais.total_landed_caixa_brl;
+      const fobRefBrl=dRef.valores_brl.fob;
+
+      const temNeg = fobNegUn>0 && fobNegUn<fobRefUn;
+      // segundo ponto para a inclinação m: o negociado (se válido) ou metade do FOB ref
+      let dSeg, custo2, fob2Brl, dNeg=null;
+      if(temNeg){ dNeg=await rpcLanded(fobNegUn*ctx.qtd, ctx); custo2=dNeg.totais.total_landed_caixa_brl; fob2Brl=dNeg.valores_brl.fob; }
+      else { dSeg=await rpcLanded(fobRefUn*0.5*ctx.qtd, ctx); custo2=dSeg.totais.total_landed_caixa_brl; fob2Brl=dSeg.valores_brl.fob; }
+      const m=(custoRef-custo2)/(fobRefBrl-fob2Brl);   // inclinação do custo-sem-comissão vs FOB
+
+      render({dRef,dNeg,custoRef,fobRefBrl,m,com,fixo,fobRefUn,fobNegUn,temNeg,ctx});
+      st.className='status-line ok'; st.textContent='✓ calculado';
+    }catch(e){ st.className='status-line err'; st.textContent='✗ '+(e.message||e); }
+    finally{ btn.disabled=false; }
+  };
+
+  function pisoDe(c,m){ return (c<=0)?0:(c/(m+c)); }   // break-even em fração de desconto no FOB
+
+  function render(R){
+    const {dRef,dNeg,custoRef,fobRefBrl,m,com,fixo,fobRefUn,fobNegUn,temNeg,ctx}=R;
+    const piso=pisoDe(com,m);
+    const nome=nomeAtual()||'Item';
+    let html='';
+
+    // ---- bloco veredito + termômetro ----
+    let status,color,head,sub,desc=null,maxScale,pisoPos,needlePos,needleColor,fillStops;
+    if(temNeg){
+      const fobNegBrl=dNeg.valores_brl.fob;
+      const custoNeg=dNeg.totais.total_landed_caixa_brl;
+      const comRef=fobRefBrl*com, comNeg=fobNegBrl*com;
+      const A=custoRef+comRef, B=custoNeg+comNeg;
+      desc=(fobRefUn-fobNegUn)/fobRefUn;
+      const ganho=A-B, ganhoU=ganho/ctx.qtd;
+      if(desc+1e-9<piso){ status='ABAIXO DO PISO'; color='var(--red)'; head='Esse desconto não paga a comissão.';
+        sub='O piso para este produto e este agente é '+pct(piso)+'. O agente entregou '+pct(desc)+'. Abaixo do piso, os '+pct(com)+' custam mais do que o desconto economiza — exija pelo menos o piso para fechar.'; }
+      else { const folga=desc-piso; status=folga<0.03?'MARGEM FINA':'ACIMA DO PISO'; color=folga<0.03?'var(--trib)':'var(--accent-2)';
+        head=folga<0.03?'Cobre a comissão, mas por pouco.':'O desconto cobre os '+pct(com)+' e ainda sobra.';
+        sub='Piso '+pct(piso)+' · entregue '+pct(desc)+'. Ganho real de R$ '+fmtBRL(ganhoU)+'/un (R$ '+fmtBRL(ganho)+' no lote de '+ctx.qtd+').'; }
+      maxScale=Math.max(0.30,Math.ceil((Math.max(desc,piso)+0.05)*20)/20);
+      pisoPos=Math.min(100,piso/maxScale*100); needlePos=Math.min(100,Math.max(0,desc/maxScale*100));
+      needleColor=desc<piso?'var(--red)':(desc-piso<0.03?'var(--trib)':'var(--accent-2)');
+      fillStops='linear-gradient(90deg,rgba(248,113,113,.14) 0%,rgba(248,113,113,.14) '+pisoPos+'%,rgba(16,185,129,.12) '+pisoPos+'%,rgba(16,185,129,.12) 100%)';
+      html+=verdictHtml(status,color,head,sub,maxScale,pisoPos,needlePos,needleColor,fillStops,desc,piso);
+      html+=cardsHtml(B/ctx.qtd, dNeg.totais.markup_sobre_fob, comNeg, fixo, com);
+      html+=breakdownHtml(dRef,dNeg,comRef,comNeg,ctx.qtd);
+      html+=projHtml(B/ctx.qtd,nome);
+    } else {
+      // modo META — só o piso
+      status='META DE NEGOCIAÇÃO'; color='var(--accent-2)';
+      head='Exija pelo menos '+pct(piso)+' de desconto neste produto.';
+      sub='Com a comissão de '+pct(com)+' deste agente, qualquer desconto acima de '+pct(piso)+' já te economiza dinheiro líquido. Abaixo disso, tu paga a comissão sem retorno. Preencha o preço negociado para medir o que ele entregou.';
+      maxScale=Math.max(0.30,Math.ceil((piso+0.05)*20)/20);
+      pisoPos=Math.min(100,piso/maxScale*100);
+      fillStops='linear-gradient(90deg,rgba(248,113,113,.14) 0%,rgba(248,113,113,.14) '+pisoPos+'%,rgba(16,185,129,.12) '+pisoPos+'%,rgba(16,185,129,.12) 100%)';
+      html+=verdictHtml(status,color,head,sub,maxScale,pisoPos,null,null,fillStops,null,piso);
+      html+=cardsHtml(dRef.totais.custo_unitario_brl, dRef.totais.markup_sobre_fob, fobRefBrl*com, fixo, com, true);
+    }
+
+    // ---- comparação de agentes (mesmo m) ----
+    html+=agentesHtml(m,piso,com,fixo);
+
+    $('resultado').innerHTML='<div class="res-head" style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;gap:10px"><h2 style="margin:0;font-size:18px;font-weight:700">'+esc(nome)+'</h2><span style="font-family:var(--mono);font-size:12px;color:var(--faint)">NCM '+esc(ctx.ncm)+' · câmbio '+String(R.dRef.cambio_usado).replace('.',',')+'</span></div>'+html;
+    $('placeholder').style.display='none'; $('resultado').style.display='block';
+    if(window.lucide?.createIcons) window.lucide.createIcons();
+  }
+
+  function verdictHtml(status,color,head,sub,maxScale,pisoPos,needlePos,needleColor,fillStops,desc,piso){
+    const needle = (needlePos==null)?'' :
+      '<div class="needle" style="left:'+needlePos+'%;border-top-color:'+needleColor+'"></div>'
+      +'<div class="needle-val" style="left:'+needlePos+'%;color:'+needleColor+'">'+pct(Math.max(0,desc))+'</div>';
+    return '<div class="verdict">'
+      +'<div class="verdict-top"><div class="status"><span class="dot" style="background:'+color+'"></span>'+status+'</div>'
+      +'<h2>'+head+'</h2><div class="sub">'+sub+'</div></div>'
+      +'<div class="thermo"><div class="thermo-scale">'
+      +'<div class="thermo-track"><div class="thermo-fill" style="background:'+fillStops+'"></div></div>'
+      +'<div class="piso-flag" style="left:'+pisoPos+'%">PISO '+pct(piso)+'</div>'
+      +'<div class="piso-line" style="left:'+pisoPos+'%"></div>'+needle
+      +'</div><div class="thermo-axis"><span>0%</span><span>desconto vs. piso</span><span>'+pct(maxScale)+'</span></div></div>'
+      +'</div>';
+  }
+
+  function cardsHtml(custoUnit,mult,comissaoLote,fixo,com,isRef){
+    return '<div class="cards3">'
+      +'<div class="sc"><div class="k">Custo landed / un'+(isRef?' (ref)':'')+'</div><div class="big">R$ '+fmtBRL(custoUnit)+'</div><div class="small">'+Number(mult||0).toFixed(2).replace('.',',')+'× FOB</div></div>'
+      +'<div class="sc amber"><div class="k">Comissão · lote</div><div class="big">R$ '+fmtBRL(comissaoLote)+'</div><div class="small">'+pct(com)+' s/ FOB</div></div>'
+      +'<div class="sc"><div class="k">Taxa fixa anual</div><div class="big">R$ '+fmtBRL(fixo)+'</div><div class="small">overhead · fora do custo</div></div>'
+      +'</div>';
+  }
+
+  function breakdownHtml(dRef,dNeg,comRef,comNeg,q){
+    const vA=dRef.valores_brl, vB=dNeg.valores_brl;
+    const aA=dRef.despesas_na_bc_icms||{}, aB=dNeg.despesas_na_bc_icms||{};
+    const fA=dRef.despesas_fora_bc_icms||{}, fB=dNeg.despesas_fora_bc_icms||{};
+    const tA=dRef.totais.total_landed_caixa_brl, tB=dNeg.totais.total_landed_caixa_brl;
+    const r=(lbl,a,b,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+lbl+'</td><td>R$ '+fmtBRL(a/q)+'</td><td class="cb">R$ '+fmtBRL(b/q)+'</td></tr>';
+    return '<div class="sect"><i data-lucide="table"></i> Custo landed · dois cenários (por unidade)</div>'
+      +'<table class="bd"><thead><tr><th>Componente</th><th>A · referência</th><th>B · negociado</th></tr></thead><tbody>'
+      +r('Valor aduaneiro',vA.valor_aduaneiro,vB.valor_aduaneiro)
+      +r('II',vA.ii,vB.ii)+r('IPI',vA.ipi,vB.ipi)+r('PIS-Imp',vA.pis_imp,vB.pis_imp)+r('COFINS-Imp',vA.cofins_imp,vB.cofins_imp)
+      +r('Siscomex',vA.siscomex,vB.siscomex)
+      +r('Armazenagem',aA.armazenagem,aB.armazenagem)+r('Capatazia',aA.capatazia,aB.capatazia)
+      +r('ICMS-PI',vA.icms,vB.icms)
+      +r('Frete nacional',fA.frete_nacional,fB.frete_nacional)+r('Spread cambial',fA.spread_cambial,fB.spread_cambial)
+      +r('Comissão do agente',comRef,comNeg,'comm')
+      +'<tr class="tot"><td>Custo landed / un</td><td>R$ '+fmtBRL((tA+comRef)/q)+'</td><td class="cb">R$ '+fmtBRL((tB+comNeg)/q)+'</td></tr>'
+      +'</tbody></table>'
+      +'<p class="hint">A = se o agente cobrasse a comissão sem conseguir desconto. B = o que ele entregou. A diferença é o ganho real, já alavancado pela cascata.</p>';
+  }
+
+  function projHtml(custoUnitB,nome){
+    return '<div class="sect"><i data-lucide="gavel"></i> Projeção comercial · licitação</div>'
+      +'<div class="proj"><div class="row c2">'
+      +'<div><label>Custo landed unitário (chão)</label><input type="text" value="R$ '+fmtBRL(custoUnitB)+'" readonly style="color:var(--accent-2)"></div>'
+      +'<div><label>Lance pretendido R$/un</label><input id="lance" type="number" step="0.01" placeholder="0" oninput="window.calcLance('+custoUnitB+')"></div>'
+      +'</div><div class="chao" id="lance-out">Custo é o chão. Lances abaixo de <b>R$ '+fmtBRL(custoUnitB)+'</b> entram no prejuízo. Margem em pregão é decisão tua no certame — aqui fica só o piso de custo.</div></div>';
+  }
+  window.calcLance=function(chao){
+    const v=Number($('lance').value)||0; const out=$('lance-out');
+    if(v<=0){ out.innerHTML='Custo é o chão. Lances abaixo de <b>R$ '+fmtBRL(chao)+'</b> entram no prejuízo.'; return; }
+    const marg=v-chao, pctM=chao>0?marg/chao*100:0;
+    const cor=marg>=0?'var(--accent-2)':'var(--red)';
+    out.innerHTML='Lance R$ '+fmtBRL(v)+' · custo R$ '+fmtBRL(chao)+' → margem bruta <b style="color:'+cor+'">R$ '+fmtBRL(marg)+' ('+pctM.toFixed(1).replace('.',',')+'%)</b>. <span style="color:var(--faint)">Sem contar despesas comerciais e o gap de 20–30 dias de chegada.</span>';
+  };
+
+  function agentesHtml(m,pisoAtual,comAtual,fixoAtual){
+    const ags=lerAgentes();
+    // inclui o agente "em edição" se não estiver salvo
+    const linhas=[];
+    ags.forEach(a=>linhas.push({nome:a.nome,com:a.com,fixo:a.fixo,sel:Math.abs(a.com/100-comAtual)<1e-9}));
+    if(!ags.some(a=>Math.abs(a.com/100-comAtual)<1e-9)) linhas.unshift({nome:($('ag-nome').value.trim()||'(em edição)'),com:comAtual*100,fixo:fixoAtual,sel:true});
+    if(!linhas.length) return '';
+    const rows=linhas.map(a=>{
+      const p=pisoDe(a.com/100,m);
+      return '<tr'+(a.sel?' class="sel"':'')+'><td class="nome">'+esc(a.nome)+(a.sel?' <span style="color:var(--accent-2);font-size:10px">◀ atual</span>':'')+'</td>'
+        +'<td class="meta">'+Number(a.com).toFixed(1).replace('.',',')+'%</td>'
+        +'<td class="meta">'+(a.fixo>0?'R$ '+fmtBRL(a.fixo):'—')+'</td>'
+        +'<td class="piso">'+pct(p)+'</td></tr>';
+    }).join('');
+    return '<div class="sect"><i data-lucide="users"></i> Meta de desconto por agente <span style="text-transform:none;letter-spacing:0;color:var(--faint);font-weight:400">— mesmo produto</span></div>'
+      +'<table class="ag"><thead><tr><th>Agente</th><th>Comissão</th><th>Fixo/ano</th><th>Piso (meta)</th></tr></thead><tbody>'+rows+'</tbody></table>'
+      +'<p class="hint">O piso é a meta que cada agente precisa bater no desconto sobre a tua base 1688. Quanto menor a comissão, menor a meta — mais fácil ele te entregar ganho líquido.</p>';
+  }
+
+  // pré-preenche câmbio com a PTAX sincronizada, se houver (view pública)
+  async function preencherCambio(){
+    try{
+      const {data}=await sb.from('imp_vw_cambio_atual').select('ptax_venda').limit(1).maybeSingle();
+      if(data&&data.ptax_venda) $('cambio').value=data.ptax_venda;
+    }catch(e){}
+  }
+
+  carregarCatalogo();
+  preencherCambio();
+  renderAgenteSelect();
+  recalcFob();
+  if(window.lucide?.createIcons) window.lucide.createIcons();
+</script>
+</body>
+</html>
