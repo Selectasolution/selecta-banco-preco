@@ -183,7 +183,7 @@
           <div><label>Qtd</label><input id="qtd" type="number" step="1" value="200" oninput="recalcFob()"></div>
           <div><label>Peso br. un. kg</label><input id="peso" type="number" step="0.001" value="0.060"></div>
           <div><label>Incoterm</label>
-            <select id="incoterm">
+            <select id="incoterm" onchange="atualizarCondicao()">
               <option>EXW</option><option selected>FCA</option><option>FOB</option>
               <option>FAS</option><option>CFR</option><option>CPT</option><option>CIF</option><option>CIP</option>
             </select>
@@ -200,13 +200,13 @@
       <div class="panel neg">
         <div class="step"><span class="n">3</span><span class="t">Negociação</span></div>
         <div class="row"><div>
-          <label>Preço que achei no 1688 · referência (FOB un. US$)</label>
+          <label>Preço que achei no 1688 · referência (<span id="cond-ref">FOB</span> un. US$)</label>
           <input id="fob-ref" type="number" step="0.0001" value="12.50" oninput="recalcFob()">
           <div class="fob-readout" id="ro-ref"></div>
           <div class="hint">Tua régua. O ganho real e o piso se medem contra este preço — nunca contra a tabela que o agente apresenta.</div>
         </div></div>
         <div class="row" style="margin-top:14px"><div>
-          <label>Preço que o agente negociou (FOB un. US$) <span style="text-transform:none;letter-spacing:0;color:var(--faint)">— deixe vazio para ver só a meta</span></label>
+          <label>Preço que o agente negociou (<span id="cond-neg">FOB</span> un. US$) <span style="text-transform:none;letter-spacing:0;color:var(--faint)">— deixe vazio para ver só a meta</span></label>
           <input id="fob-neg" type="number" step="0.0001" placeholder="0" oninput="recalcFob()">
           <div class="fob-readout" id="ro-neg"></div>
         </div></div>
@@ -359,18 +359,23 @@
       const com=num('ag-com')/100, fixo=num('ag-fixo');
       if(!ctx.ncm){ throw new Error('informe o NCM'); }
       if(!ctx.cambio||!ctx.qtd||!fobRefUn){ throw new Error('câmbio, qtd e FOB de referência são obrigatórios'); }
+      if(num('peso')<=0){ throw new Error('informe o peso unitário — entra na armazenagem/capatazia'); }
+      if(!SEM_FRETE.includes(incoterm) && num('frete')<=0){ throw new Error('informe o frete internacional — entra na base aduaneira neste Incoterm ('+incoterm+')'); }
 
       // chamada de referência (sempre)
       const dRef=await rpcLanded(fobRefUn*ctx.qtd, ctx);
       const custoRef=dRef.totais.total_landed_caixa_brl;
       const fobRefBrl=dRef.valores_brl.fob;
 
-      const temNeg = fobNegUn>0 && fobNegUn<fobRefUn;
-      // segundo ponto para a inclinação m: o negociado (se válido) ou metade do FOB ref
-      let dSeg, custo2, fob2Brl, dNeg=null;
-      if(temNeg){ dNeg=await rpcLanded(fobNegUn*ctx.qtd, ctx); custo2=dNeg.totais.total_landed_caixa_brl; fob2Brl=dNeg.valores_brl.fob; }
-      else { dSeg=await rpcLanded(fobRefUn*0.5*ctx.qtd, ctx); custo2=dSeg.totais.total_landed_caixa_brl; fob2Brl=dSeg.valores_brl.fob; }
-      const m=(custoRef-custo2)/(fobRefBrl-fob2Brl);   // inclinação do custo-sem-comissão vs FOB
+      // inclinação m sempre de dois pontos afastados (custo landed é linear no FOB):
+      // fixa o piso como propriedade do produto, independente do preço negociado, e some o ruído de arredondamento em desconto pequeno
+      const dMeio=await rpcLanded(fobRefUn*0.5*ctx.qtd, ctx);
+      const m=(custoRef-dMeio.totais.total_landed_caixa_brl)/(fobRefBrl-dMeio.valores_brl.fob);
+
+      // negociado: calcula sempre que informado, inclusive se >= referência (o veredito vira "Negativo" via ok=false)
+      const temNeg = fobNegUn>0;
+      let dNeg=null;
+      if(temNeg){ dNeg=await rpcLanded(fobNegUn*ctx.qtd, ctx); }
 
       render({dRef,dNeg,custoRef,fobRefBrl,m,com,fixo,fobRefUn,fobNegUn,temNeg,ctx});
       st.className='status-line ok'; st.textContent='✓ calculado';
@@ -392,8 +397,9 @@
       const fobNegBrl=dNeg.valores_brl.fob;
       const custoNeg=dNeg.totais.total_landed_caixa_brl;
       const comRef=fobRefBrl*com, comNeg=fobNegBrl*com;
-      const B=custoNeg+comNeg;
+      const A=custoRef+comRef, B=custoNeg+comNeg;
       desc=(fobRefUn-fobNegUn)/fobRefUn;
+      const ganho=A-B, ganhoU=ganho/ctx.qtd;
       const ok = desc+1e-9 >= piso;           // atingiu a meta?
       const afirm = ok ? 'Positivo' : 'Negativo';
       color = ok ? 'var(--accent-2)' : 'var(--red)';
@@ -431,7 +437,7 @@
   function verdictHtml(afirmacao,color,maxScale,pisoPos,needlePos,needleColor,fillStops,desc,piso){
     const needle = (needlePos==null)?'' :
       '<div class="needle" style="left:'+needlePos+'%;border-top-color:'+needleColor+'"></div>'
-      +'<div class="needle-val" style="left:'+needlePos+'%;color:'+needleColor+'">'+pct(Math.max(0,desc))+'</div>';
+      +'<div class="needle-val" style="left:'+needlePos+'%;color:'+needleColor+'">'+pct(desc)+'</div>';
     return '<div class="verdict">'
       +'<div class="verdict-top"><h2 style="color:'+color+'">'+afirmacao+'</h2></div>'
       +'<div class="thermo"><div class="thermo-scale">'
@@ -473,7 +479,7 @@
       +r('Comissão do agente',comRef,comNeg,'comm')
       +'<tr class="tot"><td>Custo landed / un</td><td>R$ '+fmtBRL((tA+comRef)/q)+'</td><td class="cb">R$ '+fmtBRL((tB+comNeg)/q)+'</td></tr>'
       +'</tbody></table>'
-      +'<p class="hint">A = se o agente cobrasse a comissão sem conseguir desconto. B = o que ele entregou. A diferença é o ganho real, já alavancado pela cascata.</p>';
+      +'<p class="hint">A = sem desconto (referência + comissão). B = o que o agente entregou (negociado + comissão). A diferença é quanto o desconto baixou o custo total. Se a comissão se paga, quem decide é o card "Economia / operação" (líq. da comissão) e o veredito acima — não esta diferença, que é sempre positiva.</p>';
   }
 
   function projHtml(baseAquisicao,nome){
@@ -545,10 +551,17 @@
     }catch(e){}
   }
 
+  // rótulo do preço acompanha o Incoterm selecionado (digite o preço na condição escolhida)
+  window.atualizarCondicao=function(){
+    const ic=$('incoterm').value, r=$('cond-ref'), n=$('cond-neg');
+    if(r) r.textContent=ic; if(n) n.textContent=ic;
+  };
+
   carregarCatalogo();
   preencherCambio();
   renderAgenteSelect();
   recalcFob();
+  atualizarCondicao();
   if(window.lucide?.createIcons) window.lucide.createIcons();
 </script>
 </body>
