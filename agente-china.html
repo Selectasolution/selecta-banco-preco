@@ -63,10 +63,10 @@
 
   /* Veredito + termômetro */
   .verdict{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
-  .verdict-top{padding:18px 18px 4px}
+  .verdict-top{padding:16px 18px 2px}
   .verdict .status{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
   .verdict .dot{width:9px;height:9px;border-radius:50%;background:var(--faint)}
-  .verdict h2{margin:2px 0 0;font-size:18px;font-weight:700;line-height:1.3}
+  .verdict h2{margin:0;font-size:20px;font-weight:700;line-height:1.2;letter-spacing:.01em}
   .verdict .sub{font-size:12.5px;color:var(--dim);margin-top:6px;line-height:1.5}
   .thermo{padding:14px 18px 18px}
   .thermo-scale{position:relative;height:44px;margin:26px 0 6px}
@@ -78,12 +78,12 @@
   .needle-val{position:absolute;top:30px;transform:translateX(-50%);font-family:var(--mono);font-size:13px;font-weight:700;white-space:nowrap;transition:left .35s ease,color .2s}
   .thermo-axis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:2px}
 
-  .cards3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px}
+  .cards3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px}
   @media(max-width:680px){.cards3{grid-template-columns:1fr}}
-  .sc{border:1px solid var(--border-soft);border-radius:11px;padding:14px 16px;background:var(--card)}
-  .sc .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:7px}
-  .sc .big{font-family:var(--mono);font-size:22px;font-weight:700}
-  .sc .small{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:5px}
+  .sc{border:1px solid var(--border-soft);border-radius:9px;padding:10px 13px;background:var(--card)}
+  .sc .k{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+  .sc .big{font-family:var(--mono);font-size:15px;font-weight:600}
+  .sc .small{font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:3px}
   .sc.accent .big{color:var(--accent-2)}
   .sc.amber .big{color:var(--trib)}
 
@@ -102,6 +102,12 @@
   .proj .row.c2{margin-top:0}
   .proj .chao{font-family:var(--mono);font-size:13px;color:var(--dim);margin-top:10px;line-height:1.6}
   .proj .chao b{color:var(--accent-2)}
+  .proj-min{font-family:var(--mono);font-size:12.5px;color:var(--dim);line-height:1.7;margin-top:14px;padding:11px 13px;border:1px solid var(--border-soft);border-radius:9px;background:rgba(16,185,129,.04)}
+  .proj-min b{color:var(--text)}
+  .proj-result{margin-top:14px;padding:13px 15px;border:1px solid var(--border-accent);border-radius:10px;background:linear-gradient(180deg,#0f1f17,#0c1611)}
+  .ml-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-2);font-weight:600;margin-bottom:6px}
+  .ml-val{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1.1}
+  .ml-note{font-size:11.5px;color:var(--faint);margin-top:7px;line-height:1.5}
 
   /* tabela de agentes */
   table.ag{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
@@ -177,7 +183,7 @@
           <div><label>Qtd</label><input id="qtd" type="number" step="1" value="200" oninput="recalcFob()"></div>
           <div><label>Peso br. un. kg</label><input id="peso" type="number" step="0.001" value="0.060"></div>
           <div><label>Incoterm</label>
-            <select id="incoterm" onchange="atualizarCondicao()">
+            <select id="incoterm">
               <option>EXW</option><option selected>FCA</option><option>FOB</option>
               <option>FAS</option><option>CFR</option><option>CPT</option><option>CIF</option><option>CIP</option>
             </select>
@@ -194,13 +200,13 @@
       <div class="panel neg">
         <div class="step"><span class="n">3</span><span class="t">Negociação</span></div>
         <div class="row"><div>
-          <label>Preço que achei no 1688 · referência (<span id="cond-ref">FOB</span> un. US$)</label>
+          <label>Preço que achei no 1688 · referência (FOB un. US$)</label>
           <input id="fob-ref" type="number" step="0.0001" value="12.50" oninput="recalcFob()">
           <div class="fob-readout" id="ro-ref"></div>
           <div class="hint">Tua régua. O ganho real e o piso se medem contra este preço — nunca contra a tabela que o agente apresenta.</div>
         </div></div>
         <div class="row" style="margin-top:14px"><div>
-          <label>Preço que o agente negociou (<span id="cond-neg">FOB</span> un. US$) <span style="text-transform:none;letter-spacing:0;color:var(--faint)">— deixe vazio para ver só a meta</span></label>
+          <label>Preço que o agente negociou (FOB un. US$) <span style="text-transform:none;letter-spacing:0;color:var(--faint)">— deixe vazio para ver só a meta</span></label>
           <input id="fob-neg" type="number" step="0.0001" placeholder="0" oninput="recalcFob()">
           <div class="fob-readout" id="ro-neg"></div>
         </div></div>
@@ -353,23 +359,18 @@
       const com=num('ag-com')/100, fixo=num('ag-fixo');
       if(!ctx.ncm){ throw new Error('informe o NCM'); }
       if(!ctx.cambio||!ctx.qtd||!fobRefUn){ throw new Error('câmbio, qtd e FOB de referência são obrigatórios'); }
-      if(num('peso')<=0){ throw new Error('informe o peso unitário — entra na armazenagem/capatazia'); }
-      if(!SEM_FRETE.includes(incoterm) && num('frete')<=0){ throw new Error('informe o frete internacional — entra na base aduaneira neste Incoterm ('+incoterm+')'); }
 
       // chamada de referência (sempre)
       const dRef=await rpcLanded(fobRefUn*ctx.qtd, ctx);
       const custoRef=dRef.totais.total_landed_caixa_brl;
       const fobRefBrl=dRef.valores_brl.fob;
 
-      // inclinação m sempre de dois pontos afastados (custo landed é linear no FOB):
-      // fixa o piso como propriedade do produto, independente do preço negociado, e some o ruído de arredondamento em desconto pequeno
-      const dMeio=await rpcLanded(fobRefUn*0.5*ctx.qtd, ctx);
-      const m=(custoRef-dMeio.totais.total_landed_caixa_brl)/(fobRefBrl-dMeio.valores_brl.fob);
-
-      // negociado: calcula sempre que informado, inclusive se >= referência (para marcar vermelho "acima da régua")
-      const temNeg = fobNegUn>0;
-      let dNeg=null;
-      if(temNeg){ dNeg=await rpcLanded(fobNegUn*ctx.qtd, ctx); }
+      const temNeg = fobNegUn>0 && fobNegUn<fobRefUn;
+      // segundo ponto para a inclinação m: o negociado (se válido) ou metade do FOB ref
+      let dSeg, custo2, fob2Brl, dNeg=null;
+      if(temNeg){ dNeg=await rpcLanded(fobNegUn*ctx.qtd, ctx); custo2=dNeg.totais.total_landed_caixa_brl; fob2Brl=dNeg.valores_brl.fob; }
+      else { dSeg=await rpcLanded(fobRefUn*0.5*ctx.qtd, ctx); custo2=dSeg.totais.total_landed_caixa_brl; fob2Brl=dSeg.valores_brl.fob; }
+      const m=(custoRef-custo2)/(fobRefBrl-fob2Brl);   // inclinação do custo-sem-comissão vs FOB
 
       render({dRef,dNeg,custoRef,fobRefBrl,m,com,fixo,fobRefUn,fobNegUn,temNeg,ctx});
       st.className='status-line ok'; st.textContent='✓ calculado';
@@ -383,60 +384,56 @@
     const {dRef,dNeg,custoRef,fobRefBrl,m,com,fixo,fobRefUn,fobNegUn,temNeg,ctx}=R;
     const piso=pisoDe(com,m);
     const nome=nomeAtual()||'Item';
-    let html='';
+    let projBase=null, vHtml='', cHtml='', bHtml='';
 
     // ---- bloco veredito + termômetro ----
-    let status,color,head,sub,desc=null,maxScale,pisoPos,needlePos,needleColor,fillStops;
+    let color,desc=null,maxScale,pisoPos,needlePos,needleColor,fillStops;
     if(temNeg){
       const fobNegBrl=dNeg.valores_brl.fob;
       const custoNeg=dNeg.totais.total_landed_caixa_brl;
       const comRef=fobRefBrl*com, comNeg=fobNegBrl*com;
-      const A=custoRef+comRef, B=custoNeg+comNeg;
+      const B=custoNeg+comNeg;
       desc=(fobRefUn-fobNegUn)/fobRefUn;
-      const ganho=A-B, ganhoU=ganho/ctx.qtd;
-      if(desc<=1e-9){ status='ACIMA DA RÉGUA'; color='var(--red)';
-        head = desc< -1e-9 ? 'O agente cotou acima da sua referência do 1688.' : 'O agente cotou igual à sua referência do 1688.';
-        sub='Sem desconto sobre a régua de mercado — e ainda com a comissão de '+pct(com)+' por cima. Troca de agente ou peça um fornecedor melhor para este item.'; }
-      else if(desc+1e-9<piso){ status='ABAIXO DO PISO'; color='var(--red)'; head='Esse desconto não paga a comissão.';
-        sub='O piso para este produto e este agente é '+pct(piso)+'. O agente entregou '+pct(desc)+'. Abaixo do piso, os '+pct(com)+' custam mais do que o desconto economiza — exija pelo menos o piso para fechar.'; }
-      else { const folga=desc-piso; status=folga<0.03?'MARGEM FINA':'ACIMA DO PISO'; color=folga<0.03?'var(--trib)':'var(--accent-2)';
-        head=folga<0.03?'Cobre a comissão, mas por pouco.':'O desconto cobre os '+pct(com)+' e ainda sobra.';
-        sub='Piso '+pct(piso)+' · entregue '+pct(desc)+'. Ganho real de R$ '+fmtBRL(ganhoU)+'/un (R$ '+fmtBRL(ganho)+' no lote de '+ctx.qtd+').'; }
+      const ok = desc+1e-9 >= piso;           // atingiu a meta?
+      const afirm = ok ? 'Positivo' : 'Negativo';
+      color = ok ? 'var(--accent-2)' : 'var(--red)';
       maxScale=Math.max(0.30,Math.ceil((Math.max(desc,piso)+0.05)*20)/20);
       pisoPos=Math.min(100,piso/maxScale*100); needlePos=Math.min(100,Math.max(0,desc/maxScale*100));
-      needleColor=desc<piso?'var(--red)':(desc-piso<0.03?'var(--trib)':'var(--accent-2)');
+      needleColor=color;
       fillStops='linear-gradient(90deg,rgba(248,113,113,.14) 0%,rgba(248,113,113,.14) '+pisoPos+'%,rgba(16,185,129,.12) '+pisoPos+'%,rgba(16,185,129,.12) 100%)';
-      html+=verdictHtml(status,color,head,sub,maxScale,pisoPos,needlePos,needleColor,fillStops,desc,piso);
-      html+=cardsHtml(B/ctx.qtd, dNeg.totais.markup_sobre_fob, comNeg, fixo, com);
-      html+=breakdownHtml(dRef,dNeg,comRef,comNeg,ctx.qtd);
-      html+=projHtml(B/ctx.qtd,nome);
+      vHtml=verdictHtml(afirm,color,maxScale,pisoPos,needlePos,needleColor,fillStops,desc,piso);
+      const economiaLote = custoRef - (custoNeg + comNeg);   // preço cheio − (negociado + comissão)
+      cHtml=cardsHtml(B/ctx.qtd, dNeg.totais.markup_sobre_fob, comNeg, {lote:economiaLote, un:economiaLote/ctx.qtd}, com);
+      bHtml=breakdownHtml(dRef,dNeg,comRef,comNeg,ctx.qtd);
+      projBase=B/ctx.qtd;
     } else {
       // modo META — só o piso
-      status='META DE NEGOCIAÇÃO'; color='var(--accent-2)';
-      head='Exija pelo menos '+pct(piso)+' de desconto neste produto.';
-      sub='Com a comissão de '+pct(com)+' deste agente, qualquer desconto acima de '+pct(piso)+' já te economiza dinheiro líquido. Abaixo disso, tu paga a comissão sem retorno. Preencha o preço negociado para medir o que ele entregou.';
+      const afirm='Meta: '+pct(piso)+' de desconto';
+      color='var(--accent-2)';
       maxScale=Math.max(0.30,Math.ceil((piso+0.05)*20)/20);
       pisoPos=Math.min(100,piso/maxScale*100);
       fillStops='linear-gradient(90deg,rgba(248,113,113,.14) 0%,rgba(248,113,113,.14) '+pisoPos+'%,rgba(16,185,129,.12) '+pisoPos+'%,rgba(16,185,129,.12) 100%)';
-      html+=verdictHtml(status,color,head,sub,maxScale,pisoPos,null,null,fillStops,null,piso);
-      html+=cardsHtml(dRef.totais.custo_unitario_brl, dRef.totais.markup_sobre_fob, fobRefBrl*com, fixo, com, true);
+      vHtml=verdictHtml(afirm,color,maxScale,pisoPos,null,null,fillStops,null,piso);
+      cHtml=cardsHtml(dRef.totais.custo_unitario_brl, dRef.totais.markup_sobre_fob, fobRefBrl*com, null, com, true);
     }
 
-    // ---- comparação de agentes (mesmo m) ----
-    html+=agentesHtml(m,piso,com,fixo);
+    // Ordem: veredito/termômetro → meta por agente (lê o gráfico) → custo landed → breakdown → projeção
+    const aHtml=agentesHtml(m,piso,com,fixo);
+    const pHtml=projBase!=null?projHtml(projBase,nome):'';
+    const html = vHtml + aHtml + cHtml + bHtml + pHtml;
 
     $('resultado').innerHTML='<div class="res-head" style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;gap:10px"><h2 style="margin:0;font-size:18px;font-weight:700">'+esc(nome)+'</h2><span style="font-family:var(--mono);font-size:12px;color:var(--faint)">NCM '+esc(ctx.ncm)+' · câmbio '+String(R.dRef.cambio_usado).replace('.',',')+'</span></div>'+html;
     $('placeholder').style.display='none'; $('resultado').style.display='block';
     if(window.lucide?.createIcons) window.lucide.createIcons();
+    if(document.querySelector('.proj')) window.recalcProj();
   }
 
-  function verdictHtml(status,color,head,sub,maxScale,pisoPos,needlePos,needleColor,fillStops,desc,piso){
+  function verdictHtml(afirmacao,color,maxScale,pisoPos,needlePos,needleColor,fillStops,desc,piso){
     const needle = (needlePos==null)?'' :
       '<div class="needle" style="left:'+needlePos+'%;border-top-color:'+needleColor+'"></div>'
-      +'<div class="needle-val" style="left:'+needlePos+'%;color:'+needleColor+'">'+pct(desc)+'</div>';
+      +'<div class="needle-val" style="left:'+needlePos+'%;color:'+needleColor+'">'+pct(Math.max(0,desc))+'</div>';
     return '<div class="verdict">'
-      +'<div class="verdict-top"><div class="status"><span class="dot" style="background:'+color+'"></span>'+status+'</div>'
-      +'<h2>'+head+'</h2><div class="sub">'+sub+'</div></div>'
+      +'<div class="verdict-top"><h2 style="color:'+color+'">'+afirmacao+'</h2></div>'
       +'<div class="thermo"><div class="thermo-scale">'
       +'<div class="thermo-track"><div class="thermo-fill" style="background:'+fillStops+'"></div></div>'
       +'<div class="piso-flag" style="left:'+pisoPos+'%">PISO '+pct(piso)+'</div>'
@@ -445,11 +442,17 @@
       +'</div>';
   }
 
-  function cardsHtml(custoUnit,mult,comissaoLote,fixo,com,isRef){
+  function cardsHtml(custoUnit,mult,comissaoLote,econ,com,isRef){
+    let val='—', note='informe o negociado', cor='var(--faint)';
+    if(econ){
+      cor = econ.lote < -1e-9 ? 'var(--red)' : 'var(--accent-2)';
+      val = (econ.lote<-1e-9?'− R$ ':'R$ ')+fmtBRL(Math.abs(econ.lote));
+      note = 'R$ '+fmtBRL(Math.abs(econ.un))+'/un · líq. da comissão';
+    }
     return '<div class="cards3">'
       +'<div class="sc"><div class="k">Custo landed / un'+(isRef?' (ref)':'')+'</div><div class="big">R$ '+fmtBRL(custoUnit)+'</div><div class="small">'+Number(mult||0).toFixed(2).replace('.',',')+'× FOB</div></div>'
       +'<div class="sc amber"><div class="k">Comissão · lote</div><div class="big">R$ '+fmtBRL(comissaoLote)+'</div><div class="small">'+pct(com)+' s/ FOB</div></div>'
-      +'<div class="sc"><div class="k">Taxa fixa anual</div><div class="big">R$ '+fmtBRL(fixo)+'</div><div class="small">overhead · fora do custo</div></div>'
+      +'<div class="sc"><div class="k">Economia / operação</div><div class="big" style="color:'+cor+'">'+val+'</div><div class="small">'+note+'</div></div>'
       +'</div>';
   }
 
@@ -470,22 +473,49 @@
       +r('Comissão do agente',comRef,comNeg,'comm')
       +'<tr class="tot"><td>Custo landed / un</td><td>R$ '+fmtBRL((tA+comRef)/q)+'</td><td class="cb">R$ '+fmtBRL((tB+comNeg)/q)+'</td></tr>'
       +'</tbody></table>'
-      +'<p class="hint">A = sem desconto (referência + comissão). B = o que o agente entregou (negociado + comissão). A diferença mostra quanto o desconto baixou o custo total. O veredito de "vale a comissão?" é o do topo: abaixo do piso fica vermelho mesmo que a diferença aqui seja positiva.</p>';
+      +'<p class="hint">A = se o agente cobrasse a comissão sem conseguir desconto. B = o que ele entregou. A diferença é o ganho real, já alavancado pela cascata.</p>';
   }
 
-  function projHtml(custoUnitB,nome){
-    return '<div class="sect"><i data-lucide="gavel"></i> Projeção comercial · licitação</div>'
-      +'<div class="proj"><div class="row c2">'
-      +'<div><label>Custo landed unitário (chão)</label><input type="text" value="R$ '+fmtBRL(custoUnitB)+'" readonly style="color:var(--accent-2)"></div>'
-      +'<div><label>Lance pretendido R$/un</label><input id="lance" type="number" step="0.01" placeholder="0" oninput="window.calcLance('+custoUnitB+')"></div>'
-      +'</div><div class="chao" id="lance-out">Custo é o chão. Lances abaixo de <b>R$ '+fmtBRL(custoUnitB)+'</b> entram no prejuízo. Margem em pregão é decisão tua no certame — aqui fica só o piso de custo.</div></div>';
+  function projHtml(baseAquisicao,nome){
+    // baseAquisicao = custo landed unitário + comissão do agente (R$/un) — o capital que sai pra ter o produto na Selecta
+    return '<div class="sect"><i data-lucide="gavel"></i> Projeção comercial · licitação <span style="text-transform:none;letter-spacing:0;color:var(--faint);font-weight:400">— Simples Nacional · setor público</span></div>'
+      +'<div class="proj" data-base="'+baseAquisicao+'">'
+      +'<div class="row c2">'
+        +'<div><label>Custo landed + comissão (R$/un)</label><input type="text" value="R$ '+fmtBRL(baseAquisicao)+'" readonly style="color:var(--accent-2)"></div>'
+        +'<div><label>Custos administrativos % <span style="text-transform:none;letter-spacing:0;color:var(--faint)">(s/ venda)</span></label><input id="pj-adm" type="number" step="0.1" value="15" oninput="window.recalcProj()"></div>'
+      +'</div>'
+      +'<div class="row c2" style="margin-top:12px">'
+        +'<div><label>Imposto de saída · DAS % <span style="text-transform:none;letter-spacing:0;color:var(--faint)">(Anexo I)</span></label><input id="pj-das" type="number" step="0.1" value="4" oninput="window.recalcProj()"></div>'
+        +'<div><label>Frete de entrega % <span style="text-transform:none;letter-spacing:0;color:var(--faint)">(s/ venda)</span></label><input id="pj-frete" type="number" step="0.1" value="5" oninput="window.recalcProj()"></div>'
+      +'</div>'
+      +'<div class="proj-min" id="pj-min"></div>'
+      +'<div class="row" style="margin-top:12px"><div><label>Lance pretendido R$/un <span style="text-transform:none;letter-spacing:0;color:var(--faint)">— simulação livre</span></label><input id="pj-lance" type="number" step="0.01" placeholder="0" oninput="window.recalcProj()"></div></div>'
+      +'<div class="proj-result" id="pj-out"></div>'
+      +'</div>';
   }
-  window.calcLance=function(chao){
-    const v=Number($('lance').value)||0; const out=$('lance-out');
-    if(v<=0){ out.innerHTML='Custo é o chão. Lances abaixo de <b>R$ '+fmtBRL(chao)+'</b> entram no prejuízo.'; return; }
-    const marg=v-chao, pctM=chao>0?marg/chao*100:0;
-    const cor=marg>=0?'var(--accent-2)':'var(--red)';
-    out.innerHTML='Lance R$ '+fmtBRL(v)+' · custo R$ '+fmtBRL(chao)+' → margem bruta <b style="color:'+cor+'">R$ '+fmtBRL(marg)+' ('+pctM.toFixed(1).replace('.',',')+'%)</b>. <span style="color:var(--faint)">Sem contar despesas comerciais e o gap de 20–30 dias de chegada.</span>';
+  // Lance mínimo "por dentro": custos que escalam com a venda (adm + DAS + frete) ficam no divisor.
+  // L_min = base_aquisicao / (1 - adm - DAS - frete).  Margem lucro = L × (1 - adm - DAS - frete) - base.
+  window.recalcProj=function(){
+    const proj=document.querySelector('.proj'); if(!proj) return;
+    const base=Number(proj.getAttribute('data-base'))||0;
+    const adm=(Number($('pj-adm').value)||0)/100;
+    const das=(Number($('pj-das').value)||0)/100;
+    const frete=(Number($('pj-frete').value)||0)/100;
+    const divisor=1-adm-das-frete;
+    const min=$('pj-min'), out=$('pj-out');
+    if(divisor<=0){
+      min.innerHTML='<span style="color:var(--red)">Adm + DAS + frete somam 100% ou mais da venda — impossível precificar.</span>';
+      out.innerHTML=''; return;
+    }
+    const lanceMin=base/divisor;
+    min.innerHTML='Custo de aquisição (landed + comissão): <b>R$ '+fmtBRL(base)+'</b>'
+      +'<br>Lance mínimo real <span style="color:var(--faint)">(lucro zero · adm+DAS+frete por dentro)</span>: <b style="color:var(--accent-2)">R$ '+fmtBRL(lanceMin)+'</b>';
+    const L=Number($('pj-lance').value)||0;
+    if(L<=0){ out.innerHTML='<div class="ml-label">Margem lucro</div><div class="ml-val" style="color:var(--faint)">—</div>'; return; }
+    const margem=L*divisor - base;          // lucro por unidade, já deduzido adm + DAS + frete
+    const margemPct=margem/L*100;
+    const cor = margem < -1e-9 ? 'var(--red)' : 'var(--accent-2)';
+    out.innerHTML='<div class="ml-label">Margem lucro</div><div class="ml-val" style="color:'+cor+'">'+margemPct.toFixed(1).replace('.',',')+'%</div>';
   };
 
   function agentesHtml(m,pisoAtual,comAtual,fixoAtual){
@@ -515,17 +545,10 @@
     }catch(e){}
   }
 
-  // rótulo do preço acompanha o Incoterm selecionado (digite o preço na condição escolhida)
-  window.atualizarCondicao=function(){
-    const ic=$('incoterm').value, r=$('cond-ref'), n=$('cond-neg');
-    if(r) r.textContent=ic; if(n) n.textContent=ic;
-  };
-
   carregarCatalogo();
   preencherCambio();
   renderAgenteSelect();
   recalcFob();
-  atualizarCondicao();
   if(window.lucide?.createIcons) window.lucide.createIcons();
 </script>
 </body>
