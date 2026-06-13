@@ -124,6 +124,36 @@
   .status-line.err{color:var(--red)}
   .status-line.ok{color:var(--accent-2)}
   .lucide{width:1em;height:1em;vertical-align:-2px}
+
+  /* toggle de view */
+  .viewbar{display:flex;align-items:center;gap:8px;margin:0 0 16px}
+  .viewbtn{display:inline-flex;align-items:center;gap:6px;font:600 13px/1 var(--sans);color:var(--dim);background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 14px;cursor:pointer}
+  .viewbtn.active{color:var(--text);border-color:var(--accent-2);background:rgba(52,211,153,.08)}
+  .authchip{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+  .authchip.on{color:var(--accent-2)}
+  /* save bar */
+  .savebar{display:flex;align-items:center;gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+  .btn-save{display:inline-flex;align-items:center;gap:7px;font:600 13px/1 var(--sans);color:#04221a;background:var(--accent-2);border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
+  .btn-save:disabled{opacity:.5;cursor:not-allowed}
+  .savehint{font-family:var(--mono);font-size:12px;color:var(--faint)}
+  .savehint.ok{color:var(--accent-2)} .savehint.err{color:var(--red)}
+  /* consultas */
+  .cons-wrap{max-width:1000px}
+  .cons-head{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+  .cons-tools{display:flex;gap:8px;margin-bottom:16px}
+  .cons-search{width:100%;max-width:380px}
+  .cons-group{border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden}
+  .cons-item{display:flex;align-items:baseline;gap:8px;padding:11px 14px;background:var(--panel);font-weight:600;border-bottom:1px solid var(--border)}
+  .cons-count{font-family:var(--mono);font-size:11px;color:var(--faint);font-weight:400}
+  table.cons-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.cons-tbl th{text-align:left;padding:8px 10px;color:var(--faint);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+  table.cons-tbl td{padding:9px 10px;border-bottom:1px solid var(--border)}
+  table.cons-tbl tr:last-child td{border-bottom:0}
+  table.cons-tbl .v-pos{color:var(--accent-2);font-weight:600}
+  table.cons-tbl .v-neg{color:var(--red);font-weight:600}
+  .cons-del{color:var(--faint);background:none;border:0;cursor:pointer;font-size:16px;line-height:1;padding:2px 7px;border-radius:5px}
+  .cons-del:hover{color:var(--red);background:rgba(248,113,113,.1)}
+  .cons-empty{color:var(--faint);text-align:center;padding:50px 20px;font-size:13px}
 </style>
 </head>
 <body>
@@ -135,7 +165,13 @@
     <div class="truth">Custo vem da RPC <b>imp_fn_custo_landed</b> (Import OS). Esta aba não toca na operação real — só decide. O agente não vê isto.</div>
   </header>
 
-  <div class="grid">
+  <div class="viewbar">
+    <button class="viewbtn active" id="vb-sim" onclick="setView('sim')"><i data-lucide="gauge"></i> Simulação</button>
+    <button class="viewbtn" id="vb-cons" onclick="setView('cons')"><i data-lucide="history"></i> Consultas</button>
+    <span class="authchip" id="authchip"></span>
+  </div>
+
+  <div class="grid" id="view-sim">
     <!-- ENTRADA -->
     <div>
       <!-- 1. Agente -->
@@ -166,6 +202,10 @@
         <div class="row"><div>
           <label>Produto (catálogo · imp_produto)</label>
           <select id="produto" onchange="selecionarProduto()"><option value="">— carregando catálogo… —</option></select>
+        </div></div>
+        <div class="row" style="margin-top:12px"><div>
+          <label>Fornecedor <span style="text-transform:none;letter-spacing:0;color:var(--faint)">(rótulo do registro · não é cadastro)</span></label>
+          <input id="fornecedor" type="text" placeholder="Ex: Shenzhen XYZ Co.">
         </div></div>
         <div class="row" style="margin-top:12px"><div>
           <label>NCM</label>
@@ -226,6 +266,17 @@
       </div>
       <div id="resultado" style="display:none"></div>
     </div>
+  </div>
+
+  <div id="view-cons" class="cons-wrap" style="display:none">
+    <div class="cons-head">
+      <h2 style="margin:0;font-size:18px;font-weight:700">Simulações salvas</h2>
+      <span style="font-family:var(--mono);font-size:12px;color:var(--faint)">histórico · agrupado por item</span>
+    </div>
+    <div class="cons-tools">
+      <input id="cons-search" class="cons-search" type="text" placeholder="filtrar por item ou fornecedor…" oninput="filtrarConsultas()">
+    </div>
+    <div id="cons-list"></div>
   </div>
 
 <script type="module">
@@ -389,7 +440,7 @@
     const {dRef,dNeg,custoRef,fobRefBrl,m,com,fixo,fobRefUn,fobNegUn,temNeg,ctx}=R;
     const piso=pisoDe(com,m);
     const nome=nomeAtual()||'Item';
-    let projBase=null, vHtml='', cHtml='', bHtml='';
+    let projBase=null, vHtml='', cHtml='', bHtml='', sHtml='';
 
     // ---- bloco veredito + termômetro ----
     let color,desc=null,maxScale,pisoPos,needlePos,needleColor,fillStops;
@@ -409,24 +460,38 @@
       fillStops='linear-gradient(90deg,rgba(248,113,113,.14) 0%,rgba(248,113,113,.14) '+pisoPos+'%,rgba(16,185,129,.12) '+pisoPos+'%,rgba(16,185,129,.12) 100%)';
       vHtml=verdictHtml(afirm,color,maxScale,pisoPos,needlePos,needleColor,fillStops,desc,piso);
       const economiaLote = custoRef - (custoNeg + comNeg);   // preço cheio − (negociado + comissão)
-      cHtml=cardsHtml(B/ctx.qtd, dNeg.totais.markup_sobre_fob, comNeg, {lote:economiaLote, un:economiaLote/ctx.qtd}, com);
+      cHtml=cardsHtml(B/ctx.qtd, B/fobNegBrl, comNeg, {lote:economiaLote, un:economiaLote/ctx.qtd}, com);
       bHtml=breakdownHtml(dRef,dNeg,comRef,comNeg,ctx.qtd);
       projBase=B/ctx.qtd;
+      window.ULTIMA_SIM={
+        item_nome:nome, ncm:ctx.ncm, agente:($('ag-nome').value.trim()||null),
+        fob_ref:fobRefUn, fob_neg:fobNegUn, qtd:ctx.qtd, peso:num('peso'),
+        frete:num('frete'), seguro:num('seguro'), incoterm:ctx.incoterm, cambio:ctx.cambio,
+        comissao_pct:num('ag-com'), taxa_fixa:num('ag-fixo'),
+        landed_un:B/ctx.qtd, markup:B/fobNegBrl,
+        desconto_pct:desc*100, piso_pct:piso*100,
+        veredito:(ok?'Positivo':'Negativo'),
+        economia_lote:economiaLote, economia_un:economiaLote/ctx.qtd,
+        proj_adm:null, proj_das_pct:null, proj_frete_nac:null, lance_minimo:null
+      };
+      sHtml='<div class="savebar"><button class="btn-save" onclick="salvarSim()"><i data-lucide="save"></i> Salvar simulação</button><span class="savehint" id="save-hint"></span></div>';
     } else {
       // modo META — só o piso
+      window.ULTIMA_SIM=null;
       const afirm='Meta: '+pct(piso)+' de desconto';
       color='var(--accent-2)';
       maxScale=Math.max(0.30,Math.ceil((piso+0.05)*20)/20);
       pisoPos=Math.min(100,piso/maxScale*100);
       fillStops='linear-gradient(90deg,rgba(248,113,113,.14) 0%,rgba(248,113,113,.14) '+pisoPos+'%,rgba(16,185,129,.12) '+pisoPos+'%,rgba(16,185,129,.12) 100%)';
       vHtml=verdictHtml(afirm,color,maxScale,pisoPos,null,null,fillStops,null,piso);
-      cHtml=cardsHtml(dRef.totais.custo_unitario_brl, dRef.totais.markup_sobre_fob, fobRefBrl*com, null, com, true);
+      const comRef=fobRefBrl*com;
+      cHtml=cardsHtml((custoRef+comRef)/ctx.qtd, (custoRef+comRef)/fobRefBrl, comRef, null, com, true);
     }
 
     // Ordem: veredito/termômetro → meta por agente (lê o gráfico) → custo landed → breakdown → projeção
     const aHtml=agentesHtml(m,piso,com,fixo);
     const pHtml=projBase!=null?projHtml(projBase,nome):'';
-    const html = vHtml + aHtml + cHtml + bHtml + pHtml;
+    const html = vHtml + aHtml + cHtml + bHtml + pHtml + sHtml;
 
     $('resultado').innerHTML='<div class="res-head" style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;gap:10px"><h2 style="margin:0;font-size:18px;font-weight:700">'+esc(nome)+'</h2><span style="font-family:var(--mono);font-size:12px;color:var(--faint)">NCM '+esc(ctx.ncm)+' · câmbio '+String(R.dRef.cambio_usado).replace('.',',')+'</span></div>'+html;
     $('placeholder').style.display='none'; $('resultado').style.display='block';
@@ -456,7 +521,7 @@
       note = 'R$ '+fmtBRL(Math.abs(econ.un))+'/un · líq. da comissão';
     }
     return '<div class="cards3">'
-      +'<div class="sc"><div class="k">Custo landed / un'+(isRef?' (ref)':'')+'</div><div class="big">R$ '+fmtBRL(custoUnit)+'</div><div class="small">'+Number(mult||0).toFixed(2).replace('.',',')+'× FOB</div></div>'
+      +'<div class="sc"><div class="k">Custo / un'+(isRef?' · ref':'')+'</div><div class="big">R$ '+fmtBRL(custoUnit)+'</div><div class="small">'+Number(mult||0).toFixed(2).replace('.',',')+'× FOB · c/ comissão</div></div>'
       +'<div class="sc amber"><div class="k">Comissão · lote</div><div class="big">R$ '+fmtBRL(comissaoLote)+'</div><div class="small">'+pct(com)+' s/ FOB</div></div>'
       +'<div class="sc"><div class="k">Economia / operação</div><div class="big" style="color:'+cor+'">'+val+'</div><div class="small">'+note+'</div></div>'
       +'</div>';
@@ -514,6 +579,7 @@
       out.innerHTML=''; return;
     }
     const lanceMin=base/divisor;
+    if(window.ULTIMA_SIM){ window.ULTIMA_SIM.proj_adm=Number($('pj-adm').value)||0; window.ULTIMA_SIM.proj_das_pct=Number($('pj-das').value)||0; window.ULTIMA_SIM.proj_frete_nac=Number($('pj-frete').value)||0; window.ULTIMA_SIM.lance_minimo=lanceMin; }
     min.innerHTML='Custo de aquisição (landed + comissão): <b>R$ '+fmtBRL(base)+'</b>'
       +'<br>Lance mínimo real <span style="color:var(--faint)">(lucro zero · adm+DAS+frete por dentro)</span>: <b style="color:var(--accent-2)">R$ '+fmtBRL(lanceMin)+'</b>';
     const L=Number($('pj-lance').value)||0;
@@ -557,11 +623,104 @@
     if(r) r.textContent=ic; if(n) n.textContent=ic;
   };
 
+  // ---------- SESSÃO (herdada do Banco de Preço · mesma origem/projeto) ----------
+  let AUTHED=false;
+  function updateAuthChip(){
+    const c=$('authchip'); if(!c) return;
+    if(AUTHED){ c.textContent='● sessão ativa'; c.className='authchip on'; }
+    else { c.textContent='entre pelo Banco de Preço p/ salvar'; c.className='authchip'; }
+  }
+  async function initAuth(){
+    try{ const {data}=await sb.auth.getSession(); AUTHED=!!(data&&data.session); }catch(e){ AUTHED=false; }
+    updateAuthChip();
+    try{ sb.auth.onAuthStateChange((_e,s)=>{ AUTHED=!!s; updateAuthChip();
+      const sh=$('save-hint'); if(sh&&AUTHED){ sh.textContent=''; sh.className='savehint'; }
+      if($('view-cons')&&$('view-cons').style.display!=='none') carregarConsultas(); }); }catch(e){}
+  }
+
+  // ---------- VIEW (Simulação / Consultas) ----------
+  window.setView=function(v){
+    const sim=v!=='cons';
+    $('view-sim').style.display=sim?'':'none';
+    $('view-cons').style.display=sim?'none':'';
+    $('vb-sim').classList.toggle('active',sim);
+    $('vb-cons').classList.toggle('active',!sim);
+    if(!sim) carregarConsultas();
+  };
+
+  // ---------- SALVAR simulação ----------
+  window.salvarSim=async function(){
+    const sh=$('save-hint'); const sim=window.ULTIMA_SIM;
+    if(!sh||!sim) return;
+    if(!AUTHED){ sh.textContent='Entre pelo Banco de Preço (aba principal) pra salvar.'; sh.className='savehint err'; return; }
+    const f=$('fornecedor').value.trim();
+    if(!f){ sh.textContent='Informe o fornecedor antes de salvar.'; sh.className='savehint err'; $('fornecedor').focus(); return; }
+    const btn=document.querySelector('.btn-save'); if(btn) btn.disabled=true;
+    sh.textContent='salvando…'; sh.className='savehint';
+    try{
+      const {error}=await sb.from('ac_simulacao').insert({...sim, fornecedor:f});
+      if(error) throw error;
+      sh.textContent='✓ salvo no histórico'; sh.className='savehint ok';
+    }catch(e){ sh.textContent='✗ '+(e.message||e); sh.className='savehint err'; }
+    finally{ if(btn) btn.disabled=false; }
+  };
+
+  // ---------- CONSULTAS ----------
+  let CONS_CACHE=[];
+  async function carregarConsultas(){
+    const wrap=$('cons-list'); if(!wrap) return;
+    if(!AUTHED){ wrap.innerHTML='<div class="cons-empty">Entre pelo Banco de Preço (na aba principal) pra consultar o histórico.</div>'; return; }
+    wrap.innerHTML='<div class="cons-empty">carregando…</div>';
+    try{
+      const {data,error}=await sb.from('ac_simulacao').select('*').order('item_nome',{ascending:true}).order('created_at',{ascending:false});
+      if(error) throw error;
+      CONS_CACHE=data||[];
+      renderConsultas($('cons-search')?$('cons-search').value.trim().toLowerCase():'');
+    }catch(e){ wrap.innerHTML='<div class="cons-empty" style="color:var(--red)">✗ '+esc(e.message||e)+'</div>'; }
+  }
+  window.filtrarConsultas=function(){ renderConsultas($('cons-search').value.trim().toLowerCase()); };
+  function renderConsultas(q){
+    const wrap=$('cons-list'); if(!wrap) return;
+    let rows=CONS_CACHE;
+    if(q) rows=rows.filter(r=>(r.item_nome||'').toLowerCase().includes(q)||(r.fornecedor||'').toLowerCase().includes(q));
+    if(!rows.length){ wrap.innerHTML='<div class="cons-empty">'+(CONS_CACHE.length?'Nada encontrado para o filtro.':'Nenhuma simulação salva ainda.')+'</div>'; return; }
+    const pctS=(x)=>(Number(x)||0).toFixed(1).replace('.',',')+'%';
+    const groups={};
+    rows.forEach(r=>{ (groups[r.item_nome]=groups[r.item_nome]||[]).push(r); });
+    let html='';
+    Object.keys(groups).forEach(item=>{
+      const g=groups[item];
+      html+='<div class="cons-group"><div class="cons-item">'+esc(item)+' <span class="cons-count">'+g.length+' fornecedor'+(g.length>1?'es':'')+'</span></div>'
+        +'<table class="cons-tbl"><thead><tr><th>Fornecedor</th><th>Data</th><th>Custo/un</th><th>Desc.</th><th>Piso</th><th>Veredito</th><th>Lance mín.</th><th></th></tr></thead><tbody>';
+      g.forEach(r=>{
+        const d=r.created_at?new Date(r.created_at).toLocaleDateString('pt-BR'):'—';
+        const vcls=(r.veredito==='Positivo')?'v-pos':'v-neg';
+        html+='<tr><td>'+esc(r.fornecedor||'—')+'</td><td>'+d+'</td>'
+          +'<td>R$ '+fmtBRL(r.landed_un)+'</td><td>'+pctS(r.desconto_pct)+'</td><td>'+pctS(r.piso_pct)+'</td>'
+          +'<td class="'+vcls+'">'+esc(r.veredito||'—')+'</td>'
+          +'<td>'+(r.lance_minimo!=null?'R$ '+fmtBRL(r.lance_minimo):'—')+'</td>'
+          +'<td><button class="cons-del" title="apagar" onclick="apagarSim('+r.id+')">×</button></td></tr>';
+      });
+      html+='</tbody></table></div>';
+    });
+    wrap.innerHTML=html;
+  }
+  window.apagarSim=async function(id){
+    if(!confirm('Apagar esta simulação salva? (não dá pra desfazer)')) return;
+    try{
+      const {error}=await sb.from('ac_simulacao').delete().eq('id',id);
+      if(error) throw error;
+      CONS_CACHE=CONS_CACHE.filter(r=>r.id!==id);
+      renderConsultas($('cons-search')?$('cons-search').value.trim().toLowerCase():'');
+    }catch(e){ alert('Erro ao apagar: '+(e.message||e)); }
+  };
+
   carregarCatalogo();
   preencherCambio();
   renderAgenteSelect();
   recalcFob();
   atualizarCondicao();
+  initAuth();
   if(window.lucide?.createIcons) window.lucide.createIcons();
 </script>
 </body>
