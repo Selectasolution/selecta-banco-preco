@@ -154,6 +154,20 @@
   .cons-del{color:var(--faint);background:none;border:0;cursor:pointer;font-size:16px;line-height:1;padding:2px 7px;border-radius:5px}
   .cons-del:hover{color:var(--red);background:rgba(248,113,113,.1)}
   .cons-empty{color:var(--faint);text-align:center;padding:50px 20px;font-size:13px}
+  .cons-link{color:var(--accent-2);cursor:pointer;font-size:12px;text-decoration:underline;text-underline-offset:2px;margin-right:12px}
+  .cons-act{white-space:nowrap;text-align:right}
+  /* modal relatório */
+  .rel-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:50}
+  .rel-card{background:var(--panel-2);border:1px solid var(--border-soft);border-radius:14px;max-width:560px;width:100%;padding:24px 26px;position:relative}
+  .rel-close{position:absolute;top:14px;right:16px;background:none;border:0;color:var(--faint);font-size:22px;line-height:1;cursor:pointer}
+  .rel-close:hover{color:var(--text)}
+  .rel-h h3{margin:0;font-size:18px;font-weight:700}
+  .rel-sub{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:3px}
+  .rel-verd{display:inline-block;margin:14px 0 4px;font-size:20px;font-weight:700}
+  .rel-verd.v-pos{color:var(--accent-2)} .rel-verd.v-neg{color:var(--red)}
+  .rel-sect{margin:16px 0 6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);font-weight:600;border-bottom:1px solid var(--border);padding-bottom:5px}
+  .rel-row{display:flex;justify-content:space-between;gap:14px;padding:5px 0;font-size:13px}
+  .rel-k{color:var(--dim)} .rel-v{color:var(--text);font-family:var(--mono);text-align:right}
 </style>
 </head>
 <body>
@@ -277,6 +291,13 @@
       <input id="cons-search" class="cons-search" type="text" placeholder="filtrar por item ou fornecedor…" oninput="filtrarConsultas()">
     </div>
     <div id="cons-list"></div>
+  </div>
+
+  <div id="rel-modal" class="rel-modal" style="display:none" onclick="if(event.target===this)fecharRelatorio()">
+    <div class="rel-card">
+      <button class="rel-close" onclick="fecharRelatorio()" title="fechar">×</button>
+      <div id="rel-body"></div>
+    </div>
   </div>
 
 <script type="module">
@@ -661,6 +682,7 @@
       const {error}=await sb.from('ac_simulacao').insert({...sim, fornecedor:f});
       if(error) throw error;
       sh.textContent='✓ salvo no histórico'; sh.className='savehint ok';
+      setTimeout(window.novaSimulacao,1000);
     }catch(e){ sh.textContent='✗ '+(e.message||e); sh.className='savehint err'; }
     finally{ if(btn) btn.disabled=false; }
   };
@@ -691,15 +713,16 @@
     Object.keys(groups).forEach(item=>{
       const g=groups[item];
       html+='<div class="cons-group"><div class="cons-item">'+esc(item)+' <span class="cons-count">'+g.length+' fornecedor'+(g.length>1?'es':'')+'</span></div>'
-        +'<table class="cons-tbl"><thead><tr><th>Fornecedor</th><th>Data</th><th>Custo/un</th><th>Desc.</th><th>Piso</th><th>Veredito</th><th>Lance mín.</th><th></th></tr></thead><tbody>';
+        +'<table class="cons-tbl"><thead><tr><th>Fornecedor</th><th>Data</th><th>Preço FOB</th><th>Preço Custo</th><th>Veredito</th><th>Lance mín.</th><th></th></tr></thead><tbody>';
       g.forEach(r=>{
         const d=r.created_at?new Date(r.created_at).toLocaleDateString('pt-BR'):'—';
         const vcls=(r.veredito==='Positivo')?'v-pos':'v-neg';
         html+='<tr><td>'+esc(r.fornecedor||'—')+'</td><td>'+d+'</td>'
-          +'<td>R$ '+fmtBRL(r.landed_un)+'</td><td>'+pctS(r.desconto_pct)+'</td><td>'+pctS(r.piso_pct)+'</td>'
+          +'<td>'+(r.fob_neg!=null?'US$ '+fmtUSD(r.fob_neg):'—')+'</td>'
+          +'<td>R$ '+fmtBRL(r.landed_un)+'</td>'
           +'<td class="'+vcls+'">'+esc(r.veredito||'—')+'</td>'
           +'<td>'+(r.lance_minimo!=null?'R$ '+fmtBRL(r.lance_minimo):'—')+'</td>'
-          +'<td><button class="cons-del" title="apagar" onclick="apagarSim('+r.id+')">×</button></td></tr>';
+          +'<td class="cons-act"><a class="cons-link" onclick="verRelatorio('+r.id+')">ver</a><button class="cons-del" title="apagar" onclick="apagarSim('+r.id+')">×</button></td></tr>';
       });
       html+='</tbody></table></div>';
     });
@@ -713,6 +736,61 @@
       CONS_CACHE=CONS_CACHE.filter(r=>r.id!==id);
       renderConsultas($('cons-search')?$('cons-search').value.trim().toLowerCase():'');
     }catch(e){ alert('Erro ao apagar: '+(e.message||e)); }
+  };
+
+  // ---------- RELATÓRIO completo (modal) ----------
+  window.verRelatorio=function(id){
+    const r=CONS_CACHE.find(x=>x.id===id); if(!r) return;
+    const d=r.created_at?new Date(r.created_at).toLocaleString('pt-BR'):'—';
+    const vcls=(r.veredito==='Positivo')?'v-pos':'v-neg';
+    const usd=(x)=>x!=null?'US$ '+fmtUSD(x):'—';
+    const brl=(x)=>x!=null?'R$ '+fmtBRL(x):'—';
+    const pc=(x)=>x!=null?(Number(x)||0).toFixed(1).replace('.',',')+'%':'—';
+    const vrg=(x)=>x!=null?String(x).replace('.',','):'—';
+    const ln=(k,v)=>'<div class="rel-row"><span class="rel-k">'+k+'</span><span class="rel-v">'+v+'</span></div>';
+    $('rel-body').innerHTML=
+      '<div class="rel-h"><h3>'+esc(r.item_nome||'Item')+'</h3>'
+        +'<div class="rel-sub">'+esc(r.fornecedor||'—')+' · '+d+(r.agente?' · agente: '+esc(r.agente):'')+'</div></div>'
+      +'<div class="rel-verd '+vcls+'">'+esc(r.veredito||'—')+'</div>'
+      +'<div class="rel-sect">Negociação</div>'
+        +ln('Preço FOB referência (1688)',usd(r.fob_ref))
+        +ln('Preço FOB negociado',usd(r.fob_neg))
+        +ln('Desconto obtido',pc(r.desconto_pct))
+        +ln('Piso · meta de desconto',pc(r.piso_pct))
+      +'<div class="rel-sect">Embarque</div>'
+        +ln('NCM',esc(r.ncm||'—'))
+        +ln('Quantidade',r.qtd!=null?String(r.qtd):'—')
+        +ln('Peso un. (kg)',vrg(r.peso))
+        +ln('Incoterm',esc(r.incoterm||'—'))
+        +ln('Câmbio R$/US$',vrg(r.cambio))
+        +ln('Frete int.',usd(r.frete))
+        +ln('Seguro int.',usd(r.seguro))
+      +'<div class="rel-sect">Agente</div>'
+        +ln('Comissão',pc(r.comissao_pct))
+        +ln('Taxa fixa anual',brl(r.taxa_fixa))
+      +'<div class="rel-sect">Custo &amp; resultado</div>'
+        +ln('Preço custo / un (c/ comissão)',brl(r.landed_un))
+        +ln('Multiplicador',(Number(r.markup)||0).toFixed(2).replace('.',',')+'× FOB')
+        +ln('Economia / lote',brl(r.economia_lote))
+        +ln('Economia / un',brl(r.economia_un))
+      +'<div class="rel-sect">Projeção do lance · Simples</div>'
+        +ln('Custos administrativos',pc(r.proj_adm))
+        +ln('DAS',pc(r.proj_das_pct))
+        +ln('Frete de entrega',pc(r.proj_frete_nac))
+        +ln('Lance mínimo real',brl(r.lance_minimo));
+    $('rel-modal').style.display='flex';
+  };
+  window.fecharRelatorio=function(){ $('rel-modal').style.display='none'; };
+
+  // ---------- volta a tela em branco para a próxima simulação ----------
+  window.novaSimulacao=function(){
+    window.ULTIMA_SIM=null;
+    $('fornecedor').value='';
+    $('fob-neg').value='';
+    $('resultado').style.display='none'; $('resultado').innerHTML='';
+    $('placeholder').style.display='';
+    const st=$('status'); if(st){ st.textContent=''; st.className='status-line'; }
+    recalcFob();
   };
 
   carregarCatalogo();
