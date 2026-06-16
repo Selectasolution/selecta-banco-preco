@@ -123,6 +123,7 @@ td.np{color:var(--lock);font-style:italic}
 .precoSave:hover{border-color:var(--green);color:var(--green)}
 .precoSave.dirty{background:var(--green);border-color:var(--green);color:#fff}
 .precoSave.dirty:hover{background:var(--green-d)}
+.precoCel .fornEdit{width:110px;text-align:left;font-size:12px;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -167,11 +168,7 @@ td.np{color:var(--lock);font-style:italic}
       <h2><span class="n">03</span>Memória e Armazenamento</h2>
       <div class="row">
         <label>Memória RAM</label>
-        <div class="row2">
-          <select id="s_ram" disabled></select>
-          <input id="s_ramq" type="number" min="1" value="1" title="Quantidade de pentes" disabled>
-        </div>
-        <div class="hint">Quantidade de pentes à direita.</div>
+        <select id="s_ram" disabled></select>
       </div>
       <div class="row">
         <label>Armazenamento</label>
@@ -187,14 +184,18 @@ td.np{color:var(--lock);font-style:italic}
     </div>
 
     <div class="card">
-      <h2><span class="n">05</span>Adicionais (valor manual)</h2>
+      <h2><span class="n">05</span>Periféricos</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label>Monitor</label><select id="s_mon"></select></div>
+        <div><label>Kit teclado + mouse</label><select id="s_kit"></select></div>
+      </div>
+      <div class="hint">Preço vem do que você cadastrar na aba Catálogo. Entram no ranking de solicitações.</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">06</span>Adicionais (valor manual)</h2>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Sem banco de preço — digite o valor. Em branco = não soma.</div>
       <div class="row3">
-        <div><label>Monitor</label><input class="man" data-k="Monitor" type="number" min="0" placeholder="R$"></div>
-        <div><label>Teclado</label><input class="man" data-k="Teclado" type="number" min="0" placeholder="R$"></div>
-        <div><label>Mouse</label><input class="man" data-k="Mouse" type="number" min="0" placeholder="R$"></div>
-      </div>
-      <div class="row3" style="margin-top:10px">
         <div><label>Placa de vídeo</label><input class="man" data-k="Placa de vídeo" type="number" min="0" placeholder="R$"></div>
         <div><label>Placa de rede</label><input class="man" data-k="Placa de rede" type="number" min="0" placeholder="R$"></div>
         <div><label>Sistema operacional</label><input class="man" data-k="Sistema operacional" type="number" min="0" placeholder="R$"></div>
@@ -204,11 +205,11 @@ td.np{color:var(--lock);font-style:italic}
 
   <div>
     <div class="card budget">
-      <h2><span class="n">06</span>Orçamento</h2>
+      <h2><span class="n">07</span>Orçamento</h2>
       <div id="bdItems"></div>
       <div class="total"><span class="t1">Total / máquina</span><span class="t2 mono" id="bdTotal">—</span></div>
       <div id="bdWarn"></div>
-      <button class="act" id="btnApr">Aprovar e salvar consulta</button>
+      <button class="act" id="btnApr">Salvar consulta</button>
       <button class="ghost" id="btnClr">Limpar e começar outro</button>
     </div>
   </div>
@@ -325,12 +326,23 @@ const CAT = {
     {id:'fx04',item:'Cabo de vídeo HDMI',regra:'sempre',preco:15},
     {id:'fx05',item:'Cooler CPU básico',regra:'cooler',preco:50},
     {id:'fx06',item:'Cabo de força',regra:'forca',preco:20}
+  ],
+  perifericos:[
+    {id:'kit01',tipo:'kit',item:'Kit teclado+mouse',sub:'USB',preco:null},
+    {id:'kit02',tipo:'kit',item:'Kit teclado+mouse',sub:'Sem fio',preco:null},
+    {id:'mon01',tipo:'monitor',item:'Monitor',sub:'15.4"',preco:null},
+    {id:'mon02',tipo:'monitor',item:'Monitor',sub:'17"',preco:null},
+    {id:'mon03',tipo:'monitor',item:'Monitor',sub:'19"',preco:null},
+    {id:'mon04',tipo:'monitor',item:'Monitor',sub:'20"',preco:null},
+    {id:'mon05',tipo:'monitor',item:'Monitor',sub:'21.5"',preco:null},
+    {id:'mon06',tipo:'monitor',item:'Monitor',sub:'24"',preco:null},
+    {id:'mon07',tipo:'monitor',item:'Monitor',sub:'27"',preco:null}
   ]
 };
 
 /* índice id -> item */
 const IDX={};
-['processadores','memorias','placas','armazenamento','fixos'].forEach(g=>CAT[g].forEach(it=>IDX[it.id]=it));
+['processadores','memorias','placas','armazenamento','fixos','perifericos'].forEach(g=>CAT[g].forEach(it=>IDX[it.id]=it));
 
 /* mapa nome-no-orcamento -> id, para casar consultas antigas (gravadas sem id) */
 const NOME2ID={};
@@ -339,6 +351,7 @@ CAT.placas.forEach(it=>NOME2ID['Placa '+it.chipset+' ('+it.socket+')']=it.id);
 CAT.memorias.forEach(it=>NOME2ID[it.tipo+' '+it.cap+' '+it.freq]=it.id);
 CAT.armazenamento.forEach(it=>NOME2ID[it.tipo+' '+it.cap]=it.id);
 CAT.fixos.forEach(it=>NOME2ID[it.item]=it.id);
+CAT.perifericos.forEach(it=>NOME2ID[it.item+' '+it.sub]=it.id);
 
 /* soma de quantas vezes cada peca foi solicitada nas consultas aprovadas */
 function contagemPorId(){
@@ -354,16 +367,18 @@ function contagemPorId(){
 let ORD_RANK=false;
 
 /* ===================== ESTADO / STORAGE ===================== */
-let PRECOS={}, HIST=[], LS_OK=true;
-const K_PRE='selecta_montador_precos', K_HIS='selecta_montador_historico';
+let PRECOS={}, FORN={}, HIST=[], LS_OK=true;
+const K_PRE='selecta_montador_precos', K_FOR='selecta_montador_fornecedores', K_HIS='selecta_montador_historico';
 
 function lsLoad(){
   try{
     PRECOS=JSON.parse(localStorage.getItem(K_PRE)||'{}');
+    FORN=JSON.parse(localStorage.getItem(K_FOR)||'{}');
     HIST=JSON.parse(localStorage.getItem(K_HIS)||'[]');
-  }catch(e){ LS_OK=false; PRECOS={}; HIST=[]; }
+  }catch(e){ LS_OK=false; PRECOS={}; FORN={}; HIST=[]; }
 }
 function lsSavePre(){ try{ localStorage.setItem(K_PRE,JSON.stringify(PRECOS)); }catch(e){ LS_OK=false; } }
+function lsSaveFor(){ try{ localStorage.setItem(K_FOR,JSON.stringify(FORN)); }catch(e){ LS_OK=false; } }
 function lsSaveHis(){ try{ localStorage.setItem(K_HIS,JSON.stringify(HIST)); }catch(e){ LS_OK=false; } }
 
 /* ===================== SINCRONIZAÇÃO SUPABASE (preços) ===================== */
@@ -388,36 +403,42 @@ async function sbInit(){
 async function sbLoadPrecos(){
   if(!SB) return;
   try{
-    const { data, error } = await SB.from('montador_precos').select('component_id, preco');
-    if(error) throw error;
-    (data||[]).forEach(r=>{ if(r.preco!=null && IDX[r.component_id]) PRECOS[r.component_id]=Number(r.preco); });
-    lsSavePre();                          // espelha no cache offline
-    fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento(); renderCatalogo();
+    let { data, error } = await SB.from('montador_precos').select('component_id, preco, fornecedor');
+    if(error){ const r2 = await SB.from('montador_precos').select('component_id, preco'); if(r2.error) throw r2.error; data=r2.data; }
+    (data||[]).forEach(r=>{ if(!IDX[r.component_id]) return; if(r.preco!=null) PRECOS[r.component_id]=Number(r.preco); if(r.fornecedor) FORN[r.component_id]=r.fornecedor; });
+    lsSavePre(); lsSaveFor();              // espelha no cache offline
+    fillCpu(); fillRam(); fillArm(); fillMon(); fillKit(); renderAutoMb(); renderOrcamento(); renderCatalogo();
   }catch(e){
     console.warn('[montador] Falha ao ler preços do servidor.', e);
   }
 }
-async function sbSavePreco(id, val){
+async function sbSavePreco(id, val, forn){
   if(!SB) return false;
+  const temPreco = !(val===null || val===undefined || isNaN(val));
+  const temForn = !!(forn && String(forn).trim());
   try{
-    if(val===null || val===undefined || isNaN(val)){
+    if(!temPreco && !temForn){
       const { error } = await SB.from('montador_precos').delete().eq('component_id', id);
       if(error) throw error;
-    }else{
-      const { error } = await SB.from('montador_precos')
-        .upsert({ component_id:id, preco:val, updated_at:new Date().toISOString() }, { onConflict:'component_id' });
-      if(error) throw error;
+      return true;
+    }
+    const row = { component_id:id, preco:temPreco?val:null, fornecedor:temForn?String(forn).trim():null, updated_at:new Date().toISOString() };
+    let { error } = await SB.from('montador_precos').upsert(row, { onConflict:'component_id' });
+    if(error){ // coluna 'fornecedor' pode ainda nao existir -> grava so o preco
+      const row2 = { component_id:id, preco:temPreco?val:null, updated_at:new Date().toISOString() };
+      const r2 = await SB.from('montador_precos').upsert(row2, { onConflict:'component_id' });
+      if(r2.error) throw r2.error;
     }
     return true;
   }catch(e){
-    console.warn('[montador] Falha ao sincronizar preço.', e);
+    console.warn('[montador] Falha ao sincronizar.', e);
     return false;
   }
 }
 
 function preco(id){ return (PRECOS[id]!==undefined && PRECOS[id]!==null) ? PRECOS[id] : IDX[id].preco; }
 
-const estado={cpu:null,ram:null,ramq:1,arm:null,cooler:true,forca:false,man:{}};
+const estado={cpu:null,ram:null,arm:null,cooler:true,forca:false,mon:null,kit:null,man:{}};
 
 /* ===================== HELPERS ===================== */
 function fmt(n){
@@ -449,9 +470,9 @@ function fillCpu(){
 }
 function fillRam(){
   const s=el('s_ram');
-  if(!estado.cpu){ s.innerHTML='<option>— trava: escolha o processador —</option>'; s.disabled=true; el('s_ramq').disabled=true; return; }
+  if(!estado.cpu){ s.innerHTML='<option>— trava: escolha o processador —</option>'; s.disabled=true; return; }
   const mb=placaDoCpu(estado.cpu);
-  s.disabled=false; el('s_ramq').disabled=false;
+  s.disabled=false;
   s.innerHTML='<option value="">— escolha a memória ('+mb.tipoRAM+') —</option>';
   CAT.memorias.filter(m=>m.tipo===mb.tipoRAM).forEach(m=>{
     const p=preco(m.id);
@@ -476,6 +497,28 @@ function fillArm(){
   });
   if(estado.arm && !(estado.arm.nvme && !mb.m2)){ s.value=estado.arm.id; } else { estado.arm=null; }
 }
+function fillMon(){
+  const s=el('s_mon'); if(!s) return;
+  s.innerHTML='<option value="">— sem monitor —</option>';
+  CAT.perifericos.filter(p=>p.tipo==='monitor').forEach(m=>{
+    const pr=preco(m.id);
+    const o=document.createElement('option'); o.value=m.id;
+    o.textContent=m.sub+'  ·  '+(pr?fmt(pr):'sem preço');
+    s.appendChild(o);
+  });
+  if(estado.mon){ s.value=estado.mon.id; }
+}
+function fillKit(){
+  const s=el('s_kit'); if(!s) return;
+  s.innerHTML='<option value="">— sem kit —</option>';
+  CAT.perifericos.filter(p=>p.tipo==='kit').forEach(k=>{
+    const pr=preco(k.id);
+    const o=document.createElement('option'); o.value=k.id;
+    o.textContent=k.sub+'  ·  '+(pr?fmt(pr):'sem preço');
+    s.appendChild(o);
+  });
+  if(estado.kit){ s.value=estado.kit.id; }
+}
 function renderAutoMb(){
   const box=el('autoMb'), ch=el('chain');
   if(!estado.cpu){ box.innerHTML=''; ch.innerHTML=''; return; }
@@ -495,8 +538,10 @@ function linhasOrcamento(){
   const L=[];
   if(estado.cpu){ L.push({cat:'Processador',id:estado.cpu.id,nome:estado.cpu.marca+' '+estado.cpu.modelo,preco:preco(estado.cpu.id),qtd:1}); }
   if(estado.cpu){ const mb=placaDoCpu(estado.cpu); L.push({cat:'Placa-mãe',id:mb.id,nome:'Placa '+mb.chipset+' ('+mb.socket+')',preco:preco(mb.id),qtd:1}); }
-  if(estado.ram){ L.push({cat:'Memória',id:estado.ram.id,nome:estado.ram.tipo+' '+estado.ram.cap+' '+estado.ram.freq,preco:preco(estado.ram.id),qtd:estado.ramq}); }
+  if(estado.ram){ L.push({cat:'Memória',id:estado.ram.id,nome:estado.ram.tipo+' '+estado.ram.cap+' '+estado.ram.freq,preco:preco(estado.ram.id),qtd:1}); }
   if(estado.arm){ L.push({cat:'Armazenamento',id:estado.arm.id,nome:estado.arm.tipo+' '+estado.arm.cap,preco:preco(estado.arm.id),qtd:1}); }
+  if(estado.mon){ L.push({cat:'Periférico',id:estado.mon.id,nome:estado.mon.item+' '+estado.mon.sub,preco:preco(estado.mon.id),qtd:1}); }
+  if(estado.kit){ L.push({cat:'Periférico',id:estado.kit.id,nome:estado.kit.item+' '+estado.kit.sub,preco:preco(estado.kit.id),qtd:1}); }
   CAT.fixos.forEach(f=>{
     if(f.regra==='sempre') L.push({cat:'Fixo',id:f.id,nome:f.item,preco:preco(f.id),qtd:1});
     else if(f.regra==='cooler'&&estado.cooler) L.push({cat:'Fixo',id:f.id,nome:f.item,preco:preco(f.id),qtd:1});
@@ -542,13 +587,17 @@ function aprovar(){
     itens:L, total:total, incompleto:semPreco
   });
   lsSaveHis(); renderCatalogo(); renderHistorico();
-  toast('Consulta salva no histórico.');
+  limpar();
+  toast('Consulta salva — pronto para a próxima.');
 }
 function limpar(){
-  estado.cpu=estado.ram=estado.arm=null; estado.ramq=1; estado.cooler=true; estado.forca=false; estado.man={};
-  el('s_cpu').value=''; el('s_ramq').value=1; el('c_cooler').checked=true; el('c_forca').checked=false;
+  estado.cpu=estado.ram=estado.arm=null; estado.mon=null; estado.kit=null; estado.cooler=true; estado.forca=false; estado.man={};
+  el('s_cpu').value=''; el('c_cooler').checked=true; el('c_forca').checked=false;
+  el('s_mon').value=''; el('s_kit').value='';
+  el('f_cliente').value=''; el('f_edital').value='';
+  const d=new Date(); el('f_data').value=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
   document.querySelectorAll('.man').forEach(i=>i.value='');
-  fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
+  fillRam(); fillArm(); fillMon(); fillKit(); renderAutoMb(); renderOrcamento();
 }
 
 /* ===================== CATÁLOGO ===================== */
@@ -569,7 +618,8 @@ function catTable(titulo,itens,nomeFn,CONT,ordRank){
       : '<span class="rknum rkzero mono">0</span>';
     h+='<tr><td>'+nomeFn(it)+'</td><td class="right"><div class="precoCel">'+
        '<input class="pin precoEdit" data-id="'+it.id+'" type="number" min="0" step="0.01" value="'+(p!==null&&p!==undefined?p:'')+'" placeholder="sem preço">'+
-       '<button class="precoSave" data-id="'+it.id+'" title="Salvar este preço">Salvar</button></div></td>'+
+       '<input class="fornEdit" data-id="'+it.id+'" type="text" value="'+(FORN[it.id]?String(FORN[it.id]).replace(/"/g,'&quot;'):'')+'" placeholder="fornecedor">'+
+       '<button class="precoSave" data-id="'+it.id+'" title="Salvar preço e fornecedor">Salvar</button></div></td>'+
        '<td class="right rkcell">'+cont+'</td></tr>';
   });
   return h+'</table>';
@@ -585,39 +635,46 @@ function renderCatalogo(){
   h+=catTable('Placas-mãe',CAT.placas,it=>'Placa '+it.chipset+' <span class="det">'+it.socket+' · '+it.tipoRAM+'</span>',CONT,ORD_RANK);
   h+=catTable('Armazenamento',CAT.armazenamento,it=>it.tipo+' '+it.cap+' <span class="det">'+it.iface+'</span>',CONT,ORD_RANK);
   h+=catTable('Fixos e Consumíveis',CAT.fixos,it=>it.item,CONT,ORD_RANK);
+  h+=catTable('Periféricos',CAT.perifericos,it=>it.item+' <span class="det">'+it.sub+'</span>',CONT,ORD_RANK);
   el('catBody').innerHTML=h;
   const tg=el('ordRank'); if(tg) tg.addEventListener('change',()=>{ ORD_RANK=tg.checked; renderCatalogo(); });
   function precoSalvo(id){ return (PRECOS[id]!==undefined && PRECOS[id]!==null) ? PRECOS[id] : (IDX[id]?IDX[id].preco:null); }
-  function marcaSujo(inp){
-    const id=inp.dataset.id, v=inp.value.trim();
-    const atual=(v==='')?null:parseFloat(v), base=precoSalvo(id);
-    const mudou = (atual===null) ? (base!=null) : (base===null || Number(atual)!==Number(base));
+  function fornSalvo(id){ return FORN[id]||''; }
+  function marcaSujo(id){
+    const pin=document.querySelector('.precoEdit[data-id="'+id+'"]');
+    const fin=document.querySelector('.fornEdit[data-id="'+id+'"]');
+    const v=pin?pin.value.trim():''; const atual=(v==='')?null:parseFloat(v); const base=precoSalvo(id);
+    const precoMudou = (atual===null) ? (base!=null) : (base===null || Number(atual)!==Number(base));
+    const fornMudou = fin ? (fin.value.trim()!==String(fornSalvo(id))) : false;
     const btn=document.querySelector('.precoSave[data-id="'+id+'"]');
-    if(btn) btn.classList.toggle('dirty', !!mudou);
+    if(btn) btn.classList.toggle('dirty', !!(precoMudou||fornMudou));
   }
   // editar NAO grava: apenas sinaliza alteracao pendente (botao fica verde)
-  document.querySelectorAll('.precoEdit').forEach(inp=>{
-    inp.addEventListener('input',()=>marcaSujo(inp));
+  document.querySelectorAll('.precoEdit, .fornEdit').forEach(inp=>{
+    inp.addEventListener('input',()=>marcaSujo(inp.dataset.id));
     inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const b=document.querySelector('.precoSave[data-id="'+inp.dataset.id+'"]'); if(b) b.click(); } });
   });
   // grava SOMENTE ao clicar em Salvar
   document.querySelectorAll('.precoSave').forEach(btn=>{
     btn.addEventListener('click',()=>{
       const id=btn.dataset.id;
-      const inp=document.querySelector('.precoEdit[data-id="'+id+'"]');
-      const v=inp.value.trim();
+      const pin=document.querySelector('.precoEdit[data-id="'+id+'"]');
+      const fin=document.querySelector('.fornEdit[data-id="'+id+'"]');
+      const v=pin.value.trim();
       const val=(v==='')?null:parseFloat(v);
       if(v!=='' && isNaN(val)){ toast('Valor inválido.',true); return; }
+      const forn=fin?fin.value.trim():'';
       if(val===null||isNaN(val)) delete PRECOS[id]; else PRECOS[id]=val;
-      lsSavePre(); fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
+      if(forn) FORN[id]=forn; else delete FORN[id];
+      lsSavePre(); lsSaveFor(); fillCpu(); fillRam(); fillArm(); fillMon(); fillKit(); renderAutoMb(); renderOrcamento();
       btn.classList.remove('dirty');
       if(SB_OK){
-        sbSavePreco(id, val).then(ok=>{
-          toast(ok ? 'Preço salvo e sincronizado.'
+        sbSavePreco(id, val, forn).then(ok=>{
+          toast(ok ? 'Preço e fornecedor salvos e sincronizados.'
                    : 'Salvo localmente — NÃO sincronizou (verifique se está logado).', !ok);
         });
       }else{
-        toast('Preço salvo localmente (sem sincronização).');
+        toast('Salvo localmente (sem sincronização).');
       }
     });
   });
@@ -673,8 +730,9 @@ el('s_cpu').addEventListener('change',e=>{
   fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
 });
 el('s_ram').addEventListener('change',e=>{ estado.ram=e.target.value?IDX[e.target.value]:null; renderOrcamento(); });
-el('s_ramq').addEventListener('input',e=>{ estado.ramq=Math.max(1,parseInt(e.target.value)||1); renderOrcamento(); });
 el('s_arm').addEventListener('change',e=>{ estado.arm=e.target.value?IDX[e.target.value]:null; renderOrcamento(); });
+el('s_mon').addEventListener('change',e=>{ estado.mon=e.target.value?IDX[e.target.value]:null; renderOrcamento(); });
+el('s_kit').addEventListener('change',e=>{ estado.kit=e.target.value?IDX[e.target.value]:null; renderOrcamento(); });
 el('c_cooler').addEventListener('change',e=>{ estado.cooler=e.target.checked; renderOrcamento(); });
 el('c_forca').addEventListener('change',e=>{ estado.forca=e.target.checked; renderOrcamento(); });
 document.querySelectorAll('.man').forEach(inp=>{
@@ -685,7 +743,7 @@ el('btnClr').addEventListener('click',limpar);
 el('btnExpHist').addEventListener('click',expHist);
 el('btnResetPrec').addEventListener('click',()=>{
   if(!confirm('Recarregar os preços do servidor?\n\nDescarta edições locais ainda não sincronizadas e volta ao último valor do servidor (ou ao valor original, onde não houver preço cadastrado no servidor).')) return;
-  PRECOS={}; lsSavePre(); renderCatalogo(); fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
+  PRECOS={}; lsSavePre(); renderCatalogo(); fillCpu(); fillRam(); fillArm(); fillMon(); fillKit(); renderAutoMb(); renderOrcamento();
   if(SB_OK){ sbLoadPrecos().then(()=>toast('Preços recarregados do servidor.')); }
   else { toast('Sem servidor: preços voltaram aos valores originais.'); }
 });
@@ -701,7 +759,7 @@ function init(){
   if(!LS_OK) el('lsNotice').style.display='';
   const d=new Date();
   el('f_data').value=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
-  fillCpu(); fillRam(); fillArm(); renderAutoMb(); renderOrcamento();
+  fillCpu(); fillRam(); fillArm(); fillMon(); fillKit(); renderAutoMb(); renderOrcamento();
   renderCatalogo(); renderHistorico();
   sbInit();   // carrega/segue sincronizando os preços do servidor em segundo plano
 }
