@@ -2498,6 +2498,25 @@ async function exportarBancoCotacao() {
       offset += PAGE;
     }
 
+    // Carrega os atributos estruturados da tabela base e indexa por codigo_slc.
+    // A view produtos_com_ofertas nao expoe atributos; por isso buscamos em produtos e fundimos.
+    const atrMap = new Map();
+    let offAtr = 0;
+    while (true) {
+      const { data: dataAtr, error: errAtr } = await sb
+        .from('produtos')
+        .select('codigo_slc, atributos')
+        .range(offAtr, offAtr + PAGE - 1)
+        .order('codigo_slc');
+
+      if (errAtr) throw errAtr;
+      if (!dataAtr || dataAtr.length === 0) break;
+
+      dataAtr.forEach(r => { if (r.atributos) atrMap.set(r.codigo_slc, r.atributos); });
+      if (dataAtr.length < PAGE) break;
+      offAtr += PAGE;
+    }
+
     const itens = todos
       .filter(p => p.prefixo !== 'DSK' && p.prefixo !== 'NB')
       .map(p => ({
@@ -2507,7 +2526,8 @@ async function exportarBancoCotacao() {
         descricao: p.descricao || '',
         menor_brl: p.menor_brl,
         menor_usd: p.menor_usd,
-        fornecedores: p.fornecedores_disponiveis || []
+        fornecedores: p.fornecedores_disponiveis || [],
+        atributos: atrMap.get(p.codigo_slc) || null
       }));
 
     const payload = {
@@ -2526,8 +2546,9 @@ async function exportarBancoCotacao() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    btn.textContent = `✓ ${itens.length} itens`;
-    setTimeout(() => { btn.textContent = textoOriginal; btn.disabled = false; }, 2500);
+    const comAtr = itens.filter(i => i.atributos).length;
+    btn.textContent = `✓ ${itens.length} itens (${comAtr} c/ atributos)`;
+    setTimeout(() => { btn.textContent = textoOriginal; btn.disabled = false; }, 3500);
   } catch (e) {
     alert('Erro ao exportar: ' + e.message);
     btn.textContent = textoOriginal;
