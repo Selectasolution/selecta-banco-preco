@@ -3871,7 +3871,15 @@ window.importacao = (function () {
       await catCarregar();
       fetchKPIs();
     } catch (e) {
-      alert('Falha ao apagar: ' + e.message);
+      const m = (e.message || '').toLowerCase();
+      if (m.indexOf('foreign key') >= 0 || m.indexOf('violates') >= 0) {
+        const onde = m.indexOf('imp_adicao') >= 0
+          ? ' Ele está vinculado a uma operação/adição (imp_adicao).'
+          : ' Ele está vinculado a outro registro do sistema.';
+        alert('Não dá pra apagar este produto.' + onde + ' Remova esse vínculo primeiro (ex.: a operação no Import OS).');
+      } else {
+        alert('Falha ao apagar: ' + e.message);
+      }
     }
   }
 
