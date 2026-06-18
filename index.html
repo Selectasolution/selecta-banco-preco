@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SELECTA — Banco de Preço</title>
+<link rel="icon" type="image/png" href="selecta-solution-logo.png">
+<link rel="apple-touch-icon" href="selecta-solution-logo.png">
 
 <!-- Tailwind CSS via CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -121,8 +123,8 @@
 <div id="login-screen" class="min-h-screen flex items-center justify-center px-4">
   <div class="w-full max-w-md">
     <div class="text-center mb-8">
-      <h1 class="text-4xl font-bold text-primary-500 mb-2">SELECTA</h1>
-      <p class="text-gray-400 text-sm">Banco de Preço · Solution</p>
+      <img src="selecta-solution-logo.png" alt="Selecta Solution" class="mx-auto mb-3 h-20 w-auto" />
+      <p class="text-gray-400 text-sm">Banco de Preço</p>
     </div>
 
     <div class="bg-gray-800 rounded-lg p-6 shadow-xl border border-gray-700">
@@ -158,7 +160,7 @@
   <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-10">
     <div class="max-w-screen-2xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
       <div class="flex items-center gap-6 flex-wrap">
-        <h1 class="text-xl font-bold text-primary-500">SELECTA</h1>
+        <img src="selecta-solution-logo.png" alt="Selecta Solution" class="h-9 w-auto" />
         <nav class="flex gap-1">
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="catalogo">Catálogo</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="apple">Apple</button>
@@ -423,9 +425,6 @@
         <button class="imp-subnav-btn" data-pane="catalogo">
           <i data-lucide="library"></i> Catálogo
         </button>
-        <button class="imp-subnav-btn" data-pane="fornecedores">
-          <i data-lucide="factory"></i> Fornecedores
-        </button>
         <button class="imp-subnav-btn" data-pane="agente-china">
           <i data-lucide="handshake"></i> Agente China
         </button>
@@ -458,15 +457,99 @@
     </div>
 
     <div class="imp-pane" id="imp-pane-catalogo">
-      <div class="imp-empty">
-        <i data-lucide="library"></i>
-        <h3 class="text-base font-semibold mb-1">Catálogo de produtos</h3>
-        <p class="text-sm max-w-md mx-auto">
-          Banco proprietário Selecta (tabela <code>imp_produtos</code>). Cresce a cada simulação salva.
-          NCM, alíquotas, homologações vinculadas, histórico de FOB.
-        </p>
-        <p class="text-xs mt-3 text-gray-500">A ser construído na <strong>Fase 3</strong>.</p>
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div>
+          <h3 class="text-base font-semibold">Catálogo de Importação</h3>
+          <p class="text-xs text-gray-500">Produto + fornecedores num lugar só &middot; <code>imp_produto</code> + <code>imp_fornecedor_validacoes</code> &middot; view <code>imp_vw_catalogo</code></p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <input id="cat-busca" type="search" oninput="importacao.catBuscar()" placeholder="Buscar produto, NCM, categoria..." class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm w-60 max-w-full">
+          <button class="imp-btn-primary" onclick="importacao.catNovoProduto()"><i data-lucide="plus"></i> Novo produto</button>
+        </div>
       </div>
+
+      <!-- FORM PRODUTO -->
+      <div id="cat-form-produto" class="hidden-section" style="background:#1f2937;border:1px solid #374151;border-radius:0.5rem;padding:1rem;margin-bottom:1rem;">
+        <h4 id="cat-form-prod-titulo" class="text-sm font-semibold text-gray-200 mb-3">Novo produto</h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">Chave / slug * <span class="text-gray-500 normal-case">(PK · não muda depois)</span></label>
+            <input id="cat-p-chave" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm font-mono" placeholder="mem_ddr4_8gb_3200"></div>
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">Nome comercial *</label>
+            <input id="cat-p-nome" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Memória RAM DDR4 8GB 3200"></div>
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">NCM * (8 díg.)</label>
+            <input id="cat-p-ncm" type="text" maxlength="8" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm font-mono" placeholder="84733042"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">Categoria</label>
+            <input id="cat-p-categoria" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="MEMORIA RAM"></div>
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">Peso bruto un. (kg)</label>
+            <input id="cat-p-peso" type="number" step="0.001" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="0.060"></div>
+          <div class="flex items-end gap-4 pb-1">
+            <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer"><input id="cat-p-radio" type="checkbox" class="w-4 h-4"><span>rádio (ANATEL)</span></label>
+            <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer"><input id="cat-p-inmetro" type="checkbox" class="w-4 h-4"><span>INMETRO</span></label>
+          </div>
+        </div>
+        <div class="mt-3"><label class="block text-xs font-medium text-gray-400 mb-1">Descrição DUIMP</label>
+          <input id="cat-p-desc" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Descrição conforme atributos da DUIMP"></div>
+        <div class="mt-3"><label class="block text-xs font-medium text-gray-400 mb-1">Atributos (JSON · opcional)</label>
+          <textarea id="cat-p-atributos" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm font-mono" placeholder='{"capacidade":"8GB","frequencia":"3200MHz"}'></textarea></div>
+        <div id="cat-form-prod-erro" class="text-sm text-red-400 mt-2"></div>
+        <div class="flex gap-2 mt-3">
+          <button class="imp-btn-primary" onclick="importacao.catSalvarProduto()"><i data-lucide="save"></i> Salvar produto</button>
+          <button class="imp-btn-primary imp-btn-secondary" onclick="importacao.catCancelarProduto()">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- FORM FORNECEDOR (por produto · entrada manual) -->
+      <div id="cat-form-fornecedor" class="hidden-section" style="background:#1f2937;border:1px solid #374151;border-radius:0.5rem;padding:1rem;margin-bottom:1rem;">
+        <h4 class="text-sm font-semibold text-gray-200 mb-1">Fornecedor para <span id="cat-f-produto-label" class="font-mono text-primary-500"></span></h4>
+        <p class="text-xs text-gray-500 mb-3">Entrada manual &middot; preencha conforme a negociação avança.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">Fornecedor</label>
+            <select id="cat-f-fornecedor" onchange="importacao.catToggleNovoFornecedor()" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></select></div>
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">Estágio *</label>
+            <select id="cat-f-estagio" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
+              <option value="triado">Triado (Mesa)</option>
+              <option value="em_negociacao">Em negociação</option>
+              <option value="validado_campo">Validado em campo</option>
+              <option value="homologado">Homologado</option>
+            </select></div>
+        </div>
+        <div id="cat-f-novo-bloco" class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-3 p-3 rounded-md" style="background:#111827;border:1px dashed #374151;">
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">Nome novo fornecedor</label>
+            <input id="cat-f-novo-nome" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Shenzhen Larix Technology"></div>
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">País</label>
+            <input id="cat-f-novo-pais" type="text" value="CN" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm"></div>
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">Plataforma</label>
+            <input id="cat-f-novo-plat" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Alibaba / 1688"></div>
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">URL da loja</label>
+            <input id="cat-f-novo-url" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="https://..."></div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">FOB un. US$ *</label>
+            <input id="cat-f-fob" type="number" step="0.0001" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="12.50"></div>
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">MOQ (un.)</label>
+            <input id="cat-f-moq" type="number" step="1" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="200"></div>
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">Lead time (dias)</label>
+            <input id="cat-f-lead" type="number" step="1" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="30"></div>
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">Score (0-100)</label>
+            <input id="cat-f-score" type="number" step="0.1" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="opcional"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">Classificação</label>
+            <input id="cat-f-class" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="ex: A / preferencial"></div>
+          <div><label class="block text-xs font-medium text-gray-400 mb-1">Dossiê da Mesa (JSON · opcional)</label>
+            <input id="cat-f-dossie" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm font-mono" placeholder='{...}'></div>
+        </div>
+        <div id="cat-form-forn-erro" class="text-sm text-red-400 mt-2"></div>
+        <div class="flex gap-2 mt-3">
+          <button class="imp-btn-primary" onclick="importacao.catSalvarFornecedor()"><i data-lucide="save"></i> Salvar fornecedor</button>
+          <button class="imp-btn-primary imp-btn-secondary" onclick="importacao.catCancelarFornecedor()">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- LISTA -->
+      <div id="cat-lista"><div class="imp-empty"><i data-lucide="loader"></i><p class="text-sm">Carregando...</p></div></div>
     </div>
 
     <div class="imp-pane" id="imp-pane-fornecedores">
@@ -2726,6 +2809,7 @@ window.importacao = (function () {
       p.classList.toggle('active', p.id === `imp-pane-${paneId}`);
     });
     if (paneId === 'fornecedores') listarFornecedores();
+    if (paneId === 'catalogo') catCarregar();
     if (paneId === 'simulacao') simCarregarCatalogo();
     if (paneId === 'regulatorio') regCarregar();
     if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
@@ -2766,11 +2850,10 @@ window.importacao = (function () {
         document.getElementById('imp-kpi-cambio-fonte').textContent = 'PTAX (aguardando sync)';
       }
 
-      // Catálogo — tabela imp_produtos
+      // Catálogo — tabela imp_produto (singular · modelo vivo)
       const { count: produtos } = await impState.sb
-        .from('imp_produtos')
-        .select('id', { count: 'exact', head: true })
-        .eq('ativo', true);
+        .from('imp_produto')
+        .select('chave', { count: 'exact', head: true });
       setKpi('imp-kpi-produtos', produtos ?? 0);
 
       impState.kpisJaCarregados = true;
@@ -3444,6 +3527,266 @@ window.importacao = (function () {
     }).join('');
   }
 
+  // ===================================================================
+  // CATÁLOGO DE IMPORTAÇÃO — produto + fornecedores (fusão · entrada manual)
+  // Lê de imp_vw_catalogo · grava em imp_produto / imp_fornecedores / imp_fornecedor_validacoes
+  // ===================================================================
+  const CAT_SLUG_RE = /^[a-z0-9]+(_[a-z0-9]+)*$/;
+  const CAT_ESTAGIO_LABEL = { triado:'Triado', em_negociacao:'Em negociação', validado_campo:'Validado em campo', homologado:'Homologado' };
+  const CAT_ESTAGIO_COR = { triado:'#6b7280', em_negociacao:'#d97706', validado_campo:'#10b981', homologado:'#34d399' };
+  let _catCache = [];
+  let _catProdutoAlvo = null;
+  let _catEditChave = null;
+
+  async function catCarregar() {
+    const box = document.getElementById('cat-lista');
+    if (!box || !impState.sb) return;
+    box.innerHTML = '<div class="imp-empty"><i data-lucide="loader"></i><p class="text-sm">Carregando catálogo...</p></div>';
+    try {
+      const { data, error } = await impState.sb.from('imp_vw_catalogo').select('*');
+      if (error) throw error;
+      _catCache = data || [];
+      catRender();
+    } catch (e) {
+      box.innerHTML = '<div style="color:#ef4444;font-size:0.85rem;">Erro ao carregar catálogo: ' + impEsc(e.message) + '</div>';
+    }
+    if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+  }
+
+  function catBuscar() { catRender(); }
+
+  function catRender() {
+    const box = document.getElementById('cat-lista');
+    if (!box) return;
+    const termo = (document.getElementById('cat-busca') ? document.getElementById('cat-busca').value : '').toLowerCase().trim();
+    const prods = {};
+    _catCache.forEach((r) => {
+      if (!prods[r.chave]) {
+        prods[r.chave] = {
+          chave: r.chave, nome_comercial: r.nome_comercial, ncm: r.ncm, categoria: r.categoria,
+          possui_radio: r.possui_radio, requer_inmetro: r.requer_inmetro,
+          peso_bruto_kg: r.peso_bruto_kg, descricao_duimp: r.descricao_duimp, fornecedores: [],
+        };
+      }
+      if (r.validacao_id) prods[r.chave].fornecedores.push(r);
+    });
+    let lista = Object.values(prods);
+    if (termo) {
+      lista = lista.filter((p) =>
+        (p.chave || '').toLowerCase().includes(termo) ||
+        (p.nome_comercial || '').toLowerCase().includes(termo) ||
+        (p.ncm || '').toLowerCase().includes(termo) ||
+        (p.categoria || '').toLowerCase().includes(termo));
+    }
+    lista.sort((a, b) => (a.nome_comercial || '').localeCompare(b.nome_comercial || ''));
+    if (!lista.length) {
+      box.innerHTML = '<div class="imp-empty"><i data-lucide="library"></i><h3 class="text-base font-semibold mb-1">Catálogo vazio</h3><p class="text-sm">Clique em &quot;Novo produto&quot; para começar a cadastrar.</p></div>';
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+      return;
+    }
+    box.innerHTML = lista.map(catCardProduto).join('');
+    if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+  }
+
+  function catCardProduto(p) {
+    const flags = [];
+    if (p.possui_radio) flags.push('<span style="font-size:11px;background:#7f1d1d;color:#fecaca;border:1px solid #991b1b;border-radius:4px;padding:1px 6px;">ANATEL (rádio)</span>');
+    if (p.requer_inmetro) flags.push('<span style="font-size:11px;background:#7c2d12;color:#fed7aa;border:1px solid #9a3412;border-radius:4px;padding:1px 6px;">INMETRO</span>');
+    if (!p.possui_radio && !p.requer_inmetro) flags.push('<span style="font-size:11px;background:#064e3b;color:#a7f3d0;border:1px solid #065f46;border-radius:4px;padding:1px 6px;">bloco verde</span>');
+    const forn = p.fornecedores || [];
+    const linhasForn = forn.length ? forn.map((f) => {
+      const est = f.estagio || 'triado';
+      return '<tr style="border-top:1px solid #1f2937;">'
+        + '<td style="padding:5px 8px;"><span style="font-size:11px;color:' + (CAT_ESTAGIO_COR[est] || '#6b7280') + ';font-weight:600;">&#9679; ' + impEsc(CAT_ESTAGIO_LABEL[est] || est) + '</span></td>'
+        + '<td style="padding:5px 8px;">' + impEsc(f.fornecedor_nome || '—') + (f.fornecedor_pais ? ' <span style="color:#6b7280;">(' + impEsc(f.fornecedor_pais) + ')</span>' : '') + '</td>'
+        + '<td style="padding:5px 8px;text-align:right;font-family:monospace;">US$ ' + (f.preco_fob_usd != null ? fmtUSD(f.preco_fob_usd) : '—') + '</td>'
+        + '<td style="padding:5px 8px;text-align:right;">' + (f.moq_unidades != null ? f.moq_unidades : '—') + '</td>'
+        + '<td style="padding:5px 8px;text-align:right;">' + (f.lead_time_dias != null ? f.lead_time_dias + 'd' : '—') + '</td>'
+        + '<td style="padding:5px 8px;text-align:right;">' + (f.score_combinado != null ? f.score_combinado : '—') + '</td>'
+        + '</tr>';
+    }).join('') : '<tr><td colspan="6" style="padding:8px;color:#6b7280;font-size:12px;text-align:center;">Nenhum fornecedor ainda — clique em &quot;+ fornecedor&quot;.</td></tr>';
+    return '<div style="background:#111827;border:1px solid #1f2937;border-radius:10px;padding:14px;margin-bottom:12px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap;">'
+      +   '<div style="min-width:0;">'
+      +     '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-weight:600;color:#f3f4f6;">' + impEsc(p.nome_comercial) + '</span>'
+      +       '<span style="font-family:monospace;font-size:11px;color:#10b981;">' + impEsc(p.chave) + '</span></div>'
+      +     '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;font-size:12px;color:#9ca3af;">'
+      +       '<span>NCM <b style="color:#d1d5db;font-family:monospace;">' + impEsc(p.ncm) + '</b></span>'
+      +       (p.categoria ? '<span>&middot; ' + impEsc(p.categoria) + '</span>' : '')
+      +       (p.peso_bruto_kg != null ? '<span>&middot; ' + p.peso_bruto_kg + ' kg/un</span>' : '<span style="color:#b45309;">&middot; sem peso</span>')
+      +       '</div>'
+      +     '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;">' + flags.join('') + '</div>'
+      +   '</div>'
+      +   '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      +     '<button class="imp-btn-primary" style="padding:4px 10px;font-size:12px;" onclick="importacao.catNovoFornecedor(\'' + impEsc(p.chave) + '\')"><i data-lucide="plus"></i> fornecedor</button>'
+      +     '<button class="imp-btn-primary imp-btn-secondary" style="padding:4px 10px;font-size:12px;" onclick="importacao.catEditarProduto(\'' + impEsc(p.chave) + '\')">editar</button>'
+      +   '</div>'
+      + '</div>'
+      + '<table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;">'
+      +   '<thead><tr style="color:#6b7280;text-align:left;font-size:11px;text-transform:uppercase;">'
+      +     '<th style="padding:4px 8px;">Estágio</th><th style="padding:4px 8px;">Fornecedor</th>'
+      +     '<th style="padding:4px 8px;text-align:right;">FOB</th><th style="padding:4px 8px;text-align:right;">MOQ</th>'
+      +     '<th style="padding:4px 8px;text-align:right;">Lead</th><th style="padding:4px 8px;text-align:right;">Score</th></tr></thead>'
+      +   '<tbody>' + linhasForn + '</tbody>'
+      + '</table>'
+      + '</div>';
+  }
+
+  function catNovoProduto() {
+    _catEditChave = null;
+    document.getElementById('cat-form-prod-titulo').textContent = 'Novo produto';
+    ['cat-p-chave','cat-p-nome','cat-p-ncm','cat-p-categoria','cat-p-peso','cat-p-desc','cat-p-atributos'].forEach((id) => { const el = document.getElementById(id); if (el) el.value = ''; });
+    document.getElementById('cat-p-chave').disabled = false;
+    document.getElementById('cat-p-radio').checked = false;
+    document.getElementById('cat-p-inmetro').checked = false;
+    document.getElementById('cat-form-prod-erro').textContent = '';
+    show('#cat-form-produto'); hide('#cat-form-fornecedor');
+    document.getElementById('cat-form-produto').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function catEditarProduto(chave) {
+    const p = _catCache.find((r) => r.chave === chave);
+    if (!p) return;
+    _catEditChave = chave;
+    document.getElementById('cat-form-prod-titulo').textContent = 'Editar produto · ' + chave;
+    document.getElementById('cat-p-chave').value = p.chave;
+    document.getElementById('cat-p-chave').disabled = true;
+    document.getElementById('cat-p-nome').value = p.nome_comercial || '';
+    document.getElementById('cat-p-ncm').value = p.ncm || '';
+    document.getElementById('cat-p-categoria').value = p.categoria || '';
+    document.getElementById('cat-p-peso').value = p.peso_bruto_kg != null ? p.peso_bruto_kg : '';
+    document.getElementById('cat-p-desc').value = p.descricao_duimp || '';
+    document.getElementById('cat-p-atributos').value = '';
+    document.getElementById('cat-p-radio').checked = !!p.possui_radio;
+    document.getElementById('cat-p-inmetro').checked = !!p.requer_inmetro;
+    document.getElementById('cat-form-prod-erro').textContent = '';
+    show('#cat-form-produto'); hide('#cat-form-fornecedor');
+    document.getElementById('cat-form-produto').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function catCancelarProduto() { hide('#cat-form-produto'); }
+
+  async function catSalvarProduto() {
+    const err = document.getElementById('cat-form-prod-erro');
+    err.textContent = '';
+    const chave = document.getElementById('cat-p-chave').value.trim().toLowerCase();
+    const nome = document.getElementById('cat-p-nome').value.trim();
+    const ncm = document.getElementById('cat-p-ncm').value.replace(/\D/g, '');
+    const categoria = document.getElementById('cat-p-categoria').value.trim();
+    const pesoRaw = document.getElementById('cat-p-peso').value.trim();
+    const desc = document.getElementById('cat-p-desc').value.trim();
+    const atribRaw = document.getElementById('cat-p-atributos').value.trim();
+    if (!chave) { err.textContent = 'Informe a chave (slug).'; return; }
+    if (!CAT_SLUG_RE.test(chave)) { err.textContent = 'Chave fora do padrão slug (ex: mem_ddr4_8gb_3200).'; return; }
+    if (!nome) { err.textContent = 'Informe o nome comercial.'; return; }
+    if (!/^\d{8}$/.test(ncm)) { err.textContent = 'NCM deve ter 8 dígitos.'; return; }
+    let atributos = null;
+    if (atribRaw) { try { atributos = JSON.parse(atribRaw); } catch (e) { err.textContent = 'Atributos: JSON inválido — ' + e.message; return; } }
+    const obj = {
+      chave, nome_comercial: nome, ncm,
+      categoria: categoria || null,
+      peso_bruto_kg: pesoRaw ? Number(pesoRaw) : null,
+      descricao_duimp: desc || null,
+      possui_radio: document.getElementById('cat-p-radio').checked,
+      requer_inmetro: document.getElementById('cat-p-inmetro').checked,
+    };
+    if (atributos !== null) obj.atributos = atributos;
+    try {
+      const { error } = await impState.sb.from('imp_produto').upsert(obj, { onConflict: 'chave' });
+      if (error) throw error;
+      hide('#cat-form-produto');
+      await catCarregar();
+      fetchKPIs();
+    } catch (e) {
+      const rls = e.message && e.message.toLowerCase().indexOf('row-level') >= 0;
+      err.textContent = 'Falha ao salvar: ' + e.message + (rls ? ' — falta policy de INSERT/UPDATE em imp_produto para o papel authenticated.' : '');
+    }
+  }
+
+  async function catNovoFornecedor(produtoChave) {
+    _catProdutoAlvo = produtoChave;
+    document.getElementById('cat-f-produto-label').textContent = produtoChave;
+    ['cat-f-fob','cat-f-moq','cat-f-lead','cat-f-score','cat-f-novo-nome','cat-f-novo-plat','cat-f-novo-url','cat-f-dossie','cat-f-class'].forEach((id) => { const el = document.getElementById(id); if (el) el.value = ''; });
+    document.getElementById('cat-f-novo-pais').value = 'CN';
+    document.getElementById('cat-f-estagio').value = 'triado';
+    document.getElementById('cat-form-forn-erro').textContent = '';
+    await catPopularFornecedoresSelect();
+    catToggleNovoFornecedor();
+    show('#cat-form-fornecedor'); hide('#cat-form-produto');
+    document.getElementById('cat-form-fornecedor').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function catPopularFornecedoresSelect() {
+    const sel = document.getElementById('cat-f-fornecedor');
+    if (!sel) return;
+    let forn = [];
+    try {
+      const { data } = await impState.sb.from('imp_fornecedores').select('id, nome, pais').order('nome');
+      forn = data || [];
+    } catch (e) { forn = []; }
+    sel.innerHTML = '<option value="">— novo fornecedor (preencher abaixo) —</option>'
+      + forn.map((f) => '<option value="' + f.id + '">' + impEsc(f.nome) + (f.pais ? ' (' + impEsc(f.pais) + ')' : '') + '</option>').join('');
+  }
+
+  function catToggleNovoFornecedor() {
+    const usaExistente = !!document.getElementById('cat-f-fornecedor').value;
+    document.getElementById('cat-f-novo-bloco').style.display = usaExistente ? 'none' : 'grid';
+  }
+
+  function catCancelarFornecedor() { hide('#cat-form-fornecedor'); }
+
+  async function catSalvarFornecedor() {
+    const err = document.getElementById('cat-form-forn-erro');
+    err.textContent = '';
+    if (!_catProdutoAlvo) { err.textContent = 'Produto alvo não definido.'; return; }
+    const fobRaw = document.getElementById('cat-f-fob').value.trim();
+    if (fobRaw === '' || isNaN(Number(fobRaw))) { err.textContent = 'Informe o FOB unitário (US$).'; return; }
+    let fornecedorId = document.getElementById('cat-f-fornecedor').value;
+    const plat = document.getElementById('cat-f-novo-plat').value.trim() || null;
+    try {
+      if (!fornecedorId) {
+        const nome = document.getElementById('cat-f-novo-nome').value.trim();
+        if (!nome) { err.textContent = 'Informe o nome do novo fornecedor (ou selecione um existente).'; return; }
+        const novo = {
+          nome, nome_empresa_legal: nome,
+          pais: document.getElementById('cat-f-novo-pais').value.trim() || 'CN',
+          plataforma: plat,
+          plataforma_url: document.getElementById('cat-f-novo-url').value.trim() || null,
+          validado: false, ativo: true,
+        };
+        const { data, error } = await impState.sb.from('imp_fornecedores').insert(novo).select('id').single();
+        if (error) throw error;
+        fornecedorId = data.id;
+      }
+      // mantém só a oferta vigente mais recente desse fornecedor+produto
+      await impState.sb.from('imp_fornecedor_validacoes')
+        .update({ vigente: false })
+        .eq('fornecedor_id', fornecedorId).eq('produto_chave', _catProdutoAlvo).eq('vigente', true);
+      const dossieRaw = document.getElementById('cat-f-dossie').value.trim();
+      let dossie = {};
+      if (dossieRaw) { try { dossie = JSON.parse(dossieRaw); } catch (e) { err.textContent = 'Dossiê: JSON inválido — ' + e.message; return; } }
+      const linha = {
+        fornecedor_id: fornecedorId,
+        produto_chave: _catProdutoAlvo,
+        preco_fob_usd: Number(fobRaw),
+        moq_unidades: impInt(document.getElementById('cat-f-moq').value),
+        lead_time_dias: impInt(document.getElementById('cat-f-lead').value),
+        score_combinado: impNum(document.getElementById('cat-f-score').value),
+        classificacao: document.getElementById('cat-f-class').value.trim() || null,
+        estagio: document.getElementById('cat-f-estagio').value,
+        plataforma: plat,
+        dossie,
+        vigente: true,
+      };
+      const { error: eI } = await impState.sb.from('imp_fornecedor_validacoes').insert(linha);
+      if (eI) throw eI;
+      hide('#cat-form-fornecedor');
+      await catCarregar();
+    } catch (e) {
+      err.textContent = 'Falha ao salvar fornecedor: ' + e.message;
+    }
+  }
+
   return {
     init,
     onEnter,
@@ -3459,6 +3802,16 @@ window.importacao = (function () {
     validarImportacao,
     confirmarImportacao,
     listarFornecedores,
+    catCarregar,
+    catBuscar,
+    catNovoProduto,
+    catEditarProduto,
+    catCancelarProduto,
+    catSalvarProduto,
+    catNovoFornecedor,
+    catToggleNovoFornecedor,
+    catCancelarFornecedor,
+    catSalvarFornecedor,
   };
 })();
 
