@@ -477,7 +477,9 @@
           <div><label class="block text-xs font-medium text-gray-400 mb-1">Nome comercial *</label>
             <input id="cat-p-nome" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Memória RAM DDR4 8GB 3200"></div>
           <div><label class="block text-xs font-medium text-gray-400 mb-1">NCM * (8 díg.)</label>
-            <input id="cat-p-ncm" type="text" maxlength="8" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm font-mono" placeholder="84733042"></div>
+            <input id="cat-p-ncm" type="text" maxlength="8" list="cat-ncm-list" oninput="importacao.catNcmCheck(true)" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm font-mono" placeholder="comece a digitar…">
+            <datalist id="cat-ncm-list"></datalist>
+            <div id="cat-p-ncm-hint" class="text-xs mt-1"></div></div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
           <div><label class="block text-xs font-medium text-gray-400 mb-1">Categoria</label>
@@ -3542,6 +3544,7 @@ window.importacao = (function () {
     const box = document.getElementById('cat-lista');
     if (!box || !impState.sb) return;
     box.innerHTML = '<div class="imp-empty"><i data-lucide="loader"></i><p class="text-sm">Carregando catálogo...</p></div>';
+    await catCarregarNcms();
     try {
       const { data, error } = await impState.sb.from('imp_vw_catalogo').select('*');
       if (error) throw error;
@@ -3639,6 +3642,7 @@ window.importacao = (function () {
     document.getElementById('cat-p-chave').disabled = false;
     document.getElementById('cat-p-radio').checked = false;
     document.getElementById('cat-p-inmetro').checked = false;
+    document.getElementById('cat-p-ncm-hint').innerHTML = '';
     document.getElementById('cat-form-prod-erro').textContent = '';
     show('#cat-form-produto'); hide('#cat-form-fornecedor');
     document.getElementById('cat-form-produto').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -3660,6 +3664,7 @@ window.importacao = (function () {
     document.getElementById('cat-p-radio').checked = !!p.possui_radio;
     document.getElementById('cat-p-inmetro').checked = !!p.requer_inmetro;
     document.getElementById('cat-form-prod-erro').textContent = '';
+    catNcmCheck(false);
     show('#cat-form-produto'); hide('#cat-form-fornecedor');
     document.getElementById('cat-form-produto').scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -3787,6 +3792,47 @@ window.importacao = (function () {
     }
   }
 
+  // --- NCM: autocomplete + validação contra imp_ncm_tabela ---
+  let _catNcms = null, _catNcmsMap = null;
+
+  async function catCarregarNcms() {
+    if (_catNcms) return;
+    try {
+      const { data } = await impState.sb.from('imp_ncm_tabela')
+        .select('ncm, descricao, requer_anatel, requer_inmetro, requer_li, extinta')
+        .order('ncm');
+      _catNcms = data || [];
+    } catch (e) { _catNcms = []; }
+    _catNcmsMap = {};
+    _catNcms.forEach((n) => { _catNcmsMap[String(n.ncm).replace(/\D/g, '')] = n; });
+    const dl = document.getElementById('cat-ncm-list');
+    if (dl) dl.innerHTML = _catNcms.filter((n) => !n.extinta).map((n) =>
+      '<option value="' + impEsc(String(n.ncm).replace(/\D/g, '')) + '">' + impEsc(n.descricao || '') + '</option>').join('');
+  }
+
+  function catNcmCheck(autofill) {
+    const hint = document.getElementById('cat-p-ncm-hint');
+    if (!hint) return;
+    const ncm = (document.getElementById('cat-p-ncm').value || '').replace(/\D/g, '');
+    if (ncm.length < 8) { hint.innerHTML = ''; return; }
+    const reg = _catNcmsMap ? _catNcmsMap[ncm] : null;
+    if (!reg) {
+      hint.innerHTML = '<span style="color:#f59e0b;">&#9888; NCM fora da sua Base Regulatória — o cálculo de custo não vai funcionar até cadastrar este NCM + alíquotas (aba Base Regulatória).</span>';
+      return;
+    }
+    if (reg.extinta) {
+      hint.innerHTML = '<span style="color:#ef4444;">&#9888; NCM EXTINTA — não use; procure o código vigente equivalente.</span>';
+      return;
+    }
+    const sels = ['ANATEL ' + (reg.requer_anatel ? 'sim' : 'não'), 'INMETRO ' + (reg.requer_inmetro ? 'sim' : 'não')];
+    if (reg.requer_li) sels.push('exige LI');
+    hint.innerHTML = '<span style="color:#10b981;">&#10003; ' + impEsc(reg.descricao || 'registrado') + '</span> <span style="color:#9ca3af;">&middot; ' + sels.join(' &middot; ') + '</span>';
+    if (autofill) {
+      document.getElementById('cat-p-radio').checked = !!reg.requer_anatel;
+      document.getElementById('cat-p-inmetro').checked = !!reg.requer_inmetro;
+    }
+  }
+
   return {
     init,
     onEnter,
@@ -3812,6 +3858,7 @@ window.importacao = (function () {
     catToggleNovoFornecedor,
     catCancelarFornecedor,
     catSalvarFornecedor,
+    catNcmCheck,
   };
 })();
 
