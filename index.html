@@ -376,10 +376,6 @@
           <h2 class="text-2xl font-bold tracking-tight text-gray-100">Importação</h2>
           <span class="imp-version-tag">v0.2 · Fase 0</span>
         </div>
-        <p class="text-sm text-gray-400">
-          Pipeline ponta-a-ponta de importação direta China → Brasil.
-          Simulação, operações em 9 fases, tracking integrado, base regulatória.
-        </p>
       </div>
       <div class="flex items-center gap-2">
         <button class="imp-btn-primary" onclick="importacao.iniciarSimulacao()">
@@ -390,29 +386,6 @@
         </button>
       </div>
     </header>
-
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-      <div class="imp-kpi imp-kpi--accent">
-        <div class="imp-kpi__label">Em curso</div>
-        <div class="imp-kpi__value" id="imp-kpi-em-curso">—</div>
-        <div class="imp-kpi__hint">operações ativas</div>
-      </div>
-      <div class="imp-kpi imp-kpi--warn">
-        <div class="imp-kpi__label">Próx. 7 dias</div>
-        <div class="imp-kpi__value" id="imp-kpi-prazo">—</div>
-        <div class="imp-kpi__hint">prazos críticos</div>
-      </div>
-      <div class="imp-kpi">
-        <div class="imp-kpi__label">Câmbio</div>
-        <div class="imp-kpi__value" id="imp-kpi-cambio">—</div>
-        <div class="imp-kpi__hint" id="imp-kpi-cambio-fonte">PTAX</div>
-      </div>
-      <div class="imp-kpi">
-        <div class="imp-kpi__label">Catálogo</div>
-        <div class="imp-kpi__value" id="imp-kpi-produtos">—</div>
-        <div class="imp-kpi__hint">produtos cadastrados</div>
-      </div>
-    </div>
 
     <nav class="border-b border-gray-700 mb-6 overflow-x-auto">
       <div class="flex gap-1 min-w-max">
@@ -445,6 +418,28 @@
     </div>
 
     <div class="imp-pane" id="imp-pane-operacoes">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div class="imp-kpi imp-kpi--accent">
+          <div class="imp-kpi__label">Em curso</div>
+          <div class="imp-kpi__value" id="imp-kpi-em-curso">—</div>
+          <div class="imp-kpi__hint">operações ativas</div>
+        </div>
+        <div class="imp-kpi imp-kpi--warn">
+          <div class="imp-kpi__label">Próx. 7 dias</div>
+          <div class="imp-kpi__value" id="imp-kpi-prazo">—</div>
+          <div class="imp-kpi__hint">prazos críticos</div>
+        </div>
+        <div class="imp-kpi">
+          <div class="imp-kpi__label">Câmbio</div>
+          <div class="imp-kpi__value" id="imp-kpi-cambio">—</div>
+          <div class="imp-kpi__hint" id="imp-kpi-cambio-fonte">PTAX</div>
+        </div>
+        <div class="imp-kpi">
+          <div class="imp-kpi__label">Catálogo</div>
+          <div class="imp-kpi__value" id="imp-kpi-produtos">—</div>
+          <div class="imp-kpi__hint">produtos cadastrados</div>
+        </div>
+      </div>
       <div class="imp-empty">
         <i data-lucide="package"></i>
         <h3 class="text-base font-semibold mb-1">Operações em curso</h3>
@@ -460,7 +455,6 @@
       <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div>
           <h3 class="text-base font-semibold">Catálogo de Importação</h3>
-          <p class="text-xs text-gray-500">Produto + fornecedores &middot; <code>imp_produto</code> + <code>imp_fornecedor_validacoes</code> &middot; view <code>imp_vw_catalogo</code></p>
         </div>
         <input id="cat-busca" type="search" oninput="importacao.catBuscar()" placeholder="Buscar produto, NCM, categoria..." class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm w-60 max-w-full">
       </div>
@@ -2804,6 +2798,7 @@ window.importacao = (function () {
       p.classList.toggle('active', p.id === `imp-pane-${paneId}`);
     });
     if (paneId === 'fornecedores') listarFornecedores();
+    if (paneId === 'operacoes') fetchKPIs();
     if (paneId === 'catalogo') catCarregar();
     if (paneId === 'simulacao') simCarregarCatalogo();
     if (paneId === 'regulatorio') regCarregar();
@@ -3609,7 +3604,7 @@ window.importacao = (function () {
         + '<td style="padding:6px 8px;text-align:right;">' + (r.moq_unidades != null ? r.moq_unidades : '—') + '</td>'
         + '<td style="padding:6px 8px;text-align:right;">' + (r.lead_time_dias != null ? r.lead_time_dias + 'd' : '—') + '</td>'
         + '<td style="padding:6px 8px;text-align:right;">' + (r.score_combinado != null ? r.score_combinado : '—') + '</td>'
-        + '<td style="padding:6px 8px;text-align:center;"><button class="imp-btn-primary" style="padding:2px 8px;font-size:11px;" onclick="importacao.catNovoFornecedor(\'' + impEsc(r.chave) + '\')">+ outro</button></td>'
+        + '<td style="padding:6px 8px;text-align:center;white-space:nowrap;"><button class="imp-btn-primary" style="padding:2px 8px;font-size:11px;" onclick="importacao.catNovoFornecedor(\'' + impEsc(r.chave) + '\')">+ outro</button> <button class="imp-btn-primary" style="padding:2px 8px;font-size:11px;background:#7f1d1d;border-color:#991b1b;" onclick="importacao.catExcluirFornecedor(\'' + impEsc(r.validacao_id) + '\')">excluir</button></td>'
         + '</tr>';
     }).join('');
     box.innerHTML = '<table style="width:100%;font-size:12.5px;border-collapse:collapse;"><thead><tr style="color:#6b7280;text-align:left;font-size:11px;text-transform:uppercase;">'
@@ -3685,6 +3680,7 @@ window.importacao = (function () {
       +   '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
       +     '<button class="imp-btn-primary" style="padding:4px 10px;font-size:12px;" onclick="importacao.catNovoFornecedor(\'' + impEsc(p.chave) + '\')"><i data-lucide="plus"></i> fornecedor</button>'
       +     '<button class="imp-btn-primary imp-btn-secondary" style="padding:4px 10px;font-size:12px;" onclick="importacao.catEditarProduto(\'' + impEsc(p.chave) + '\')">editar</button>'
+      +     '<button class="imp-btn-primary" style="padding:4px 10px;font-size:12px;background:#7f1d1d;border-color:#991b1b;" onclick="importacao.catExcluirProduto(\'' + impEsc(p.chave) + '\')">excluir</button>'
       +   '</div>'
       + '</div>'
       + '<table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;">'
@@ -3859,6 +3855,39 @@ window.importacao = (function () {
     }
   }
 
+  async function catExcluirProduto(chave) {
+    const forn = _catCache.filter((r) => r.chave === chave && r.validacao_id);
+    let msg = 'Apagar o produto "' + chave + '"?';
+    if (forn.length) msg = 'O produto "' + chave + '" tem ' + forn.length + ' fornecedor(es) vinculado(s). Apagar o produto E esses fornecedores? Não dá pra desfazer.';
+    if (!confirm(msg)) return;
+    try {
+      if (forn.length) {
+        const { error: ef } = await impState.sb.from('imp_fornecedor_validacoes').delete().eq('produto_chave', chave);
+        if (ef) throw ef;
+      }
+      const { data, error } = await impState.sb.from('imp_produto').delete().eq('chave', chave).select('chave');
+      if (error) throw error;
+      if (!data || !data.length) { alert('Nada foi apagado — verifique a policy de DELETE em imp_produto para authenticated.'); return; }
+      await catCarregar();
+      fetchKPIs();
+    } catch (e) {
+      alert('Falha ao apagar: ' + e.message);
+    }
+  }
+
+  async function catExcluirFornecedor(validacaoId) {
+    if (!validacaoId) return;
+    if (!confirm('Apagar este fornecedor do produto? Não dá pra desfazer.')) return;
+    try {
+      const { data, error } = await impState.sb.from('imp_fornecedor_validacoes').delete().eq('id', validacaoId).select('id');
+      if (error) throw error;
+      if (!data || !data.length) { alert('Nada foi apagado — provável falta de policy de DELETE em imp_fornecedor_validacoes para authenticated.'); return; }
+      await catCarregar();
+    } catch (e) {
+      alert('Falha ao apagar fornecedor: ' + e.message);
+    }
+  }
+
   // --- NCM: autocomplete + validação contra imp_ncm_tabela ---
   let _catNcms = null, _catNcmsMap = null;
 
@@ -3925,6 +3954,8 @@ window.importacao = (function () {
     catToggleNovoFornecedor,
     catCancelarFornecedor,
     catSalvarFornecedor,
+    catExcluirProduto,
+    catExcluirFornecedor,
     catSwitchView,
     catNcmCheck,
   };
