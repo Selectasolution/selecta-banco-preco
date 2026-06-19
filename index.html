@@ -657,16 +657,19 @@
     <!-- Cadastro -->
     <div class="bg-gray-800 rounded-lg p-4 mb-4 border border-gray-700">
       <h3 class="text-sm font-semibold text-gray-200 mb-3">Cadastrar / simular produto</h3>
-      <div class="grid grid-cols-2 md:grid-cols-7 gap-3">
+      <div class="grid grid-cols-2 md:grid-cols-8 gap-3">
         <label class="block text-xs font-medium text-gray-400 md:col-span-2">Produto<input id="ecom-f-produto" placeholder="SSD NVMe 480GB" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
         <label class="block text-xs font-medium text-gray-400">Marca<input id="ecom-f-marca" placeholder="Kingston" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-        <label class="block text-xs font-medium text-gray-400">Preço médio ML R$<input id="ecom-f-preco" type="number" step="0.01" placeholder="320" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
+        <label class="block text-xs font-medium text-gray-400">Preço de mercado R$ <span class="text-gray-600">(ref.)</span><input id="ecom-f-mercado" type="number" step="0.01" placeholder="320" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
+        <label class="block text-xs font-medium text-primary-500">Meu preço de venda R$<input id="ecom-f-venda" type="number" step="0.01" placeholder="349" class="w-full bg-gray-900 border border-primary-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
         <label class="block text-xs font-medium text-gray-400">Custo c/ NF R$<input id="ecom-f-custo" type="number" step="0.01" placeholder="opcional" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
         <label class="block text-xs font-medium text-gray-400">Anúncio<select id="ecom-f-tipo" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"><option value="classico">Clássico</option><option value="premium">Premium</option></select></label>
         <label class="block text-xs font-medium text-gray-400">Frete R$<input id="ecom-f-frete" type="number" step="0.01" placeholder="padrão" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
       </div>
+      <p class="text-xs text-gray-500 mt-2">O <span class="text-primary-500">Meu preço de venda</span> é o que define os custos, a margem e o break-even. O Preço de mercado é só referência (mostra quanto você está acima/abaixo). Sem preço de venda, o cálculo usa o de mercado como proxy.</p>
       <div class="flex gap-2 mt-3">
         <button id="ecom-add" class="bg-primary-600 hover:bg-primary-500 text-white text-sm font-semibold rounded-md px-4 py-2">+ Adicionar</button>
+        <button id="ecom-cancel" class="hidden-section bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-md px-4 py-2">Cancelar</button>
         <button id="ecom-recalc" class="bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-md px-4 py-2">Recalcular</button>
       </div>
     </div>
@@ -679,14 +682,16 @@
             <tr>
               <th class="px-3 py-2.5 text-left font-medium">Produto</th>
               <th class="px-3 py-2.5 text-left font-medium">Marca</th>
-              <th class="px-3 py-2.5 text-right font-medium">Preço ML</th>
+              <th class="px-3 py-2.5 text-right font-medium">Mercado</th>
+              <th class="px-3 py-2.5 text-right font-medium">Meu preço</th>
+              <th class="px-3 py-2.5 text-right font-medium">vs merc.</th>
               <th class="px-3 py-2.5 text-center font-medium">Faixa</th>
               <th class="px-3 py-2.5 text-right font-medium">Custos ML+imp.</th>
               <th class="px-3 py-2.5 text-right font-medium">Mordida</th>
-              <th class="px-3 py-2.5 text-right font-medium">Break-even custo</th>
+              <th class="px-3 py-2.5 text-right font-medium">Break-even</th>
               <th class="px-3 py-2.5 text-right font-medium">Margem</th>
               <th class="px-3 py-2.5 text-center font-medium">Veredito</th>
-              <th class="px-3 py-2.5"></th>
+              <th class="px-3 py-2.5 text-center font-medium">Ações</th>
             </tr>
           </thead>
           <tbody id="ecom-tbody" class="divide-y divide-gray-700"></tbody>
@@ -2068,6 +2073,7 @@ function generatePDFs() {
 const ecom = {
   itens: [],
   loaded: false,
+  editId: null,
 
   _n(id) { const v = parseFloat($('#' + id).value); return isNaN(v) ? 0 : v; },
   fmtBRL(v) { return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); },
@@ -2084,47 +2090,54 @@ const ecom = {
     };
   },
 
-  // ----- MOTOR: regras Mercado Livre -----
+  // ----- MOTOR: regras Mercado Livre. Custos incidem sobre o MEU preço de venda -----
   calc(p, pr) {
     const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
-    const preco = num(p.preco_ml);
+    const has = v => !(v === null || v === undefined || v === '');
+    const precoMercado = has(p.preco_ml) ? num(p.preco_ml) : null;
+    const precoVenda   = has(p.preco_venda) ? num(p.preco_venda) : null;
+    const base = precoVenda !== null ? precoVenda : (precoMercado !== null ? precoMercado : 0);
     const comPct = (p.tipo_anuncio === 'premium') ? pr.comPremium : pr.comClassico;
-    const freteProd = (p.frete === null || p.frete === undefined || p.frete === '') ? pr.frete : num(p.frete);
+    const freteProd = has(p.frete) ? num(p.frete) : pr.frete;
 
     let taxaFixa = 0, frete = 0, faixa = '';
-    if (preco < 19)      { faixa = '<R$19';       taxaFixa = Math.min(pr.taxaFixa, preco * 0.5); }
-    else if (preco < 79) { faixa = 'R$19–78,99';  taxaFixa = pr.taxaFixa; }
-    else                 { faixa = '≥R$79';       frete = freteProd; }
+    if (base < 19)      { faixa = '<R$19';      taxaFixa = Math.min(pr.taxaFixa, base * 0.5); }
+    else if (base < 79) { faixa = 'R$19–78,99'; taxaFixa = pr.taxaFixa; }
+    else                { faixa = '≥R$79';      frete = freteProd; }
 
-    const comissao = preco * comPct / 100;
-    const imposto  = preco * pr.imposto / 100;
+    const comissao = base * comPct / 100;
+    const imposto  = base * pr.imposto / 100;
     const custosVenda = comissao + taxaFixa + frete + imposto;
-    const liquido = preco - custosVenda;                  // break-even de custo (margem zero)
-    const mordidaPct = preco > 0 ? custosVenda / preco * 100 : 0;
+    const liquido = base - custosVenda;
+    const mordidaPct = base > 0 ? custosVenda / base * 100 : 0;
 
-    const custo = (p.custo === null || p.custo === undefined || p.custo === '') ? null : num(p.custo);
+    const custo = has(p.custo) ? num(p.custo) : null;
     let margem = null, margemPct = null, margemColchao = null;
-    if (custo !== null) {
+    if (custo !== null && base > 0) {
       margem = liquido - custo;
-      margemPct = preco > 0 ? margem / preco * 100 : 0;
-      margemColchao = margem - preco * pr.colchao / 100;
+      margemPct = margem / base * 100;
+      margemColchao = margem - base * pr.colchao / 100;
     }
 
-    // Alerta zona-vale: item ≥R$79 que renderia mais a R$78,99
+    let vsMercado = null;
+    if (precoVenda !== null && precoMercado !== null && precoMercado > 0) {
+      vsMercado = (precoVenda - precoMercado) / precoMercado * 100;
+    }
+
     let zonaVale = false, ganho78 = 0;
-    if (preco >= 79) {
+    if (base >= 79) {
       const p78 = 78.99;
       const liq78 = p78 - (p78 * comPct / 100) - pr.taxaFixa - (p78 * pr.imposto / 100);
       if (liq78 > liquido) { zonaVale = true; ganho78 = liq78 - liquido; }
     }
 
     let veredito = '—', cor = 'slate';
-    if (custo !== null) {
-      if (margem < 0)            { veredito = 'Prejuízo'; cor = 'red'; }
-      else if (margemColchao < 0){ veredito = 'Apertado'; cor = 'amber'; }
-      else                       { veredito = 'Fecha';    cor = 'emerald'; }
+    if (custo !== null && base > 0) {
+      if (margem < 0)             { veredito = 'Prejuízo'; cor = 'red'; }
+      else if (margemColchao < 0) { veredito = 'Apertado'; cor = 'amber'; }
+      else                        { veredito = 'Fecha';    cor = 'emerald'; }
     }
-    return { faixa, custosVenda, liquido, mordidaPct, margem, margemPct, veredito, cor, zonaVale, ganho78 };
+    return { precoMercado, precoVenda, base, faixa, custosVenda, liquido, mordidaPct, margem, margemPct, veredito, cor, vsMercado, zonaVale, ganho78 };
   },
 
   async onEnter() {
@@ -2162,47 +2175,107 @@ const ecom = {
       const margCell = r.margem === null
         ? '<span class="text-gray-600">—</span>'
         : `<span class="${r.margem < 0 ? 'text-red-400' : 'text-emerald-400'}">${this.fmtBRL(r.margem)} <span class="text-xs opacity-70">(${this.fmtPct(r.margemPct)})</span></span>`;
+      const mercadoCell = r.precoMercado === null ? '<span class="text-gray-600">—</span>' : this.fmtBRL(r.precoMercado);
+      const meuCell = r.precoVenda === null
+        ? '<span class="text-gray-500 text-xs">— (usa mercado)</span>'
+        : `<span class="text-gray-100">${this.fmtBRL(r.precoVenda)}</span>`;
+      let vsCell = '<span class="text-gray-600">—</span>';
+      if (r.vsMercado !== null) {
+        const sinal = r.vsMercado > 0 ? '+' : '';
+        const c = Math.abs(r.vsMercado) < 0.05 ? 'text-gray-400' : (r.vsMercado > 0 ? 'text-amber-400' : 'text-sky-400');
+        vsCell = `<span class="${c}">${sinal}${this.fmtPct(r.vsMercado)}</span>`;
+      }
       const alerta = r.zonaVale ? `<div class="text-[11px] text-amber-400 mt-0.5">⚠ Zona-vale: a R$78,99 sobra ${this.fmtBRL(r.ganho78)} a mais</div>` : '';
       return `<tr class="product-row hover:bg-gray-700/30">
         <td class="px-3 py-2.5 text-gray-100">${p.produto || ''}${alerta}</td>
         <td class="px-3 py-2.5 text-gray-400">${p.marca || ''}</td>
-        <td class="px-3 py-2.5 text-right">${this.fmtBRL(p.preco_ml)}</td>
+        <td class="px-3 py-2.5 text-right text-gray-300">${mercadoCell}</td>
+        <td class="px-3 py-2.5 text-right">${meuCell}</td>
+        <td class="px-3 py-2.5 text-right">${vsCell}</td>
         <td class="px-3 py-2.5 text-center text-xs text-gray-400">${r.faixa}</td>
         <td class="px-3 py-2.5 text-right text-gray-300">${this.fmtBRL(r.custosVenda)}</td>
         <td class="px-3 py-2.5 text-right ${mordCor}">${this.fmtPct(r.mordidaPct)}</td>
         <td class="px-3 py-2.5 text-right text-primary-500 font-semibold">${this.fmtBRL(r.liquido)}</td>
         <td class="px-3 py-2.5 text-right">${margCell}</td>
         <td class="px-3 py-2.5 text-center"><span class="text-xs px-2 py-1 rounded-full ${cores[r.cor]}">${r.veredito}</span></td>
-        <td class="px-3 py-2.5 text-right"><button class="ecom-del text-gray-600 hover:text-red-400" data-id="${p.id}">✕</button></td>
+        <td class="px-3 py-2.5 text-center whitespace-nowrap">
+          <button class="ecom-edit text-primary-500 hover:text-primary-400 text-xs mr-2" data-id="${p.id}">Editar</button>
+          <button class="ecom-del text-gray-600 hover:text-red-400" data-id="${p.id}">✕</button>
+        </td>
       </tr>`;
     }).join('');
+    $$('#ecom-tbody .ecom-edit').forEach(b => b.addEventListener('click', e => ecom.edit(e.target.dataset.id)));
     $$('#ecom-tbody .ecom-del').forEach(b => b.addEventListener('click', e => ecom.del(e.target.dataset.id)));
   },
 
-  async add() {
+  clearForm() {
+    ['ecom-f-produto', 'ecom-f-marca', 'ecom-f-mercado', 'ecom-f-venda', 'ecom-f-custo', 'ecom-f-frete'].forEach(id => $('#' + id).value = '');
+    $('#ecom-f-tipo').value = 'classico';
+  },
+
+  edit(id) {
+    const p = this.itens.find(x => String(x.id) === String(id));
+    if (!p) return;
+    $('#ecom-f-produto').value = p.produto || '';
+    $('#ecom-f-marca').value   = p.marca || '';
+    $('#ecom-f-mercado').value = (p.preco_ml ?? '');
+    $('#ecom-f-venda').value   = (p.preco_venda ?? '');
+    $('#ecom-f-custo').value   = (p.custo ?? '');
+    $('#ecom-f-tipo').value    = p.tipo_anuncio || 'classico';
+    $('#ecom-f-frete').value   = (p.frete ?? '');
+    this.editId = id;
+    $('#ecom-add').textContent = 'Salvar alteração';
+    $('#ecom-cancel').classList.remove('hidden-section');
+    $('#ecom-f-produto').focus();
+  },
+
+  cancelEdit() {
+    this.editId = null;
+    this.clearForm();
+    $('#ecom-add').textContent = '+ Adicionar';
+    $('#ecom-cancel').classList.add('hidden-section');
+  },
+
+  async save() {
     const numF = id => { const v = parseFloat($('#' + id).value); return isNaN(v) ? null : v; };
     const produto = $('#ecom-f-produto').value.trim();
-    const preco = numF('ecom-f-preco');
-    if (!produto || !preco) { alert('Informe ao menos Produto e Preço médio ML.'); return; }
-    const reg = {
-      id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
+    const precoMercado = numF('ecom-f-mercado');
+    const precoVenda = numF('ecom-f-venda');
+    if (!produto || (precoMercado === null && precoVenda === null)) {
+      alert('Informe ao menos o Produto e um preço (de mercado ou de venda).');
+      return;
+    }
+    const dados = {
       produto,
       marca: $('#ecom-f-marca').value.trim() || null,
-      preco_ml: preco,
+      preco_ml: precoMercado,
+      preco_venda: precoVenda,
       custo: numF('ecom-f-custo'),
       tipo_anuncio: $('#ecom-f-tipo').value,
       frete: numF('ecom-f-frete'),
     };
-    this.itens.push(reg);
-    try {
-      const { error } = await sb.from('ecommerce_piloto').insert(reg);
-      if (error) throw error;
-    } catch (e) { console.warn('insert ecommerce_piloto:', e.message); }
-    ['ecom-f-produto', 'ecom-f-marca', 'ecom-f-preco', 'ecom-f-custo', 'ecom-f-frete'].forEach(id => $('#' + id).value = '');
+    if (this.editId) {
+      const idx = this.itens.findIndex(x => String(x.id) === String(this.editId));
+      if (idx >= 0) this.itens[idx] = { ...this.itens[idx], ...dados };
+      try {
+        const { error } = await sb.from('ecommerce_piloto').update(dados).eq('id', this.editId);
+        if (error) throw error;
+      } catch (e) { console.warn('update ecommerce_piloto:', e.message); }
+      this.cancelEdit();
+    } else {
+      const reg = { id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())), ...dados };
+      this.itens.push(reg);
+      try {
+        const { error } = await sb.from('ecommerce_piloto').insert(reg);
+        if (error) throw error;
+      } catch (e) { console.warn('insert ecommerce_piloto:', e.message); }
+      this.clearForm();
+    }
     this.render();
   },
 
   async del(id) {
+    if (this.editId && String(this.editId) === String(id)) this.cancelEdit();
     this.itens = this.itens.filter(x => String(x.id) !== String(id));
     try {
       const { error } = await sb.from('ecommerce_piloto').delete().eq('id', id);
@@ -2760,7 +2833,8 @@ $('#logout-btn').addEventListener('click', logout);
 $$('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
 
 // E-commerce (piloto)
-$('#ecom-add').addEventListener('click', () => ecom.add());
+$('#ecom-add').addEventListener('click', () => ecom.save());
+$('#ecom-cancel').addEventListener('click', () => ecom.cancelEdit());
 $('#ecom-recalc').addEventListener('click', () => ecom.render());
 $$('#tab-ecommerce .ecom-param').forEach(inp => inp.addEventListener('input', () => ecom.render()));
 
