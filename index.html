@@ -686,7 +686,7 @@
               <th class="px-3 py-2.5 text-right font-medium">Mercado</th>
               <th class="px-3 py-2.5 text-right font-medium">Meu preço</th>
               <th class="px-3 py-2.5 text-right font-medium">vs merc.</th>
-              <th class="px-3 py-2.5 text-center font-medium">Faixa</th>
+              <th class="px-3 py-2.5 text-right font-medium">Frete</th>
               <th class="px-3 py-2.5 text-right font-medium">Custos ML+imp.</th>
               <th class="px-3 py-2.5 text-right font-medium">Mordida</th>
               <th class="px-3 py-2.5 text-right font-medium">Break-even</th>
@@ -2120,6 +2120,17 @@ const ecom = {
       margemColchao = margem - base * pr.colchao / 100;
     }
 
+    // Break-even: menor preço de venda em que a margem zera (abaixo disso, prejuízo).
+    // A parcela fixa muda por faixa: ≥R$79 paga frete; R$19–78,99 paga taxa fixa.
+    let breakeven = null;
+    if (custo !== null) {
+      const vPct = (comPct + pr.imposto) / 100;   // comissão + imposto (proporcionais ao preço)
+      if (vPct < 1) {
+        const be79 = (custo + freteProd) / (1 - vPct);                // assume faixa ≥R$79 (paga frete)
+        breakeven = be79 >= 79 ? be79 : (custo + pr.taxaFixa) / (1 - vPct);  // senão, faixa com taxa fixa
+      }
+    }
+
     let vsMercado = null;
     if (precoVenda !== null && precoMercado !== null && precoMercado > 0) {
       vsMercado = (precoVenda - precoMercado) / precoMercado * 100;
@@ -2138,7 +2149,7 @@ const ecom = {
       else if (margemColchao < 0) { veredito = 'Apertado'; cor = 'amber'; }
       else                        { veredito = 'Fecha';    cor = 'emerald'; }
     }
-    return { precoMercado, precoVenda, base, faixa, custosVenda, liquido, mordidaPct, margem, margemPct, veredito, cor, vsMercado, zonaVale, ganho78 };
+    return { precoMercado, precoVenda, base, faixa, frete, custosVenda, liquido, mordidaPct, margem, margemPct, veredito, cor, vsMercado, zonaVale, ganho78, breakeven };
   },
 
   async onEnter() {
@@ -2194,10 +2205,10 @@ const ecom = {
         <td class="px-3 py-2.5 text-right text-gray-300">${mercadoCell}</td>
         <td class="px-3 py-2.5 text-right">${meuCell}</td>
         <td class="px-3 py-2.5 text-right">${vsCell}</td>
-        <td class="px-3 py-2.5 text-center text-xs text-gray-400">${r.faixa}</td>
+        <td class="px-3 py-2.5 text-right text-gray-300">${this.fmtBRL(r.frete)}</td>
         <td class="px-3 py-2.5 text-right text-gray-300">${this.fmtBRL(r.custosVenda)}</td>
         <td class="px-3 py-2.5 text-right ${mordCor}">${this.fmtPct(r.mordidaPct)}</td>
-        <td class="px-3 py-2.5 text-right text-primary-500 font-semibold">${this.fmtBRL(r.liquido)}</td>
+        <td class="px-3 py-2.5 text-right text-primary-500 font-semibold">${r.breakeven !== null ? this.fmtBRL(r.breakeven) : '—'}</td>
         <td class="px-3 py-2.5 text-right">${margCell}</td>
         <td class="px-3 py-2.5 text-center"><span class="text-xs px-2 py-1 rounded-full ${cores[r.cor]}">${r.veredito}</span></td>
         <td class="px-3 py-2.5 text-center whitespace-nowrap">
