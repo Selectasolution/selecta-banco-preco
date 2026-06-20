@@ -657,9 +657,10 @@
     <!-- Cadastro -->
     <div class="bg-gray-800 rounded-lg p-4 mb-4 border border-gray-700">
       <h3 class="text-sm font-semibold text-gray-200 mb-3">Cadastrar / simular produto</h3>
-      <div class="grid grid-cols-2 md:grid-cols-8 gap-3">
+      <div class="grid grid-cols-2 md:grid-cols-9 gap-3">
         <label class="block text-xs font-medium text-gray-400 md:col-span-2">Produto<input id="ecom-f-produto" autocomplete="off" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
         <label class="block text-xs font-medium text-gray-400">Marca<input id="ecom-f-marca" autocomplete="off" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
+        <label class="block text-xs font-medium text-gray-400">Modelo<input id="ecom-f-modelo" autocomplete="off" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
         <label class="block text-xs font-medium text-gray-400">Preço de mercado R$ <span class="text-gray-600">(ref.)</span><input id="ecom-f-mercado" autocomplete="off" type="number" step="0.01" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
         <label class="block text-xs font-medium text-primary-500">Meu preço de venda R$<input id="ecom-f-venda" autocomplete="off" type="number" step="0.01" class="w-full bg-gray-900 border border-primary-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
         <label class="block text-xs font-medium text-gray-400">Custo c/ NF R$<input id="ecom-f-custo" autocomplete="off" type="number" step="0.01" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
@@ -2186,9 +2187,10 @@ const ecom = {
         vsCell = `<span class="${c}">${sinal}${this.fmtPct(r.vsMercado)}</span>`;
       }
       const alerta = r.zonaVale ? `<div class="text-[11px] text-amber-400 mt-0.5">⚠ Zona-vale: a R$78,99 sobra ${this.fmtBRL(r.ganho78)} a mais</div>` : '';
+      const modeloSub = p.modelo ? `<div class="text-[11px] text-gray-500">${p.modelo}</div>` : '';
       return `<tr class="product-row hover:bg-gray-700/30">
         <td class="px-3 py-2.5 text-gray-100">${p.produto || ''}${alerta}</td>
-        <td class="px-3 py-2.5 text-gray-400">${p.marca || ''}</td>
+        <td class="px-3 py-2.5 text-gray-400">${p.marca || ''}${modeloSub}</td>
         <td class="px-3 py-2.5 text-right text-gray-300">${mercadoCell}</td>
         <td class="px-3 py-2.5 text-right">${meuCell}</td>
         <td class="px-3 py-2.5 text-right">${vsCell}</td>
@@ -2209,7 +2211,7 @@ const ecom = {
   },
 
   clearForm() {
-    ['ecom-f-produto', 'ecom-f-marca', 'ecom-f-mercado', 'ecom-f-venda', 'ecom-f-custo', 'ecom-f-frete'].forEach(id => $('#' + id).value = '');
+    ['ecom-f-produto', 'ecom-f-marca', 'ecom-f-modelo', 'ecom-f-mercado', 'ecom-f-venda', 'ecom-f-custo', 'ecom-f-frete'].forEach(id => $('#' + id).value = '');
     $('#ecom-f-tipo').value = 'classico';
   },
 
@@ -2218,6 +2220,7 @@ const ecom = {
     if (!p) return;
     $('#ecom-f-produto').value = p.produto || '';
     $('#ecom-f-marca').value   = p.marca || '';
+    $('#ecom-f-modelo').value  = p.modelo || '';
     $('#ecom-f-mercado').value = (p.preco_ml ?? '');
     $('#ecom-f-venda').value   = (p.preco_venda ?? '');
     $('#ecom-f-custo').value   = (p.custo ?? '');
@@ -2248,6 +2251,7 @@ const ecom = {
     const dados = {
       produto,
       marca: $('#ecom-f-marca').value.trim() || null,
+      modelo: $('#ecom-f-modelo').value.trim() || null,
       preco_ml: precoMercado,
       preco_venda: precoVenda,
       custo: numF('ecom-f-custo'),
@@ -2256,11 +2260,18 @@ const ecom = {
     };
     if (this.editId) {
       const idx = this.itens.findIndex(x => String(x.id) === String(this.editId));
+      const prev = idx >= 0 ? this.itens[idx] : null;
       if (idx >= 0) this.itens[idx] = { ...this.itens[idx], ...dados };
       try {
         const { error } = await sb.from('ecommerce_piloto').update(dados).eq('id', this.editId);
         if (error) throw error;
-      } catch (e) { console.warn('update ecommerce_piloto:', e.message); }
+      } catch (e) {
+        if (idx >= 0 && prev) this.itens[idx] = prev;   // desfaz a alteração só-em-memória
+        console.error('update ecommerce_piloto:', e.message);
+        alert('Não foi possível salvar a alteração: ' + e.message);
+        this.render();
+        return;
+      }
       this.cancelEdit();
     } else {
       const reg = { id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())), ...dados };
@@ -2268,7 +2279,13 @@ const ecom = {
       try {
         const { error } = await sb.from('ecommerce_piloto').insert(reg);
         if (error) throw error;
-      } catch (e) { console.warn('insert ecommerce_piloto:', e.message); }
+      } catch (e) {
+        this.itens = this.itens.filter(x => x !== reg);   // desfaz a inserção só-em-memória
+        console.error('insert ecommerce_piloto:', e.message);
+        alert('Não foi possível salvar o cadastro: ' + e.message);
+        this.render();
+        return;   // mantém o formulário preenchido para você tentar de novo
+      }
       this.clearForm();
     }
     this.render();
@@ -2276,11 +2293,18 @@ const ecom = {
 
   async del(id) {
     if (this.editId && String(this.editId) === String(id)) this.cancelEdit();
+    const removido = this.itens.find(x => String(x.id) === String(id));
     this.itens = this.itens.filter(x => String(x.id) !== String(id));
     try {
       const { error } = await sb.from('ecommerce_piloto').delete().eq('id', id);
       if (error) throw error;
-    } catch (e) { console.warn('delete ecommerce_piloto:', e.message); }
+    } catch (e) {
+      if (removido) this.itens.push(removido);   // desfaz a remoção só-em-memória
+      console.error('delete ecommerce_piloto:', e.message);
+      alert('Não foi possível excluir: ' + e.message);
+      this.render();
+      return;
+    }
     this.render();
   },
 };
