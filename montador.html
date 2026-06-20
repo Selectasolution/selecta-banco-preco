@@ -383,15 +383,16 @@ function lsSaveHis(){ try{ localStorage.setItem(K_HIS,JSON.stringify(HIST)); }ca
 
 /* ===================== SINCRONIZAÇÃO SUPABASE (preços) ===================== */
 /* Mantém a compatibilidade intacta: só os PREÇOS passam a viver no servidor,
-   com o localStorage atuando como cache offline. Leitura é pública (anon);
-   gravação exige login (reaproveita a sessão do app, mesma origem). */
+   com o localStorage atuando como cache offline. Leitura e gravação exigem
+   login (reaproveita a sessão do app, mesma origem). */
 const SB_URL='https://odamfhflldygdfrnnjzu.supabase.co';
 const SB_KEY='sb_publishable_7q_884vzxsdTLOIw7ZMx7A_qiUuUc-n';
 let SB=null, SB_OK=false;
 async function sbInit(){
   try{
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-    SB = createClient(SB_URL, SB_KEY);   // pega a sessão de login já existente no navegador
+    SB = createClient(SB_URL, SB_KEY);
+    await SB.auth.getSession();   // hidrata a sessão logada ANTES de ler (leitura agora exige login)
     SB_OK = true;
     await sbLoadPrecos();
   }catch(e){
