@@ -2306,8 +2306,8 @@ const ecom = {
       const tipoTag=it.tipo_anuncio==='premium'?' <span class="emodel">· Premium</span>':'';
       return `<tr>
         <td class="l"><span class="eprod">${it.produto}</span> · ${it.marca||''}${tipoTag}${modeloSub}<div class="emodel">${this.pesoLabel(it.peso_faixa)}</div>${zonaAlert}</td>
-        <td><input class="cellInput me" type="number" data-id="${it.id}" data-f="preco" value="${it.preco}"></td>
-        <td><div class="stack"><input class="cellInput" type="number" data-id="${it.id}" data-f="media" placeholder="méd" value="${it.media==null?'':it.media}"><input class="cellInput" type="number" data-id="${it.id}" data-f="menor" placeholder="mín" value="${it.menor==null?'':it.menor}"></div></td>
+        <td><input class="cellInput me" type="text" inputmode="decimal" data-id="${it.id}" data-f="preco" value="${this.fmt(it.preco)}"></td>
+        <td><div class="stack"><input class="cellInput" type="text" inputmode="decimal" data-id="${it.id}" data-f="media" placeholder="méd" value="${it.media==null?'':this.fmt(it.media)}"><input class="cellInput" type="text" inputmode="decimal" data-id="${it.id}" data-f="menor" placeholder="mín" value="${it.menor==null?'':this.fmt(it.menor)}"></div></td>
         <td><div class="stack">${vsCell(it.preco,it.media)}${vsCell(it.preco,it.menor)}</div></td>
         <td>${frCell}</td>
         <td class="${mc}">${this.fmtPct(mord)}</td>
@@ -2323,7 +2323,7 @@ const ecom = {
     this.updateCount(); },
 
   async inlineEdit(el){ const id=el.dataset.id, f=el.dataset.f; const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
-    const prev=it[f]; let v=parseFloat(el.value); if(isNaN(v)) v=(f==='preco'?it.preco:null); it[f]=v;
+    const prev=it[f]; const raw=String(el.value).trim().replace(/[R$\s]/g,''); let v=raw==='' ? NaN : (raw.indexOf(',')>=0 ? parseFloat(raw.replace(/\./g,'').replace(',','.')) : parseFloat(raw)); if(isNaN(v)) v=(f==='preco'?it.preco:null); it[f]=v;
     try{ const r=await sb.from('ecom_produtos').update({[f]:v,atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; this.render(); }
     catch(e){ it[f]=prev; console.error('inline:',e.message); alert('Não foi possível salvar: '+e.message); this.render(); } },
 
@@ -2904,11 +2904,9 @@ $('#logout-btn').addEventListener('click', logout);
 
 $$('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
 
-// E-commerce (piloto)
-$('#ecom-add').addEventListener('click', () => ecom.save());
-$('#ecom-cancel').addEventListener('click', () => ecom.cancelEdit());
-$('#ecom-recalc').addEventListener('click', () => ecom.render());
-$$('#tab-ecommerce .ecom-param').forEach(inp => inp.addEventListener('input', () => ecom.render()));
+// E-commerce: eventos centralizados em ecom.wire() (v8).
+// Bloco do piloto removido — causava duplo-bind do botão Adicionar (item duplicado)
+// e throw em #ecom-recalc/.ecom-param inexistentes, que matava checkSession/Catálogo/Apple.
 
 // =====================================================================
 // EXPORT PARA AGENTE DE COTAÇÃO — gera banco_padrao.json
