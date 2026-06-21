@@ -2314,7 +2314,7 @@ const ecom = {
         <td>${this.fmt(r.breakeven)}</td>
         <td><div class="stack"><span class="${r.margem<0?'mneg':''}">${this.fmt(r.margem)}</span><span class="smper">${this.fmtPct(r.margemPct*100)}</span></div></td>
         <td><span class="pill ${v.k}">${v.t}</span></td>
-        <td><div class="acts"><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Inativar</button></div></td>
+        <td><div class="acts"><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
       </tr>`; }).join('');
     tb.innerHTML=rows||'<tr><td class="l" colspan="10" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
     tb.querySelectorAll('.cellInput').forEach(inp=>inp.addEventListener('change',e=>this.inlineEdit(e.target)));
@@ -2349,12 +2349,12 @@ const ecom = {
       catch(e){ this._g('ecom-formmsg').textContent='Erro ao cadastrar: '+e.message; } } },
 
   async del(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
-    if(!confirm(`Inativar "${it.produto} · ${it.marca||''}"? Fica salvo no banco, só sai da lista ativa.`)) return;
+    if(!confirm(`Excluir "${it.produto} · ${it.marca||''}" em definitivo? Apaga a linha do banco e não tem volta.`)) return;
     if(this.editId&&String(this.editId)===String(id)) this.cancelEdit();
     const idx=this.itens.findIndex(x=>String(x.id)===String(id)); const rem=this.itens[idx];
     this.itens=this.itens.filter(x=>String(x.id)!==String(id)); this.render();
-    try{ const r=await sb.from('ecom_produtos').update({ativo:false,atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; }
-    catch(e){ if(rem) this.itens.splice(idx,0,rem); console.error('inativar:',e.message); alert('Não foi possível inativar: '+e.message); this.render(); } },
+    try{ const r=await sb.from('ecom_produtos').delete().eq('id',id); if(r.error) throw r.error; }
+    catch(e){ if(rem) this.itens.splice(idx,0,rem); console.error('excluir:',e.message); alert('Não foi possível excluir: '+e.message); this.render(); } },
 };
 
 function switchTab(tabName) {
