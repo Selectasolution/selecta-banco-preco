@@ -633,72 +633,197 @@
   <!-- =========================================================== -->
   <!-- TAB: E-COMMERCE (piloto — simulador de margem Mercado Livre) -->
   <!-- =========================================================== -->
+  <style id="ecom-v8-style">
+  #tab-ecommerce{--ebg:#0b1220;--epanel:#131c2e;--epanel2:#0f1726;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#34d399;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  #tab-ecommerce *{box-sizing:border-box}
+  #tab-ecommerce{color:var(--etxt);font-size:14px;line-height:1.5}
+  #tab-ecommerce .esub{color:var(--emuted);font-size:12.5px;margin:0 0 16px}
+  #tab-ecommerce .esub b{color:var(--eaccent);font-weight:600}
+  #tab-ecommerce .ecard{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:16px;margin-bottom:14px}
+  #tab-ecommerce .ecard h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin:0 0 12px;font-weight:600}
+  #tab-ecommerce .frete-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:18px}
+  @media(max-width:880px){#tab-ecommerce .frete-grid{grid-template-columns:1fr}}
+  #tab-ecommerce .selrow{margin-bottom:11px}
+  #tab-ecommerce .selrow .lab{font-size:11px;color:var(--emuted);margin-bottom:5px}
+  #tab-ecommerce .chips{display:flex;gap:6px;flex-wrap:wrap}
+  #tab-ecommerce .chip{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:6px 11px;font-size:12px;cursor:pointer}
+  #tab-ecommerce .chip:hover{border-color:var(--eaccent);color:var(--etxt)}
+  #tab-ecommerce .chip.active{background:var(--eaccent);color:#06281d;border-color:var(--eaccent);font-weight:600}
+  #tab-ecommerce .applied{margin-top:12px;padding:8px 12px;background:#0c2c22;border:1px solid #1c5c44;border-radius:10px}
+  #tab-ecommerce .applied .ctx{font-size:12px;color:var(--eteal)}
+  #tab-ecommerce .mtitle{font-size:11px;color:var(--emuted);margin-bottom:6px}
+  #tab-ecommerce table.mtx{border-collapse:collapse;width:100%}
+  #tab-ecommerce table.mtx th{font-size:10px;color:var(--emuted2);font-weight:600;padding:4px;text-align:center;white-space:nowrap}
+  #tab-ecommerce table.mtx td.rl{font-size:11px;color:var(--emuted);text-align:left;padding-right:8px;white-space:nowrap}
+  #tab-ecommerce .mcell{width:100%;background:#26220c;border:1px solid #4a4118;color:#f3e6a8;border-radius:6px;padding:5px 6px;font-family:var(--emono);font-size:12px;text-align:right}
+  #tab-ecommerce .mcell:focus{outline:none;border-color:var(--eamber)}
+  #tab-ecommerce .mcell.sel{border-color:var(--eaccent);box-shadow:0 0 0 1px var(--eaccent)}
+  #tab-ecommerce .mnote{font-size:11px;color:var(--eamber);margin-top:8px;line-height:1.45}
+  #tab-ecommerce .mnote b{color:#f3e6a8}
+  #tab-ecommerce .param-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:880px){#tab-ecommerce .param-grid{grid-template-columns:1fr 1fr}}
+  #tab-ecommerce .efield label{display:block;font-size:11px;color:var(--emuted);margin-bottom:5px}
+  #tab-ecommerce .field-row{display:flex;align-items:center;gap:6px}
+  #tab-ecommerce .num{width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:7px 9px;font-family:var(--emono);font-size:14px}
+  #tab-ecommerce .num:focus{outline:none;border-color:var(--eaccent)}
+  #tab-ecommerce .unit{color:var(--emuted2);font-family:var(--emono);font-size:13px}
+  #tab-ecommerce .toggle-row{display:flex;gap:6px;margin-top:5px}
+  #tab-ecommerce .note{font-size:11px;color:var(--emuted2);margin-top:8px;line-height:1.45}
+  #tab-ecommerce .modbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:9px 12px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:9px}
+  #tab-ecommerce .modbar .ml{font-size:11px;color:var(--emuted)}
+  #tab-ecommerce .modtog{display:flex;gap:6px}
+  #tab-ecommerce .modtog .tg{background:var(--ebg);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:12px}
+  #tab-ecommerce .modtog .tg.active{background:#0c2c22;border-color:var(--eaccent);color:var(--eaccent);font-weight:600}
+  #tab-ecommerce .modwarn{font-size:11px;color:var(--eamber)}
+  #tab-ecommerce .fixgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+  #tab-ecommerce .fixgrid .fx label{font-size:10px;color:var(--emuted2);display:block;margin-bottom:4px;white-space:nowrap}
+  #tab-ecommerce .fixnum{width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:6px;padding:6px 7px;font-family:var(--emono);font-size:12.5px;text-align:right}
+  #tab-ecommerce .fixnum:focus{outline:none;border-color:var(--eaccent)}
+  #tab-ecommerce .fixnum.locked{background:#0c1320;color:var(--emuted2)}
+  #tab-ecommerce .efiltrow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  #tab-ecommerce .addform{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  #tab-ecommerce .addform .efield{display:flex;flex-direction:column}
+  #tab-ecommerce .ainput{background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:7px 9px;font-size:13px}
+  #tab-ecommerce .ainput:focus{outline:none;border-color:var(--eaccent)}
+  #tab-ecommerce .ainput.mono{font-family:var(--emono);text-align:right}
+  #tab-ecommerce .req{color:var(--eamber)}
+  #tab-ecommerce .addbtn{background:var(--eaccent);color:#06281d;border:none;border-radius:7px;padding:9px 18px;font-weight:600;cursor:pointer;font-size:13px}
+  #tab-ecommerce .addbtn:hover{filter:brightness(1.08)}
+  #tab-ecommerce .cancelbtn{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:9px 14px;cursor:pointer;font-size:13px}
+  #tab-ecommerce .formmsg{font-size:11.5px;color:var(--eamber);margin-top:8px;min-height:14px}
+  #tab-ecommerce .tbl-wrap{overflow-x:auto;margin-top:6px}
+  #tab-ecommerce table.emain{width:100%;border-collapse:collapse;font-size:13px;min-width:1060px}
+  #tab-ecommerce table.emain thead th{text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--emuted);font-weight:600;padding:0 9px 9px;border-bottom:1px solid var(--eborder);white-space:nowrap}
+  #tab-ecommerce table.emain thead th.l{text-align:left}
+  #tab-ecommerce table.emain tbody td{padding:9px;border-bottom:1px solid #1c2740;text-align:right;font-family:var(--emono);white-space:nowrap}
+  #tab-ecommerce table.emain tbody td.l{text-align:left;font-family:inherit}
+  #tab-ecommerce table.emain tbody tr:hover{background:#0f1828}
+  #tab-ecommerce .eprod{font-weight:600}
+  #tab-ecommerce .emodel{color:var(--emuted2);font-size:11px;font-family:var(--emono)}
+  #tab-ecommerce .ezona{font-size:10.5px;color:var(--eamber);margin-top:2px}
+  #tab-ecommerce .cellInput{width:74px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:6px;padding:5px 7px;font-family:var(--emono);font-size:12.5px;text-align:right}
+  #tab-ecommerce .cellInput:focus{outline:none;border-color:var(--eaccent)}
+  #tab-ecommerce .cellInput.me{border-color:#3a4a6a;color:var(--eaccent)}
+  #tab-ecommerce .stack{display:flex;flex-direction:column;gap:3px;align-items:flex-end}
+  #tab-ecommerce .gratis{color:var(--eemerald);font-size:11.5px}
+  #tab-ecommerce .gratis small{display:block;color:var(--emuted2);font-size:10px}
+  #tab-ecommerce .pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+  #tab-ecommerce .pill.priorizar{background:#0c2c22;color:var(--eemerald)}
+  #tab-ecommerce .pill.analisar{background:#2e2410;color:var(--eamber)}
+  #tab-ecommerce .pill.excluir{background:#2e1517;color:var(--ered)}
+  #tab-ecommerce .mneg{color:var(--ered)} #tab-ecommerce .vsacima{color:var(--ered)} #tab-ecommerce .vsabaixo{color:var(--eemerald)} #tab-ecommerce .vsnull{color:var(--emuted2)}
+  #tab-ecommerce .smper{font-size:11px;color:var(--emuted)}
+  #tab-ecommerce .acts{display:flex;gap:6px;justify-content:flex-end}
+  #tab-ecommerce .rowbtn{background:none;border:1px solid var(--eborder);color:var(--emuted);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer}
+  #tab-ecommerce .rowbtn:hover{border-color:var(--eaccent);color:var(--etxt)}
+  #tab-ecommerce .rowbtn.del:hover{border-color:var(--ered);color:var(--ered)}
+  #tab-ecommerce .efooter{margin-top:14px;padding-top:13px;border-top:1px solid var(--eborder);font-size:11px;color:var(--emuted2);line-height:1.6}
+  #tab-ecommerce select.ainput{appearance:auto}
+</style>
+
   <section id="tab-ecommerce" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
 
-    <div class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 mb-4 text-xs text-gray-400">
-      <span class="text-primary-500 font-semibold">Projeto piloto · não-oficial.</span>
-      Simulador de margem para venda no Mercado Livre. Preços de mercado são aproximados e atualizados manualmente. Imposto modelado como % sobre a receita (Simples).
+    <p class="esub">Simulador de margem <b>Mercado Livre</b> com a regra dos <b>R$79</b> (tarifa pós 02/03/2026). Abaixo de R$79 o ML banca o frete e cobra custo fixo por faixa; a partir de R$79 você paga o frete da matriz. Dados salvos no banco. Veredito: <b style="color:var(--eemerald)">Priorizar</b> · <b style="color:var(--eamber)">Analisar</b> · <b style="color:var(--ered)">Excluir</b>.</p>
+
+    <!-- MODALIDADE -->
+    <div class="modbar">
+      <span class="ml">Modalidade de envio:</span>
+      <div class="modtog" id="ecom-modtog">
+        <span class="tg active" data-mod="flex">Flex / Correios</span>
+        <span class="tg" data-mod="full">Full</span>
+      </div>
+      <span class="modwarn" id="ecom-modwarn"></span>
     </div>
 
-    <!-- Parâmetros -->
-    <div class="bg-gray-800 rounded-lg p-4 mb-4 border border-gray-700">
-      <h3 class="text-sm font-semibold text-gray-200 mb-3">Parâmetros do mercado <span class="text-gray-500 font-normal">— valem para todos os itens</span></h3>
-      <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-        <label class="block text-xs font-medium text-gray-400">Comissão Clássico %<input id="ecom-p-com-classico" type="number" step="0.1" value="13" class="ecom-param w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-        <label class="block text-xs font-medium text-gray-400">Comissão Premium %<input id="ecom-p-com-premium" type="number" step="0.1" value="18" class="ecom-param w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-        <label class="block text-xs font-medium text-gray-400">Taxa fixa R$ (&lt;R$79)<input id="ecom-p-taxa-fixa" type="number" step="0.01" value="6.50" class="ecom-param w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-        <label class="block text-xs font-medium text-gray-400">Frete R$ (≥R$79)<input id="ecom-p-frete" type="number" step="0.01" value="28" class="ecom-param w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-        <label class="block text-xs font-medium text-gray-400">Imposto %<input id="ecom-p-imposto" type="number" step="0.1" value="4" class="ecom-param w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-        <label class="block text-xs font-medium text-gray-400">Colchão %<input id="ecom-p-colchao" type="number" step="0.1" value="4" class="ecom-param w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-      </div>
-      <p class="text-xs text-gray-500 mt-2">&lt;R$79 → o ML paga o frete e você paga a taxa fixa. ≥R$79 → sem taxa fixa, você paga o frete (zere o campo Frete por produto em venda local).</p>
-    </div>
-
-    <!-- Cadastro -->
-    <div class="bg-gray-800 rounded-lg p-4 mb-4 border border-gray-700">
-      <h3 class="text-sm font-semibold text-gray-200 mb-3">Cadastrar / simular produto</h3>
-      <div class="grid grid-cols-2 md:grid-cols-9 gap-3">
-        <label class="block text-xs font-medium text-gray-400 md:col-span-2">Produto<input id="ecom-f-produto" autocomplete="off" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-        <label class="block text-xs font-medium text-gray-400">Marca<input id="ecom-f-marca" autocomplete="off" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-        <label class="block text-xs font-medium text-gray-400">Modelo<input id="ecom-f-modelo" autocomplete="off" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-        <label class="block text-xs font-medium text-gray-400">Preço de mercado R$ <span class="text-gray-600">(ref.)</span><input id="ecom-f-mercado" autocomplete="off" type="number" step="0.01" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-        <label class="block text-xs font-medium text-primary-500">Meu preço de venda R$<input id="ecom-f-venda" autocomplete="off" type="number" step="0.01" class="w-full bg-gray-900 border border-primary-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-        <label class="block text-xs font-medium text-gray-400">Custo c/ NF R$<input id="ecom-f-custo" autocomplete="off" type="number" step="0.01" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-        <label class="block text-xs font-medium text-gray-400">Anúncio<select id="ecom-f-tipo" autocomplete="off" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"><option value="classico">Clássico</option><option value="premium">Premium</option></select></label>
-        <label class="block text-xs font-medium text-gray-400">Frete R$<input id="ecom-f-frete" autocomplete="off" type="number" step="0.01" class="w-full bg-gray-900 border border-gray-700 rounded-md px-2 py-1.5 mt-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"></label>
-      </div>
-      <p class="text-xs text-gray-500 mt-2">O <span class="text-primary-500">Meu preço de venda</span> é o que define os custos, a margem e o break-even. O Preço de mercado é só referência (mostra quanto você está acima/abaixo). Sem preço de venda, o cálculo usa o de mercado como proxy.</p>
-      <div class="flex gap-2 mt-3">
-        <button id="ecom-add" class="bg-primary-600 hover:bg-primary-500 text-white text-sm font-semibold rounded-md px-4 py-2">+ Adicionar</button>
-        <button id="ecom-cancel" class="hidden-section bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-md px-4 py-2">Cancelar</button>
-        <button id="ecom-recalc" class="bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-md px-4 py-2">Recalcular</button>
+    <!-- FRETE REAL -->
+    <div class="ecard">
+      <h3>Frete real (matriz salva no banco) — cenário <span style="color:var(--eaccent);text-transform:none;letter-spacing:0" id="ecom-frete-ctxtop"></span></h3>
+      <div class="frete-grid">
+        <div>
+          <div class="selrow"><div class="lab">Destino (rota que você quer precificar)</div>
+            <div class="chips" id="ecom-dest"></div></div>
+          <div class="selrow"><div class="lab">Reputação</div>
+            <div class="chips" id="ecom-rep">
+              <span class="chip active" data-r="1">Atual (cheia)</span><span class="chip" data-r="0.5">Verde (−50%)</span>
+            </div></div>
+          <div class="applied"><div class="ctx" id="ecom-frete-ctx"></div></div>
+          <p class="note">A faixa de peso é por produto (definida no cadastro). Cada item usa a célula [destino × peso dele] da matriz.</p>
+        </div>
+        <div>
+          <div class="mtitle">Matriz de frete real — preencha com o Seller Center. Edição salva direto no banco.</div>
+          <table class="mtx" id="ecom-mtx"></table>
+          <div class="mnote"><b>Amarelo = preencher.</b> Troque pelos valores reais (Seller Center › anúncio › frete › simular por CEP, na sua reputação de hoje). O −50% verde é calculado sozinho.</div>
+        </div>
       </div>
     </div>
 
-    <!-- Tabela -->
-    <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-900 text-xs uppercase text-gray-400">
-            <tr>
-              <th class="px-3 py-2.5 text-left font-medium">Produto</th>
-              <th class="px-3 py-2.5 text-left font-medium">Marca</th>
-              <th class="px-3 py-2.5 text-right font-medium">Mercado</th>
-              <th class="px-3 py-2.5 text-right font-medium">Meu preço</th>
-              <th class="px-3 py-2.5 text-right font-medium">vs merc.</th>
-              <th class="px-3 py-2.5 text-right font-medium">Frete</th>
-              <th class="px-3 py-2.5 text-right font-medium">Custos ML+imp.</th>
-              <th class="px-3 py-2.5 text-right font-medium">Mordida</th>
-              <th class="px-3 py-2.5 text-right font-medium">Break-even</th>
-              <th class="px-3 py-2.5 text-right font-medium">Margem</th>
-              <th class="px-3 py-2.5 text-center font-medium">Veredito</th>
-              <th class="px-3 py-2.5 text-center font-medium">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="ecom-tbody" class="divide-y divide-gray-700"></tbody>
-        </table>
+    <!-- PARÂMETROS -->
+    <div class="ecard">
+      <h3>Parâmetros comerciais</h3>
+      <div class="param-grid">
+        <div class="efield"><label>Comissão Clássico</label><div class="field-row"><input class="num" id="ecom-com-classico" type="number" step="0.5" value="13"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Comissão Premium</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Imposto (regime)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" step="0.5" value="4"><span class="unit">%</span></div><p class="note">Simples Anexo I 1ª faixa = 4%.</p></div>
+        <div class="efield"><label>Outros custos (antecip./parcel.)</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Colchão (devolução/embalagem)</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="4"><span class="unit">%</span></div></div>
       </div>
-      <div id="ecom-vazio" class="text-center text-gray-500 text-sm py-10">Nenhum produto. Cadastre acima para ver a simulação.</div>
+      <div style="margin-top:14px">
+        <label style="display:block;font-size:11px;color:var(--emuted);margin-bottom:2px">Custo fixo ML <b>abaixo de R$79</b> <span style="color:var(--emuted2);font-weight:400">— tabela oficial Flex/Correios (mai/2026). Edite só se o ML mudar.</span></label>
+        <div class="fixgrid">
+          <div class="fx"><label>&lt;R$12,50</label><input class="fixnum locked" value="50% do preço" disabled></div>
+          <div class="fx"><label>R$12,50–29</label><input class="fixnum" id="ecom-fix1" type="number" step="0.05" value="6.25"></div>
+          <div class="fx"><label>R$29–50</label><input class="fixnum" id="ecom-fix2" type="number" step="0.05" value="6.50"></div>
+          <div class="fx"><label>R$50–79</label><input class="fixnum" id="ecom-fix3" type="number" step="0.05" value="6.75"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSULTA -->
+    <div class="ecard">
+      <h3>Consultar <span style="color:var(--emuted2);font-weight:400;text-transform:none;letter-spacing:0">— filtre o banco conforme ele cresce</span></h3>
+      <div class="efiltrow">
+        <div class="efield"><label>Produto</label><select class="ainput" id="ecom-flt-prod" style="width:240px"><option value="">Todos os produtos</option></select></div>
+        <div class="efield"><label>Veredito</label><select class="ainput" id="ecom-flt-ver" style="width:170px"><option value="">Todos os vereditos</option><option value="priorizar">Priorizar</option><option value="analisar">Analisar</option><option value="excluir">Excluir</option></select></div>
+        <button class="cancelbtn" id="ecom-flt-clear">Limpar filtros</button>
+        <span class="note" id="ecom-flt-count" style="margin:0 0 7px"></span>
+      </div>
+    </div>
+
+    <!-- CADASTRO -->
+    <div class="ecard">
+      <h3 id="ecom-form-title">Cadastrar / simular produto</h3>
+      <div class="addform">
+        <div class="efield"><label>Produto <span class="req">*</span></label><input class="ainput" id="ecom-f-produto" style="width:170px" placeholder="SSD SATA III 256GB"></div>
+        <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px" placeholder="Kingston"></div>
+        <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px" placeholder="A400"></div>
+        <div class="efield"><label>Faixa de peso <span class="req">*</span></label><select class="ainput" id="ecom-f-peso" style="width:130px"></select></div>
+        <div class="efield"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
+        <div class="efield"><label>Meu preço <span class="req">*</span></label><input class="ainput mono" id="ecom-f-preco" type="number" style="width:90px"></div>
+        <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
+        <div class="efield"><label>Média mercado</label><input class="ainput mono" id="ecom-f-media" type="number" style="width:90px"></div>
+        <div class="efield"><label>Menor preço</label><input class="ainput mono" id="ecom-f-menor" type="number" style="width:90px"></div>
+        <button class="addbtn" id="ecom-add">+ Adicionar</button>
+        <button class="cancelbtn" id="ecom-cancel" style="display:none">Cancelar</button>
+      </div>
+      <div class="formmsg" id="ecom-formmsg"></div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table class="emain">
+        <thead><tr>
+          <th class="l">Produto</th><th>Meu preço</th>
+          <th>Mercado<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">méd / mín</span></th>
+          <th>VS<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">méd / mín</span></th>
+          <th>Frete / fixo</th><th>Mordida</th><th>Break-even</th><th>Margem</th><th>Veredito</th>
+          <th style="text-align:right">Ações</th>
+        </tr></thead>
+        <tbody id="ecom-tbody"></tbody>
+      </table>
+      <div id="ecom-vazio" class="text-center text-gray-500 text-sm py-10 hidden-section">Nenhum produto. Cadastre acima para começar.</div>
+    </div>
+
+    <div class="efooter">
+      <b>Regra ML (pós 02/03/2026, Flex/Correios):</b> ≥R$79 → comissão (por tipo de anúncio) + frete da matriz (célula destino×peso do produto). &lt;R$79 → ML banca o frete; comissão + custo fixo por faixa (R$6,25 / R$6,50 / R$6,75; abaixo de R$12,50 = 50% do preço). Tudo sobre o preço de venda; margem e break-even líquidos do colchão. Excluir = inativar (fica salvo no banco).
     </div>
 
   </section>
@@ -2071,253 +2196,165 @@ function generatePDFs() {
 // =====================================================================
 // E-COMMERCE (piloto) — simulador de margem Mercado Livre
 // =====================================================================
+// =====================================================================
+// E-COMMERCE (v8) — simulador ML + persistência (ecom_produtos / ecom_frete_matriz)
+// =====================================================================
 const ecom = {
-  itens: [],
-  loaded: false,
-  editId: null,
+  ZONAS: [['local_ne','Local / NE'],['centro','Centro'],['sudeste','Sudeste'],['sul','Sul']],
+  PESOS: [['ate300','≤300g'],['f301_500','301–500g'],['f501_1000','501g–1kg'],['f1001_2000','1–2kg']],
+  itens: [], mtx: {}, loaded:false, wired:false,
+  selDest:'sul', repFactor:1, modalidade:'flex', editId:null, fProd:'', fVer:'',
 
-  _n(id) { const v = parseFloat($('#' + id).value); return isNaN(v) ? 0 : v; },
-  fmtBRL(v) { return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); },
-  fmtPct(v) { return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'; },
+  _g(id){ return document.getElementById(id); },
+  _n(id){ const v=parseFloat(this._g(id).value); return isNaN(v)?0:v; },
+  fmt(v){ return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); },
+  fmtPct(v){ return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'; },
+  pesoLabel(c){ const f=this.PESOS.find(p=>p[0]===c); return f?f[1]:c; },
+  zonaLabel(c){ const z=this.ZONAS.find(x=>x[0]===c); return z?z[1]:c; },
+  familia(p){ return ((p||'').trim().split(/\s+/)[0]||'').toUpperCase(); },
 
-  params() {
-    return {
-      comClassico: this._n('ecom-p-com-classico'),
-      comPremium:  this._n('ecom-p-com-premium'),
-      taxaFixa:    this._n('ecom-p-taxa-fixa'),
-      frete:       this._n('ecom-p-frete'),
-      imposto:     this._n('ecom-p-imposto'),
-      colchao:     this._n('ecom-p-colchao'),
-    };
+  params(){ return { comC:this._n('ecom-com-classico'), comP:this._n('ecom-com-premium'),
+    imp:this._n('ecom-imp'), outros:this._n('ecom-outros'), colchao:this._n('ecom-colchao'),
+    f1:this._n('ecom-fix1')||6.25, f2:this._n('ecom-fix2')||6.50, f3:this._n('ecom-fix3')||6.75 }; },
+
+  custoFixoML(P,pr){ if(P<12.50) return P*0.5; if(P<29) return pr.f1; if(P<50) return pr.f2; return pr.f3; },
+  freteDe(it){ const v=this.mtx[this.selDest+'|'+it.peso_faixa]; return (v==null?0:v)*this.repFactor; },
+  breakeven(custo,t,fr,pr){ const c=[];
+    if(t<0.5){ const p=custo/(0.5-t); if(p<12.50)c.push(p); }
+    [[pr.f1,12.50,29],[pr.f2,29,50],[pr.f3,50,79]].forEach(a=>{ const p=(custo+a[0])/(1-t); if(p>=a[1]&&p<a[2])c.push(p); });
+    { const p=(custo+fr)/(1-t); if(p>=79)c.push(p); }
+    return c.length?Math.min.apply(null,c):(custo+fr)/(1-t); },
+  calc(it){ const pr=this.params(); const P=+it.preco;
+    const comPct=(it.tipo_anuncio==='premium'?pr.comP:pr.comC)/100;
+    const t=comPct+pr.imp/100+pr.outros/100+pr.colchao/100;
+    const fr=this.freteDe(it); let regime,freteItem,custoFixo=0,custoML;
+    if(P>=79){ regime='frete'; freteItem=fr; custoML=P*t+freteItem; }
+    else { regime='fixa'; freteItem=0; custoFixo=this.custoFixoML(P,pr); custoML=P*t+custoFixo; }
+    const custo=+it.custo; const margem=P-custoML-custo; const mordida=P>0?custoML/P:0;
+    const be=this.breakeven(custo,t,fr,pr); let zona=null;
+    if(P>=79){ const m=78.99-(78.99*t+this.custoFixoML(78.99,pr))-custo; if(m>margem) zona=m-margem; }
+    return {regime,freteItem,custoFixo,custoML,margem,margemPct:P>0?margem/P:0,mordida,breakeven:be,zona}; },
+  veredito(regime,m,pct,vsMin){
+    if(m<=0) return {k:'excluir',t:'Excluir'};
+    if(regime==='fixa') return {k:'analisar',t:'Analisar'};
+    if(m<15||pct<0.05) return {k:'excluir',t:'Excluir'};
+    if(m>=45&&pct>=0.10&&(vsMin==null||vsMin<=0.10)) return {k:'priorizar',t:'Priorizar'};
+    return {k:'analisar',t:'Analisar'}; },
+  itemVer(it){ const r=this.calc(it); const vs=it.menor?(it.preco-it.menor)/it.menor:null; return this.veredito(r.regime,r.margem,r.margemPct,vs).k; },
+  isVis(it){ if(this.fProd){ if(this.fProd.indexOf('fam:')===0){ if(this.familia(it.produto)!==this.fProd.slice(4)) return false; } else if(it.produto!==this.fProd) return false; } if(this.fVer && this.itemVer(it)!==this.fVer) return false; return true; },
+
+  async onEnter(){
+    if(!this.loaded){ await this.loadMatrix(); await this.loadProdutos(); this.loaded=true; }
+    if(!this.wired){ this.wire(); this.wired=true; }
+    this.buildMtx(); this.updateCtx(); this.render();
   },
+  async loadMatrix(){ try{ const r=await sb.from('ecom_frete_matriz').select('zona,peso_faixa,valor'); if(r.error) throw r.error;
+      this.mtx={}; (r.data||[]).forEach(x=>{ this.mtx[x.zona+'|'+x.peso_faixa]=Number(x.valor); }); }
+    catch(e){ console.warn('ecom_frete_matriz load:',e.message); } },
+  async loadProdutos(){ try{ const r=await sb.from('ecom_produtos').select('*').eq('ativo',true).order('criado_em'); if(r.error) throw r.error; this.itens=r.data||[]; }
+    catch(e){ console.warn('ecom_produtos load:',e.message); this.itens=[]; } },
 
-  // ----- MOTOR: regras Mercado Livre. Custos incidem sobre o MEU preço de venda -----
-  calc(p, pr) {
-    const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
-    const has = v => !(v === null || v === undefined || v === '');
-    const precoMercado = has(p.preco_ml) ? num(p.preco_ml) : null;
-    const precoVenda   = has(p.preco_venda) ? num(p.preco_venda) : null;
-    const base = precoVenda !== null ? precoVenda : (precoMercado !== null ? precoMercado : 0);
-    const comPct = (p.tipo_anuncio === 'premium') ? pr.comPremium : pr.comClassico;
-    const freteProd = has(p.frete) ? num(p.frete) : pr.frete;
-
-    let taxaFixa = 0, frete = 0, faixa = '';
-    if (base < 19)      { faixa = '<R$19';      taxaFixa = Math.min(pr.taxaFixa, base * 0.5); }
-    else if (base < 79) { faixa = 'R$19–78,99'; taxaFixa = pr.taxaFixa; }
-    else                { faixa = '≥R$79';      frete = freteProd; }
-
-    const comissao = base * comPct / 100;
-    const imposto  = base * pr.imposto / 100;
-    const custosVenda = comissao + taxaFixa + frete + imposto;
-    const liquido = base - custosVenda;
-    const mordidaPct = base > 0 ? custosVenda / base * 100 : 0;
-
-    const custo = has(p.custo) ? num(p.custo) : null;
-    let margem = null, margemPct = null, margemColchao = null;
-    if (custo !== null && base > 0) {
-      margem = liquido - custo;
-      margemPct = margem / base * 100;
-      margemColchao = margem - base * pr.colchao / 100;
-    }
-
-    // Break-even: menor preço de venda em que a margem zera (abaixo disso, prejuízo).
-    // A parcela fixa muda por faixa: ≥R$79 paga frete; R$19–78,99 paga taxa fixa.
-    let breakeven = null;
-    if (custo !== null) {
-      const vPct = (comPct + pr.imposto) / 100;   // comissão + imposto (proporcionais ao preço)
-      if (vPct < 1) {
-        const be79 = (custo + freteProd) / (1 - vPct);                // assume faixa ≥R$79 (paga frete)
-        breakeven = be79 >= 79 ? be79 : (custo + pr.taxaFixa) / (1 - vPct);  // senão, faixa com taxa fixa
-      }
-    }
-
-    let vsMercado = null;
-    if (precoVenda !== null && precoMercado !== null && precoMercado > 0) {
-      vsMercado = (precoVenda - precoMercado) / precoMercado * 100;
-    }
-
-    let zonaVale = false, ganho78 = 0;
-    if (base >= 79) {
-      const p78 = 78.99;
-      const liq78 = p78 - (p78 * comPct / 100) - pr.taxaFixa - (p78 * pr.imposto / 100);
-      if (liq78 > liquido) { zonaVale = true; ganho78 = liq78 - liquido; }
-    }
-
-    let veredito = '—', cor = 'slate';
-    if (custo !== null && base > 0) {
-      if (margem < 0)             { veredito = 'Prejuízo'; cor = 'red'; }
-      else if (margemColchao < 0) { veredito = 'Apertado'; cor = 'amber'; }
-      else                        { veredito = 'Fecha';    cor = 'emerald'; }
-    }
-    return { precoMercado, precoVenda, base, faixa, frete, custosVenda, liquido, mordidaPct, margem, margemPct, veredito, cor, vsMercado, zonaVale, ganho78, breakeven };
+  wire(){ const g=id=>this._g(id);
+    g('ecom-dest').innerHTML=this.ZONAS.map(z=>`<span class="chip${z[0]===this.selDest?' active':''}" data-z="${z[0]}">${z[1]}${z[0]==='sul'?' (pior)':''}</span>`).join('');
+    g('ecom-dest').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ this.selDest=c.dataset.z; g('ecom-dest').querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); this.buildMtx(); this.updateCtx(); this.render(); }));
+    g('ecom-rep').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ this.repFactor=+c.dataset.r; g('ecom-rep').querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); this.updateCtx(); this.render(); }));
+    g('ecom-f-peso').innerHTML=this.PESOS.map(p=>`<option value="${p[0]}">${p[1]}</option>`).join('');
+    g('ecom-modtog').querySelectorAll('.tg').forEach(t=>t.addEventListener('click',()=>{ this.modalidade=t.dataset.mod; g('ecom-modtog').querySelectorAll('.tg').forEach(x=>x.classList.remove('active')); t.classList.add('active'); g('ecom-modwarn').textContent=this.modalidade==='full'?'⚠ No Full, abaixo de R$79 o custo é variável por peso/dimensão — os números <R$79 viram estimativa.':''; this.render(); }));
+    ['ecom-com-classico','ecom-com-premium','ecom-imp','ecom-outros','ecom-colchao','ecom-fix1','ecom-fix2','ecom-fix3'].forEach(id=>g(id).addEventListener('input',()=>this.render()));
+    g('ecom-flt-prod').addEventListener('change',e=>{ this.fProd=e.target.value; this.render(); });
+    g('ecom-flt-ver').addEventListener('change',e=>{ this.fVer=e.target.value; this.render(); });
+    g('ecom-flt-clear').addEventListener('click',()=>{ this.fProd=''; this.fVer=''; g('ecom-flt-prod').value=''; g('ecom-flt-ver').value=''; this.render(); });
+    g('ecom-add').addEventListener('click',()=>this.save());
+    g('ecom-cancel').addEventListener('click',()=>this.cancelEdit());
   },
+  updateCtx(){ const rep=this.repFactor===1?'reputação cheia':'verde (−50%)'; const s=`${this.zonaLabel(this.selDest)} · ${rep}`;
+    this._g('ecom-frete-ctx').textContent=s; this._g('ecom-frete-ctxtop').textContent=s; },
 
-  async onEnter() {
-    if (!this.loaded) {
-      try {
-        const { data, error } = await sb.from('ecommerce_piloto').select('*').order('created_at');
-        if (error) throw error;
-        this.itens = data || [];
-        this.loaded = true;
-      } catch (e) {
-        console.warn('ecommerce_piloto (segue em memória):', e.message);
-      }
-    }
-    this.render();
-  },
+  buildMtx(){ const t=this._g('ecom-mtx');
+    let h='<tr><th></th>'+this.PESOS.map(p=>`<th>${p[1]}</th>`).join('')+'</tr>';
+    this.ZONAS.forEach(z=>{ h+=`<tr><td class="rl">${z[1]}</td>`;
+      this.PESOS.forEach(p=>{ const v=this.mtx[z[0]+'|'+p[0]]; h+=`<td><input class="mcell${z[0]===this.selDest?' sel':''}" type="number" data-z="${z[0]}" data-p="${p[0]}" value="${v==null?0:v}"></td>`; });
+      h+='</tr>'; });
+    t.innerHTML=h;
+    t.querySelectorAll('.mcell').forEach(inp=>inp.addEventListener('change',e=>this.saveMtxCell(e.target))); },
+  async saveMtxCell(el){ const zona=el.dataset.z, peso=el.dataset.p, valor=parseFloat(el.value)||0;
+    const prev=this.mtx[zona+'|'+peso]; this.mtx[zona+'|'+peso]=valor; this.render();
+    try{ const r=await sb.from('ecom_frete_matriz').upsert({zona,peso_faixa:peso,valor,atualizado_em:new Date().toISOString()},{onConflict:'zona,peso_faixa'}); if(r.error) throw r.error; }
+    catch(e){ this.mtx[zona+'|'+peso]=prev; console.error('upsert frete:',e.message); alert('Não foi possível salvar o frete: '+e.message); this.buildMtx(); this.render(); } },
 
-  render() {
-    const pr = this.params();
-    const tb = $('#ecom-tbody');
-    const cores = {
-      emerald: 'bg-emerald-500/15 text-emerald-400',
-      amber:   'bg-amber-500/15 text-amber-400',
-      red:     'bg-red-500/15 text-red-400',
-      slate:   'bg-gray-700/40 text-gray-400',
-    };
-    if (!this.itens.length) {
-      tb.innerHTML = '';
-      $('#ecom-vazio').classList.remove('hidden-section');
-      return;
-    }
-    $('#ecom-vazio').classList.add('hidden-section');
-    tb.innerHTML = this.itens.map(p => {
-      const r = this.calc(p, pr);
-      const mordCor = r.mordidaPct >= 40 ? 'text-red-400' : r.mordidaPct >= 30 ? 'text-amber-400' : 'text-gray-400';
-      const margCell = r.margem === null
-        ? '<span class="text-gray-600">—</span>'
-        : `<span class="${r.margem < 0 ? 'text-red-400' : 'text-emerald-400'}">${this.fmtBRL(r.margem)} <span class="text-xs opacity-70">(${this.fmtPct(r.margemPct)})</span></span>`;
-      const mercadoCell = r.precoMercado === null ? '<span class="text-gray-600">—</span>' : this.fmtBRL(r.precoMercado);
-      const meuCell = r.precoVenda === null
-        ? '<span class="text-gray-500 text-xs">— (usa mercado)</span>'
-        : `<span class="text-gray-100">${this.fmtBRL(r.precoVenda)}</span>`;
-      let vsCell = '<span class="text-gray-600">—</span>';
-      if (r.vsMercado !== null) {
-        const sinal = r.vsMercado > 0 ? '+' : '';
-        const c = Math.abs(r.vsMercado) < 0.05 ? 'text-gray-400' : (r.vsMercado > 0 ? 'text-amber-400' : 'text-sky-400');
-        vsCell = `<span class="${c}">${sinal}${this.fmtPct(r.vsMercado)}</span>`;
-      }
-      const alerta = r.zonaVale ? `<div class="text-[11px] text-amber-400 mt-0.5">⚠ Zona-vale: a R$78,99 sobra ${this.fmtBRL(r.ganho78)} a mais</div>` : '';
-      const modeloSub = p.modelo ? `<div class="text-[11px] text-gray-500">${p.modelo}</div>` : '';
-      return `<tr class="product-row hover:bg-gray-700/30">
-        <td class="px-3 py-2.5 text-gray-100">${p.produto || ''}${alerta}</td>
-        <td class="px-3 py-2.5 text-gray-400">${p.marca || ''}${modeloSub}</td>
-        <td class="px-3 py-2.5 text-right text-gray-300">${mercadoCell}</td>
-        <td class="px-3 py-2.5 text-right">${meuCell}</td>
-        <td class="px-3 py-2.5 text-right">${vsCell}</td>
-        <td class="px-3 py-2.5 text-right text-gray-300">${this.fmtBRL(r.frete)}</td>
-        <td class="px-3 py-2.5 text-right text-gray-300">${this.fmtBRL(r.custosVenda)}</td>
-        <td class="px-3 py-2.5 text-right ${mordCor}">${this.fmtPct(r.mordidaPct)}</td>
-        <td class="px-3 py-2.5 text-right text-primary-500 font-semibold">${r.breakeven !== null ? this.fmtBRL(r.breakeven) : '—'}</td>
-        <td class="px-3 py-2.5 text-right">${margCell}</td>
-        <td class="px-3 py-2.5 text-center"><span class="text-xs px-2 py-1 rounded-full ${cores[r.cor]}">${r.veredito}</span></td>
-        <td class="px-3 py-2.5 text-center whitespace-nowrap">
-          <button class="ecom-edit text-primary-500 hover:text-primary-400 text-xs mr-2" data-id="${p.id}">Editar</button>
-          <button class="ecom-del text-gray-600 hover:text-red-400" data-id="${p.id}">✕</button>
-        </td>
-      </tr>`;
-    }).join('');
-    $$('#ecom-tbody .ecom-edit').forEach(b => b.addEventListener('click', e => ecom.edit(e.target.dataset.id)));
-    $$('#ecom-tbody .ecom-del').forEach(b => b.addEventListener('click', e => ecom.del(e.target.dataset.id)));
-  },
+  populateProdFilter(){ const sel=this._g('ecom-flt-prod'); const cur=sel.value; const fams={};
+    this.itens.forEach(it=>{ const f=this.familia(it.produto); (fams[f]=fams[f]||new Set()).add(it.produto); });
+    let o='<option value="">Todos os produtos</option>';
+    Object.keys(fams).sort((a,b)=>a.localeCompare(b,'pt-BR')).forEach(f=>{
+      const nomes=[...fams[f]].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+      o+=`<option value="fam:${f.replace(/"/g,'&quot;')}">${f} — todos</option>`;
+      if(nomes.length>1) nomes.forEach(n=>{ o+=`<option value="${n.replace(/"/g,'&quot;')}">\u00A0\u00A0${n}</option>`; }); });
+    sel.innerHTML=o; sel.value=[].some.call(sel.options,x=>x.value===cur)?cur:''; this.fProd=sel.value; },
+  updateCount(){ const vis=this.itens.filter(it=>this.isVis(it)).length;
+    this._g('ecom-flt-count').textContent=(this.fProd||this.fVer)?`${vis} de ${this.itens.length} itens`:`${this.itens.length} itens no banco`; },
 
-  clearForm() {
-    ['ecom-f-produto', 'ecom-f-marca', 'ecom-f-modelo', 'ecom-f-mercado', 'ecom-f-venda', 'ecom-f-custo', 'ecom-f-frete'].forEach(id => $('#' + id).value = '');
-    $('#ecom-f-tipo').value = 'classico';
-  },
+  render(){ this.populateProdFilter(); const tb=this._g('ecom-tbody');
+    if(!this.itens.length){ tb.innerHTML=''; show('#ecom-vazio'); this.updateCount(); return; }
+    hide('#ecom-vazio');
+    const vsCell=(p,ref)=>{ if(!ref||ref<=0) return '<span class="vsnull">—</span>'; const d=(p-ref)/ref*100; return `<span class="${d>0?'vsacima':'vsabaixo'}">${d>0?'+':''}${d.toFixed(1)}%</span>`; };
+    const rows=this.itens.map(it=>{ if(!this.isVis(it)) return '';
+      const r=this.calc(it); const vsMin=it.menor?(it.preco-it.menor)/it.menor:null; const v=this.veredito(r.regime,r.margem,r.margemPct,vsMin);
+      const mord=r.mordida*100; const mc=mord>=40?'mneg':'';
+      const frCell=r.regime==='fixa'?`<span class="gratis">grátis ML<small>fixo ${this.fmt(r.custoFixo)}</small></span>`:this.fmt(r.freteItem);
+      const zonaAlert=r.zona!=null?`<div class="ezona">⚠ Zona-vale: a R$78,99 sobra ${this.fmt(r.zona)} a mais</div>`:'';
+      const modeloSub=it.modelo?`<div class="emodel">${it.modelo}</div>`:'';
+      const tipoTag=it.tipo_anuncio==='premium'?' <span class="emodel">· Premium</span>':'';
+      return `<tr>
+        <td class="l"><span class="eprod">${it.produto}</span> · ${it.marca||''}${tipoTag}${modeloSub}<div class="emodel">${this.pesoLabel(it.peso_faixa)}</div>${zonaAlert}</td>
+        <td><input class="cellInput me" type="number" data-id="${it.id}" data-f="preco" value="${it.preco}"></td>
+        <td><div class="stack"><input class="cellInput" type="number" data-id="${it.id}" data-f="media" placeholder="méd" value="${it.media==null?'':it.media}"><input class="cellInput" type="number" data-id="${it.id}" data-f="menor" placeholder="mín" value="${it.menor==null?'':it.menor}"></div></td>
+        <td><div class="stack">${vsCell(it.preco,it.media)}${vsCell(it.preco,it.menor)}</div></td>
+        <td>${frCell}</td>
+        <td class="${mc}">${this.fmtPct(mord)}</td>
+        <td>${this.fmt(r.breakeven)}</td>
+        <td><div class="stack"><span class="${r.margem<0?'mneg':''}">${this.fmt(r.margem)}</span><span class="smper">${this.fmtPct(r.margemPct*100)}</span></div></td>
+        <td><span class="pill ${v.k}">${v.t}</span></td>
+        <td><div class="acts"><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Inativar</button></div></td>
+      </tr>`; }).join('');
+    tb.innerHTML=rows||'<tr><td class="l" colspan="10" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
+    tb.querySelectorAll('.cellInput').forEach(inp=>inp.addEventListener('change',e=>this.inlineEdit(e.target)));
+    tb.querySelectorAll('.ecom-edit').forEach(b=>b.addEventListener('click',()=>this.edit(b.dataset.id)));
+    tb.querySelectorAll('.ecom-del').forEach(b=>b.addEventListener('click',()=>this.del(b.dataset.id)));
+    this.updateCount(); },
 
-  edit(id) {
-    const p = this.itens.find(x => String(x.id) === String(id));
-    if (!p) return;
-    $('#ecom-f-produto').value = p.produto || '';
-    $('#ecom-f-marca').value   = p.marca || '';
-    $('#ecom-f-modelo').value  = p.modelo || '';
-    $('#ecom-f-mercado').value = (p.preco_ml ?? '');
-    $('#ecom-f-venda').value   = (p.preco_venda ?? '');
-    $('#ecom-f-custo').value   = (p.custo ?? '');
-    $('#ecom-f-tipo').value    = p.tipo_anuncio || 'classico';
-    $('#ecom-f-frete').value   = (p.frete ?? '');
-    this.editId = id;
-    $('#ecom-add').textContent = 'Salvar alteração';
-    $('#ecom-cancel').classList.remove('hidden-section');
-    $('#ecom-f-produto').focus();
-  },
+  async inlineEdit(el){ const id=el.dataset.id, f=el.dataset.f; const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
+    const prev=it[f]; let v=parseFloat(el.value); if(isNaN(v)) v=(f==='preco'?it.preco:null); it[f]=v;
+    try{ const r=await sb.from('ecom_produtos').update({[f]:v,atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; this.render(); }
+    catch(e){ it[f]=prev; console.error('inline:',e.message); alert('Não foi possível salvar: '+e.message); this.render(); } },
 
-  cancelEdit() {
-    this.editId = null;
-    this.clearForm();
-    $('#ecom-add').textContent = '+ Adicionar';
-    $('#ecom-cancel').classList.add('hidden-section');
-  },
+  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-peso').value='ate300'; this._g('ecom-f-tipo').value='classico'; this._g('ecom-formmsg').textContent=''; },
+  edit(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
+    this._g('ecom-f-produto').value=it.produto||''; this._g('ecom-f-marca').value=it.marca||''; this._g('ecom-f-modelo').value=it.modelo||'';
+    this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico';
+    this._g('ecom-f-preco').value=it.preco; this._g('ecom-f-custo').value=it.custo; this._g('ecom-f-media').value=it.media==null?'':it.media; this._g('ecom-f-menor').value=it.menor==null?'':it.menor;
+    this.editId=id; this._g('ecom-add').textContent='Salvar alteração'; show('#ecom-cancel'); this._g('ecom-f-produto').focus(); },
+  cancelEdit(){ this.editId=null; this.clearForm(); this._g('ecom-add').textContent='+ Adicionar'; hide('#ecom-cancel'); },
 
-  async save() {
-    const numF = id => { const v = parseFloat($('#' + id).value); return isNaN(v) ? null : v; };
-    const produto = $('#ecom-f-produto').value.trim();
-    const precoMercado = numF('ecom-f-mercado');
-    const precoVenda = numF('ecom-f-venda');
-    if (!produto || (precoMercado === null && precoVenda === null)) {
-      alert('Informe ao menos o Produto e um preço (de mercado ou de venda).');
-      return;
-    }
-    const dados = {
-      produto,
-      marca: $('#ecom-f-marca').value.trim() || null,
-      modelo: $('#ecom-f-modelo').value.trim() || null,
-      preco_ml: precoMercado,
-      preco_venda: precoVenda,
-      custo: numF('ecom-f-custo'),
-      tipo_anuncio: $('#ecom-f-tipo').value,
-      frete: numF('ecom-f-frete'),
-    };
-    if (this.editId) {
-      const idx = this.itens.findIndex(x => String(x.id) === String(this.editId));
-      const prev = idx >= 0 ? this.itens[idx] : null;
-      if (idx >= 0) this.itens[idx] = { ...this.itens[idx], ...dados };
-      try {
-        const { error } = await sb.from('ecommerce_piloto').update(dados).eq('id', this.editId);
-        if (error) throw error;
-      } catch (e) {
-        if (idx >= 0 && prev) this.itens[idx] = prev;   // desfaz a alteração só-em-memória
-        console.error('update ecommerce_piloto:', e.message);
-        alert('Não foi possível salvar a alteração: ' + e.message);
-        this.render();
-        return;
-      }
-      this.cancelEdit();
-    } else {
-      const reg = { id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())), ...dados };
-      this.itens.push(reg);
-      try {
-        const { error } = await sb.from('ecommerce_piloto').insert(reg);
-        if (error) throw error;
-      } catch (e) {
-        this.itens = this.itens.filter(x => x !== reg);   // desfaz a inserção só-em-memória
-        console.error('insert ecommerce_piloto:', e.message);
-        alert('Não foi possível salvar o cadastro: ' + e.message);
-        this.render();
-        return;   // mantém o formulário preenchido para você tentar de novo
-      }
-      this.clearForm();
-    }
-    this.render();
-  },
+  async save(){ const num=id=>{ const v=parseFloat(this._g(id).value); return isNaN(v)?null:v; };
+    const produto=this._g('ecom-f-produto').value.trim(); const preco=num('ecom-f-preco'), custo=num('ecom-f-custo');
+    if(!produto||preco==null||custo==null){ this._g('ecom-formmsg').textContent='Produto, Meu preço e Custo são obrigatórios.'; return; }
+    this._g('ecom-formmsg').textContent='';
+    const dados={ produto, marca:this._g('ecom-f-marca').value.trim()||null, modelo:this._g('ecom-f-modelo').value.trim()||null,
+      preco, custo, media:num('ecom-f-media'), menor:num('ecom-f-menor'), peso_faixa:this._g('ecom-f-peso').value, tipo_anuncio:this._g('ecom-f-tipo').value };
+    if(this.editId){ const idx=this.itens.findIndex(x=>String(x.id)===String(this.editId)); const prev=idx>=0?Object.assign({},this.itens[idx]):null;
+      if(idx>=0) this.itens[idx]=Object.assign({},this.itens[idx],dados);
+      try{ const r=await sb.from('ecom_produtos').update(Object.assign({},dados,{atualizado_em:new Date().toISOString()})).eq('id',this.editId); if(r.error) throw r.error; this.cancelEdit(); this.render(); }
+      catch(e){ if(idx>=0&&prev) this.itens[idx]=prev; this._g('ecom-formmsg').textContent='Erro ao salvar: '+e.message; this.render(); } }
+    else { try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{ativo:true})).select().single(); if(r.error) throw r.error; this.itens.push(r.data); this.clearForm(); this.render(); }
+      catch(e){ this._g('ecom-formmsg').textContent='Erro ao cadastrar: '+e.message; } } },
 
-  async del(id) {
-    if (this.editId && String(this.editId) === String(id)) this.cancelEdit();
-    const removido = this.itens.find(x => String(x.id) === String(id));
-    this.itens = this.itens.filter(x => String(x.id) !== String(id));
-    try {
-      const { error } = await sb.from('ecommerce_piloto').delete().eq('id', id);
-      if (error) throw error;
-    } catch (e) {
-      if (removido) this.itens.push(removido);   // desfaz a remoção só-em-memória
-      console.error('delete ecommerce_piloto:', e.message);
-      alert('Não foi possível excluir: ' + e.message);
-      this.render();
-      return;
-    }
-    this.render();
-  },
+  async del(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
+    if(!confirm(`Inativar "${it.produto} · ${it.marca||''}"? Fica salvo no banco, só sai da lista ativa.`)) return;
+    if(this.editId&&String(this.editId)===String(id)) this.cancelEdit();
+    const idx=this.itens.findIndex(x=>String(x.id)===String(id)); const rem=this.itens[idx];
+    this.itens=this.itens.filter(x=>String(x.id)!==String(id)); this.render();
+    try{ const r=await sb.from('ecom_produtos').update({ativo:false,atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; }
+    catch(e){ if(rem) this.itens.splice(idx,0,rem); console.error('inativar:',e.message); alert('Não foi possível inativar: '+e.message); this.render(); } },
 };
 
 function switchTab(tabName) {
