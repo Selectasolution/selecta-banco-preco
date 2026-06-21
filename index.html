@@ -733,6 +733,7 @@
         <span class="tg" data-mod="full">Full</span>
       </div>
       <span class="modwarn" id="ecom-modwarn"></span>
+      <button id="ecom-export" class="cancelbtn" style="margin-left:auto" title="Exporta o cenário atual (parâmetros, produtos, matriz e vereditos) em .md para análise de mercado/marca">⬇ Exportar cenário (.md)</button>
     </div>
 
     <!-- FRETE REAL -->
@@ -2266,6 +2267,7 @@ const ecom = {
     g('ecom-flt-clear').addEventListener('click',()=>{ this.fProd=''; this.fVer=''; g('ecom-flt-prod').value=''; g('ecom-flt-ver').value=''; this.render(); });
     g('ecom-add').addEventListener('click',()=>this.save());
     g('ecom-cancel').addEventListener('click',()=>this.cancelEdit());
+    { const eb=this._g('ecom-export'); if(eb) eb.addEventListener('click',()=>this.exportarCenario()); }
   },
   updateCtx(){ const rep=this.repFactor===1?'reputação cheia':'verde (−50%)'; const s=`${this.zonaLabel(this.selDest)} · ${rep}`;
     this._g('ecom-frete-ctx').textContent=s; this._g('ecom-frete-ctxtop').textContent=s; },
@@ -2355,6 +2357,67 @@ const ecom = {
     this.itens=this.itens.filter(x=>String(x.id)!==String(id)); this.render();
     try{ const r=await sb.from('ecom_produtos').delete().eq('id',id); if(r.error) throw r.error; }
     catch(e){ if(rem) this.itens.splice(idx,0,rem); console.error('excluir:',e.message); alert('Não foi possível excluir: '+e.message); this.render(); } },
+
+  exportarCenario(){
+    const pr=this.params();
+    const agora=new Date();
+    const ts=agora.toLocaleString('pt-BR');
+    const repTxt=this.repFactor===1?'cheia (atual)':'verde (\u221250%)';
+    const modTxt=this.modalidade==='full'?'Full':'Flex / Correios';
+    let cP=0,cA=0,cE=0;
+    const linhas=this.itens.map(it=>{
+      const r=this.calc(it);
+      const vsMedFrac=it.media?(it.preco-it.media)/it.media:null;
+      const vsMinFrac=it.menor?(it.preco-it.menor)/it.menor:null;
+      const v=this.veredito(r.regime,r.margem,r.margemPct,vsMinFrac);
+      if(v.k==='priorizar')cP++; else if(v.k==='analisar')cA++; else cE++;
+      const frTxt=r.regime==='fixa'?('gr\u00e1tis ML \u00b7 fixo '+this.fmt(r.custoFixo)):this.fmt(r.freteItem);
+      const vsMedTxt=vsMedFrac==null?'\u2014':((vsMedFrac>0?'+':'')+(vsMedFrac*100).toFixed(1)+'%');
+      const vsMinTxt=vsMinFrac==null?'\u2014':((vsMinFrac>0?'+':'')+(vsMinFrac*100).toFixed(1)+'%');
+      const zonaTxt=r.zona!=null?(' (zona-vale: a R$78,99 sobra +'+this.fmt(r.zona)+')'):'';
+      const cel=s=>String(s==null?'':s).replace(/\|/g,'/').replace(/\n/g,' ');
+      return '| '+[cel(it.produto),cel(it.marca||'\u2014'),cel(it.modelo||'\u2014'),this.pesoLabel(it.peso_faixa),
+        (it.tipo_anuncio==='premium'?'Premium':'Cl\u00e1ssico'),this.fmt(it.preco),this.fmt(it.custo),
+        (it.media==null?'\u2014':this.fmt(it.media)),(it.menor==null?'\u2014':this.fmt(it.menor)),
+        vsMedTxt,vsMinTxt,frTxt,this.fmtPct(r.mordida*100),this.fmt(r.breakeven),
+        this.fmt(r.margem),this.fmtPct(r.margemPct*100),v.t+zonaTxt].join(' | ')+' |';
+    }).join('\n');
+    const matriz=this.ZONAS.map(z=>{
+      const cells=this.PESOS.map(p=>{ const val=this.mtx[z[0]+'|'+p[0]]; return val==null?'\u2014':this.fmt(val); });
+      const mark=z[0]===this.selDest?' \u25c4 selecionado':'';
+      return '| '+this.zonaLabel(z[0])+mark+' | '+cells.join(' | ')+' |';
+    }).join('\n');
+    const md=
+'# Cen\u00e1rio E-commerce ML \u2014 Selecta\n'+
+'Exportado em: '+ts+'\n\n'+
+'## Cen\u00e1rio aplicado (define os vereditos abaixo)\n'+
+'- Destino / rota precificada: **'+this.zonaLabel(this.selDest)+'**\n'+
+'- Reputa\u00e7\u00e3o: **'+repTxt+'**\n'+
+'- Modalidade de envio: **'+modTxt+'**\n'+
+'- Comiss\u00e3o Cl\u00e1ssico: '+pr.comC+'% \u00b7 Comiss\u00e3o Premium: '+pr.comP+'%\n'+
+'- Imposto (regime): '+pr.imp+'%\n'+
+'- Outros custos: '+pr.outros+'%\n'+
+'- Colch\u00e3o (devolu\u00e7\u00e3o/embalagem): '+pr.colchao+'%\n'+
+'- Custo fixo ML <R$79: R$12,50\u201329 = '+this.fmt(pr.f1)+' \u00b7 R$29\u201350 = '+this.fmt(pr.f2)+' \u00b7 R$50\u201379 = '+this.fmt(pr.f3)+' \u00b7 <R$12,50 = 50% do pre\u00e7o\n\n'+
+'## Resumo\n'+
+'- Itens no banco: '+this.itens.length+'\n'+
+'- Priorizar: '+cP+' \u00b7 Analisar: '+cA+' \u00b7 Excluir: '+cE+'\n\n'+
+'## Produtos\n'+
+'| Produto | Marca | Modelo | Peso | An\u00fancio | Meu pre\u00e7o | Custo NF | M\u00e9d merc | M\u00edn merc | VS m\u00e9d | VS m\u00edn | Frete/fixo | Mordida | Break-even | Margem R$ | Margem % | Veredito |\n'+
+'|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n'+
+(linhas||'| (sem itens cadastrados) |')+'\n\n'+
+'## Matriz de frete real (R$) \u2014 cada item usa a c\u00e9lula [destino \u00d7 peso dele]\n'+
+'| Zona | \u2264300g | 301\u2013500g | 501g\u20131kg | 1\u20132kg |\n'+
+'|---|---|---|---|---|\n'+
+matriz+'\n\n'+
+'> Os vereditos s\u00e3o do cen\u00e1rio aplicado (destino + reputa\u00e7\u00e3o + modalidade). Trocar destino ou reputa\u00e7\u00e3o muda os vereditos. "VS m\u00e9d/m\u00edn" = quanto o meu pre\u00e7o est\u00e1 acima(+) ou abaixo(\u2212) do concorrente. Margem e break-even s\u00e3o l\u00edquidos do colch\u00e3o.\n';
+    const blob=new Blob([md],{type:'text/markdown;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='cenario_ecommerce_'+agora.toISOString().slice(0,10)+'.md';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
 };
 
 function switchTab(tabName) {
