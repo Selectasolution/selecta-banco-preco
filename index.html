@@ -766,7 +766,7 @@
         <div class="efield"><label>Comissão Premium</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
         <div class="efield"><label>Imposto (regime)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" step="0.5" value="4"><span class="unit">%</span></div><p class="note">Simples Anexo I 1ª faixa = 4%.</p></div>
         <div class="efield"><label>Outros custos (antecip./parcel.)</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Colchão (devolução/embalagem)</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="4"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Colchão (devolução/embalagem)</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="2"><span class="unit">%</span></div></div>
       </div>
       <div style="margin-top:14px">
         <label style="display:block;font-size:11px;color:var(--emuted);margin-bottom:2px">Custo fixo ML <b>abaixo de R$79</b> <span style="color:var(--emuted2);font-weight:400">— tabela oficial Flex/Correios (mai/2026). Edite só se o ML mudar.</span></label>
@@ -2204,7 +2204,7 @@ const ecom = {
   ZONAS: [['local_ne','Local / NE'],['centro','Centro'],['sudeste','Sudeste'],['sul','Sul']],
   PESOS: [['ate300','≤300g'],['f301_500','301–500g'],['f501_1000','501g–1kg'],['f1001_2000','1–2kg']],
   itens: [], mtx: {}, loaded:false, wired:false,
-  selDest:'sul', repFactor:1, modalidade:'flex', editId:null, fProd:'', fVer:'',
+  selDest:'local_ne', repFactor:1, modalidade:'flex', editId:null, fProd:'', fVer:'',
 
   _g(id){ return document.getElementById(id); },
   _n(id){ const v=parseFloat(this._g(id).value); return isNaN(v)?0:v; },
