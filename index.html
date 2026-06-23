@@ -780,6 +780,23 @@
     #tab-ecommerce .rl-fc{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:13px}
     #tab-ecommerce .rl-fc .l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted)}
     #tab-ecommerce .rl-fc .b{font-family:var(--emono);font-size:19px;font-weight:600;margin-top:6px}
+    #tab-ecommerce .al-quad{display:grid;grid-template-columns:78px 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:10px}
+    #tab-ecommerce .al-quad .qaxis{font-size:10px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;text-align:center}
+    #tab-ecommerce .al-quad .qaxis.v{writing-mode:vertical-rl;transform:rotate(180deg)}
+    #tab-ecommerce .al-quad .qcell{border:1px solid var(--eborder);border-radius:11px;padding:12px;min-height:110px;background:var(--epanel2)}
+    #tab-ecommerce .al-quad .qcell h4{margin:0 0 3px;font-size:13px}
+    #tab-ecommerce .al-quad .qcell .d{font-size:10.5px;color:var(--emuted2);margin-bottom:8px}
+    #tab-ecommerce .al-quad .qcell.scale{background:#06231f;border-color:#15514a}
+    #tab-ecommerce .al-quad .qcell.scale h4{color:var(--eteal)}
+    #tab-ecommerce .al-quad .qcell.fix{border-color:#473714}
+    #tab-ecommerce .al-quad .qcell.fix h4{color:var(--eamber)}
+    #tab-ecommerce .chip{display:inline-block;background:var(--epanel3);border:1px solid var(--eborder);border-radius:7px;padding:3px 8px;font-size:11px;margin:0 5px 5px 0}
+    #tab-ecommerce .chip.t{border-color:#15514a;color:var(--eteal)}
+    #tab-ecommerce .al-regs{display:flex;flex-direction:column;gap:10px}
+    #tab-ecommerce .al-reg .rn{font-size:12px;font-weight:600}
+    #tab-ecommerce .al-reg .rt{font-size:11.5px;color:var(--emuted);margin-top:3px}
+    #tab-ecommerce .al-reg .bar{height:5px;background:var(--epanel3);border-radius:3px;margin-top:6px;overflow:hidden}
+    #tab-ecommerce .al-reg .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--eemerald),var(--eteal))}
     </style>
 
     <div class="ecom-subnav">
@@ -1023,7 +1040,42 @@
         <div id="rl-mensal"></div>
       </div>
     </div>
-    <div id="ecom-sub-alvo" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">🎯 Alvo — em construção.</div></div></div>
+    <div id="ecom-sub-alvo" class="ecom-subpanel" style="display:none">
+      <p class="esub">Estudo de sortimento: o ML valida demanda, e o que se prova vira candidato a importação. "Mais vendido" e "mais lucrativo" ficam separados de propósito.</p>
+      <div class="ecard">
+        <h3>Quadrante de decisão <span class="faint" style="font-weight:400;font-size:12px">· margem × saída</span></h3>
+        <div id="al-quad"><div class="ph">carregando…</div></div>
+      </div>
+      <div class="vgrid" style="margin-top:18px">
+        <div class="ecard">
+          <h3>Candidatos a importação</h3>
+          <div id="al-import"></div>
+          <p class="hint" style="font-size:11px;color:var(--emuted2);margin-top:10px">Sobem aqui os produtos validados (saída + margem acima da média). A margem importada estimada depende do custo da DUIMP — o botão leva ao estudo no Import OS.</p>
+        </div>
+        <div class="ecard">
+          <h3>Onde vende mais <span class="faint" style="font-weight:400;font-size:12px">· por região</span></h3>
+          <div id="al-reg"></div>
+        </div>
+      </div>
+      <div class="ecard" style="margin-top:18px">
+        <h3>Controle de venda por anúncio</h3>
+        <div class="vgrid">
+          <div>
+            <div class="vrow">
+              <div class="efield"><label>Código do produto *</label><input class="vinput mono" id="al-cod" placeholder="SSD-0001"></div>
+              <div class="efield"><label>Preço anunciado</label><input class="vinput mono" id="al-preco" type="number" step="0.01" placeholder="0,00"></div>
+            </div>
+            <div class="efield"><label>Título do anúncio *</label><input class="vinput" id="al-tit" placeholder="como está no ML"></div>
+            <div class="efield"><label>Data de publicação *</label><input class="vinput mono" id="al-pub" type="date"></div>
+            <button class="vbtn" id="al-cadastrar">Cadastrar anúncio</button>
+            <div class="vmsg" id="al-amsg"></div>
+          </div>
+          <div>
+            <div id="al-anuncios"><div class="ph">nenhum anúncio cadastrado</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
   </section>
 
@@ -3450,6 +3502,74 @@ const ecomRelatorios={
       +'</div>';
   }
 };
+// ===== E-COMMERCE · Alvo (sortimento + ponte importação + anúncios) =====
+const ecomAlvo={
+  vendas:[], anuncios:[],
+  _g:id=>document.getElementById(id),
+  fmt:v=>(v==null||isNaN(v))?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}),
+  async load(){
+    try{ const rv=await sb.from('ecom_vendas').select('produto,produto_codigo,uf,receita_bruta,resultado_liquido,status,data_solicitacao');
+      const ra=await sb.from('ecom_anuncios').select('*').order('data_publicacao',{ascending:false});
+      if(rv.error) throw rv.error; if(ra.error) throw ra.error;
+      this.vendas=(rv.data||[]).filter(v=>v.status!=='cancelado'); this.anuncios=ra.data||[];
+      this.renderQuad(); this.renderImport(); this.renderReg(); this.renderAnuncios();
+    }catch(e){ this._g('al-quad').innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
+  },
+  porProduto(){ const m={};
+    this.vendas.forEach(v=>{ const k=v.produto_codigo||v.produto; if(!k) return; const o=m[k]=m[k]||{nome:v.produto,n:0,rec:0,luc:0,recComp:0};
+      o.n++; o.rec+=+v.receita_bruta||0; if(v.resultado_liquido!=null){ o.luc+=+v.resultado_liquido; o.recComp+=+v.receita_bruta||0; } });
+    return Object.values(m).map(o=>Object.assign(o,{margem:o.recComp?o.luc/o.recComp*100:null}));
+  },
+  renderQuad(){ const box=this._g('al-quad'); const prods=this.porProduto();
+    const comM=prods.filter(p=>p.margem!=null), semM=prods.filter(p=>p.margem==null);
+    if(!comM.length){ box.innerHTML='<div class="ph">Ainda não há produtos com margem fechada. Feche vendas no Financeiro para o quadrante ganhar vida.'+(semM.length?' ('+semM.length+' aguardando)':'')+'</div>'; return; }
+    const mMar=comM.reduce((s,p)=>s+p.margem,0)/comM.length, mSai=comM.reduce((s,p)=>s+p.n,0)/comM.length;
+    const chip=(p,t)=>'<span class="chip'+(t?' t':'')+'">'+p.nome+' <span style="opacity:.6">('+p.n+'× · '+this.fmt(p.margem)+'%)</span></span>';
+    const cell=(f,t)=>{ const l=comM.filter(f); return l.length?l.map(p=>chip(p,t)).join(''):'<span class="faint" style="font-size:11px">—</span>'; };
+    box.innerHTML='<div class="al-quad">'
+      +'<div class="qaxis"></div><div class="qaxis">Saída baixa</div><div class="qaxis">Saída alta</div>'
+      +'<div class="qaxis v">Margem alta</div>'
+        +'<div class="qcell"><h4>Publicar / testar</h4><div class="d">potencial, falta exposição</div>'+cell(p=>p.margem>=mMar&&p.n<mSai)+'</div>'
+        +'<div class="qcell scale"><h4>Escalar → importar</h4><div class="d">validado: empurrar e estudar importação</div>'+cell(p=>p.margem>=mMar&&p.n>=mSai,true)+'</div>'
+      +'<div class="qaxis v">Margem baixa</div>'
+        +'<div class="qcell"><h4>Abandonar</h4><div class="d">não sai e não lucra</div>'+cell(p=>p.margem<mMar&&p.n<mSai)+'</div>'
+        +'<div class="qcell fix"><h4>Rever preço</h4><div class="d">vende, mas lucra pouco</div>'+cell(p=>p.margem<mMar&&p.n>=mSai)+'</div>'
+      +'</div>'+(semM.length?'<div style="font-size:11px;color:var(--eamber);margin-top:10px">'+semM.length+' produto(s) sem margem fechada não entram no quadrante.</div>':'');
+  },
+  renderImport(){ const box=this._g('al-import'); const prods=this.porProduto().filter(p=>p.margem!=null);
+    if(!prods.length){ box.innerHTML='<div class="ph">sem dados de margem ainda</div>'; return; }
+    const mMar=prods.reduce((s,p)=>s+p.margem,0)/prods.length, mSai=prods.reduce((s,p)=>s+p.n,0)/prods.length;
+    const cand=prods.filter(p=>p.margem>=mMar&&p.n>=mSai).sort((a,b)=>b.n-a.n);
+    if(!cand.length){ box.innerHTML='<div class="ph">nenhum produto validado para importação ainda</div>'; return; }
+    box.innerHTML=cand.map(p=>'<div class="vli"><div class="vmain"><div class="vp">'+p.nome+'</div><div class="vm">'+p.n+' vendas · margem dropship '+this.fmt(p.margem)+'%</div></div><button class="vbtn sm" data-alimport="1">estudar importação →</button></div>').join('');
+  },
+  regiaoDe(uf){ const NE=['MA','PI','CE','RN','PB','PE','AL','SE','BA'],N=['AC','AP','AM','PA','RO','RR','TO'],CO=['DF','GO','MT','MS'],SE=['SP','RJ','MG','ES'],S=['PR','SC','RS']; if(NE.indexOf(uf)>=0)return'Nordeste'; if(N.indexOf(uf)>=0)return'Norte'; if(CO.indexOf(uf)>=0)return'Centro-Oeste'; if(SE.indexOf(uf)>=0)return'Sudeste'; if(S.indexOf(uf)>=0)return'Sul'; return uf; },
+  renderReg(){ const box=this._g('al-reg'); const reg={}; let tot=0;
+    this.vendas.forEach(v=>{ if(!v.uf) return; tot++; const r=this.regiaoDe(v.uf); reg[r]=reg[r]||{n:0,prod:{}}; reg[r].n++; reg[r].prod[v.produto]=(reg[r].prod[v.produto]||0)+1; });
+    if(!tot){ box.innerHTML='<div class="ph">sem UF registrada nas vendas ainda — preencha a UF ao lançar.</div>'; return; }
+    const keys=Object.keys(reg).sort((a,b)=>reg[b].n-reg[a].n);
+    box.innerHTML='<div class="al-regs">'+keys.map(r=>{ const e=Object.entries(reg[r].prod).sort((a,b)=>b[1]-a[1])[0]; const pct=Math.round(reg[r].n/tot*100);
+      return '<div class="al-reg"><div class="rn">'+r+'</div><div class="rt">'+(e?e[0]:'—')+' · '+pct+'%</div><div class="bar"><i style="width:'+pct+'%"></i></div></div>';
+    }).join('')+'</div>';
+  },
+  renderAnuncios(){ const box=this._g('al-anuncios');
+    if(!this.anuncios.length){ box.innerHTML='<div class="ph">nenhum anúncio cadastrado</div>'; return; }
+    const hoje=new Date();
+    box.innerHTML=this.anuncios.map(an=>{ const dias=Math.floor((hoje-new Date(an.data_publicacao))/864e5);
+      const vendas=this.vendas.filter(v=>v.produto_codigo===an.produto_codigo && v.data_solicitacao && new Date(v.data_solicitacao)>=new Date(an.data_publicacao)).length;
+      let sug,cls; if(dias<7){ sug='recém-publicado, aguarde'; cls='n'; } else if(vendas===0){ sug='🔴 '+dias+' dias sem vender — revise título, foto ou preço'; cls='c'; } else if(vendas/Math.max(dias,1)<0.1){ sug='🟡 baixa conversão ('+vendas+' em '+dias+'d)'; cls='a'; } else { sug='🟢 performando ('+vendas+' vendas)'; cls='o'; }
+      return '<div class="vli" style="align-items:flex-start"><div class="vmain"><div class="vp">'+an.titulo+'</div><div class="vm">'+an.produto_codigo+' · '+dias+' dias no ar · '+vendas+' venda(s)</div><div style="margin-top:5px"><span class="rpfar '+cls+'">'+sug+'</span></div></div><button class="vbtn sm" data-aldel="'+an.id+'">remover</button></div>';
+    }).join('');
+  },
+  async cadastrar(){ const cod=this._g('al-cod').value.trim().toUpperCase(), tit=this._g('al-tit').value.trim(), preco=parseFloat(this._g('al-preco').value), pub=this._g('al-pub').value; const msg=this._g('al-amsg'); msg.className='vmsg';
+    if(!cod||!tit||!pub){ msg.className='vmsg err'; msg.textContent='Código, título e data de publicação são obrigatórios.'; return; }
+    try{ const chk=await sb.from('ecom_produtos').select('codigo').eq('codigo',cod).maybeSingle(); if(chk.error) throw chk.error; if(!chk.data){ msg.className='vmsg err'; msg.textContent='Código não existe no catálogo.'; return; }
+      const r=await sb.from('ecom_anuncios').insert({produto_codigo:cod,titulo:tit,preco:isNaN(preco)?null:preco,data_publicacao:pub,ativo:true}).select().single(); if(r.error) throw r.error;
+      ['al-cod','al-tit','al-preco','al-pub'].forEach(i=>this._g(i).value=''); msg.className='vmsg ok'; msg.textContent='✓ Anúncio cadastrado'; setTimeout(()=>msg.textContent='',2500); this.load();
+    }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
+  },
+  async remover(id){ if(!confirm('Remover este anúncio? (não afeta as vendas)')) return; try{ const r=await sb.from('ecom_anuncios').delete().eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } }
+};
 $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
   const sub=b.dataset.sub;
@@ -3459,7 +3579,12 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   if(sub==='reputacao'){ ecomReputacao.load(); }
   if(sub==='historico'){ ecomHistorico.load(); }
   if(sub==='relatorios'){ ecomRelatorios.load(); }
+  if(sub==='alvo'){ ecomAlvo.load(); }
 }));
+(function(){ const c=ecomAlvo._g('al-cadastrar'); if(c) c.addEventListener('click',()=>ecomAlvo.cadastrar());
+  const imp=ecomAlvo._g('al-import'); if(imp) imp.addEventListener('click',e=>{ if(e.target.closest('[data-alimport]')) alert('Leva à Mesa de Análise / Import OS para estudar fornecedor e tributação da importação direta (DUIMP).'); });
+  const an=ecomAlvo._g('al-anuncios'); if(an) an.addEventListener('click',e=>{ const d=e.target.closest('[data-aldel]'); if(d) ecomAlvo.remover(d.dataset.aldel); });
+})();
 (function(){ const c=ecomRelatorios._g('rl-consultar'); if(c) c.addEventListener('click',()=>ecomRelatorios.consultar()); })();
 (function(){
   const list=ecomHistorico._g('hs-list');
