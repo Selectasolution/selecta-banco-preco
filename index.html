@@ -803,6 +803,7 @@
         <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
         <div class="efield"><label>Média mercado</label><input class="ainput mono" id="ecom-f-media" type="number" style="width:90px"></div>
         <div class="efield"><label>Menor preço</label><input class="ainput mono" id="ecom-f-menor" type="number" style="width:90px"></div>
+        <div class="efield"><label>Break-even <span style="color:var(--emuted2);font-weight:400">(ref.)</span></label><input class="ainput mono" id="ecom-f-breakeven" type="text" style="width:90px" readonly tabindex="-1" placeholder="—"></div>
         <button class="addbtn" id="ecom-add">+ Adicionar</button>
         <button class="cancelbtn hidden-section" id="ecom-cancel">Cancelar</button>
       </div>
@@ -815,7 +816,7 @@
           <th class="l">Produto</th><th>Meu preço</th>
           <th>Mercado<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">méd / mín</span></th>
           <th>VS<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">méd / mín</span></th>
-          <th>Frete / fixo</th><th>Mordida</th><th>Break-even</th><th>Margem</th><th>Veredito</th>
+          <th>Frete / fixo</th><th>Mordida</th><th>Custo (NF)</th><th>Margem</th><th>Veredito</th>
           <th style="text-align:right">Ações</th>
         </tr></thead>
         <tbody id="ecom-tbody"></tbody>
@@ -2267,10 +2268,11 @@ const ecom = {
     g('ecom-flt-clear').addEventListener('click',()=>{ this.fProd=''; this.fVer=''; g('ecom-flt-prod').value=''; g('ecom-flt-ver').value=''; this.render(); });
     g('ecom-add').addEventListener('click',()=>this.save());
     g('ecom-cancel').addEventListener('click',()=>this.cancelEdit());
+    ['ecom-f-preco','ecom-f-custo','ecom-f-peso','ecom-f-tipo'].forEach(id=>{ const el=g(id); if(el) el.addEventListener('input',()=>this.updateFormBreakeven()); });
     { const eb=this._g('ecom-export'); if(eb) eb.addEventListener('click',()=>this.exportarCenario()); }
   },
   updateCtx(){ const rep=this.repFactor===1?'reputação cheia':'verde (−50%)'; const s=`${this.zonaLabel(this.selDest)} · ${rep}`;
-    this._g('ecom-frete-ctx').textContent=s; this._g('ecom-frete-ctxtop').textContent=s; },
+    this._g('ecom-frete-ctx').textContent=s; this._g('ecom-frete-ctxtop').textContent=s; this.updateFormBreakeven(); },
 
   buildMtx(){ const t=this._g('ecom-mtx');
     let h='<tr><th></th>'+this.PESOS.map(p=>`<th>${p[1]}</th>`).join('')+'</tr>';
@@ -2313,7 +2315,7 @@ const ecom = {
         <td><div class="stack">${vsCell(it.preco,it.media)}${vsCell(it.preco,it.menor)}</div></td>
         <td>${frCell}</td>
         <td class="${mc}">${this.fmtPct(mord)}</td>
-        <td>${this.fmt(r.breakeven)}</td>
+        <td>${this.fmt(it.custo)}</td>
         <td><div class="stack"><span class="${r.margem<0?'mneg':''}">${this.fmt(r.margem)}</span><span class="smper">${this.fmtPct(r.margemPct*100)}</span></div></td>
         <td><span class="pill ${v.k}">${v.t}</span></td>
         <td><div class="acts"><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
@@ -2329,11 +2331,25 @@ const ecom = {
     try{ const r=await sb.from('ecom_produtos').update({[f]:v,atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; this.render(); }
     catch(e){ it[f]=prev; console.error('inline:',e.message); alert('Não foi possível salvar: '+e.message); this.render(); } },
 
-  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-peso').value='ate300'; this._g('ecom-f-tipo').value='classico'; this._g('ecom-formmsg').textContent=''; },
+  updateFormBreakeven(){
+    const P=parseFloat(this._g('ecom-f-preco').value);
+    const custo=parseFloat(this._g('ecom-f-custo').value);
+    const out=this._g('ecom-f-breakeven');
+    if(!out) return;
+    if(isNaN(P)||isNaN(custo)){ out.value=''; return; }
+    const pr=this.params();
+    const comPct=(this._g('ecom-f-tipo').value==='premium'?pr.comP:pr.comC)/100;
+    const t=comPct+pr.imp/100+pr.outros/100+pr.colchao/100;
+    const peso=this._g('ecom-f-peso').value;
+    const fr=(this.mtx[this.selDest+'|'+peso]==null?0:this.mtx[this.selDest+'|'+peso])*this.repFactor;
+    out.value=this.fmt(this.breakeven(custo,t,fr,pr));
+  },
+  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-peso').value='ate300'; this._g('ecom-f-tipo').value='classico'; this._g('ecom-formmsg').textContent=''; this.updateFormBreakeven(); },
   edit(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
     this._g('ecom-f-produto').value=it.produto||''; this._g('ecom-f-marca').value=it.marca||''; this._g('ecom-f-modelo').value=it.modelo||'';
     this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico';
     this._g('ecom-f-preco').value=it.preco; this._g('ecom-f-custo').value=it.custo; this._g('ecom-f-media').value=it.media==null?'':it.media; this._g('ecom-f-menor').value=it.menor==null?'':it.menor;
+    this.updateFormBreakeven();
     this.editId=id; this._g('ecom-add').textContent='Salvar alteração'; show('#ecom-cancel'); this._g('ecom-f-produto').focus(); },
   cancelEdit(){ this.editId=null; this.clearForm(); this._g('ecom-add').textContent='+ Adicionar'; hide('#ecom-cancel'); },
 
