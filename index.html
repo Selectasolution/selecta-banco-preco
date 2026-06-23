@@ -755,6 +755,23 @@
     #tab-ecommerce .vpill.ok{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
     #tab-ecommerce .vmsg{font-size:12px;margin-top:8px;min-height:16px}
     #tab-ecommerce .vmsg.ok{color:var(--eemerald)} #tab-ecommerce .vmsg.err{color:var(--ered)}
+    #tab-ecommerce .rp-idxrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+    @media(max-width:900px){#tab-ecommerce .rp-idxrow{grid-template-columns:repeat(2,1fr)}}
+    #tab-ecommerce .rp-idx{background:var(--epanel);border:1px solid var(--eborder);border-radius:10px;padding:13px}
+    #tab-ecommerce .rp-idx .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted)}
+    #tab-ecommerce .rp-idx .v{font-family:var(--emono);font-size:21px;font-weight:600;margin-top:5px}
+    #tab-ecommerce .rp-idx.bad .v{color:var(--eamber)} #tab-ecommerce .rp-idx.good .v{color:var(--eemerald)}
+    #tab-ecommerce table.rptab{width:100%;border-collapse:collapse;font-size:13px}
+    #tab-ecommerce table.rptab th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted);font-weight:600;padding:10px 12px;background:var(--epanel2);border-bottom:1px solid var(--eborder)}
+    #tab-ecommerce table.rptab td{padding:11px 12px;border-bottom:1px solid var(--eborder);vertical-align:top}
+    #tab-ecommerce table.rptab tr:last-child td{border-bottom:0}
+    #tab-ecommerce table.rptab tr.crit td:first-child{box-shadow:inset 3px 0 0 var(--ered)}
+    #tab-ecommerce table.rptab tr.warn td:first-child{box-shadow:inset 3px 0 0 var(--eamber)}
+    #tab-ecommerce .rpfar{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:600}
+    #tab-ecommerce .rpfar.c{background:#240f12;color:#fb7185;border:1px solid #4a2026}
+    #tab-ecommerce .rpfar.a{background:#241c08;color:#facc6b;border:1px solid #473714}
+    #tab-ecommerce .rpfar.o{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
+    #tab-ecommerce .rpfar.n{background:var(--epanel2);color:var(--emuted2);border:1px solid var(--eborder)}
     </style>
 
     <div class="ecom-subnav">
@@ -936,7 +953,11 @@
         </div>
       </div>
     </div>
-    <div id="ecom-sub-reputacao" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Reputação — em construção.</div></div></div>
+    <div id="ecom-sub-reputacao" class="ecom-subpanel" style="display:none">
+      <p class="esub">Os três relógios de cada venda — postagem, entrega e janela de reclamação — em dias úteis, ordenado por gravidade. Entregas limpas saem; só permanece o que tem risco aberto.</p>
+      <div id="rp-idx" class="rp-idxrow"></div>
+      <div id="rp-table"><div class="ph">carregando…</div></div>
+    </div>
     <div id="ecom-sub-historico" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Histórico — em construção.</div></div></div>
     <div id="ecom-sub-relatorios" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Relatórios — em construção.</div></div></div>
     <div id="ecom-sub-alvo" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">🎯 Alvo — em construção.</div></div></div>
@@ -3214,12 +3235,48 @@ const ecomFinanceiro={
     }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
   }
 };
+// ===== E-COMMERCE · Reputação (lê a view do vigia) =====
+const ecomReputacao={
+  _g:id=>document.getElementById(id),
+  far(txt){ if(!txt) return '<span class="rpfar n">—</span>'; const c=txt.indexOf('🔴')===0?'c':txt.indexOf('🟡')===0?'a':txt.indexOf('🟢')===0?'o':'n'; return '<span class="rpfar '+c+'">'+txt+'</span>'; },
+  rowClass(s){ return (s&&s.indexOf('🔴')===0)?'crit':(s&&s.indexOf('🟡')===0)?'warn':''; },
+  async load(){
+    const tbox=this._g('rp-table'), ibox=this._g('rp-idx');
+    try{ const r=await sb.from('ecom_vw_vigia_reputacao').select('id,ml_pedido_id,produto,status,data_embarque,atraso_postagem_du,alerta_postagem,prazo_entrega,data_entrega,alerta_entrega,tem_reclamacao,alerta_pos_entrega,saude_geral');
+      if(r.error) throw r.error;
+      const all=r.data||[];
+      this.indices(all,ibox);
+      const vis=all.filter(v=>(v.status==='a_enviar'||v.status==='enviado')||(v.saude_geral&&v.saude_geral.indexOf('🟢')!==0));
+      this.renderTable(vis,tbox);
+    }catch(e){ ibox.innerHTML=''; tbox.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar a vigia: '+e.message+'</div>'; }
+  },
+  indices(all,box){
+    const postadas=all.filter(v=>v.data_embarque!=null).length;
+    const atrasadas=all.filter(v=>v.atraso_postagem_du>0).length;
+    const entregues=all.filter(v=>v.data_entrega!=null).length;
+    const entrPrazo=all.filter(v=>v.alerta_entrega&&v.alerta_entrega.indexOf('no prazo')>=0).length;
+    const recl=all.filter(v=>v.tem_reclamacao).length;
+    const canc=all.filter(v=>v.alerta_pos_entrega&&v.alerta_pos_entrega.indexOf('culpa sua')>=0).length;
+    const pct=(n,d)=>d>0?(n/d*100).toFixed(1)+'%':'—';
+    box.innerHTML=
+       '<div class="rp-idx '+(atrasadas>0?'bad':'good')+'"><div class="l">Atraso de postagem</div><div class="v">'+pct(atrasadas,postadas)+'</div></div>'
+      +'<div class="rp-idx '+(entregues>0&&entrPrazo===entregues?'good':'')+'"><div class="l">Entregas no prazo</div><div class="v">'+pct(entrPrazo,entregues)+'</div></div>'
+      +'<div class="rp-idx"><div class="l">Reclamações abertas</div><div class="v">'+recl+'</div></div>'
+      +'<div class="rp-idx"><div class="l">Cancelamentos (culpa sua)</div><div class="v">'+canc+'</div></div>';
+  },
+  renderTable(vis,box){
+    if(!vis.length){ box.innerHTML='<div class="ph">tudo limpo — nenhuma venda em risco ou em curso</div>'; return; }
+    const rows=vis.map(v=>'<tr class="'+this.rowClass(v.saude_geral)+'"><td><div style="font-weight:500">'+v.produto+'</div><div style="font-family:var(--emono);font-size:11px;color:var(--emuted)">#'+v.ml_pedido_id+' · '+v.status+'</div></td><td>'+this.far(v.saude_geral)+'</td><td>'+this.far(v.alerta_postagem)+'</td><td>'+this.far(v.alerta_entrega)+'</td><td>'+this.far(v.alerta_pos_entrega)+'</td></tr>').join('');
+    box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab"><thead><tr><th>Pedido / produto</th><th>Saúde</th><th>Postagem</th><th>Entrega</th><th>Pós-entrega</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+};
 $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
   const sub=b.dataset.sub;
   $$('.ecom-subpanel').forEach(p=>{ p.style.display=(p.id==='ecom-sub-'+sub)?'':'none'; });
   if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value) dt.value=ecomVendas.nowLocal(); ecomVendas.loaded=true; ecomVendas.load(); }
   if(sub==='financeiro'){ ecomFinanceiro.load(); }
+  if(sub==='reputacao'){ ecomReputacao.load(); }
 }));
 (function(){
   const list=ecomFinanceiro._g('fn-list');
