@@ -773,6 +773,13 @@
     #tab-ecommerce .rpfar.o{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
     #tab-ecommerce .rpfar.n{background:var(--epanel2);color:var(--emuted2);border:1px solid var(--eborder)}
     #tab-ecommerce .mono{font-family:var(--emono);font-variant-numeric:tabular-nums}
+    #tab-ecommerce .rl-forecast{background:linear-gradient(135deg,#0f1d2e,#101a2c);border:1px solid var(--eborder);border-radius:14px;padding:18px;margin-bottom:20px}
+    #tab-ecommerce .rl-fc-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+    #tab-ecommerce .rl-fc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    @media(max-width:760px){#tab-ecommerce .rl-fc-grid{grid-template-columns:1fr}}
+    #tab-ecommerce .rl-fc{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:13px}
+    #tab-ecommerce .rl-fc .l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted)}
+    #tab-ecommerce .rl-fc .b{font-family:var(--emono);font-size:19px;font-weight:600;margin-top:6px}
     </style>
 
     <div class="ecom-subnav">
@@ -992,7 +999,30 @@
         </div>
       </div>
     </div>
-    <div id="ecom-sub-relatorios" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Relatórios — em construção.</div></div></div>
+    <div id="ecom-sub-relatorios" class="ecom-subpanel" style="display:none">
+      <p class="esub">Painel de capital, dinâmico — recalcula sempre do banco. Competência pela <b>data do pedido</b>: a venda conta no mês em que foi vendida, mesmo que o Mercado Pago libere o dinheiro depois.</p>
+      <div id="rl-forecast" class="rl-forecast"></div>
+      <h3 style="font-size:12.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Visão geral</h3>
+      <div id="rl-kpis"><div class="ph">carregando…</div></div>
+      <div class="ecard" style="margin-top:18px">
+        <h3>Consulta gerencial</h3>
+        <div class="vrow3">
+          <div class="efield"><label>De (data pedido)</label><input class="vinput mono" id="rl-de" type="date"></div>
+          <div class="efield"><label>Até</label><input class="vinput mono" id="rl-ate" type="date"></div>
+          <div class="efield"><label>Status</label><select class="vinput mono" id="rl-status"><option value="">todos</option><option value="a_enviar">a enviar</option><option value="enviado">enviado</option><option value="entregue">entregue</option><option value="concluido">concluído</option></select></div>
+        </div>
+        <div class="vrow">
+          <div class="efield"><label>Produto ou código</label><input class="vinput mono" id="rl-prod" placeholder="ex.: Havit ou SSD-0001"></div>
+          <div class="efield"><label>UF</label><input class="vinput mono" id="rl-uf" maxlength="2" placeholder="SP"></div>
+        </div>
+        <button class="vbtn" id="rl-consultar">Consultar</button>
+        <div id="rl-query-result" style="margin-top:14px"></div>
+      </div>
+      <div class="ecard" style="margin-top:18px">
+        <h3>Por mês (competência)</h3>
+        <div id="rl-mensal"></div>
+      </div>
+    </div>
     <div id="ecom-sub-alvo" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">🎯 Alvo — em construção.</div></div></div>
 
   </section>
@@ -3351,6 +3381,75 @@ const ecomHistorico={
     }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
   }
 };
+// ===== E-COMMERCE · Relatórios (dinâmico, competência por data do pedido) =====
+const ecomRelatorios={
+  data:[], loaded:false,
+  _g:id=>document.getElementById(id),
+  fmt:v=>(v==null||isNaN(v))?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
+  fmt0:v=>(v==null||isNaN(v))?'—':Math.round(v).toLocaleString('pt-BR'),
+  async load(){
+    try{ const r=await sb.from('ecom_vendas').select('id,produto,produto_codigo,uf,quantidade,preco_venda,status,data_solicitacao,data_entrega,receita_bruta,valor_recebido_ml,custo_total,resultado_liquido,margem_pct');
+      if(r.error) throw r.error; this.data=r.data||[]; this.loaded=true;
+      this.renderForecast(); this.renderKpis(this.agg(this.data),false); this.renderMensal(); this._g('rl-query-result').innerHTML='';
+    }catch(e){ this._g('rl-kpis').innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
+  },
+  agg(vendas){ let fat=0,luc=0,fatComp=0,custo=0,presoMP=0,n=0,nComp=0,nPend=0;
+    vendas.forEach(v=>{ if(v.status==='cancelado') return; n++; fat+=+v.receita_bruta||0; custo+=+v.custo_total||0;
+      if(v.resultado_liquido!=null){ luc+=+v.resultado_liquido; fatComp+=+v.receita_bruta||0; nComp++; } else nPend++;
+      if(v.valor_recebido_ml!=null && v.status!=='entregue' && v.status!=='concluido') presoMP+=+v.valor_recebido_ml;
+    });
+    return {fat,luc,custo,presoMP,n,nComp,nPend,ticket:n?fat/n:0,margem:fatComp?luc/fatComp*100:null,lpri:custo?luc/custo:null};
+  },
+  filtered(){ const de=this._g('rl-de').value, ate=this._g('rl-ate').value, prod=(this._g('rl-prod').value||'').toLowerCase(), uf=(this._g('rl-uf').value||'').toUpperCase(), st=this._g('rl-status').value;
+    return this.data.filter(v=>{ const d=v.data_solicitacao?v.data_solicitacao.slice(0,10):'';
+      if(de && d<de) return false; if(ate && d>ate) return false;
+      if(prod && !(((v.produto||'')+' '+(v.produto_codigo||'')).toLowerCase().includes(prod))) return false;
+      if(uf && (v.uf||'')!==uf) return false; if(st && v.status!==st) return false; return true;
+    });
+  },
+  consultar(){ const a=this.agg(this.filtered()); this.renderKpis(a,true); },
+  kpiHtml(a){ const F=this.fmt;
+    const pend=a.nPend>0?'<div style="font-size:11px;color:var(--eamber);margin-top:8px">⚠ '+a.nPend+' venda(s) sem margem fechada — lucro e margem ainda parciais.</div>':'';
+    return '<div class="rp-idxrow">'
+      +'<div class="rp-idx"><div class="l">Faturamento</div><div class="v">R$ '+F(a.fat)+'</div></div>'
+      +'<div class="rp-idx good"><div class="l">Lucro real</div><div class="v">R$ '+F(a.luc)+'</div></div>'
+      +'<div class="rp-idx"><div class="l">Margem ponderada</div><div class="v">'+(a.margem==null?'—':F(a.margem)+'%')+'</div></div>'
+      +'<div class="rp-idx"><div class="l">Ticket médio</div><div class="v">R$ '+F(a.ticket)+'</div></div>'
+      +'<div class="rp-idx"><div class="l">Nº de vendas</div><div class="v">'+a.n+'</div></div>'
+      +'<div class="rp-idx"><div class="l">Custo a fornecedores</div><div class="v">R$ '+F(a.custo)+'</div></div>'
+      +'<div class="rp-idx bad"><div class="l">Capital em giro preso</div><div class="v">R$ '+F(a.presoMP)+'</div></div>'
+      +'<div class="rp-idx"><div class="l">Lucro por R$ investido</div><div class="v">'+(a.lpri==null?'—':F(a.lpri))+'</div></div>'
+      +'</div>'+pend;
+  },
+  renderKpis(a,isQuery){ (isQuery?this._g('rl-query-result'):this._g('rl-kpis')).innerHTML=this.kpiHtml(a); },
+  renderMensal(){ const box=this._g('rl-mensal'); const meses={};
+    this.data.forEach(v=>{ if(v.status==='cancelado'||!v.data_solicitacao) return; const m=v.data_solicitacao.slice(0,7); (meses[m]=meses[m]||[]).push(v); });
+    const keys=Object.keys(meses).sort().reverse();
+    if(!keys.length){ box.innerHTML='<div class="ph">sem vendas ainda</div>'; return; }
+    const ord=keys.slice().reverse(), aggMap={}; ord.forEach(m=>aggMap[m]=this.agg(meses[m]));
+    const nm=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+    const rows=keys.map(m=>{ const a=aggMap[m]; const idx=ord.indexOf(m); const ant=idx>0?aggMap[ord[idx-1]]:null;
+      let vt='—'; if(ant&&ant.fat>0){ const d=(a.fat-ant.fat)/ant.fat*100; vt='<span style="color:'+(d>=0?'var(--eemerald)':'var(--ered)')+'">'+(d>=0?'+':'')+d.toFixed(1)+'%</span>'; }
+      const p=m.split('-'); const nome=nm[(+p[1])-1]+'/'+p[0];
+      return '<tr><td style="font-weight:500">'+nome+'</td><td class="mono">R$ '+this.fmt(a.fat)+'</td><td class="mono">R$ '+this.fmt(a.luc)+'</td><td class="mono">'+(a.margem==null?'—':this.fmt(a.margem)+'%')+'</td><td class="mono">'+a.n+'</td><td class="mono">'+vt+'</td></tr>';
+    }).join('');
+    box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab"><thead><tr><th>Mês</th><th>Faturamento</th><th>Lucro</th><th>Margem</th><th>Vendas</th><th>vs mês ant.</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  },
+  renderForecast(){ const box=this._g('rl-forecast'); const now=new Date(), ms=7*24*3600*1000;
+    const recent=this.data.filter(v=>{ if(v.status==='cancelado'||!v.data_solicitacao) return false; return (now-new Date(v.data_solicitacao))<=8*ms; });
+    const wk={}; recent.forEach(v=>{ const w=Math.floor((now-new Date(v.data_solicitacao))/ms); wk[w]=true; });
+    const nSem=Object.keys(wk).length, sem=nSem>0?nSem:1, a=this.agg(recent);
+    let entra=0; recent.forEach(v=>{ if(v.valor_recebido_ml!=null) entra+=+v.valor_recebido_ml; }); entra/=sem;
+    const fatP=a.fat/sem, lucP=a.luc/sem, volP=a.n/sem, saiP=a.custo/sem;
+    const conf=nSem>=5?{t:'razoável',c:'var(--eemerald)'}:nSem>=2?{t:'fraca',c:'var(--eamber)'}:{t:'muito fraca',c:'var(--ered)'};
+    box.innerHTML='<div class="rl-fc-head"><h3 style="margin:0">Próxima semana · projeção</h3><span style="font-size:10.5px;font-weight:600;color:'+conf.c+';background:var(--epanel2);border:1px solid var(--eborder);border-radius:999px;padding:3px 10px">estimativa '+conf.t+' · '+nSem+' sem. de dados</span></div>'
+      +'<div class="rl-fc-grid">'
+      +'<div class="rl-fc"><div class="l">Faturamento &amp; lucro</div><div class="b">R$ '+this.fmt0(fatP)+' <span style="color:var(--emuted);font-size:13px">/ R$ '+this.fmt0(lucP)+'</span></div></div>'
+      +'<div class="rl-fc"><div class="l">Volume</div><div class="b">~'+Math.round(volP)+' vendas</div></div>'
+      +'<div class="rl-fc"><div class="l">Fluxo de caixa</div><div class="b" style="color:var(--eteal)">+'+this.fmt0(entra)+' <span style="color:var(--emuted);font-size:13px">/ –'+this.fmt0(saiP)+'</span></div></div>'
+      +'</div>';
+  }
+};
 $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
   const sub=b.dataset.sub;
@@ -3359,7 +3458,9 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   if(sub==='financeiro'){ ecomFinanceiro.load(); }
   if(sub==='reputacao'){ ecomReputacao.load(); }
   if(sub==='historico'){ ecomHistorico.load(); }
+  if(sub==='relatorios'){ ecomRelatorios.load(); }
 }));
+(function(){ const c=ecomRelatorios._g('rl-consultar'); if(c) c.addEventListener('click',()=>ecomRelatorios.consultar()); })();
 (function(){
   const list=ecomHistorico._g('hs-list');
   if(list) list.addEventListener('click',e=>{ const ed=e.target.closest('[data-hedit]'); const pd=e.target.closest('[data-hpdf]'); if(ed) ecomHistorico.openEdit(ed.dataset.hedit); else if(pd) ecomHistorico.pdf(pd.dataset.hpdf); });
