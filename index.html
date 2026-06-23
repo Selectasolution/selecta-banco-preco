@@ -908,7 +908,34 @@
       </div>
     </div>
 
-    <div id="ecom-sub-financeiro" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Financeiro — próximo passo da construção.</div></div></div>
+    <div id="ecom-sub-financeiro" class="ecom-subpanel" style="display:none">
+      <p class="esub">Cada venda lançada chega aqui. Lance as taxas reais do ML e o custo do fornecedor — o lucro fica vazio (não zero) até completar. São <b>dois bolsos</b>: o que o Mercado Pago deposita e o que sai pro fornecedor.</p>
+      <div class="vgrid">
+        <div class="ecard">
+          <h3>Pedidos a fechar</h3>
+          <div id="fn-list"><div class="ph">carregando…</div></div>
+        </div>
+        <div class="ecard">
+          <h3 id="fn-titulo">Selecione um pedido</h3>
+          <div id="fn-form" style="display:none">
+            <div class="vrow3">
+              <div class="efield"><label>Comissão ML (R$)</label><input class="vinput mono" id="fn-com" type="number" step="0.01" placeholder="extrato"></div>
+              <div class="efield"><label>Tarifa fixa (R$)</label><input class="vinput mono" id="fn-tar" type="number" step="0.01" value="0"></div>
+              <div class="efield"><label>Frete seu (R$)</label><input class="vinput mono" id="fn-fre" type="number" step="0.01" value="0"></div>
+            </div>
+            <div class="vrow">
+              <div class="efield"><label>Ônus do frete</label><select class="vinput mono" id="fn-onus"><option value="vendedor">vendedor (você pagou)</option><option value="comprador">comprador</option></select></div>
+              <div class="efield"><label>Custo do fornecedor un. (R$)</label><input class="vinput mono" id="fn-cus" type="number" step="0.01" placeholder="nota do fornecedor"></div>
+            </div>
+            <div id="fn-ledger" style="margin:6px 0 12px"></div>
+            <div id="fn-status" style="margin-bottom:12px"></div>
+            <button class="vbtn" id="fn-save">Fechar margem e gerar relatório</button>
+            <div class="vmsg" id="fn-msg"></div>
+          </div>
+          <div class="ph" id="fn-vazio">clique num pedido à esquerda para lançar os valores</div>
+        </div>
+      </div>
+    </div>
     <div id="ecom-sub-reputacao" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Reputação — em construção.</div></div></div>
     <div id="ecom-sub-historico" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Histórico — em construção.</div></div></div>
     <div id="ecom-sub-relatorios" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Relatórios — em construção.</div></div></div>
@@ -3126,12 +3153,80 @@ const ecomVendas={
   async postar(id){ try{ const r=await sb.from('ecom_vendas').update({status:'enviado',data_embarque:new Date().toISOString(),atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } },
   async entregar(id){ if(!confirm('Marcar entrega efetiva? A venda sai da fila ativa.')) return; try{ const r=await sb.from('ecom_vendas').update({status:'entregue',data_entrega:new Date().toISOString(),atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } }
 };
+// ===== E-COMMERCE · Financeiro (fecha a margem real) =====
+const ecomFinanceiro={
+  cur:null,
+  _g:id=>document.getElementById(id),
+  fmt:v=>(v==null||isNaN(v))?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
+  num(id){ const v=parseFloat(this._g(id).value); return isNaN(v)?null:v; },
+  async load(){ const box=this._g('fn-list');
+    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,preco_venda,quantidade,comissao_valor,custo_unitario').in('status',['a_enviar','enviado']).order('data_solicitacao',{ascending:false});
+      if(r.error) throw r.error; this.renderList(r.data||[]);
+    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
+  },
+  renderList(itens){ const box=this._g('fn-list');
+    if(!itens.length){ box.innerHTML='<div class="ph">sem pedidos a fechar</div>'; return; }
+    box.innerHTML=itens.map(v=>{ const ok=v.comissao_valor!=null&&v.custo_unitario!=null;
+      return '<div class="vli" style="cursor:pointer" data-fid="'+v.id+'"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · R$ '+this.fmt(v.preco_venda)+'</div></div><span class="vpill '+(ok?'ok':'warn')+'">'+(ok?'completo':'pendente')+'</span></div>';
+    }).join('');
+  },
+  async selecionar(id){
+    try{ const r=await sb.from('ecom_vendas').select('*').eq('id',id).single(); if(r.error) throw r.error; this.cur=r.data;
+      this._g('fn-titulo').textContent='#'+r.data.ml_pedido_id+' · '+r.data.produto;
+      this._g('fn-vazio').style.display='none'; this._g('fn-form').style.display='block';
+      this._g('fn-com').value=r.data.comissao_valor!=null?r.data.comissao_valor:'';
+      this._g('fn-tar').value=r.data.tarifa_fixa_valor!=null?r.data.tarifa_fixa_valor:'0';
+      this._g('fn-fre').value=r.data.frete_valor!=null?r.data.frete_valor:'0';
+      this._g('fn-onus').value=r.data.frete_onus||'vendedor';
+      this._g('fn-cus').value=r.data.custo_unitario!=null?r.data.custo_unitario:'';
+      this._g('fn-msg').textContent=''; this._g('fn-msg').className='vmsg';
+      this.recalc();
+    }catch(e){ alert('Erro: '+e.message); }
+  },
+  recalc(){ if(!this.cur) return;
+    const P=Number(this.cur.preco_venda), Q=Number(this.cur.quantidade)||1;
+    const onus=this._g('fn-onus').value;
+    const freInput=this._g('fn-fre'); freInput.disabled=(onus==='comprador'); if(onus==='comprador') freInput.value='0';
+    const com=this.num('fn-com'), tar=this.num('fn-tar')||0, fre=(onus==='vendedor'?(this.num('fn-fre')||0):0), cus=this.num('fn-cus');
+    const rec=P*Q, tax=com!=null?com+tar+fre:null, mp=com!=null?rec-tax:null, cusT=cus!=null?cus*Q:null;
+    const pronto=com!=null&&cus!=null, luc=pronto?rec-tax-cusT:null, mar=pronto&&rec?luc/rec*100:null;
+    const F=this.fmt;
+    const line=(k,v,bg,kc)=>'<div style="display:flex;justify-content:space-between;padding:9px 13px;background:'+(bg||'var(--epanel)')+'"><span'+(kc?' style="color:'+kc+'"':'')+'>'+k+'</span><span style="font-family:var(--emono)">'+v+'</span></div>';
+    const tot='<div style="display:flex;justify-content:space-between;padding:13px;background:#1a2740"><span style="font-weight:700">Lucro real</span><span style="font-family:var(--emono);font-size:18px;font-weight:700;color:'+(luc==null?'var(--emuted2)':(luc>=0?'var(--eemerald)':'var(--ered)'))+'">'+(luc==null?'—':'R$ '+F(luc))+'</span></div>';
+    this._g('fn-ledger').innerHTML='<div style="border:1px solid var(--eborder);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;gap:1px;background:var(--eborder)">'
+      +line('Receita bruta','R$ '+F(rec))
+      +line('(–) Taxas do ML',tax==null?'—':'– R$ '+F(tax))
+      +line('= Depósito Mercado Pago',mp==null?'—':'R$ '+F(mp),'#08231f','var(--eteal)')
+      +line('(–) Custo do fornecedor',cusT==null?'—':'– R$ '+F(cusT),'#241c08','var(--eamber)')
+      +tot
+      +line('Margem',mar==null?'—':F(mar)+' %')
+      +'</div>';
+    this._g('fn-status').innerHTML=pronto?'<span class="vpill ok">completo · relatório pronto</span>':(com==null&&cus==null)?'<span class="vpill warn">faltam taxas ML e custo</span>':com==null?'<span class="vpill warn">faltam taxas ML</span>':'<span class="vpill warn">falta custo do fornecedor</span>';
+  },
+  async fechar(){ if(!this.cur) return; const msg=this._g('fn-msg');
+    const com=this.num('fn-com'), cus=this.num('fn-cus');
+    if(com==null||cus==null){ msg.className='vmsg err'; msg.textContent='Lance comissão e custo para fechar.'; return; }
+    const onus=this._g('fn-onus').value;
+    const dados={ comissao_valor:com, tarifa_fixa_valor:this.num('fn-tar')||0, frete_valor:(onus==='vendedor'?(this.num('fn-fre')||0):0), frete_onus:onus, custo_unitario:cus, fees_conferidas:true, atualizado_em:new Date().toISOString() };
+    try{ const r=await sb.from('ecom_vendas').update(dados).eq('id',this.cur.id); if(r.error) throw r.error;
+      msg.className='vmsg ok'; msg.textContent='✓ Margem fechada · pedido completo (vai ao Histórico após a entrega)';
+      this.load();
+    }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
+  }
+};
 $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
   const sub=b.dataset.sub;
   $$('.ecom-subpanel').forEach(p=>{ p.style.display=(p.id==='ecom-sub-'+sub)?'':'none'; });
   if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value) dt.value=ecomVendas.nowLocal(); ecomVendas.loaded=true; ecomVendas.load(); }
+  if(sub==='financeiro'){ ecomFinanceiro.load(); }
 }));
+(function(){
+  const list=ecomFinanceiro._g('fn-list');
+  if(list) list.addEventListener('click',e=>{ const it=e.target.closest('[data-fid]'); if(it) ecomFinanceiro.selecionar(it.dataset.fid); });
+  ['fn-com','fn-tar','fn-fre','fn-cus','fn-onus'].forEach(id=>{ const el=ecomFinanceiro._g(id); if(el){ el.addEventListener('input',()=>ecomFinanceiro.recalc()); el.addEventListener('change',()=>ecomFinanceiro.recalc()); } });
+  const sv=ecomFinanceiro._g('fn-save'); if(sv) sv.addEventListener('click',()=>ecomFinanceiro.fechar());
+})();
 (function(){
   const cod=ecomVendas._g('vd-cod'); if(cod) cod.addEventListener('input',()=>ecomVendas.lookup());
   const add=ecomVendas._g('vd-add'); if(add) add.addEventListener('click',()=>ecomVendas.lancar());
