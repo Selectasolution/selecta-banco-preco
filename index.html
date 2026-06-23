@@ -772,6 +772,7 @@
     #tab-ecommerce .rpfar.a{background:#241c08;color:#facc6b;border:1px solid #473714}
     #tab-ecommerce .rpfar.o{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
     #tab-ecommerce .rpfar.n{background:var(--epanel2);color:var(--emuted2);border:1px solid var(--eborder)}
+    #tab-ecommerce .mono{font-family:var(--emono);font-variant-numeric:tabular-nums}
     </style>
 
     <div class="ecom-subnav">
@@ -958,7 +959,39 @@
       <div id="rp-idx" class="rp-idxrow"></div>
       <div id="rp-table"><div class="ph">carregando…</div></div>
     </div>
-    <div id="ecom-sub-historico" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Histórico — em construção.</div></div></div>
+    <div id="ecom-sub-historico" class="ecom-subpanel" style="display:none">
+      <p class="esub">Entra aqui só após a entrega efetiva. Registro fechado de cada venda — editável se você errou um preenchimento, e toda edição fica marcada. Cada linha exporta o relatório do pedido em PDF.</p>
+      <div id="hs-list"><div class="ph">carregando…</div></div>
+      <div id="hs-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:20px">
+        <div style="background:var(--epanel);border:1px solid var(--eborder);border-radius:14px;max-width:580px;width:100%;max-height:90vh;overflow:auto;padding:20px">
+          <h3 id="hs-mtitle" style="margin-top:0">Editar venda</h3>
+          <p style="font-size:12px;color:var(--eamber);margin-top:0">Você está corrigindo um registro já arquivado. A correção será marcada como editada.</p>
+          <div class="vrow3">
+            <div class="efield"><label>Preço un.</label><input class="vinput mono" id="hs-preco" type="number" step="0.01"></div>
+            <div class="efield"><label>Qtd</label><input class="vinput mono" id="hs-qtd" type="number" min="1"></div>
+            <div class="efield"><label>Custo un.</label><input class="vinput mono" id="hs-cus" type="number" step="0.01"></div>
+          </div>
+          <div class="vrow3">
+            <div class="efield"><label>Comissão ML</label><input class="vinput mono" id="hs-com" type="number" step="0.01"></div>
+            <div class="efield"><label>Tarifa fixa</label><input class="vinput mono" id="hs-tar" type="number" step="0.01"></div>
+            <div class="efield"><label>Frete seu</label><input class="vinput mono" id="hs-fre" type="number" step="0.01"></div>
+          </div>
+          <div class="vrow">
+            <div class="efield"><label>Ônus do frete</label><select class="vinput mono" id="hs-onus"><option value="vendedor">vendedor</option><option value="comprador">comprador</option></select></div>
+            <div class="efield"><label>Data da solicitação</label><input class="vinput mono" id="hs-dsol" type="datetime-local"></div>
+          </div>
+          <div class="vrow">
+            <div class="efield"><label>Data de embarque</label><input class="vinput mono" id="hs-demb" type="datetime-local"></div>
+            <div class="efield"><label>Data de entrega</label><input class="vinput mono" id="hs-dent" type="datetime-local"></div>
+          </div>
+          <div class="vmsg" id="hs-mmsg"></div>
+          <div style="display:flex;gap:10px;margin-top:14px;justify-content:flex-end">
+            <button class="vbtn sm" id="hs-cancel">Cancelar</button>
+            <button class="vbtn" id="hs-savebtn">Salvar correção</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div id="ecom-sub-relatorios" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Relatórios — em construção.</div></div></div>
     <div id="ecom-sub-alvo" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">🎯 Alvo — em construção.</div></div></div>
 
@@ -3270,6 +3303,54 @@ const ecomReputacao={
     box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab"><thead><tr><th>Pedido / produto</th><th>Saúde</th><th>Postagem</th><th>Entrega</th><th>Pós-entrega</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
 };
+// ===== E-COMMERCE · Histórico (arquivo consolidado + PDF + edição) =====
+const ecomHistorico={
+  cur:null,
+  _g:id=>document.getElementById(id),
+  fmt:v=>(v==null||isNaN(v))?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
+  fmtD:iso=>iso?new Date(iso).toLocaleDateString('pt-BR'):'—',
+  fmtDT(iso){ if(!iso) return ''; const d=new Date(iso); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); },
+  async load(){ const box=this._g('hs-list');
+    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,preco_venda,data_solicitacao,data_entrega,editado_em').in('status',['entregue','concluido']).order('data_entrega',{ascending:false});
+      if(r.error) throw r.error; this.render(r.data||[]);
+    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
+  },
+  render(itens){ const box=this._g('hs-list');
+    if(!itens.length){ box.innerHTML='<div class="ph">nenhuma venda entregue ainda</div>'; return; }
+    const rows=itens.map(v=>'<tr><td class="mono" style="color:var(--emuted)">#'+v.ml_pedido_id+'</td><td>'+v.produto+(v.editado_em?' <span style="font-size:10px;color:var(--eamber)">editado</span>':'')+'</td><td class="mono">R$ '+this.fmt(v.preco_venda)+'</td><td class="mono" style="color:var(--emuted)">'+this.fmtD(v.data_solicitacao)+'</td><td class="mono" style="color:var(--emuted)">'+this.fmtD(v.data_entrega)+'</td><td style="white-space:nowrap;text-align:right"><button class="vbtn sm" data-hedit="'+v.id+'">Editar</button> <button class="vbtn sm" data-hpdf="'+v.id+'">PDF</button></td></tr>').join('');
+    box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab"><thead><tr><th>Pedido</th><th>Produto</th><th>Valor venda</th><th>Data pedido</th><th>Data entregue</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  },
+  async pdf(id){ try{ const r=await sb.from('ecom_vendas').select('*').eq('id',id).single(); if(r.error) throw r.error; this.gerarPDF(r.data); }catch(e){ alert('Erro ao gerar PDF: '+e.message); } },
+  gerarPDF(v){ const { jsPDF }=window.jspdf; const doc=new jsPDF(); const F=this.fmt;
+    doc.setFontSize(16); doc.setTextColor(20); doc.text('Selecta Solution \u2014 Relatorio de Venda',14,18);
+    doc.setFontSize(10); doc.setTextColor(90);
+    doc.text('Pedido ML: #'+v.ml_pedido_id,14,28);
+    doc.text('Produto: '+v.produto+(v.produto_codigo?' ('+v.produto_codigo+')':''),14,34);
+    doc.text('Solicitado: '+this.fmtD(v.data_solicitacao)+'     Entregue: '+this.fmtD(v.data_entrega),14,40);
+    const rows=[['Receita bruta','R$ '+F(v.receita_bruta)],['Comissao ML',v.comissao_valor!=null?'R$ '+F(v.comissao_valor):'-'],['Tarifa fixa',v.tarifa_fixa_valor!=null?'R$ '+F(v.tarifa_fixa_valor):'-'],['Frete (seu)',v.frete_valor!=null?'R$ '+F(v.frete_valor):'-'],['Deposito Mercado Pago',v.valor_recebido_ml!=null?'R$ '+F(v.valor_recebido_ml):'-'],['Custo do fornecedor',v.custo_total!=null?'R$ '+F(v.custo_total):'-'],['Lucro real',v.resultado_liquido!=null?'R$ '+F(v.resultado_liquido):'-'],['Margem',v.margem_pct!=null?F(v.margem_pct)+' %':'-']];
+    doc.autoTable({startY:48,head:[['Item','Valor']],body:rows,theme:'striped',headStyles:{fillColor:[16,185,129]},columnStyles:{1:{halign:'right'}}});
+    doc.save('venda-'+v.ml_pedido_id+'.pdf');
+  },
+  async openEdit(id){ try{ const r=await sb.from('ecom_vendas').select('*').eq('id',id).single(); if(r.error) throw r.error; this.cur=r.data; const g=i=>this._g(i);
+    g('hs-mtitle').textContent='Editar #'+r.data.ml_pedido_id+' \u00b7 '+r.data.produto;
+    g('hs-preco').value=r.data.preco_venda!=null?r.data.preco_venda:''; g('hs-qtd').value=r.data.quantidade!=null?r.data.quantidade:1; g('hs-cus').value=r.data.custo_unitario!=null?r.data.custo_unitario:'';
+    g('hs-com').value=r.data.comissao_valor!=null?r.data.comissao_valor:''; g('hs-tar').value=r.data.tarifa_fixa_valor!=null?r.data.tarifa_fixa_valor:''; g('hs-fre').value=r.data.frete_valor!=null?r.data.frete_valor:'';
+    g('hs-onus').value=r.data.frete_onus||'vendedor';
+    g('hs-dsol').value=this.fmtDT(r.data.data_solicitacao); g('hs-demb').value=this.fmtDT(r.data.data_embarque); g('hs-dent').value=this.fmtDT(r.data.data_entrega);
+    g('hs-mmsg').textContent=''; g('hs-mmsg').className='vmsg'; g('hs-modal').style.display='flex';
+  }catch(e){ alert('Erro: '+e.message); } },
+  closeEdit(){ this._g('hs-modal').style.display='none'; this.cur=null; },
+  async saveEdit(){ if(!this.cur) return; const g=i=>this._g(i); const msg=g('hs-mmsg');
+    const n=i=>{ const v=parseFloat(g(i).value); return isNaN(v)?null:v; }; const dt=v=>v?new Date(v).toISOString():null;
+    const preco=n('hs-preco'); if(preco==null){ msg.className='vmsg err'; msg.textContent='Preço é obrigatório.'; return; }
+    const dados={ preco_venda:preco, quantidade:parseInt(g('hs-qtd').value)||1, custo_unitario:n('hs-cus'),
+      comissao_valor:n('hs-com'), tarifa_fixa_valor:n('hs-tar'), frete_valor:n('hs-fre'), frete_onus:g('hs-onus').value,
+      data_solicitacao:dt(g('hs-dsol').value)||this.cur.data_solicitacao, data_embarque:dt(g('hs-demb').value), data_entrega:dt(g('hs-dent').value),
+      editado_em:new Date().toISOString(), atualizado_em:new Date().toISOString() };
+    try{ const r=await sb.from('ecom_vendas').update(dados).eq('id',this.cur.id); if(r.error) throw r.error; this.closeEdit(); this.load();
+    }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
+  }
+};
 $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
   const sub=b.dataset.sub;
@@ -3277,7 +3358,15 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value) dt.value=ecomVendas.nowLocal(); ecomVendas.loaded=true; ecomVendas.load(); }
   if(sub==='financeiro'){ ecomFinanceiro.load(); }
   if(sub==='reputacao'){ ecomReputacao.load(); }
+  if(sub==='historico'){ ecomHistorico.load(); }
 }));
+(function(){
+  const list=ecomHistorico._g('hs-list');
+  if(list) list.addEventListener('click',e=>{ const ed=e.target.closest('[data-hedit]'); const pd=e.target.closest('[data-hpdf]'); if(ed) ecomHistorico.openEdit(ed.dataset.hedit); else if(pd) ecomHistorico.pdf(pd.dataset.hpdf); });
+  const cc=ecomHistorico._g('hs-cancel'); if(cc) cc.addEventListener('click',()=>ecomHistorico.closeEdit());
+  const sv=ecomHistorico._g('hs-savebtn'); if(sv) sv.addEventListener('click',()=>ecomHistorico.saveEdit());
+  const md=ecomHistorico._g('hs-modal'); if(md) md.addEventListener('click',e=>{ if(e.target===md) ecomHistorico.closeEdit(); });
+})();
 (function(){
   const list=ecomFinanceiro._g('fn-list');
   if(list) list.addEventListener('click',e=>{ const it=e.target.closest('[data-fid]'); if(it) ecomFinanceiro.selecionar(it.dataset.fid); });
