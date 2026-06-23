@@ -723,6 +723,52 @@
 
   <section id="tab-ecommerce" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
 
+    <style>
+    #tab-ecommerce .ecom-subnav{display:flex;gap:2px;border-bottom:1px solid var(--eborder);margin:0 0 18px;overflow-x:auto}
+    #tab-ecommerce .ecom-subtab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--emuted);font:inherit;font-size:13.5px;padding:9px 14px;cursor:pointer;white-space:nowrap}
+    #tab-ecommerce .ecom-subtab:hover{color:var(--etxt)}
+    #tab-ecommerce .ecom-subtab.active{color:var(--etxt);border-bottom-color:var(--eemerald)}
+    #tab-ecommerce .ecom-subtab.alvo.active{border-bottom-color:var(--eteal)}
+    #tab-ecommerce .ph{color:var(--emuted2);font-size:13px;text-align:center;padding:30px 10px}
+    #tab-ecommerce .vgrid{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start}
+    @media(max-width:900px){#tab-ecommerce .vgrid{grid-template-columns:1fr}}
+    #tab-ecommerce .vform .efield,#tab-ecommerce .vrow .efield,#tab-ecommerce .vrow3 .efield{margin-bottom:12px}
+    #tab-ecommerce .vform label{display:block;font-size:11px;color:var(--emuted);margin-bottom:5px}
+    #tab-ecommerce .vrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    #tab-ecommerce .vrow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    #tab-ecommerce .vinput{width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:8px;padding:9px 11px;font:inherit}
+    #tab-ecommerce .vinput.mono{font-family:var(--emono);font-variant-numeric:tabular-nums}
+    #tab-ecommerce .vinput:focus{outline:2px solid var(--eemerald);border-color:transparent}
+    #tab-ecommerce .vpulled{background:var(--epanel2);border:1px dashed var(--eborder);border-radius:8px;padding:8px 11px;font-size:12.5px;color:var(--emuted)}
+    #tab-ecommerce .vpulled b{color:var(--eteal)}
+    #tab-ecommerce .vbtn{appearance:none;border:0;border-radius:9px;font:inherit;font-weight:600;padding:10px 16px;cursor:pointer;background:linear-gradient(135deg,var(--eemerald),var(--eteal));color:#06231a}
+    #tab-ecommerce .vbtn:hover{filter:brightness(1.08)}
+    #tab-ecommerce .vbtn.sm{padding:5px 10px;font-size:12px;border-radius:7px;background:none;border:1px solid var(--eborder);color:var(--etxt);font-weight:500}
+    #tab-ecommerce .vbtn.sm:hover{border-color:var(--eemerald)}
+    #tab-ecommerce .vli{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--eborder)}
+    #tab-ecommerce .vli:last-child{border-bottom:0}
+    #tab-ecommerce .vli .vmain{flex:1;min-width:0}
+    #tab-ecommerce .vli .vp{font-size:13px;font-weight:500}
+    #tab-ecommerce .vli .vm{font-family:var(--emono);font-size:11px;color:var(--emuted)}
+    #tab-ecommerce .vpill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600}
+    #tab-ecommerce .vpill.warn{background:#241c08;color:#facc6b;border:1px solid #473714}
+    #tab-ecommerce .vpill.ok{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
+    #tab-ecommerce .vmsg{font-size:12px;margin-top:8px;min-height:16px}
+    #tab-ecommerce .vmsg.ok{color:var(--eemerald)} #tab-ecommerce .vmsg.err{color:var(--ered)}
+    </style>
+
+    <div class="ecom-subnav">
+      <button class="ecom-subtab active" data-sub="simulador">Simulador</button>
+      <button class="ecom-subtab" data-sub="vendas">Vendas</button>
+      <button class="ecom-subtab" data-sub="financeiro">Financeiro</button>
+      <button class="ecom-subtab" data-sub="reputacao">Reputação</button>
+      <button class="ecom-subtab" data-sub="historico">Histórico</button>
+      <button class="ecom-subtab" data-sub="relatorios">Relatórios</button>
+      <button class="ecom-subtab alvo" data-sub="alvo">🎯 Alvo</button>
+    </div>
+
+    <div id="ecom-sub-simulador" class="ecom-subpanel">
+
     <p class="esub">Simulador de margem <b>Mercado Livre</b> com a regra dos <b>R$79</b> (tarifa pós 02/03/2026). Abaixo de R$79 o ML banca o frete e cobra custo fixo por faixa; a partir de R$79 você paga o frete da matriz. Dados salvos no banco. Veredito: <b style="color:var(--eemerald)">Priorizar</b> · <b style="color:var(--eamber)">Analisar</b> · <b style="color:var(--ered)">Excluir</b>.</p>
 
     <!-- MODALIDADE -->
@@ -828,6 +874,45 @@
     <div class="efooter">
       <b>Regra ML (pós 02/03/2026, Flex/Correios):</b> ≥R$79 → comissão (por tipo de anúncio) + frete da matriz (célula destino×peso do produto). &lt;R$79 → ML banca o frete; comissão + custo fixo por faixa (R$6,25 / R$6,50 / R$6,75; abaixo de R$12,50 = 50% do preço). Tudo sobre o preço de venda; margem e break-even líquidos do colchão. Excluir = inativar (fica salvo no banco).
     </div>
+    </div><!-- /ecom-sub-simulador -->
+
+    <!-- ===== SUBPASTA: VENDAS ===== -->
+    <div id="ecom-sub-vendas" class="ecom-subpanel" style="display:none">
+      <p class="esub">Lance o pedido na hora em que cai no ML. Ao salvar, os campos limpam e o pedido nasce no Financeiro. A lista mostra só vendas ativas — ao marcar a entrega efetiva, a venda sai daqui.</p>
+      <div class="vgrid">
+        <div class="ecard vform">
+          <h3>Lançar venda</h3>
+          <div class="vrow">
+            <div class="efield"><label>Nº do pedido ML *</label><input class="vinput mono" id="vd-ped" placeholder="2000000000000"></div>
+            <div class="efield"><label>Comprador (apelido)</label><input class="vinput" id="vd-comp" placeholder="opcional"></div>
+          </div>
+          <div class="efield"><label>Data/hora da solicitação *</label><input class="vinput mono" id="vd-dt" type="datetime-local"></div>
+          <div class="efield"><label>Código do produto *</label><input class="vinput mono" id="vd-cod" placeholder="ex.: SSD-0001"></div>
+          <div class="vpulled" id="vd-nome">digite o código — o nome é puxado do catálogo</div>
+          <div class="vrow3" style="margin-top:12px">
+            <div class="efield"><label>Qtd *</label><input class="vinput mono" id="vd-qtd" type="number" value="1" min="1"></div>
+            <div class="efield"><label>Preço un. *</label><input class="vinput mono" id="vd-preco" type="number" step="0.01" placeholder="0,00"></div>
+            <div class="efield"><label>UF comprador</label><input class="vinput mono" id="vd-uf" maxlength="2" placeholder="SP"></div>
+          </div>
+          <div class="vrow">
+            <div class="efield"><label>Postar até</label><input class="vinput mono" id="vd-pp" type="date"></div>
+            <div class="efield"><label>Previsão de entrega</label><input class="vinput mono" id="vd-pe" type="date"></div>
+          </div>
+          <button class="vbtn" id="vd-add" style="margin-top:6px">Lançar venda</button>
+          <div class="vmsg" id="vd-msg"></div>
+        </div>
+        <div class="ecard">
+          <h3>Lançadas — ativas, por data</h3>
+          <div id="vd-list"><div class="ph">carregando…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="ecom-sub-financeiro" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Financeiro — próximo passo da construção.</div></div></div>
+    <div id="ecom-sub-reputacao" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Reputação — em construção.</div></div></div>
+    <div id="ecom-sub-historico" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Histórico — em construção.</div></div></div>
+    <div id="ecom-sub-relatorios" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">Relatórios — em construção.</div></div></div>
+    <div id="ecom-sub-alvo" class="ecom-subpanel" style="display:none"><div class="ecard"><div class="ph">🎯 Alvo — em construção.</div></div></div>
 
   </section>
 
@@ -2984,6 +3069,76 @@ $('#login-email').addEventListener('keydown', e => { if (e.key === 'Enter') tryL
 $('#logout-btn').addEventListener('click', logout);
 
 $$('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+
+// ===== E-COMMERCE · sub-navegação + aba Vendas =====
+const UFS=['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+const ecomVendas={
+  prod:null, loaded:false,
+  _g:id=>document.getElementById(id),
+  fmt:v=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
+  nowLocal(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); },
+  async lookup(){
+    const cod=this._g('vd-cod').value.trim().toUpperCase(); const box=this._g('vd-nome');
+    if(!cod){ this.prod=null; box.innerHTML='digite o código — o nome é puxado do catálogo'; return; }
+    try{ const r=await sb.from('ecom_produtos').select('id,produto,marca,modelo,codigo').eq('codigo',cod).eq('ativo',true).maybeSingle();
+      if(r.error) throw r.error;
+      if(r.data){ this.prod=r.data; box.innerHTML='<b>'+r.data.produto+'</b>'+(r.data.marca?' · '+r.data.marca:''); }
+      else { this.prod=null; box.innerHTML='<span style="color:var(--eamber)">código não encontrado no catálogo</span>'; }
+    }catch(e){ this.prod=null; box.innerHTML='<span style="color:var(--ered)">erro ao buscar: '+e.message+'</span>'; }
+  },
+  async lancar(){
+    const msg=this._g('vd-msg'); msg.className='vmsg';
+    const ped=this._g('vd-ped').value.trim(); const preco=parseFloat(this._g('vd-preco').value);
+    const qtd=parseInt(this._g('vd-qtd').value)||1; const dt=this._g('vd-dt').value;
+    const uf=(this._g('vd-uf').value.trim().toUpperCase())||null;
+    if(!ped||!this.prod||isNaN(preco)||!dt){ msg.className='vmsg err'; msg.textContent='Pedido, código válido, preço e data são obrigatórios.'; return; }
+    if(uf && !UFS.includes(uf)){ msg.className='vmsg err'; msg.textContent='UF inválida.'; return; }
+    const pp=this._g('vd-pp').value, pe=this._g('vd-pe').value;
+    const dados={ canal:'mercado_livre', ml_pedido_id:ped, comprador:this._g('vd-comp').value.trim()||null,
+      produto_id:this.prod.id, produto:this.prod.produto, marca:this.prod.marca, modelo:this.prod.modelo, produto_codigo:this.prod.codigo,
+      quantidade:qtd, preco_venda:preco, uf,
+      data_solicitacao:new Date(dt).toISOString(),
+      prazo_postagem: pp?new Date(pp+'T23:59:59').toISOString():null,
+      prazo_entrega: pe?new Date(pe+'T23:59:59').toISOString():null,
+      status:'a_enviar' };
+    try{ const r=await sb.from('ecom_vendas').insert(dados).select().single(); if(r.error) throw r.error;
+      ['vd-ped','vd-comp','vd-cod','vd-preco','vd-uf','vd-pp','vd-pe'].forEach(i=>this._g(i).value='');
+      this._g('vd-qtd').value='1'; this._g('vd-dt').value=this.nowLocal(); this.prod=null;
+      this._g('vd-nome').innerHTML='digite o código — o nome é puxado do catálogo';
+      msg.className='vmsg ok'; msg.textContent='✓ Venda lançada · pedido criado no Financeiro'; setTimeout(()=>{msg.textContent='';},3000);
+      this.load();
+    }catch(e){ msg.className='vmsg err'; msg.textContent=(e.code==='23505'||/duplicate|unique/i.test(e.message||''))?'Essa venda (pedido + produto) já foi lançada.':'Erro: '+e.message; }
+  },
+  async load(){ const box=this._g('vd-list');
+    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,preco_venda,quantidade,status,data_solicitacao').in('status',['a_enviar','enviado']).order('data_solicitacao',{ascending:false});
+      if(r.error) throw r.error; this.render(r.data||[]);
+    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar: '+e.message+'</div>'; }
+  },
+  render(itens){ const box=this._g('vd-list');
+    if(!itens.length){ box.innerHTML='<div class="ph">nenhuma venda ativa</div>'; return; }
+    box.innerHTML=itens.map(v=>{
+      const dt=new Date(v.data_solicitacao).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      const pill=v.status==='enviado'?'<span class="vpill ok">enviado</span>':'<span class="vpill warn">a enviar</span>';
+      const btnPost=v.status==='a_enviar'?'<button class="vbtn sm" data-act="postar" data-id="'+v.id+'">postado</button>':'';
+      return '<div class="vli"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · '+(v.produto_codigo||'')+' · '+dt+' · R$ '+this.fmt(v.preco_venda)+'</div></div>'+pill+'<div style="display:flex;gap:6px">'+btnPost+'<button class="vbtn sm" data-act="entregar" data-id="'+v.id+'">entregue</button></div></div>';
+    }).join('');
+  },
+  async postar(id){ try{ const r=await sb.from('ecom_vendas').update({status:'enviado',data_embarque:new Date().toISOString(),atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } },
+  async entregar(id){ if(!confirm('Marcar entrega efetiva? A venda sai da fila ativa.')) return; try{ const r=await sb.from('ecom_vendas').update({status:'entregue',data_entrega:new Date().toISOString(),atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } }
+};
+$$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
+  $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
+  const sub=b.dataset.sub;
+  $$('.ecom-subpanel').forEach(p=>{ p.style.display=(p.id==='ecom-sub-'+sub)?'':'none'; });
+  if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value) dt.value=ecomVendas.nowLocal(); ecomVendas.loaded=true; ecomVendas.load(); }
+}));
+(function(){
+  const cod=ecomVendas._g('vd-cod'); if(cod) cod.addEventListener('input',()=>ecomVendas.lookup());
+  const add=ecomVendas._g('vd-add'); if(add) add.addEventListener('click',()=>ecomVendas.lancar());
+  const uf=ecomVendas._g('vd-uf'); if(uf) uf.addEventListener('input',()=>{ uf.value=uf.value.toUpperCase(); });
+  const list=ecomVendas._g('vd-list');
+  if(list) list.addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return; const id=b.dataset.id; if(b.dataset.act==='postar') ecomVendas.postar(id); else if(b.dataset.act==='entregar') ecomVendas.entregar(id); });
+})();
 
 // E-commerce: eventos centralizados em ecom.wire() (v8).
 // Bloco do piloto removido — causava duplo-bind do botão Adicionar (item duplicado)
