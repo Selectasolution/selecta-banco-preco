@@ -1026,7 +1026,7 @@
         <div class="vrow3">
           <div class="efield"><label>De (data pedido)</label><input class="vinput mono" id="rl-de" type="date"></div>
           <div class="efield"><label>Até</label><input class="vinput mono" id="rl-ate" type="date"></div>
-          <div class="efield"><label>Status</label><select class="vinput mono" id="rl-status"><option value="">todos</option><option value="a_enviar">a enviar</option><option value="enviado">enviado</option><option value="entregue">entregue</option><option value="concluido">concluído</option></select></div>
+          <div class="efield"><label>Status</label><select class="vinput mono" id="rl-status"><option value="">todos</option><option value="a_enviar">a enviar</option><option value="enviado">enviado</option><option value="entregue">entregue</option></select></div>
         </div>
         <div class="vrow">
           <div class="efield"><label>Produto ou código</label><input class="vinput mono" id="rl-prod" placeholder="ex.: Havit ou SSD-0001"></div>
@@ -3393,7 +3393,7 @@ const ecomHistorico={
   fmtD:iso=>iso?new Date(iso).toLocaleDateString('pt-BR'):'—',
   fmtDT(iso){ if(!iso) return ''; const d=new Date(iso); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); },
   async load(){ const box=this._g('hs-list');
-    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,preco_venda,data_solicitacao,data_entrega,editado_em').in('status',['entregue','concluido']).order('data_entrega',{ascending:false});
+    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,preco_venda,data_solicitacao,data_entrega,editado_em').eq('status','entregue').order('data_entrega',{ascending:false});
       if(r.error) throw r.error; this.render(r.data||[]);
     }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
   },
@@ -3448,7 +3448,7 @@ const ecomRelatorios={
   agg(vendas){ let fat=0,luc=0,fatComp=0,custo=0,presoMP=0,n=0,nComp=0,nPend=0;
     vendas.forEach(v=>{ if(v.status==='cancelado') return; n++; fat+=+v.receita_bruta||0; custo+=+v.custo_total||0;
       if(v.resultado_liquido!=null){ luc+=+v.resultado_liquido; fatComp+=+v.receita_bruta||0; nComp++; } else nPend++;
-      if(v.valor_recebido_ml!=null && v.status!=='entregue' && v.status!=='concluido') presoMP+=+v.valor_recebido_ml;
+      if(v.valor_recebido_ml!=null && v.status!=='entregue') presoMP+=+v.valor_recebido_ml;
     });
     return {fat,luc,custo,presoMP,n,nComp,nPend,ticket:n?fat/n:0,margem:fatComp?luc/fatComp*100:null,lpri:custo?luc/custo:null};
   },
