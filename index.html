@@ -885,7 +885,7 @@
         <div class="efield"><label>Produto <span class="req">*</span></label><input class="ainput" id="ecom-f-produto" style="width:170px" placeholder="SSD SATA III 256GB"></div>
         <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px" placeholder="Kingston"></div>
         <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px" placeholder="A400"></div>
-        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:150px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="GPU">Placa de vídeo</option><option value="MOU">Mouse</option><option value="TEC">Teclado</option><option value="KIT">Kit teclado+mouse</option><option value="HST">Headset</option><option value="FON">Fonte</option><option value="COO">Cooler</option><option value="WEB">Webcam</option></select></div>
+        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:170px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option></select></div>
         <div class="efield"><label>Faixa de peso <span class="req">*</span></label><select class="ainput" id="ecom-f-peso" style="width:130px"></select></div>
         <div class="efield"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
         <div class="efield"><label>Meu preço <span class="req">*</span></label><input class="ainput mono" id="ecom-f-preco" type="number" style="width:90px"></div>
@@ -2613,8 +2613,13 @@ const ecom = {
       if(idx>=0) this.itens[idx]=Object.assign({},this.itens[idx],dados);
       try{ const r=await sb.from('ecom_produtos').update(Object.assign({},dados,{atualizado_em:new Date().toISOString()})).eq('id',this.editId).select().single(); if(r.error) throw r.error; if(idx>=0&&r.data) this.itens[idx]=r.data; this.cancelEdit(); this.render(); }
       catch(e){ if(idx>=0&&prev) this.itens[idx]=prev; this._g('ecom-formmsg').textContent='Erro ao salvar: '+e.message; this.render(); } }
-    else { try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{ativo:true})).select().single(); if(r.error) throw r.error; this.itens.push(r.data); this.clearForm(); this.render(); }
+    else { const codigo=this.nextCodigo(categoria);
+      try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{codigo,ativo:true})).select().single(); if(r.error) throw r.error; this.itens.push(r.data); this.clearForm(); this.render(); }
       catch(e){ this._g('ecom-formmsg').textContent='Erro ao cadastrar: '+e.message; } } },
+
+  nextCodigo(sigla){ const re=new RegExp('^'+sigla+'-(\\d+)$'); let max=0;
+    this.itens.forEach(it=>{ const m=(it.codigo||'').match(re); if(m){ const n=parseInt(m[1],10); if(n>max) max=n; } });
+    return sigla+'-'+String(max+1).padStart(4,'0'); },
 
   async del(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
     if(!confirm(`Excluir "${it.produto} · ${it.marca||''}" em definitivo? Apaga a linha do banco e não tem volta.`)) return;
