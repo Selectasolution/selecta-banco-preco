@@ -3651,11 +3651,11 @@ const ecomAlvo={
       +'<span style="font-size:11px;color:var(--emuted2);margin-left:auto">leitura externa de mercado · opinião datada, não venda real</span></div>';
     // agrupar por AÇÃO (ranking): LANÇAR (verde) → SEGURAR (amarelo) → BLOQUEIO (vermelho)
     const GRUPOS=[
-      {v:'PUBLICAR',titulo:'Publicar / Alvo prioritário', cor:'var(--eemerald)', dsc:'pronto para o ar — margem real e giro favoráveis'},
-      {v:'REDUZIR', titulo:'Reduzir preço',               cor:'#38bdf8',         dsc:'acima do piso, cortar p/ ganhar Buy Box'},
-      {v:'AUMENTAR',titulo:'Aumentar preço',              cor:'var(--eamber)',   dsc:'abaixo do piso, dá para subir'},
-      {v:'SEGURAR', titulo:'Analisar / Segurar',          cor:'var(--eamber)',   dsc:'validar antes — margem fina ou marca de risco'},
-      {v:'BLOQUEAR',titulo:'Bloquear / Não publicar',     cor:'var(--ered)',     dsc:'corrigir preço/custo no Simulador antes'},
+      {v:'PUBLICAR',titulo:'Publicar / Alvo prioritário', cor:'var(--eemerald)', dsc:'anunciar já — margem real boa e bem posicionado no mercado'},
+      {v:'REDUZIR', titulo:'Reduzir preço',               cor:'#38bdf8',         dsc:'você está acima do menor preço; a margem aguenta cortar p/ ganhar a vitrine (Buy Box)'},
+      {v:'AUMENTAR',titulo:'Aumentar preço',              cor:'var(--eamber)',   dsc:'você está abaixo do mercado com margem fina; dá p/ subir sem perder venda'},
+      {v:'SEGURAR', titulo:'Caso a caso',                 cor:'var(--eamber)',   dsc:'cada item tem uma ação própria — leia a observação (RMA, INMETRO, ímã de tráfego, renegociar custo)'},
+      {v:'BLOQUEAR',titulo:'Bloquear / Não anunciar',     cor:'var(--ered)',     dsc:'preço fora do mercado ou margem quase nula — corrigir no Simulador antes'},
       {v:'ABANDONAR',titulo:'Abandonar',                  cor:'var(--emuted)',   dsc:'sem viabilidade comercial'}
     ];
     const maxIdx=Math.max(1,...a.map(x=>x.indice||0));
