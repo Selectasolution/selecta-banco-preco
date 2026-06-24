@@ -1077,13 +1077,16 @@
       </div>
       <div class="ecard" style="margin-top:18px">
         <h3>Comando de Análise Comercial <span class="faint" style="font-weight:400;font-size:12px">· briefing para o chat</span></h3>
-        <p class="hint" style="font-size:12px;color:var(--emuted);margin:2px 0 12px;line-height:1.5">Fluxo: exporte o catálogo do Simulador (e, se quiser, as vendas da Alvo) → cole o comando abaixo no chat com os anexos → receba o PDF de análise → dê o OK → receba o JSON para a Alvo processar. Este texto orienta a análise como um briefing de CEO para analista sênior de mercado.</p>
-        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
+        <p class="hint" style="font-size:12.5px;color:var(--emuted);margin:2px 0 14px;line-height:1.6"><b style="color:var(--etxt)">Fluxo:</b> exporto o catálogo do Simulador (e, se quiser, as vendas da Alvo) → copio o comando → colo no chat com os anexos → recebo o <b>PDF</b> de análise → dou o OK → recebo o <b>JSON</b> para a Alvo processar.</p>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:6px">
           <div class="efield"><label>Data desta versão do comando</label><input class="vinput mono" id="al-cmd-data" type="date" style="width:170px"></div>
           <button class="vbtn" id="al-cmd-copy">📋 Copiar comando</button>
           <span class="vmsg" id="al-cmd-msg" style="align-self:center"></span>
         </div>
-        <textarea id="al-cmd-text" readonly style="width:100%;min-height:340px;background:var(--epanel2);color:var(--etxt);border:1px solid var(--eborder);border-radius:10px;padding:14px;font:12.5px/1.55 ui-monospace,Menlo,Consolas,monospace;resize:vertical" spellcheck="false"></textarea>
+        <details style="margin-top:8px">
+          <summary style="cursor:pointer;color:var(--emuted2);font-size:11.5px;user-select:none">ver o texto do comando</summary>
+          <textarea id="al-cmd-text" readonly style="width:100%;min-height:300px;margin-top:8px;background:var(--epanel2);color:var(--etxt);border:1px solid var(--eborder);border-radius:10px;padding:14px;font:12.5px/1.55 ui-monospace,Menlo,Consolas,monospace;resize:vertical" spellcheck="false"></textarea>
+        </details>
       </div>
     </div>
 
