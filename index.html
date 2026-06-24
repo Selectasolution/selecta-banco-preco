@@ -3637,7 +3637,7 @@ const ecomAlvo={
     const imp=this._g('al-an-import'); if(imp && !imp._b){ imp._b=true; imp.addEventListener('click',()=>this.importarAnalise()); }
     const cl=this._g('al-an-clear'); if(cl && !cl._b){ cl._b=true; cl.addEventListener('click',()=>this.limparAnalise()); }
   },
-  _vcolor(v){ return v==='LANCAR'?'var(--eemerald)':v==='SEGURAR'?'var(--eamber)':v==='BLOQUEIO'?'var(--ered)':v==='ABANDONAR'?'var(--emuted)':'var(--etxt)'; },
+  _vcolor(v){ v=(v||'').toUpperCase(); return v==='PUBLICAR'?'var(--eemerald)':v==='REDUZIR'?'#38bdf8':v==='AUMENTAR'||v==='SEGURAR'?'var(--eamber)':v==='BLOQUEAR'?'var(--ered)':v==='ABANDONAR'?'var(--emuted)':'var(--etxt)'; },
   _tend(t){ return t==='SUBINDO'?'↑ subindo':t==='CAINDO'?'↓ caindo':t==='ESTAVEL'?'→ estável':''; },
   renderAnalise(){
     const head=this._g('al-an-head'), body=this._g('al-an-body');
@@ -3651,10 +3651,12 @@ const ecomAlvo={
       +'<span style="font-size:11px;color:var(--emuted2);margin-left:auto">leitura externa de mercado · opinião datada, não venda real</span></div>';
     // agrupar por AÇÃO (ranking): LANÇAR (verde) → SEGURAR (amarelo) → BLOQUEIO (vermelho)
     const GRUPOS=[
-      {v:'LANCAR',  titulo:'Lançar / Alvo prioritário', cor:'var(--eemerald)', dsc:'melhor projeção — margem e giro favoráveis'},
-      {v:'SEGURAR', titulo:'Analisar / Segurar',        cor:'var(--eamber)',   dsc:'validar antes — margem fina, marca de risco ou ajuste de preço'},
-      {v:'BLOQUEIO',titulo:'Bloquear / Não publicar',   cor:'var(--ered)',     dsc:'corrigir no Simulador antes de qualquer publicação'},
-      {v:'ABANDONAR',titulo:'Abandonar',                cor:'var(--emuted)',   dsc:'sem viabilidade comercial'}
+      {v:'PUBLICAR',titulo:'Publicar / Alvo prioritário', cor:'var(--eemerald)', dsc:'pronto para o ar — margem real e giro favoráveis'},
+      {v:'REDUZIR', titulo:'Reduzir preço',               cor:'#38bdf8',         dsc:'acima do piso, cortar p/ ganhar Buy Box'},
+      {v:'AUMENTAR',titulo:'Aumentar preço',              cor:'var(--eamber)',   dsc:'abaixo do piso, dá para subir'},
+      {v:'SEGURAR', titulo:'Analisar / Segurar',          cor:'var(--eamber)',   dsc:'validar antes — margem fina ou marca de risco'},
+      {v:'BLOQUEAR',titulo:'Bloquear / Não publicar',     cor:'var(--ered)',     dsc:'corrigir preço/custo no Simulador antes'},
+      {v:'ABANDONAR',titulo:'Abandonar',                  cor:'var(--emuted)',   dsc:'sem viabilidade comercial'}
     ];
     const maxIdx=Math.max(1,...a.map(x=>x.indice||0));
     let html='';
