@@ -3551,10 +3551,10 @@ const ecomAlvo={
   async load(){
     try{ const rv=await sb.from('ecom_vendas').select('produto,produto_codigo,uf,receita_bruta,resultado_liquido,status,data_solicitacao');
       const ra=await sb.from('ecom_anuncios').select('*').order('data_publicacao',{ascending:false});
-      const rp=await sb.from('ecom_produtos').select('codigo,marca,modelo');
+      const rp=await sb.from('ecom_produtos').select('codigo,produto,marca,modelo');
       if(rv.error) throw rv.error; if(ra.error) throw ra.error;
       this.vendas=(rv.data||[]).filter(v=>v.status!=='cancelado'); this.anuncios=ra.data||[];
-      this.catNome={}; (rp.data||[]).forEach(p=>{ if(p.codigo) this.catNome[p.codigo]=[p.marca,p.modelo].filter(Boolean).join(' '); });
+      this.catNome={}; (rp.data||[]).forEach(p=>{ if(p.codigo) this.catNome[p.codigo]=[p.produto,p.marca,p.modelo].filter(Boolean).join(' '); });
       this.renderQuad(); this.renderImport(); this.renderReg(); this.renderCat(); this.renderAnuncios(); this.fillComando(); this.loadAnalise();
     }catch(e){ this._g('al-quad').innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
   },
@@ -3677,7 +3677,7 @@ const ecomAlvo={
           +'<td style="padding:4px 6px;color:var(--emuted2)">'+(i+1)+'º</td>'
           +'<td style="padding:4px 6px;color:var(--etxt)"><b>'+(x.codigo||'')+'</b>'+(this.catNome[x.codigo]?' <span style="color:var(--emuted);font-weight:400">· '+this.catNome[x.codigo]+'</span>':'')+'</td>'
           +'<td style="padding:4px 6px">'+bar+'</td>'
-          +'<td style="padding:4px 6px;text-align:right;font-weight:600;color:'+((x.margem_liq||0)>=45?'var(--eemerald)':(x.margem_liq||0)<20?'var(--eamber)':'var(--etxt)')+'">'+(x.margem_liq!=null?Math.round(x.margem_liq)+'%':'—')+'</td>'
+          +'<td style="padding:4px 6px;text-align:right;font-weight:700;color:'+((x.margem_liq||0)>=18?'var(--eemerald)':(x.margem_liq||0)<8?'var(--eamber)':'var(--etxt)')+'">'+(x.margem_liq!=null?(Math.round(x.margem_liq*10)/10)+'%':'—')+'</td>'
           +'<td style="padding:4px 6px;text-align:center;color:var(--eemerald)">'+(x.giro?'●'.repeat(x.giro):'—')+'</td>'
           +'<td style="padding:4px 6px;text-align:right;color:var(--etxt)">'+(x.preco_sugerido!=null?'R$'+Math.round(x.preco_sugerido):'—')+'</td>'
           +'<td style="padding:4px 6px;color:var(--emuted)">'+(x.observacao||'')+(x.risco?' <span style="color:var(--ered)">· '+x.risco+'</span>':'')+'</td>'
