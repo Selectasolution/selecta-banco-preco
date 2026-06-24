@@ -1043,20 +1043,41 @@
     <div id="ecom-sub-alvo" class="ecom-subpanel" style="display:none">
       <p class="esub">Estudo de sortimento: o ML valida demanda, e o que se prova vira candidato a importação. "Mais vendido" e "mais lucrativo" ficam separados de propósito.</p>
       <div class="ecard">
-        <h3>Quadrante de decisão <span class="faint" style="font-weight:400;font-size:12px">· margem × saída</span></h3>
+        <h3>Projeção Sistema <span class="faint" style="font-weight:400;font-size:12px">· margem × saída (o Alvo cruzando suas vendas)</span></h3>
         <div id="al-quad"><div class="ph">carregando…</div></div>
       </div>
-      <div class="vgrid" style="margin-top:18px">
-        <div class="ecard">
-          <h3>Candidatos a importação</h3>
+
+      <div class="ecard" style="margin-top:18px;border-color:var(--eemerald);border-width:1px">
+        <h3>Análise Comercial <span class="faint" style="font-weight:400;font-size:12px">· estratégia de mercado projetada pelo chat</span></h3>
+        <div id="al-an-head"></div>
+        <div id="al-an-body"><div class="ph">Nenhuma análise carregada. Use o Comando (abaixo) no chat e cole o JSON de volta aqui.</div></div>
+        <details style="margin-top:12px">
+          <summary style="cursor:pointer;color:var(--emuted2);font-size:11.5px;user-select:none">importar análise (colar JSON)</summary>
+          <textarea id="al-an-json" placeholder='Cole aqui o JSON da análise (formato {"lote":...,"itens":[...]})' style="width:100%;min-height:140px;margin-top:8px;background:var(--epanel2);color:var(--etxt);border:1px solid var(--eborder);border-radius:10px;padding:12px;font:11.5px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical" spellcheck="false"></textarea>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">
+            <button class="vbtn" id="al-an-import">Importar para a Alvo</button>
+            <button class="vbtn sm" id="al-an-clear" style="background:var(--epanel3);color:var(--emuted)">Limpar análises</button>
+            <span class="vmsg" id="al-an-msg"></span>
+          </div>
+        </details>
+      </div>
+
+      <div class="vgrid3" style="margin-top:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div class="ecard" style="padding:13px">
+          <h3 style="font-size:13px">Candidatos a importação</h3>
           <div id="al-import"></div>
-          <p class="hint" style="font-size:11px;color:var(--emuted2);margin-top:10px">Sobem aqui os produtos validados (saída + margem acima da média). A margem importada estimada depende do custo da DUIMP — o botão leva ao estudo no Import OS.</p>
+          <p class="hint" style="font-size:10px;color:var(--emuted2);margin-top:8px">Validados (saída + margem acima da média). Margem importada depende da DUIMP — botão leva ao Import OS.</p>
         </div>
-        <div class="ecard">
-          <h3>Onde vende mais <span class="faint" style="font-weight:400;font-size:12px">· por região</span></h3>
+        <div class="ecard" style="padding:13px">
+          <h3 style="font-size:13px">Vende mais <span class="faint" style="font-weight:400;font-size:11px">· região</span></h3>
           <div id="al-reg"></div>
         </div>
+        <div class="ecard" style="padding:13px">
+          <h3 style="font-size:13px">Vende mais <span class="faint" style="font-weight:400;font-size:11px">· categoria</span></h3>
+          <div id="al-cat"></div>
+        </div>
       </div>
+
       <div class="ecard" style="margin-top:18px">
         <h3>Controle de venda por anúncio</h3>
         <div class="vgrid">
@@ -3530,7 +3551,7 @@ const ecomAlvo={
       const ra=await sb.from('ecom_anuncios').select('*').order('data_publicacao',{ascending:false});
       if(rv.error) throw rv.error; if(ra.error) throw ra.error;
       this.vendas=(rv.data||[]).filter(v=>v.status!=='cancelado'); this.anuncios=ra.data||[];
-      this.renderQuad(); this.renderImport(); this.renderReg(); this.renderAnuncios(); this.fillComando();
+      this.renderQuad(); this.renderImport(); this.renderReg(); this.renderCat(); this.renderAnuncios(); this.fillComando(); this.loadAnalise();
     }catch(e){ this._g('al-quad').innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
   },
   porProduto(){ const m={};
@@ -3570,6 +3591,16 @@ const ecomAlvo={
       return '<div class="al-reg"><div class="rn">'+r+'</div><div class="rt">'+(e?e[0]:'—')+' · '+pct+'%</div><div class="bar"><i style="width:'+pct+'%"></i></div></div>';
     }).join('')+'</div>';
   },
+  renderCat(){ const box=this._g('al-cat'); if(!box) return; const cat={}; let tot=0;
+    // mapa código->categoria a partir do que a análise trouxe; fallback: prefixo do código
+    const catDe=(cod)=>{ if(!cod) return '—'; const m=cod.match(/^([A-Z]+)-/); return m?m[1]:'—'; };
+    this.vendas.forEach(v=>{ const c=catDe(v.produto_codigo); if(c==='—') return; tot++; cat[c]=cat[c]||{n:0,rec:0}; cat[c].n++; cat[c].rec+=+v.receita_bruta||0; });
+    if(!tot){ box.innerHTML='<div class="ph">sem vendas com categoria ainda — o gráfico cresce conforme você vende.</div>'; return; }
+    const keys=Object.keys(cat).sort((a,b)=>cat[b].n-cat[a].n);
+    box.innerHTML='<div class="al-regs">'+keys.map(c=>{ const pct=Math.round(cat[c].n/tot*100);
+      return '<div class="al-reg"><div class="rn">'+c+'</div><div class="rt">'+cat[c].n+' venda(s) · '+pct+'%</div><div class="bar"><i style="width:'+pct+'%"></i></div></div>';
+    }).join('')+'</div>';
+  },
   renderAnuncios(){ const box=this._g('al-anuncios');
     if(!this.anuncios.length){ box.innerHTML='<div class="ph">nenhum anúncio cadastrado</div>'; return; }
     const hoje=new Date();
@@ -3587,6 +3618,107 @@ const ecomAlvo={
     }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
   },
   async remover(id){ if(!confirm('Remover este anúncio? (não afeta as vendas)')) return; try{ const r=await sb.from('ecom_anuncios').delete().eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } },
+  analise:[], analiseLote:null,
+  async loadAnalise(){
+    try{ const r=await sb.from('ecom_analise_alvo').select('*').order('data_analise',{ascending:false}).order('indice',{ascending:false});
+      if(r.error) throw r.error;
+      const all=r.data||[];
+      if(!all.length){ this.analise=[]; this.analiseLote=null; this.renderAnalise(); this.bindAnalise(); return; }
+      const lote=all[0].lote; this.analiseLote=lote;
+      this.analise=all.filter(x=>x.lote===lote);
+      this.renderAnalise(); this.bindAnalise();
+    }catch(e){ const b=this._g('al-an-body'); if(b) b.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar análise: '+e.message+'</div>'; this.bindAnalise(); }
+  },
+  bindAnalise(){
+    const imp=this._g('al-an-import'); if(imp && !imp._b){ imp._b=true; imp.addEventListener('click',()=>this.importarAnalise()); }
+    const cl=this._g('al-an-clear'); if(cl && !cl._b){ cl._b=true; cl.addEventListener('click',()=>this.limparAnalise()); }
+  },
+  _vcolor(v){ return v==='LANCAR'?'var(--eemerald)':v==='SEGURAR'?'var(--eamber)':v==='BLOQUEIO'?'var(--ered)':v==='ABANDONAR'?'var(--emuted)':'var(--etxt)'; },
+  _tend(t){ return t==='SUBINDO'?'↑ subindo':t==='CAINDO'?'↓ caindo':t==='ESTAVEL'?'→ estável':''; },
+  renderAnalise(){
+    const head=this._g('al-an-head'), body=this._g('al-an-body');
+    if(!this.analise.length){ if(head) head.innerHTML=''; if(body) body.innerHTML='<div class="ph">Nenhuma análise carregada. Cole o JSON devolvido pelo chat para a Alvo processar suas conclusões.</div>'; return; }
+    const a=this.analise; const d=a[0];
+    const obs={}; this.vendas.forEach(v=>{ const k=v.produto_codigo; if(!k) return; obs[k]=(obs[k]||0)+1; });
+    head.innerHTML='<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:8px 12px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:9px">'
+      +'<span style="font-size:12px;color:var(--emuted)">Análise de <b style="color:var(--etxt)">'+(d.data_analise||'—')+'</b></span>'
+      +(d.data_export?'<span style="font-size:12px;color:var(--emuted)">· export <b style="color:var(--etxt)">'+d.data_export+'</b></span>':'')
+      +'<span style="font-size:12px;color:var(--emuted)">· <b style="color:var(--etxt)">'+a.length+'</b> SKUs</span>'
+      +'<span style="font-size:11px;color:var(--emuted2);margin-left:auto">leitura externa de mercado · opinião datada, não venda real</span></div>';
+    // agrupar por AÇÃO (ranking): LANÇAR (verde) → SEGURAR (amarelo) → BLOQUEIO (vermelho)
+    const GRUPOS=[
+      {v:'LANCAR',  titulo:'Lançar / Alvo prioritário', cor:'var(--eemerald)', dsc:'melhor projeção — margem e giro favoráveis'},
+      {v:'SEGURAR', titulo:'Analisar / Segurar',        cor:'var(--eamber)',   dsc:'validar antes — margem fina, marca de risco ou ajuste de preço'},
+      {v:'BLOQUEIO',titulo:'Bloquear / Não publicar',   cor:'var(--ered)',     dsc:'corrigir no Simulador antes de qualquer publicação'},
+      {v:'ABANDONAR',titulo:'Abandonar',                cor:'var(--emuted)',   dsc:'sem viabilidade comercial'}
+    ];
+    const maxIdx=Math.max(1,...a.map(x=>x.indice||0));
+    let html='';
+    GRUPOS.forEach(g=>{
+      const items=a.filter(x=>(x.veredito||'').toUpperCase()===g.v).sort((x,y)=>(y.indice||0)-(x.indice||0));
+      if(!items.length) return;
+      html+='<div style="margin-bottom:18px">';
+      html+='<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:7px;border-left:3px solid '+g.cor+';padding-left:8px">'
+        +'<span style="font-size:13.5px;font-weight:700;color:'+g.cor+'">'+g.titulo+'</span>'
+        +'<span style="font-size:11px;color:var(--emuted2)">'+items.length+' SKUs · '+g.dsc+'</span></div>';
+      html+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+      html+='<tr style="color:var(--emuted2);font-size:10px;text-transform:uppercase;letter-spacing:.04em"><td style="padding:3px 6px">#</td><td style="padding:3px 6px">Código</td><td style="padding:3px 6px">Cat</td><td style="padding:3px 6px;width:130px">Índice</td><td style="padding:3px 6px;text-align:right">Margem</td><td style="padding:3px 6px;text-align:center">Giro</td><td style="padding:3px 6px;text-align:right">Sug.</td><td style="padding:3px 6px">Observação</td><td style="padding:3px 6px;text-align:center">Vend.</td></tr>';
+      items.forEach((x,i)=>{
+        const nv=obs[x.codigo]||0;
+        const w=Math.round((x.indice||0)/maxIdx*100);
+        const bar='<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:var(--epanel3);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+g.cor+'"></div></div><span style="font-size:10.5px;color:var(--etxt);min-width:20px">'+(x.indice!=null?Math.round(x.indice):'—')+'</span></div>';
+        html+='<tr style="border-top:1px solid var(--eborder)">'
+          +'<td style="padding:4px 6px;color:var(--emuted2)">'+(i+1)+'º</td>'
+          +'<td style="padding:4px 6px;color:var(--etxt)"><b>'+(x.codigo||'')+'</b></td>'
+          +'<td style="padding:4px 6px;color:var(--emuted)">'+(x.categoria||'')+'</td>'
+          +'<td style="padding:4px 6px">'+bar+'</td>'
+          +'<td style="padding:4px 6px;text-align:right;font-weight:600;color:'+((x.margem_liq||0)>=45?'var(--eemerald)':(x.margem_liq||0)<20?'var(--eamber)':'var(--etxt)')+'">'+(x.margem_liq!=null?Math.round(x.margem_liq)+'%':'—')+'</td>'
+          +'<td style="padding:4px 6px;text-align:center;color:var(--eemerald)">'+(x.giro?'●'.repeat(x.giro):'—')+'</td>'
+          +'<td style="padding:4px 6px;text-align:right;color:var(--etxt)">'+(x.preco_sugerido!=null?'R$'+Math.round(x.preco_sugerido):'—')+'</td>'
+          +'<td style="padding:4px 6px;color:var(--emuted)">'+(x.observacao||'')+(x.risco?' <span style="color:var(--ered)">· '+x.risco+'</span>':'')+'</td>'
+          +'<td style="padding:4px 6px;text-align:center;color:'+(nv?'var(--eemerald)':'var(--emuted2)')+'">'+(nv||'·')+'</td>'
+          +'</tr>';
+      });
+      html+='</table></div>';
+    });
+    body.innerHTML=html;
+  },
+  async importarAnalise(){
+    const ta=this._g('al-an-json'), msg=this._g('al-an-msg'); msg.className='vmsg';
+    let payload;
+    try{ payload=JSON.parse(ta.value.trim()); }
+    catch(e){ msg.className='vmsg err'; msg.textContent='JSON inválido: '+e.message; return; }
+    const itens=Array.isArray(payload)?payload:(payload.itens||payload.items||[]);
+    if(!itens.length){ msg.className='vmsg err'; msg.textContent='Nenhum item encontrado no JSON.'; return; }
+    const hoje=new Date().toISOString().slice(0,10);
+    const lote=(payload.lote)||(payload.data_analise)||hoje;
+    const data_analise=(payload.data_analise)||hoje;
+    const data_export=(payload.data_export)||null;
+    const rows=itens.map(it=>({
+      lote, data_analise, data_export,
+      codigo:(it.codigo||'').toUpperCase(), categoria:it.categoria||null,
+      indice:it.indice!=null?+it.indice:null, margem_liq:it.margem_liq!=null?+it.margem_liq:(it.margem!=null?+it.margem:null),
+      giro:it.giro!=null?+it.giro:null, preco_sugerido:it.preco_sugerido!=null?+it.preco_sugerido:null,
+      piso_mercado:it.piso_mercado!=null?+it.piso_mercado:null, veredito:it.veredito||null,
+      observacao:it.observacao||it.obs||null, tendencia:it.tendencia||null, concorrencia:it.concorrencia||null,
+      papel:it.papel||null, risco:it.risco||null
+    }));
+    const invalid=rows.filter(r=>!r.codigo);
+    if(invalid.length){ msg.className='vmsg err'; msg.textContent=invalid.length+' item(ns) sem código — corrija o JSON.'; return; }
+    try{
+      // substitui o lote: apaga linhas do mesmo lote antes de inserir (re-importação limpa)
+      await sb.from('ecom_analise_alvo').delete().eq('lote',lote);
+      const r=await sb.from('ecom_analise_alvo').insert(rows); if(r.error) throw r.error;
+      msg.className='vmsg ok'; msg.textContent='✓ '+rows.length+' SKUs importados (lote '+lote+')';
+      ta.value=''; this.loadAnalise();
+    }catch(e){ msg.className='vmsg err'; msg.textContent='Erro ao importar: '+e.message; }
+  },
+  async limparAnalise(){
+    if(!this.analiseLote){ return; }
+    if(!confirm('Apagar a análise do lote "'+this.analiseLote+'"? (não afeta produtos nem vendas)')) return;
+    try{ const r=await sb.from('ecom_analise_alvo').delete().eq('lote',this.analiseLote); if(r.error) throw r.error; this.loadAnalise(); }
+    catch(e){ alert('Erro: '+e.message); }
+  },
   cmdTexto:"COMANDO — Inteligência Comercial da Alvo · Selecta Solution\n(colar no chat junto com os anexos)\n\nClaude, assuma o papel de analista sênior de mercado e-commerce da Selecta Solution. Não me dê só números — me dê o que eu, como gestor, preciso para decidir onde colocar dinheiro e atenção. Pense como quem responde a um CEO.\n\nANEXOS DESTA MENSAGEM:\n- Export do catálogo (ecom_produtos): produto, marca, modelo, categoria, código, preço, custo, média, menor.\n- [Quando houver] Export de vendas reais da Alvo (ecom_vendas): código, UF, receita, resultado líquido, status, data.\n\n----------------------------------------------------------------\nPARTE A — MARGEM REAL (do meu dado)\nPara cada SKU, calcular margem líquida vendendo no piso defensável de mercado, descontando taxa ML (~12% Clássico). Custo vem do meu export — nunca estimar.\n\nPARTE B — PESQUISA DE MERCADO ML (seu trabalho, com rigor de especialista)\n1. Piso DEFENSÁVEL, não o menor preço. Descartar vendedores fake, preço fantasma (baixo demais sem nota/estoque/reputação), frete embutido escondido, dropshipping de 40 dias. Piso válido = menor preço entre vendedores reais e confiáveis (reputação verde, MercadoLíder de preferência, estoque nacional). Dizer explicitamente o que descartou e por quê.\n2. Densidade competitiva. Quantos vendedores sérios disputam cada item. Sinalizar nichos de baixa concorrência (Selecta manda no preço) vs. red ocean (guerra de Buy Box).\n3. Tendência da categoria. Subindo, estável ou morrendo? (Ex.: SATA em declínio vs. NVMe, Wi-Fi 6 vs. AC, câmeras IP em alta.) Não recomendar estoque pesado em categoria em queda, mesmo com margem boa.\n4. Volume e giro reais para fundamentar o giro 1–5 — do volume observado no ML, não suposição.\n\nPARTE C — ESTRATÉGIA DE PREÇO (pense como CEO)\n- Produto que recruta vs. produto que lucra: identificar ímãs de tráfego (vendem barato, trazem cliente) e separá-los dos que sustentam margem. Estratégia de preço oposta para cada.\n- Cenários: quando fizer diferença, mostrar \"a R$ X acontece isso, a R$ Y acontece aquilo\". Apontar faixa morta de preço se existir.\n- Âncora de marca: onde a marca sustenta preço alto (Apple, Ubiquiti, Logitech premium) vs. onde só preço agressivo fura a concorrência.\n\nPARTE D — MAPA DE RISCO\nSinalizar por SKU: histórico de RMA/devolução (Macrovip = sempre teto amarelo, nunca verde), dependência de homologação que não tenho (ANATEL/INMETRO = bloqueio), ticket alto exposto a chargeback. Risco não é só margem negativa.\n\nPARTE E — CRUZAMENTO TRIPLO (quando houver export de vendas)\nCruzar: meu portfólio (custo real) x minha realidade de venda (Alvo) x realidade de mercado (sua pesquisa). O ouro está na divergência: onde a venda real contradiz o que o mercado sugeria. Apontar e interpretar.\n\n----------------------------------------------------------------\nRANKING\nDentro de cada categoria, ordenar pelo índice combinado = 50% margem líquida (satura em 60%) + 50% giro. Observação de uma frase por SKU (preço-vs-mercado + margem + alerta estratégico se houver).\n\nREGRAS INVIOLÁVEIS\n- Nunca inventar número. Dado que eu não forneci (margem importada, custo DUIMP) = fora ou marcado pendente.\n- Piso fantasma é descartado e reportado, nunca usado como referência.\n- Macrovip = sempre teto amarelo. Apple/sem-ANATEL = bloqueio. Preço defasado no export = BLOQUEIO (corrigir no Simulador).\n- Datar a análise (data de hoje + data do export).\n\nENTREGA\n1. PDF marca Selecta, para leitura e aprovação: ranking por categoria, campeões, observações, mapa de risco, sugestões de preço, leitura de tendência.\n2. Após meu OK, JSON no formato que a Alvo processa: código, categoria, índice, margem líquida, giro, observação, veredito, preço sugerido, data da análise.\n\nAguardar meu OK no PDF antes de gerar o JSON.\n",
   fillComando(){ const t=this._g('al-cmd-text'); if(t && !t.value) t.value=this.cmdTexto;
     const d=this._g('al-cmd-data'); if(d && !d.value) d.value=new Date().toISOString().slice(0,10);
