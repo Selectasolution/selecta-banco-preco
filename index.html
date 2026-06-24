@@ -1075,6 +1075,16 @@
           </div>
         </div>
       </div>
+      <div class="ecard" style="margin-top:18px">
+        <h3>Comando de Análise Comercial <span class="faint" style="font-weight:400;font-size:12px">· briefing para o chat</span></h3>
+        <p class="hint" style="font-size:12px;color:var(--emuted);margin:2px 0 12px;line-height:1.5">Fluxo: exporte o catálogo do Simulador (e, se quiser, as vendas da Alvo) → cole o comando abaixo no chat com os anexos → receba o PDF de análise → dê o OK → receba o JSON para a Alvo processar. Este texto orienta a análise como um briefing de CEO para analista sênior de mercado.</p>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
+          <div class="efield"><label>Data desta versão do comando</label><input class="vinput mono" id="al-cmd-data" type="date" style="width:170px"></div>
+          <button class="vbtn" id="al-cmd-copy">📋 Copiar comando</button>
+          <span class="vmsg" id="al-cmd-msg" style="align-self:center"></span>
+        </div>
+        <textarea id="al-cmd-text" readonly style="width:100%;min-height:340px;background:var(--epanel2);color:var(--etxt);border:1px solid var(--eborder);border-radius:10px;padding:14px;font:12.5px/1.55 ui-monospace,Menlo,Consolas,monospace;resize:vertical" spellcheck="false"></textarea>
+      </div>
     </div>
 
   </section>
@@ -3517,7 +3527,7 @@ const ecomAlvo={
       const ra=await sb.from('ecom_anuncios').select('*').order('data_publicacao',{ascending:false});
       if(rv.error) throw rv.error; if(ra.error) throw ra.error;
       this.vendas=(rv.data||[]).filter(v=>v.status!=='cancelado'); this.anuncios=ra.data||[];
-      this.renderQuad(); this.renderImport(); this.renderReg(); this.renderAnuncios();
+      this.renderQuad(); this.renderImport(); this.renderReg(); this.renderAnuncios(); this.fillComando();
     }catch(e){ this._g('al-quad').innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
   },
   porProduto(){ const m={};
@@ -3573,7 +3583,16 @@ const ecomAlvo={
       ['al-cod','al-tit','al-preco','al-pub'].forEach(i=>this._g(i).value=''); msg.className='vmsg ok'; msg.textContent='✓ Anúncio cadastrado'; setTimeout(()=>msg.textContent='',2500); this.load();
     }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
   },
-  async remover(id){ if(!confirm('Remover este anúncio? (não afeta as vendas)')) return; try{ const r=await sb.from('ecom_anuncios').delete().eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } }
+  async remover(id){ if(!confirm('Remover este anúncio? (não afeta as vendas)')) return; try{ const r=await sb.from('ecom_anuncios').delete().eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } },
+  cmdTexto:"COMANDO — Inteligência Comercial da Alvo · Selecta Solution\n(colar no chat junto com os anexos)\n\nClaude, assuma o papel de analista sênior de mercado e-commerce da Selecta Solution. Não me dê só números — me dê o que eu, como gestor, preciso para decidir onde colocar dinheiro e atenção. Pense como quem responde a um CEO.\n\nANEXOS DESTA MENSAGEM:\n- Export do catálogo (ecom_produtos): produto, marca, modelo, categoria, código, preço, custo, média, menor.\n- [Quando houver] Export de vendas reais da Alvo (ecom_vendas): código, UF, receita, resultado líquido, status, data.\n\n----------------------------------------------------------------\nPARTE A — MARGEM REAL (do meu dado)\nPara cada SKU, calcular margem líquida vendendo no piso defensável de mercado, descontando taxa ML (~12% Clássico). Custo vem do meu export — nunca estimar.\n\nPARTE B — PESQUISA DE MERCADO ML (seu trabalho, com rigor de especialista)\n1. Piso DEFENSÁVEL, não o menor preço. Descartar vendedores fake, preço fantasma (baixo demais sem nota/estoque/reputação), frete embutido escondido, dropshipping de 40 dias. Piso válido = menor preço entre vendedores reais e confiáveis (reputação verde, MercadoLíder de preferência, estoque nacional). Dizer explicitamente o que descartou e por quê.\n2. Densidade competitiva. Quantos vendedores sérios disputam cada item. Sinalizar nichos de baixa concorrência (Selecta manda no preço) vs. red ocean (guerra de Buy Box).\n3. Tendência da categoria. Subindo, estável ou morrendo? (Ex.: SATA em declínio vs. NVMe, Wi-Fi 6 vs. AC, câmeras IP em alta.) Não recomendar estoque pesado em categoria em queda, mesmo com margem boa.\n4. Volume e giro reais para fundamentar o giro 1–5 — do volume observado no ML, não suposição.\n\nPARTE C — ESTRATÉGIA DE PREÇO (pense como CEO)\n- Produto que recruta vs. produto que lucra: identificar ímãs de tráfego (vendem barato, trazem cliente) e separá-los dos que sustentam margem. Estratégia de preço oposta para cada.\n- Cenários: quando fizer diferença, mostrar \"a R$ X acontece isso, a R$ Y acontece aquilo\". Apontar faixa morta de preço se existir.\n- Âncora de marca: onde a marca sustenta preço alto (Apple, Ubiquiti, Logitech premium) vs. onde só preço agressivo fura a concorrência.\n\nPARTE D — MAPA DE RISCO\nSinalizar por SKU: histórico de RMA/devolução (Macrovip = sempre teto amarelo, nunca verde), dependência de homologação que não tenho (ANATEL/INMETRO = bloqueio), ticket alto exposto a chargeback. Risco não é só margem negativa.\n\nPARTE E — CRUZAMENTO TRIPLO (quando houver export de vendas)\nCruzar: meu portfólio (custo real) x minha realidade de venda (Alvo) x realidade de mercado (sua pesquisa). O ouro está na divergência: onde a venda real contradiz o que o mercado sugeria. Apontar e interpretar.\n\n----------------------------------------------------------------\nRANKING\nDentro de cada categoria, ordenar pelo índice combinado = 50% margem líquida (satura em 60%) + 50% giro. Observação de uma frase por SKU (preço-vs-mercado + margem + alerta estratégico se houver).\n\nREGRAS INVIOLÁVEIS\n- Nunca inventar número. Dado que eu não forneci (margem importada, custo DUIMP) = fora ou marcado pendente.\n- Piso fantasma é descartado e reportado, nunca usado como referência.\n- Macrovip = sempre teto amarelo. Apple/sem-ANATEL = bloqueio. Preço defasado no export = BLOQUEIO (corrigir no Simulador).\n- Datar a análise (data de hoje + data do export).\n\nENTREGA\n1. PDF marca Selecta, para leitura e aprovação: ranking por categoria, campeões, observações, mapa de risco, sugestões de preço, leitura de tendência.\n2. Após meu OK, JSON no formato que a Alvo processa: código, categoria, índice, margem líquida, giro, observação, veredito, preço sugerido, data da análise.\n\nAguardar meu OK no PDF antes de gerar o JSON.\n",
+  fillComando(){ const t=this._g('al-cmd-text'); if(t && !t.value) t.value=this.cmdTexto;
+    const d=this._g('al-cmd-data'); if(d && !d.value) d.value=new Date().toISOString().slice(0,10);
+    const b=this._g('al-cmd-copy'); if(b && !b._bound){ b._bound=true; b.addEventListener('click',()=>this.copiarComando()); } },
+  copiarComando(){ const t=this._g('al-cmd-text'), m=this._g('al-cmd-msg'); const data=this._g('al-cmd-data').value;
+    const head='# Comando gerado em '+ (data||'(sem data)') +'\n\n'; const full=head+t.value;
+    const done=()=>{ if(m){ m.className='vmsg ok'; m.textContent='✓ Copiado — cole no chat com os anexos'; setTimeout(()=>m.textContent='',3000); } };
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(full).then(done).catch(()=>{ t.select(); document.execCommand('copy'); done(); }); }
+    else { t.select(); document.execCommand('copy'); done(); } },
 };
 $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
