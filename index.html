@@ -891,7 +891,8 @@
         <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px" placeholder="Kingston"></div>
         <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px" placeholder="A400"></div>
         <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:170px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option></select></div>
-        <div class="efield"><label>Faixa de peso <span class="req">*</span></label><select class="ainput" id="ecom-f-peso" style="width:130px"></select></div>
+        <div class="efield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px" placeholder="ex: 320"></div>
+        <div class="efield"><label>Faixa (auto)</label><select class="ainput" id="ecom-f-peso" style="width:130px"></select><span id="ecom-f-peso-warn" style="display:none;font-size:10px;color:var(--eamber);margin-left:6px"></span></div>
         <div class="efield"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
         <div class="efield"><label>Meu preço <span class="req">*</span></label><input class="ainput mono" id="ecom-f-preco" type="number" style="width:90px"></div>
         <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
@@ -2516,6 +2517,8 @@ const ecom = {
   fmt(v){ return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); },
   fmtPct(v){ return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'; },
   pesoLabel(c){ const f=this.PESOS.find(p=>p[0]===c); return f?f[1]:c; },
+  faixaFromPeso(g){ g=parseInt(g,10); if(isNaN(g)||g<=0) return null; if(g<=300) return 'ate300'; if(g<=500) return 'f301_500'; if(g<=1000) return 'f501_1000'; return 'f1001_2000'; },
+  applyPesoG(){ const g=parseInt(this._g('ecom-f-pesog').value,10); const sel=this._g('ecom-f-peso'); const warn=this._g('ecom-f-peso-warn'); const fx=this.faixaFromPeso(g); if(fx&&sel){ sel.value=fx; } if(warn){ if(!isNaN(g)&&g>2000){ warn.style.display='inline'; warn.textContent='⚠ >2kg: faixa travada em 1–2kg (banda real pendente)'; } else { warn.style.display='none'; warn.textContent=''; } } },
   zonaLabel(c){ const z=this.ZONAS.find(x=>x[0]===c); return z?z[1]:c; },
   familia(p){ return ((p||'').trim().split(/\s+/)[0]||'').toUpperCase(); },
 
@@ -2573,6 +2576,7 @@ const ecom = {
     g('ecom-add').addEventListener('click',()=>this.save());
     g('ecom-cancel').addEventListener('click',()=>this.cancelEdit());
     ['ecom-f-preco','ecom-f-custo','ecom-f-peso','ecom-f-tipo'].forEach(id=>{ const el=g(id); if(el) el.addEventListener('input',()=>this.updateFormBreakeven()); });
+    { const pe=g('ecom-f-pesog'); if(pe) pe.addEventListener('input',()=>{ this.applyPesoG(); this.updateFormBreakeven(); }); }
     { const eb=this._g('ecom-export'); if(eb) eb.addEventListener('click',()=>this.exportarCenario()); }
   },
   updateCtx(){ const rep=this.repFactor===1?'reputação cheia':'verde (−50%)'; const s=`${this.zonaLabel(this.selDest)} · ${rep}`;
@@ -2648,10 +2652,10 @@ const ecom = {
     const fr=(this.mtx[this.selDest+'|'+peso]==null?0:this.mtx[this.selDest+'|'+peso])*this.repFactor;
     out.value=this.fmt(this.breakeven(custo,t,fr,pr));
   },
-  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-peso').value='ate300'; this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-categoria').value=''; this._g('ecom-formmsg').textContent=''; this.updateFormBreakeven(); },
+  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const w=this._g('ecom-f-peso-warn'); if(w){ w.style.display='none'; w.textContent=''; } } this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-categoria').value=''; this._g('ecom-formmsg').textContent=''; this.updateFormBreakeven(); },
   edit(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
     this._g('ecom-f-produto').value=it.produto||''; this._g('ecom-f-marca').value=it.marca||''; this._g('ecom-f-modelo').value=it.modelo||'';
-    this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico'; this._g('ecom-f-categoria').value=it.categoria||'';
+    this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico'; this._g('ecom-f-categoria').value=it.categoria||'';
     this._g('ecom-f-preco').value=it.preco; this._g('ecom-f-custo').value=it.custo; this._g('ecom-f-media').value=it.media==null?'':it.media; this._g('ecom-f-menor').value=it.menor==null?'':it.menor;
     this.updateFormBreakeven();
     this.editId=id; this._g('ecom-add').textContent='Salvar alteração'; show('#ecom-cancel'); this._g('ecom-f-produto').focus(); },
@@ -2662,8 +2666,9 @@ const ecom = {
     const categoria=this._g('ecom-f-categoria').value||null;
     if(!produto||preco==null||custo==null||!categoria){ this._g('ecom-formmsg').textContent='Produto, Categoria, Meu preço e Custo são obrigatórios.'; return; }
     this._g('ecom-formmsg').textContent='';
+    const pesog=(()=>{ const v=parseInt(this._g('ecom-f-pesog').value,10); return isNaN(v)?null:v; })();
     const dados={ produto, categoria, marca:this._g('ecom-f-marca').value.trim()||null, modelo:this._g('ecom-f-modelo').value.trim()||null,
-      preco, custo, media:num('ecom-f-media'), menor:num('ecom-f-menor'), peso_faixa:this._g('ecom-f-peso').value, tipo_anuncio:this._g('ecom-f-tipo').value };
+      preco, custo, media:num('ecom-f-media'), menor:num('ecom-f-menor'), peso_g:pesog, peso_faixa:(pesog!=null?this.faixaFromPeso(pesog):this._g('ecom-f-peso').value), tipo_anuncio:this._g('ecom-f-tipo').value };
     if(this.editId){ const idx=this.itens.findIndex(x=>String(x.id)===String(this.editId)); const prev=idx>=0?Object.assign({},this.itens[idx]):null;
       if(idx>=0) this.itens[idx]=Object.assign({},this.itens[idx],dados);
       try{ const r=await sb.from('ecom_produtos').update(Object.assign({},dados,{atualizado_em:new Date().toISOString()})).eq('id',this.editId).select().single(); if(r.error) throw r.error; if(idx>=0&&r.data) this.itens[idx]=r.data; this.cancelEdit(); this.render(); }
