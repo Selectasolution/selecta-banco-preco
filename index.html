@@ -729,6 +729,11 @@
     #tab-ecommerce .ecom-subtab:hover{color:var(--etxt)}
     #tab-ecommerce .ecom-subtab.active{color:var(--etxt);border-bottom-color:var(--eemerald)}
     #tab-ecommerce .ecom-subtab.alvo.active{border-bottom-color:var(--eteal)}
+    #tab-ecommerce .alsubbar{display:flex;gap:8px;align-items:center;margin:6px 0 18px;flex-wrap:wrap}
+    #tab-ecommerce .alsub-btn{background:var(--epanel2);color:var(--emuted);border:1px solid var(--eborder);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all .12s}
+    #tab-ecommerce .alsub-btn:hover{color:var(--etxt);border-color:var(--emuted2)}
+    #tab-ecommerce .alsub-btn.active{background:var(--epanel3);color:var(--etxt);border-color:var(--eteal)}
+    #tab-ecommerce .alsub-btn.cmd{margin-left:auto;border-style:dashed}
     #tab-ecommerce .ph{color:var(--emuted2);font-size:13px;text-align:center;padding:30px 10px}
     #tab-ecommerce .vgrid{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start}
     @media(max-width:900px){#tab-ecommerce .vgrid{grid-template-columns:1fr}}
@@ -1042,6 +1047,14 @@
     </div>
     <div id="ecom-sub-alvo" class="ecom-subpanel" style="display:none">
       <p class="esub">Estudo de sortimento: o ML valida demanda, e o que se prova vira candidato a importação. "Mais vendido" e "mais lucrativo" ficam separados de propósito.</p>
+
+      <div class="alsubbar" id="alsubbar">
+        <button class="alsub-btn active" data-alsub="analise">📊 Análise Comercial</button>
+        <button class="alsub-btn" data-alsub="controle">📈 Controle de venda por anúncio</button>
+        <button class="alsub-btn cmd" data-alsub="comando">📋 Comando</button>
+      </div>
+
+      <div id="alsub-analise" class="alsub">
       <div class="ecard">
         <h3>Projeção Sistema <span class="faint" style="font-weight:400;font-size:12px">· margem × saída (o Alvo cruzando suas vendas)</span></h3>
         <div id="al-quad"><div class="ph">carregando…</div></div>
@@ -1079,7 +1092,9 @@
           <div id="al-cat"></div>
         </div>
       </div>
+      </div><!-- /alsub-analise -->
 
+      <div id="alsub-controle" class="alsub" style="display:none">
       <div class="ecard" style="margin-top:18px">
         <h3>Controle de venda por anúncio</h3>
         <div class="vgrid">
@@ -1098,6 +1113,9 @@
           </div>
         </div>
       </div>
+      </div><!-- /alsub-controle -->
+
+      <div id="alsub-comando" class="alsub" style="display:none">
       <div class="ecard" style="margin-top:18px">
         <h3>Comando de Análise Comercial <span class="faint" style="font-weight:400;font-size:12px">· briefing para o chat</span></h3>
         <p class="hint" style="font-size:12.5px;color:var(--emuted);margin:2px 0 14px;line-height:1.6"><b style="color:var(--etxt)">Fluxo:</b> exporto o catálogo do Simulador (e, se quiser, as vendas da Alvo) → copio o comando → colo no chat com os anexos → recebo o <b>PDF</b> de análise → dou o OK → recebo o <b>JSON</b> para a Alvo processar.</p>
@@ -1111,6 +1129,7 @@
           <textarea id="al-cmd-text" readonly style="width:100%;min-height:300px;margin-top:8px;background:var(--epanel2);color:var(--etxt);border:1px solid var(--eborder);border-radius:10px;padding:14px;font:12.5px/1.55 ui-monospace,Menlo,Consolas,monospace;resize:vertical" spellcheck="false"></textarea>
         </details>
       </div>
+      </div><!-- /alsub-comando -->
     </div>
 
   </section>
@@ -3747,6 +3766,11 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
 (function(){ const c=ecomAlvo._g('al-cadastrar'); if(c) c.addEventListener('click',()=>ecomAlvo.cadastrar());
   const imp=ecomAlvo._g('al-import'); if(imp) imp.addEventListener('click',e=>{ if(e.target.closest('[data-alimport]')) alert('Leva à Mesa de Análise / Import OS para estudar fornecedor e tributação da importação direta (DUIMP).'); });
   const an=ecomAlvo._g('al-anuncios'); if(an) an.addEventListener('click',e=>{ const d=e.target.closest('[data-aldel]'); if(d) ecomAlvo.remover(d.dataset.aldel); });
+  const bar=document.getElementById('alsubbar'); if(bar) bar.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
+    const tgt=b.dataset.alsub;
+    document.querySelectorAll('#ecom-sub-alvo .alsub').forEach(p=>{ p.style.display=(p.id==='alsub-'+tgt)?'':'none'; });
+    bar.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x===b));
+  });
 })();
 (function(){ const c=ecomRelatorios._g('rl-consultar'); if(c) c.addEventListener('click',()=>ecomRelatorios.consultar()); })();
 (function(){
