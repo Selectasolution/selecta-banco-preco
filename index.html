@@ -700,6 +700,7 @@
   #tab-ecommerce table.emain tbody tr:hover{background:#0f1828}
   #tab-ecommerce .eprod{font-weight:600}
   #tab-ecommerce .emodel{color:var(--emuted2);font-size:11px;font-family:var(--emono)}
+  #tab-ecommerce .edesc{color:#fff;font-size:13px;font-family:var(--emono)}
   #tab-ecommerce .ezona{font-size:10.5px;color:var(--eamber);margin-top:2px}
   #tab-ecommerce .cellInput{width:74px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:6px;padding:5px 7px;font-family:var(--emono);font-size:12.5px;text-align:right}
   #tab-ecommerce .cellInput:focus{outline:none;border-color:var(--eaccent)}
@@ -834,8 +835,9 @@
       <h3>Frete real (matriz salva no banco) — cenário <span style="color:var(--eaccent);text-transform:none;letter-spacing:0" id="ecom-frete-ctxtop"></span></h3>
       <div class="frete-grid">
         <div>
-          <div class="selrow"><div class="lab">Destino (rota que você quer precificar)</div>
-            <div class="chips" id="ecom-dest"></div></div>
+          <div class="selrow"><div class="lab">Frete</div>
+            <div style="font-size:11px;color:var(--emuted2);max-width:340px;line-height:1.4">Frete real é <b style="color:var(--eteal)">nacional</b> — um valor por produto, sem variação por região. A zona afeta <b>apenas</b> itens em fallback de matriz. Cenário fixo: Local/NE.</div>
+            <div class="chips" id="ecom-dest" style="display:none"></div></div>
           <div class="selrow"><div class="lab">Reputação</div>
             <div class="chips" id="ecom-rep">
               <span class="chip active" data-r="1">Atual (cheia)</span><span class="chip" data-r="0.5">Verde (−50%)</span>
@@ -2542,7 +2544,12 @@ const ecom = {
     f1:this._n('ecom-fix1')||6.25, f2:this._n('ecom-fix2')||6.50, f3:this._n('ecom-fix3')||6.75 }; },
 
   custoFixoML(P,pr){ if(P<12.50) return P*0.5; if(P<29) return pr.f1; if(P<50) return pr.f2; return pr.f3; },
-  freteDe(it){ const v=this.mtx[this.selDest+'|'+it.peso_faixa]; return (v==null?0:v)*this.repFactor; },
+  freteInfo(it){ const rep=this.repFactor;
+    if(it.frete_real_ml!=null){ const v=Number(it.frete_real_ml); if(!isNaN(v)) return {v:v*rep,src:'real',n:1}; }
+    const irmaos=this.itens.filter(x=>x.categoria===it.categoria && x.peso_faixa===it.peso_faixa && x.frete_real_ml!=null && String(x.id)!==String(it.id)).map(x=>Number(x.frete_real_ml)).filter(v=>!isNaN(v));
+    if(irmaos.length){ const m=irmaos.reduce((a,b)=>a+b,0)/irmaos.length; return {v:m*rep,src:'estim',n:irmaos.length}; }
+    const mv=this.mtx[this.selDest+'|'+it.peso_faixa]; return {v:(mv==null?0:mv)*rep,src:'matriz',n:0}; },
+  freteDe(it){ return this.freteInfo(it).v; },
   breakeven(custo,t,fr,pr){ const c=[];
     if(t<0.5){ const p=custo/(0.5-t); if(p<12.50)c.push(p); }
     [[pr.f1,12.50,29],[pr.f2,29,50],[pr.f3,50,79]].forEach(a=>{ const p=(custo+a[0])/(1-t); if(p>=a[1]&&p<a[2])c.push(p); });
@@ -2594,7 +2601,7 @@ const ecom = {
     { const pe=g('ecom-f-pesog'); if(pe) pe.addEventListener('input',()=>{ this.applyPesoG(); this.updateFormBreakeven(); }); }
     { const eb=this._g('ecom-export'); if(eb) eb.addEventListener('click',()=>this.exportarCenario()); }
   },
-  updateCtx(){ const rep=this.repFactor===1?'reputação cheia':'verde (−50%)'; const s=`${this.zonaLabel(this.selDest)} · ${rep}`;
+  updateCtx(){ const rep=this.repFactor===1?'reputação cheia':'verde (−50%)'; const s=`${rep} · frete real nacional`;
     this._g('ecom-frete-ctx').textContent=s; this._g('ecom-frete-ctxtop').textContent=s; this.updateFormBreakeven(); },
 
   buildMtx(){ const t=this._g('ecom-mtx');
@@ -2627,9 +2634,10 @@ const ecom = {
     const rows=this.itens.map(it=>{ if(!this.isVis(it)) return '';
       const r=this.calc(it); const vsMin=it.menor?(it.preco-it.menor)/it.menor:null; const v=this.veredito(r.regime,r.margem,r.margemPct,vsMin);
       const mord=r.mordida*100; const mc=mord>=40?'mneg':'';
-      const frCell=r.regime==='fixa'?`<span class="gratis">grátis ML<small>fixo ${this.fmt(r.custoFixo)}</small></span>`:this.fmt(r.freteItem);
+      const _fi=this.freteInfo(it); const _smap={real:['REAL','var(--eteal)'],estim:['ESTIM'+(_fi.n?'·'+_fi.n:''),'var(--eaccent)'],matriz:['MATRIZ','var(--emuted2)']}; const _sm=_smap[_fi.src]||_smap.matriz; const srcTag=r.regime==='fixa'?'':` <span style="font-family:var(--emono);font-size:9px;color:${_sm[1]};border:1px solid var(--eborder);border-radius:4px;padding:0 4px;margin-left:4px">${_sm[0]}</span>`;
+      const frCell=r.regime==='fixa'?`<span class="gratis">grátis ML<small>fixo ${this.fmt(r.custoFixo)}</small></span>`:this.fmt(r.freteItem)+srcTag;
       const zonaAlert=r.zona!=null?`<div class="ezona">⚠ Zona-vale: a R$78,99 sobra ${this.fmt(r.zona)} a mais</div>`:'';
-      const modeloSub=it.modelo?`<div class="emodel">${it.modelo}</div>`:'';
+      const modeloSub=it.modelo?`<div class="edesc">${it.modelo}</div>`:'';
       const tipoTag=it.tipo_anuncio==='premium'?' <span class="emodel">· Premium</span>':'';
       return `<tr>
         <td class="l"><span class="eprod">${it.produto}</span>${it.codigo?`<span style="font-family:var(--emono);font-size:11px;color:var(--eteal);background:var(--epanel2);border:1px solid var(--eborder);border-radius:5px;padding:1px 6px;margin-left:6px">${it.codigo}</span>`:`<span style="font-size:10px;color:var(--eamber);margin-left:6px">sem código</span>`} · ${it.marca||''}${tipoTag}${modeloSub}<div class="emodel">${this.pesoLabel(it.peso_faixa)}</div>${zonaAlert}</td>
@@ -2664,7 +2672,8 @@ const ecom = {
     const comPct=(this._g('ecom-f-tipo').value==='premium'?pr.comP:pr.comC)/100;
     const t=comPct+pr.imp/100+pr.outros/100+pr.colchao/100;
     const peso=this._g('ecom-f-peso').value;
-    const fr=(this.mtx[this.selDest+'|'+peso]==null?0:this.mtx[this.selDest+'|'+peso])*this.repFactor;
+    const cat=this._g('ecom-f-categoria').value||null;
+    const fr=this.freteInfo({categoria:cat,peso_faixa:peso,frete_real_ml:null,id:this.editId}).v;
     out.value=this.fmt(this.breakeven(custo,t,fr,pr));
   },
   clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const w=this._g('ecom-f-peso-warn'); if(w){ w.style.display='none'; w.textContent=''; } } this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-categoria').value=''; this._g('ecom-formmsg').textContent=''; this.updateFormBreakeven(); },
