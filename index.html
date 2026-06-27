@@ -3803,17 +3803,17 @@ const ecomAlvo={
         +'<span style="font-size:13.5px;font-weight:700;color:'+g.cor+'">'+g.titulo+'</span>'
         +'<span style="font-size:11px;color:var(--emuted2)">'+items.length+' SKUs · '+g.dsc+'</span></div>';
       html+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
-      html+='<tr style="color:var(--emuted2);font-size:10px;text-transform:uppercase;letter-spacing:.04em"><td style="padding:3px 6px">#</td><td style="padding:3px 6px">Produto</td><td style="padding:3px 6px;text-align:center">Função</td><td style="padding:3px 6px;width:110px">Índice</td><td style="padding:3px 6px;text-align:right" title="Margem real do Simulador (imposto, frete, taxa ML, custo NF)">Margem ℹ</td><td style="padding:3px 6px;text-align:right">Sug.</td><td style="padding:3px 6px">Observação + gatilho</td><td style="padding:3px 6px;text-align:center">Vend.</td></tr>';
+      html+='<tr style="color:var(--emuted2);font-size:10px;text-transform:uppercase;letter-spacing:.04em"><td style="padding:3px 6px">#</td><td style="padding:3px 6px">Produto</td><td style="padding:3px 6px;text-align:center">Função</td><td style="padding:3px 6px;text-align:center">Índice</td><td style="padding:3px 6px;text-align:right" title="Margem real do Simulador (imposto, frete, taxa ML, custo NF)">Margem ℹ</td><td style="padding:3px 6px;text-align:right">Sug.</td><td style="padding:3px 6px">Observação + gatilho</td><td style="padding:3px 6px;text-align:center">Vend.</td></tr>';
       items.forEach((x,i)=>{
         const nv=obs[x.codigo]||0;
         const w=Math.round((x.indice||0)/maxIdx*100);
-        const bar='<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:var(--epanel3);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+g.cor+'"></div></div><span style="font-size:10.5px;color:var(--etxt);min-width:20px">'+(x.indice!=null?Math.round(x.indice):'—')+'</span></div>';
+        const bar='<span style="font-weight:700;font-size:13px;color:'+g.cor+'">'+(x.indice!=null?Math.round(x.indice):'—')+'</span>';
         const funcao=(x.papel||'').toUpperCase();
         html+='<tr style="border-top:1px solid var(--eborder)">'
           +'<td style="padding:4px 6px;color:var(--emuted2)">'+(i+1)+'º</td>'
           +'<td style="padding:4px 6px;color:var(--etxt)"><b'+(pub.has(x.codigo)?' style="color:var(--eemerald)" title="✓ publicado no ML"':'')+'>'+(x.codigo||'')+'</b>'+(this.catNome[x.codigo]?' <span style="color:var(--emuted);font-weight:400">· '+this.catNome[x.codigo]+'</span>':'')+'</td>'
           +'<td style="padding:4px 6px;text-align:center">'+(funcao?'<span style="font-size:9.5px;font-weight:700;color:'+fcolor(funcao)+';border:1px solid '+fcolor(funcao)+';border-radius:5px;padding:1px 5px;white-space:nowrap">'+funcao+'</span>':'—')+'</td>'
-          +'<td style="padding:4px 6px">'+bar+'</td>'
+          +'<td style="padding:4px 6px;text-align:center">'+bar+'</td>'
           +'<td style="padding:4px 6px;text-align:right;font-weight:700;color:'+((x.margem_liq||0)>=18?'var(--eemerald)':(x.margem_liq||0)<8?'var(--eamber)':'var(--etxt)')+'">'+(x.margem_liq!=null?(Math.round(x.margem_liq*10)/10)+'%':'—')+'</td>'
           +'<td style="padding:4px 6px;text-align:right;color:var(--etxt)">'+(x.preco_sugerido!=null?'R$'+Math.round(x.preco_sugerido):'—')+'</td>'
           +'<td style="padding:4px 6px;color:var(--emuted)">'+(x.observacao||'')+(x.gatilho?' <span style="color:var(--emuted2)">⟳ revisa se: '+x.gatilho+'</span>':'')+(x.risco?' <span style="color:var(--ered)">· '+x.risco+'</span>':'')+'</td>'
