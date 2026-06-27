@@ -3594,10 +3594,10 @@ const ecomAlvo={
   async load(){
     try{ const rv=await sb.from('ecom_vendas').select('produto,produto_codigo,uf,receita_bruta,resultado_liquido,status,data_solicitacao');
       const ra=await sb.from('ecom_anuncios').select('*').order('data_publicacao',{ascending:false});
-      const rp=await sb.from('ecom_produtos').select('codigo,produto,marca,modelo');
+      const rp=await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,preco');
       if(rv.error) throw rv.error; if(ra.error) throw ra.error;
       this.vendas=(rv.data||[]).filter(v=>v.status!=='cancelado'); this.anuncios=ra.data||[];
-      this.catNome={}; (rp.data||[]).forEach(p=>{ if(p.codigo) this.catNome[p.codigo]=[p.produto,p.marca,p.modelo].filter(Boolean).join(' '); });
+      this.catNome={}; this.catPreco={}; (rp.data||[]).forEach(p=>{ if(p.codigo){ this.catNome[p.codigo]=[p.produto,p.marca,p.modelo].filter(Boolean).join(' '); this.catPreco[p.codigo]=p.preco; } });
       await this.loadResultados();
       this.renderImport(); this.renderAnuncios(); this.fillComando(); this.fillComandoResultado(); this.loadAnalise();
     }catch(e){ const b=this._g('al-anuncios'); if(b) b.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
@@ -3772,6 +3772,7 @@ const ecomAlvo={
     const nameByCod={}; Object.keys(this.catNome||{}).forEach(k=>{ const n=norm(k); if(n) nameByCod[n]=this.catNome[k]; });
     const pub=new Set((this.anuncios||[]).map(an=>norm(an.produto_codigo)).filter(Boolean));
     const precoAtual={}; (this.anuncios||[]).forEach(an=>{ const k=norm(an.produto_codigo); if(k && an.preco!=null) precoAtual[k]=an.preco; });
+    const catPrecoN={}; Object.keys(this.catPreco||{}).forEach(k=>{ const n=norm(k); if(n) catPrecoN[n]=this.catPreco[k]; });
     head.innerHTML='<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:8px 12px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:9px">'
       +'<span style="font-size:12px;color:var(--emuted)">Análise de <b style="color:var(--etxt)">'+(d.data_analise||'—')+'</b></span>'
       +(d.data_export?'<span style="font-size:12px;color:var(--emuted)">· export <b style="color:var(--etxt)">'+d.data_export+'</b></span>':'')
@@ -3794,7 +3795,7 @@ const ecomAlvo={
       {v:'CORTAR',  titulo:'Cortar do portfólio',     cor:'var(--emuted)',   dsc:'sem função e sem margem, ou risco de RMA — sai'},
       {v:'BLOQUEAR',titulo:'Bloqueio legal',          cor:'var(--ered)',     dsc:'ANATEL/INMETRO ausente — não é escolha, é lei'}
     ];
-    let html='';
+    let html=''; let _rn=0;
     GRUPOS.forEach(g=>{
       const items=a.filter(x=>vgrp(x.veredito)===g.v).sort((x,y)=>(y.indice||0)-(x.indice||0));
       if(!items.length) return;
@@ -3803,8 +3804,9 @@ const ecomAlvo={
         +'<span style="font-size:13.5px;font-weight:700;color:'+g.cor+'">'+g.titulo+'</span>'
         +'<span style="font-size:11px;color:var(--emuted2)">'+items.length+' SKUs · '+g.dsc+'</span></div>';
       html+='<table style="width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed">';
-      html+='<colgroup><col style="width:8%"><col style="width:26%"><col style="width:6%"><col style="width:7%"><col style="width:9%"><col style="width:9%"><col style="width:35%"></colgroup>';
+      html+='<colgroup><col style="width:4%"><col style="width:8%"><col style="width:24%"><col style="width:6%"><col style="width:7%"><col style="width:8%"><col style="width:8%"><col style="width:35%"></colgroup>';
       html+='<tr style="color:var(--emuted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap">'
+        +'<td style="padding:3px 5px;text-align:right">#</td>'
         +'<td style="padding:3px 5px">Nº cod</td>'
         +'<td style="padding:3px 5px">Produto</td>'
         +'<td style="padding:3px 5px;text-align:center">Índice</td>'
@@ -3817,10 +3819,12 @@ const ecomAlvo={
       items.forEach(x=>{
         const ind=x.indice!=null?Math.round(x.indice):null;
         const cod=norm(x.codigo);
-        const pAtual=precoAtual[cod];
+        const pAtual=precoAtual[cod]!=null?precoAtual[cod]:catPrecoN[cod];
         const nome=nameByCod[cod]||'';
         const obsFull=(x.observacao||'')+(x.gatilho?' ⟳ revisa se: '+x.gatilho:'')+(x.risco?' · '+x.risco:'');
+        _rn++;
         html+='<tr style="border-top:1px solid var(--eborder);vertical-align:middle">'
+          +'<td style="padding:3px 5px;text-align:right;color:var(--emuted2);font-variant-numeric:tabular-nums">'+_rn+'</td>'
           +'<td style="padding:3px 5px;font-family:var(--emono);white-space:nowrap"><b'+(pub.has(cod)?' style="color:var(--eemerald)" title="publicado no ML"':' style="color:var(--etxt)"')+'>'+(x.codigo||'')+'</b></td>'
           +'<td style="padding:3px 5px;color:var(--etxt);'+nz+'" title="'+ea(nome)+'">'+(nome||'<span style="color:var(--emuted2)">—</span>')+'</td>'
           +'<td style="padding:3px 5px;text-align:center;font-weight:700;font-size:12.5px;color:'+g.cor+'">'+(ind!=null?ind:'—')+'</td>'
