@@ -840,10 +840,10 @@
             <div class="chips" id="ecom-dest" style="display:none"></div></div>
           <div class="selrow"><div class="lab">Reputação</div>
             <div class="chips" id="ecom-rep">
-              <span class="chip active" data-r="1">Atual (cheia)</span><span class="chip" data-r="0.5">Verde (−50%)</span>
+              <span class="chip active" data-r="1">Atual (cheia)</span><span class="chip" data-r="0.6">Amarela (−40%)</span><span class="chip" data-r="0.5">Verde (−50%)</span>
             </div></div>
           <div class="applied"><div class="ctx" id="ecom-frete-ctx"></div></div>
-          <p class="note">A faixa de peso é por produto (definida no cadastro). Cada item usa a célula [destino × peso dele] da matriz.</p>
+          <p class="note">Frete vem da <b>tabela oficial do ML</b> (peso × preço × reputação) — varia com o preço. Banda efetiva = peso do produto, salvo override (itens volumosos). A matriz abaixo é legado.</p>
         </div>
         <div>
           <div class="mtitle">Matriz de frete real — preencha com o Seller Center. Edição salva direto no banco.</div>
@@ -895,6 +895,7 @@
         <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:170px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option></select></div>
         <div class="efield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px" placeholder="ex: 320"></div>
         <div class="efield"><label>Faixa (auto)</label><select class="ainput" id="ecom-f-peso" style="width:130px"></select><span id="ecom-f-peso-warn" style="display:none;font-size:10px;color:var(--eamber);margin-left:6px"></span></div>
+        <div class="efield"><label>Banda frete (efetiva)</label><select class="ainput" id="ecom-f-bandaef" style="width:160px"></select></div>
         <div class="efield"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
         <div class="efield"><label>Meu preço <span class="req">*</span></label><input class="ainput mono" id="ecom-f-preco" type="number" style="width:90px"></div>
         <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
@@ -2544,26 +2545,32 @@ const ecom = {
     f1:this._n('ecom-fix1')||6.25, f2:this._n('ecom-fix2')||6.50, f3:this._n('ecom-fix3')||6.75 }; },
 
   custoFixoML(P,pr){ if(P<12.50) return P*0.5; if(P<29) return pr.f1; if(P<50) return pr.f2; return pr.f3; },
-  freteInfo(it){ const rep=this.repFactor;
-    if(it.frete_real_ml!=null){ const v=Number(it.frete_real_ml); if(!isNaN(v)) return {v:v*rep,src:'real',n:1}; }
-    const irmaos=this.itens.filter(x=>x.categoria===it.categoria && x.peso_faixa===it.peso_faixa && x.frete_real_ml!=null && String(x.id)!==String(it.id)).map(x=>Number(x.frete_real_ml)).filter(v=>!isNaN(v));
-    if(irmaos.length){ const m=irmaos.reduce((a,b)=>a+b,0)/irmaos.length; return {v:m*rep,src:'estim',n:irmaos.length}; }
-    const mv=this.mtx[this.selDest+'|'+it.peso_faixa]; return {v:(mv==null?0:mv)*rep,src:'matriz',n:0}; },
-  freteDe(it){ return this.freteInfo(it).v; },
-  breakeven(custo,t,fr,pr){ const c=[];
-    if(t<0.5){ const p=custo/(0.5-t); if(p<12.50)c.push(p); }
-    [[pr.f1,12.50,29],[pr.f2,29,50],[pr.f3,50,79]].forEach(a=>{ const p=(custo+a[0])/(1-t); if(p>=a[1]&&p<a[2])c.push(p); });
-    { const p=(custo+fr)/(1-t); if(p>=79)c.push(p); }
-    return c.length?Math.min.apply(null,c):(custo+fr)/(1-t); },
+  FRETE_TBL:{bandas:[['b03','≤0,3kg',300],['b05','0,3–0,5kg',500],['b1','0,5–1kg',1000],['b15','1–1,5kg',1500],['b2','1,5–2kg',2000],['b3','2–3kg',3000],['b4','3–4kg',4000],['b5','4–5kg',5000],['b6','5–6kg',6000],['b7','6–7kg',7000],['b8','7–8kg',8000],['b9','8–9kg',9000],['b11','9–11kg',11000]],
+    cheio:{b03:[24.70,28.70,32.90,36.90,41.90],b05:[26.50,30.90,35.30,39.70,45.10],b1:[27.70,32.30,36.90,41.50,47.30],b15:[28.30,32.90,37.70,42.30,49.30],b2:[28.90,33.70,38.50,43.30,49.30],b3:[31.50,36.70,42.10,47.30,52.50],b4:[34.10,39.70,45.30,51.10,56.70],b5:[36.90,43.10,49.30,55.50,61.50],b6:[50.90,57.10,65.30,71.50,79.50],b7:[54.10,62.10,72.10,80.10,88.10],b8:[57.70,67.30,76.90,86.50,96.10],b9:[59.30,69.10,79.10,88.90,98.70],b11:[82.50,96.10,109.90,123.50,137.30]}},
+  bandaPeso(g){ g=parseInt(g,10); if(isNaN(g)||g<=0) return null; for(const b of this.FRETE_TBL.bandas){ if(g<=b[2]) return b[0]; } return 'b11'; },
+  bandaLabel(code){ const b=this.FRETE_TBL.bandas.find(x=>x[0]===code); return b?b[1]:code; },
+  bandaEfetiva(it){ return it.frete_banda_efetiva || this.bandaPeso(it.peso_g); },
+  precoCol(P){ P=+P; if(P<100)return 0; if(P<120)return 1; if(P<150)return 2; if(P<200)return 3; return 4; },
+  freteInfo(it,P){ if(P==null)P=+it.preco; const rep=this.repFactor; const b=this.bandaEfetiva(it);
+    if(!b) return {v:0,src:'?',n:0,cheio:0};
+    const row=this.FRETE_TBL.cheio[b]; if(!row) return {v:0,src:'?',n:0,cheio:0};
+    const cheio=row[P<79?0:this.precoCol(P)];
+    return {v:cheio*rep,src:(it.frete_banda_efetiva?'tabela+vol':'tabela'),n:0,banda:b,cheio:cheio}; },
+  freteDe(it,P){ return this.freteInfo(it,P).v; },
+  breakeven(it,custo,t,pr){ const c=[]; const frLo=this.freteDe(it,12.49);
+    if(t<0.5){ const p=(custo+frLo)/(0.5-t); if(p<12.50)c.push(p); }
+    [[pr.f1,12.50,29],[pr.f2,29,50],[pr.f3,50,79]].forEach(a=>{ const p=(custo+a[0]+frLo)/(1-t); if(p>=a[1]&&p<a[2])c.push(p); });
+    [[79,100],[100,120],[120,150],[150,200],[200,Infinity]].forEach(b=>{ const fr=this.freteDe(it,b[0]); const p=(custo+fr)/(1-t); if(p>=b[0]&&p<b[1])c.push(p); });
+    return c.length?Math.min.apply(null,c):(custo+this.freteDe(it,79))/(1-t); },
   calc(it){ const pr=this.params(); const P=+it.preco;
     const comPct=(it.tipo_anuncio==='premium'?pr.comP:pr.comC)/100;
     const t=comPct+pr.imp/100+pr.outros/100+pr.colchao/100;
-    const fr=this.freteDe(it); let regime,freteItem,custoFixo=0,custoML;
+    const fr=this.freteDe(it,P); let regime,freteItem,custoFixo=0,custoML;
     if(P>=79){ regime='frete'; freteItem=fr; custoML=P*t+freteItem; }
-    else { regime='fixa'; freteItem=0; custoFixo=this.custoFixoML(P,pr); custoML=P*t+custoFixo; }
+    else { regime='fixa'; custoFixo=this.custoFixoML(P,pr); freteItem=fr; custoML=P*t+custoFixo+freteItem; }
     const custo=+it.custo; const margem=P-custoML-custo; const mordida=P>0?custoML/P:0;
-    const be=this.breakeven(custo,t,fr,pr); let zona=null;
-    if(P>=79){ const m=78.99-(78.99*t+this.custoFixoML(78.99,pr))-custo; if(m>margem) zona=m-margem; }
+    const be=this.breakeven(it,custo,t,pr); let zona=null;
+    if(P>=79){ const m=78.99-(78.99*t+this.custoFixoML(78.99,pr)+this.freteDe(it,78.99))-custo; if(m>margem) zona=m-margem; }
     return {regime,freteItem,custoFixo,custoML,margem,margemPct:P>0?margem/P:0,mordida,breakeven:be,zona}; },
   veredito(regime,m,pct,vsMin){
     if(m<=0) return {k:'excluir',t:'Excluir'};
@@ -2590,6 +2597,7 @@ const ecom = {
     g('ecom-dest').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ this.selDest=c.dataset.z; g('ecom-dest').querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); this.buildMtx(); this.updateCtx(); this.render(); }));
     g('ecom-rep').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ this.repFactor=+c.dataset.r; g('ecom-rep').querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); this.updateCtx(); this.render(); }));
     g('ecom-f-peso').innerHTML=this.PESOS.map(p=>`<option value="${p[0]}">${p[1]}</option>`).join('');
+    { const be=g('ecom-f-bandaef'); if(be) be.innerHTML='<option value="">(auto pelo peso)</option>'+this.FRETE_TBL.bandas.map(b=>`<option value="${b[0]}">${b[1]}</option>`).join(''); }
     g('ecom-modtog').querySelectorAll('.tg').forEach(t=>t.addEventListener('click',()=>{ this.modalidade=t.dataset.mod; g('ecom-modtog').querySelectorAll('.tg').forEach(x=>x.classList.remove('active')); t.classList.add('active'); g('ecom-modwarn').textContent=this.modalidade==='full'?'⚠ No Full, abaixo de R$79 o custo é variável por peso/dimensão — os números <R$79 viram estimativa.':''; this.render(); }));
     ['ecom-com-classico','ecom-com-premium','ecom-imp','ecom-outros','ecom-colchao','ecom-fix1','ecom-fix2','ecom-fix3'].forEach(id=>g(id).addEventListener('input',()=>this.render()));
     g('ecom-flt-prod').addEventListener('change',e=>{ this.fProd=e.target.value; this.render(); });
@@ -2601,7 +2609,7 @@ const ecom = {
     { const pe=g('ecom-f-pesog'); if(pe) pe.addEventListener('input',()=>{ this.applyPesoG(); this.updateFormBreakeven(); }); }
     { const eb=this._g('ecom-export'); if(eb) eb.addEventListener('click',()=>this.exportarCenario()); }
   },
-  updateCtx(){ const rep=this.repFactor===1?'reputação cheia':'verde (−50%)'; const s=`${rep} · frete real nacional`;
+  updateCtx(){ const rep=this.repFactor===1?'reputação cheia':(this.repFactor===0.6?'amarela (−40%)':'verde (−50%)'); const s=`${rep} · frete real nacional`;
     this._g('ecom-frete-ctx').textContent=s; this._g('ecom-frete-ctxtop').textContent=s; this.updateFormBreakeven(); },
 
   buildMtx(){ const t=this._g('ecom-mtx');
@@ -2634,8 +2642,8 @@ const ecom = {
     const rows=this.itens.map(it=>{ if(!this.isVis(it)) return '';
       const r=this.calc(it); const vsMin=it.menor?(it.preco-it.menor)/it.menor:null; const v=this.veredito(r.regime,r.margem,r.margemPct,vsMin);
       const mord=r.mordida*100; const mc=mord>=40?'mneg':'';
-      const _fi=this.freteInfo(it); const _smap={real:['REAL','var(--eteal)'],estim:['ESTIM'+(_fi.n?'·'+_fi.n:''),'var(--eaccent)'],matriz:['MATRIZ','var(--emuted2)']}; const _sm=_smap[_fi.src]||_smap.matriz; const srcTag=r.regime==='fixa'?'':` <span style="font-family:var(--emono);font-size:9px;color:${_sm[1]};border:1px solid var(--eborder);border-radius:4px;padding:0 4px;margin-left:4px">${_sm[0]}</span>`;
-      const frCell=r.regime==='fixa'?`<span class="gratis">grátis ML<small>fixo ${this.fmt(r.custoFixo)}</small></span>`:this.fmt(r.freteItem)+srcTag;
+      const _fi=this.freteInfo(it); const _smap={'tabela':['TABELA','var(--eteal)'],'tabela+vol':['TABELA+VOL','var(--eaccent)']}; const _sm=_smap[_fi.src]||['?','var(--emuted2)']; const srcTag=` <span style="font-family:var(--emono);font-size:9px;color:${_sm[1]};border:1px solid var(--eborder);border-radius:4px;padding:0 4px;margin-left:4px">${_sm[0]}</span>`;
+      const frCell=r.regime==='fixa'?`${this.fmt(r.freteItem)}${srcTag}<small style="color:var(--emuted2)"> + fixo ${this.fmt(r.custoFixo)}</small>`:this.fmt(r.freteItem)+srcTag;
       const zonaAlert=r.zona!=null?`<div class="ezona">⚠ Zona-vale: a R$78,99 sobra ${this.fmt(r.zona)} a mais</div>`:'';
       const modeloSub=it.modelo?`<div class="edesc">${it.modelo}</div>`:'';
       const tipoTag=it.tipo_anuncio==='premium'?' <span class="emodel">· Premium</span>':'';
@@ -2671,15 +2679,16 @@ const ecom = {
     const pr=this.params();
     const comPct=(this._g('ecom-f-tipo').value==='premium'?pr.comP:pr.comC)/100;
     const t=comPct+pr.imp/100+pr.outros/100+pr.colchao/100;
-    const peso=this._g('ecom-f-peso').value;
+    const pesog=parseInt(this._g('ecom-f-pesog').value,10);
     const cat=this._g('ecom-f-categoria').value||null;
-    const fr=this.freteInfo({categoria:cat,peso_faixa:peso,frete_real_ml:null,id:this.editId}).v;
-    out.value=this.fmt(this.breakeven(custo,t,fr,pr));
+    const bandaef=this._g('ecom-f-bandaef').value||null;
+    const pit={categoria:cat,peso_g:isNaN(pesog)?null:pesog,frete_banda_efetiva:bandaef,id:this.editId};
+    out.value=this.fmt(this.breakeven(pit,custo,t,pr));
   },
-  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const w=this._g('ecom-f-peso-warn'); if(w){ w.style.display='none'; w.textContent=''; } } this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-categoria').value=''; this._g('ecom-formmsg').textContent=''; this.updateFormBreakeven(); },
+  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const b=this._g('ecom-f-bandaef'); if(b) b.value=''; } { const w=this._g('ecom-f-peso-warn'); if(w){ w.style.display='none'; w.textContent=''; } } this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-categoria').value=''; this._g('ecom-formmsg').textContent=''; this.updateFormBreakeven(); },
   edit(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
     this._g('ecom-f-produto').value=it.produto||''; this._g('ecom-f-marca').value=it.marca||''; this._g('ecom-f-modelo').value=it.modelo||'';
-    this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico'; this._g('ecom-f-categoria').value=it.categoria||'';
+    this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-bandaef').value=it.frete_banda_efetiva||''; this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico'; this._g('ecom-f-categoria').value=it.categoria||'';
     this._g('ecom-f-preco').value=it.preco; this._g('ecom-f-custo').value=it.custo; this._g('ecom-f-media').value=it.media==null?'':it.media; this._g('ecom-f-menor').value=it.menor==null?'':it.menor;
     this.updateFormBreakeven();
     this.editId=id; this._g('ecom-add').textContent='Salvar alteração'; show('#ecom-cancel'); this._g('ecom-f-produto').focus(); },
@@ -2692,7 +2701,7 @@ const ecom = {
     this._g('ecom-formmsg').textContent='';
     const pesog=(()=>{ const v=parseInt(this._g('ecom-f-pesog').value,10); return isNaN(v)?null:v; })();
     const dados={ produto, categoria, marca:this._g('ecom-f-marca').value.trim()||null, modelo:this._g('ecom-f-modelo').value.trim()||null,
-      preco, custo, media:num('ecom-f-media'), menor:num('ecom-f-menor'), peso_g:pesog, peso_faixa:(pesog!=null?this.faixaFromPeso(pesog):this._g('ecom-f-peso').value), tipo_anuncio:this._g('ecom-f-tipo').value };
+      preco, custo, media:num('ecom-f-media'), menor:num('ecom-f-menor'), peso_g:pesog, peso_faixa:(pesog!=null?this.faixaFromPeso(pesog):this._g('ecom-f-peso').value), frete_banda_efetiva:(this._g('ecom-f-bandaef').value||null), tipo_anuncio:this._g('ecom-f-tipo').value };
     if(this.editId){ const idx=this.itens.findIndex(x=>String(x.id)===String(this.editId)); const prev=idx>=0?Object.assign({},this.itens[idx]):null;
       if(idx>=0) this.itens[idx]=Object.assign({},this.itens[idx],dados);
       try{ const r=await sb.from('ecom_produtos').update(Object.assign({},dados,{atualizado_em:new Date().toISOString()})).eq('id',this.editId).select().single(); if(r.error) throw r.error; if(idx>=0&&r.data) this.itens[idx]=r.data; this.cancelEdit(); this.render(); }
