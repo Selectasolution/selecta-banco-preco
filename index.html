@@ -700,7 +700,6 @@
   #tab-ecommerce table.emain tbody tr:hover{background:#0f1828}
   #tab-ecommerce .eprod{font-weight:600}
   #tab-ecommerce .emodel{color:var(--emuted2);font-size:11px;font-family:var(--emono)}
-  #tab-ecommerce .edesc{color:#fff;font-size:13px;font-family:var(--emono)}
   #tab-ecommerce .ezona{font-size:10.5px;color:var(--eamber);margin-top:2px}
   #tab-ecommerce .cellInput{width:74px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:6px;padding:5px 7px;font-family:var(--emono);font-size:12.5px;text-align:right}
   #tab-ecommerce .cellInput:focus{outline:none;border-color:var(--eaccent)}
@@ -835,15 +834,14 @@
       <h3>Frete real (matriz salva no banco) — cenário <span style="color:var(--eaccent);text-transform:none;letter-spacing:0" id="ecom-frete-ctxtop"></span></h3>
       <div class="frete-grid">
         <div>
-          <div class="selrow"><div class="lab">Frete</div>
-            <div style="font-size:11px;color:var(--emuted2);max-width:340px;line-height:1.4">Frete real é <b style="color:var(--eteal)">nacional</b> — um valor por produto, sem variação por região. A zona afeta <b>apenas</b> itens em fallback de matriz. Cenário fixo: Local/NE.</div>
-            <div class="chips" id="ecom-dest" style="display:none"></div></div>
+          <div class="selrow"><div class="lab">Destino (rota que você quer precificar)</div>
+            <div class="chips" id="ecom-dest"></div></div>
           <div class="selrow"><div class="lab">Reputação</div>
             <div class="chips" id="ecom-rep">
-              <span class="chip active" data-r="1">Atual (cheia)</span><span class="chip" data-r="0.6">Amarela (−40%)</span><span class="chip" data-r="0.5">Verde (−50%)</span>
+              <span class="chip active" data-r="1">Atual (cheia)</span><span class="chip" data-r="0.5">Verde (−50%)</span>
             </div></div>
           <div class="applied"><div class="ctx" id="ecom-frete-ctx"></div></div>
-          <p class="note">Frete vem da <b>tabela oficial do ML</b> (peso × preço × reputação) — varia com o preço. Banda efetiva = peso do produto, salvo override (itens volumosos). A matriz abaixo é legado.</p>
+          <p class="note">A faixa de peso é por produto (definida no cadastro). Cada item usa a célula [destino × peso dele] da matriz.</p>
         </div>
         <div>
           <div class="mtitle">Matriz de frete real — preencha com o Seller Center. Edição salva direto no banco.</div>
@@ -895,7 +893,6 @@
         <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:170px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option></select></div>
         <div class="efield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px" placeholder="ex: 320"></div>
         <div class="efield"><label>Faixa (auto)</label><select class="ainput" id="ecom-f-peso" style="width:130px"></select><span id="ecom-f-peso-warn" style="display:none;font-size:10px;color:var(--eamber);margin-left:6px"></span></div>
-        <div class="efield"><label>Banda frete (efetiva)</label><select class="ainput" id="ecom-f-bandaef" style="width:160px"></select></div>
         <div class="efield"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
         <div class="efield"><label>Meu preço <span class="req">*</span></label><input class="ainput mono" id="ecom-f-preco" type="number" style="width:90px"></div>
         <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
@@ -2545,32 +2542,21 @@ const ecom = {
     f1:this._n('ecom-fix1')||6.25, f2:this._n('ecom-fix2')||6.50, f3:this._n('ecom-fix3')||6.75 }; },
 
   custoFixoML(P,pr){ if(P<12.50) return P*0.5; if(P<29) return pr.f1; if(P<50) return pr.f2; return pr.f3; },
-  FRETE_TBL:{bandas:[['b03','≤0,3kg',300],['b05','0,3–0,5kg',500],['b1','0,5–1kg',1000],['b15','1–1,5kg',1500],['b2','1,5–2kg',2000],['b3','2–3kg',3000],['b4','3–4kg',4000],['b5','4–5kg',5000],['b6','5–6kg',6000],['b7','6–7kg',7000],['b8','7–8kg',8000],['b9','8–9kg',9000],['b11','9–11kg',11000]],
-    cheio:{b03:[24.70,28.70,32.90,36.90,41.90],b05:[26.50,30.90,35.30,39.70,45.10],b1:[27.70,32.30,36.90,41.50,47.30],b15:[28.30,32.90,37.70,42.30,49.30],b2:[28.90,33.70,38.50,43.30,49.30],b3:[31.50,36.70,42.10,47.30,52.50],b4:[34.10,39.70,45.30,51.10,56.70],b5:[36.90,43.10,49.30,55.50,61.50],b6:[50.90,57.10,65.30,71.50,79.50],b7:[54.10,62.10,72.10,80.10,88.10],b8:[57.70,67.30,76.90,86.50,96.10],b9:[59.30,69.10,79.10,88.90,98.70],b11:[82.50,96.10,109.90,123.50,137.30]}},
-  bandaPeso(g){ g=parseInt(g,10); if(isNaN(g)||g<=0) return null; for(const b of this.FRETE_TBL.bandas){ if(g<=b[2]) return b[0]; } return 'b11'; },
-  bandaLabel(code){ const b=this.FRETE_TBL.bandas.find(x=>x[0]===code); return b?b[1]:code; },
-  bandaEfetiva(it){ return it.frete_banda_efetiva || this.bandaPeso(it.peso_g); },
-  precoCol(P){ P=+P; if(P<100)return 0; if(P<120)return 1; if(P<150)return 2; if(P<200)return 3; return 4; },
-  freteInfo(it,P){ if(P==null)P=+it.preco; const rep=this.repFactor; const b=this.bandaEfetiva(it);
-    if(!b) return {v:0,src:'?',n:0,cheio:0};
-    const row=this.FRETE_TBL.cheio[b]; if(!row) return {v:0,src:'?',n:0,cheio:0};
-    const cheio=row[P<79?0:this.precoCol(P)];
-    return {v:cheio*rep,src:(it.frete_banda_efetiva?'tabela+vol':'tabela'),n:0,banda:b,cheio:cheio}; },
-  freteDe(it,P){ return this.freteInfo(it,P).v; },
-  breakeven(it,custo,t,pr){ const c=[]; const frLo=this.freteDe(it,12.49);
-    if(t<0.5){ const p=(custo+frLo)/(0.5-t); if(p<12.50)c.push(p); }
-    [[pr.f1,12.50,29],[pr.f2,29,50],[pr.f3,50,79]].forEach(a=>{ const p=(custo+a[0]+frLo)/(1-t); if(p>=a[1]&&p<a[2])c.push(p); });
-    [[79,100],[100,120],[120,150],[150,200],[200,Infinity]].forEach(b=>{ const fr=this.freteDe(it,b[0]); const p=(custo+fr)/(1-t); if(p>=b[0]&&p<b[1])c.push(p); });
-    return c.length?Math.min.apply(null,c):(custo+this.freteDe(it,79))/(1-t); },
+  freteDe(it){ const v=this.mtx[this.selDest+'|'+it.peso_faixa]; return (v==null?0:v)*this.repFactor; },
+  breakeven(custo,t,fr,pr){ const c=[];
+    if(t<0.5){ const p=custo/(0.5-t); if(p<12.50)c.push(p); }
+    [[pr.f1,12.50,29],[pr.f2,29,50],[pr.f3,50,79]].forEach(a=>{ const p=(custo+a[0])/(1-t); if(p>=a[1]&&p<a[2])c.push(p); });
+    { const p=(custo+fr)/(1-t); if(p>=79)c.push(p); }
+    return c.length?Math.min.apply(null,c):(custo+fr)/(1-t); },
   calc(it){ const pr=this.params(); const P=+it.preco;
     const comPct=(it.tipo_anuncio==='premium'?pr.comP:pr.comC)/100;
     const t=comPct+pr.imp/100+pr.outros/100+pr.colchao/100;
-    const fr=this.freteDe(it,P); let regime,freteItem,custoFixo=0,custoML;
+    const fr=this.freteDe(it); let regime,freteItem,custoFixo=0,custoML;
     if(P>=79){ regime='frete'; freteItem=fr; custoML=P*t+freteItem; }
-    else { regime='fixa'; custoFixo=this.custoFixoML(P,pr); freteItem=fr; custoML=P*t+custoFixo+freteItem; }
+    else { regime='fixa'; freteItem=0; custoFixo=this.custoFixoML(P,pr); custoML=P*t+custoFixo; }
     const custo=+it.custo; const margem=P-custoML-custo; const mordida=P>0?custoML/P:0;
-    const be=this.breakeven(it,custo,t,pr); let zona=null;
-    if(P>=79){ const m=78.99-(78.99*t+this.custoFixoML(78.99,pr)+this.freteDe(it,78.99))-custo; if(m>margem) zona=m-margem; }
+    const be=this.breakeven(custo,t,fr,pr); let zona=null;
+    if(P>=79){ const m=78.99-(78.99*t+this.custoFixoML(78.99,pr))-custo; if(m>margem) zona=m-margem; }
     return {regime,freteItem,custoFixo,custoML,margem,margemPct:P>0?margem/P:0,mordida,breakeven:be,zona}; },
   veredito(regime,m,pct,vsMin){
     if(m<=0) return {k:'excluir',t:'Excluir'};
@@ -2597,7 +2583,6 @@ const ecom = {
     g('ecom-dest').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ this.selDest=c.dataset.z; g('ecom-dest').querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); this.buildMtx(); this.updateCtx(); this.render(); }));
     g('ecom-rep').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ this.repFactor=+c.dataset.r; g('ecom-rep').querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); this.updateCtx(); this.render(); }));
     g('ecom-f-peso').innerHTML=this.PESOS.map(p=>`<option value="${p[0]}">${p[1]}</option>`).join('');
-    { const be=g('ecom-f-bandaef'); if(be) be.innerHTML='<option value="">(auto pelo peso)</option>'+this.FRETE_TBL.bandas.map(b=>`<option value="${b[0]}">${b[1]}</option>`).join(''); }
     g('ecom-modtog').querySelectorAll('.tg').forEach(t=>t.addEventListener('click',()=>{ this.modalidade=t.dataset.mod; g('ecom-modtog').querySelectorAll('.tg').forEach(x=>x.classList.remove('active')); t.classList.add('active'); g('ecom-modwarn').textContent=this.modalidade==='full'?'⚠ No Full, abaixo de R$79 o custo é variável por peso/dimensão — os números <R$79 viram estimativa.':''; this.render(); }));
     ['ecom-com-classico','ecom-com-premium','ecom-imp','ecom-outros','ecom-colchao','ecom-fix1','ecom-fix2','ecom-fix3'].forEach(id=>g(id).addEventListener('input',()=>this.render()));
     g('ecom-flt-prod').addEventListener('change',e=>{ this.fProd=e.target.value; this.render(); });
@@ -2609,7 +2594,7 @@ const ecom = {
     { const pe=g('ecom-f-pesog'); if(pe) pe.addEventListener('input',()=>{ this.applyPesoG(); this.updateFormBreakeven(); }); }
     { const eb=this._g('ecom-export'); if(eb) eb.addEventListener('click',()=>this.exportarCenario()); }
   },
-  updateCtx(){ const rep=this.repFactor===1?'reputação cheia':(this.repFactor===0.6?'amarela (−40%)':'verde (−50%)'); const s=`${rep} · frete real nacional`;
+  updateCtx(){ const rep=this.repFactor===1?'reputação cheia':'verde (−50%)'; const s=`${this.zonaLabel(this.selDest)} · ${rep}`;
     this._g('ecom-frete-ctx').textContent=s; this._g('ecom-frete-ctxtop').textContent=s; this.updateFormBreakeven(); },
 
   buildMtx(){ const t=this._g('ecom-mtx');
@@ -2642,10 +2627,9 @@ const ecom = {
     const rows=this.itens.map(it=>{ if(!this.isVis(it)) return '';
       const r=this.calc(it); const vsMin=it.menor?(it.preco-it.menor)/it.menor:null; const v=this.veredito(r.regime,r.margem,r.margemPct,vsMin);
       const mord=r.mordida*100; const mc=mord>=40?'mneg':'';
-      const _fi=this.freteInfo(it); const _smap={'tabela':['TABELA','var(--eteal)'],'tabela+vol':['TABELA+VOL','var(--eaccent)']}; const _sm=_smap[_fi.src]||['?','var(--emuted2)']; const srcTag=` <span style="font-family:var(--emono);font-size:9px;color:${_sm[1]};border:1px solid var(--eborder);border-radius:4px;padding:0 4px;margin-left:4px">${_sm[0]}</span>`;
-      const frCell=r.regime==='fixa'?`${this.fmt(r.freteItem)}${srcTag}<small style="color:var(--emuted2)"> + fixo ${this.fmt(r.custoFixo)}</small>`:this.fmt(r.freteItem)+srcTag;
+      const frCell=r.regime==='fixa'?`<span class="gratis">grátis ML<small>fixo ${this.fmt(r.custoFixo)}</small></span>`:this.fmt(r.freteItem);
       const zonaAlert=r.zona!=null?`<div class="ezona">⚠ Zona-vale: a R$78,99 sobra ${this.fmt(r.zona)} a mais</div>`:'';
-      const modeloSub=it.modelo?`<div class="edesc">${it.modelo}</div>`:'';
+      const modeloSub=it.modelo?`<div class="emodel">${it.modelo}</div>`:'';
       const tipoTag=it.tipo_anuncio==='premium'?' <span class="emodel">· Premium</span>':'';
       return `<tr>
         <td class="l"><span class="eprod">${it.produto}</span>${it.codigo?`<span style="font-family:var(--emono);font-size:11px;color:var(--eteal);background:var(--epanel2);border:1px solid var(--eborder);border-radius:5px;padding:1px 6px;margin-left:6px">${it.codigo}</span>`:`<span style="font-size:10px;color:var(--eamber);margin-left:6px">sem código</span>`} · ${it.marca||''}${tipoTag}${modeloSub}<div class="emodel">${this.pesoLabel(it.peso_faixa)}</div>${zonaAlert}</td>
@@ -2679,16 +2663,14 @@ const ecom = {
     const pr=this.params();
     const comPct=(this._g('ecom-f-tipo').value==='premium'?pr.comP:pr.comC)/100;
     const t=comPct+pr.imp/100+pr.outros/100+pr.colchao/100;
-    const pesog=parseInt(this._g('ecom-f-pesog').value,10);
-    const cat=this._g('ecom-f-categoria').value||null;
-    const bandaef=this._g('ecom-f-bandaef').value||null;
-    const pit={categoria:cat,peso_g:isNaN(pesog)?null:pesog,frete_banda_efetiva:bandaef,id:this.editId};
-    out.value=this.fmt(this.breakeven(pit,custo,t,pr));
+    const peso=this._g('ecom-f-peso').value;
+    const fr=(this.mtx[this.selDest+'|'+peso]==null?0:this.mtx[this.selDest+'|'+peso])*this.repFactor;
+    out.value=this.fmt(this.breakeven(custo,t,fr,pr));
   },
-  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const b=this._g('ecom-f-bandaef'); if(b) b.value=''; } { const w=this._g('ecom-f-peso-warn'); if(w){ w.style.display='none'; w.textContent=''; } } this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-categoria').value=''; this._g('ecom-formmsg').textContent=''; this.updateFormBreakeven(); },
+  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const w=this._g('ecom-f-peso-warn'); if(w){ w.style.display='none'; w.textContent=''; } } this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-categoria').value=''; this._g('ecom-formmsg').textContent=''; this.updateFormBreakeven(); },
   edit(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
     this._g('ecom-f-produto').value=it.produto||''; this._g('ecom-f-marca').value=it.marca||''; this._g('ecom-f-modelo').value=it.modelo||'';
-    this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-bandaef').value=it.frete_banda_efetiva||''; this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico'; this._g('ecom-f-categoria').value=it.categoria||'';
+    this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico'; this._g('ecom-f-categoria').value=it.categoria||'';
     this._g('ecom-f-preco').value=it.preco; this._g('ecom-f-custo').value=it.custo; this._g('ecom-f-media').value=it.media==null?'':it.media; this._g('ecom-f-menor').value=it.menor==null?'':it.menor;
     this.updateFormBreakeven();
     this.editId=id; this._g('ecom-add').textContent='Salvar alteração'; show('#ecom-cancel'); this._g('ecom-f-produto').focus(); },
@@ -2701,7 +2683,7 @@ const ecom = {
     this._g('ecom-formmsg').textContent='';
     const pesog=(()=>{ const v=parseInt(this._g('ecom-f-pesog').value,10); return isNaN(v)?null:v; })();
     const dados={ produto, categoria, marca:this._g('ecom-f-marca').value.trim()||null, modelo:this._g('ecom-f-modelo').value.trim()||null,
-      preco, custo, media:num('ecom-f-media'), menor:num('ecom-f-menor'), peso_g:pesog, peso_faixa:(pesog!=null?this.faixaFromPeso(pesog):this._g('ecom-f-peso').value), frete_banda_efetiva:(this._g('ecom-f-bandaef').value||null), tipo_anuncio:this._g('ecom-f-tipo').value };
+      preco, custo, media:num('ecom-f-media'), menor:num('ecom-f-menor'), peso_g:pesog, peso_faixa:(pesog!=null?this.faixaFromPeso(pesog):this._g('ecom-f-peso').value), tipo_anuncio:this._g('ecom-f-tipo').value };
     if(this.editId){ const idx=this.itens.findIndex(x=>String(x.id)===String(this.editId)); const prev=idx>=0?Object.assign({},this.itens[idx]):null;
       if(idx>=0) this.itens[idx]=Object.assign({},this.itens[idx],dados);
       try{ const r=await sb.from('ecom_produtos').update(Object.assign({},dados,{atualizado_em:new Date().toISOString()})).eq('id',this.editId).select().single(); if(r.error) throw r.error; if(idx>=0&&r.data) this.itens[idx]=r.data; this.cancelEdit(); this.render(); }
@@ -3794,38 +3776,48 @@ const ecomAlvo={
       +'<span style="font-size:12px;color:var(--emuted)">· <b style="color:var(--etxt)">'+a.length+'</b> SKUs</span>'
       +'<span style="font-size:11px;color:var(--emuted2);margin-left:auto">leitura externa de mercado · opinião datada, não venda real</span></div>'
       +'<div style="font-size:10.5px;color:var(--emuted2);margin:-6px 0 12px;padding-left:2px"><b style="color:var(--eemerald)">■</b> sigla em verde = anúncio já publicado no ML</div>';
-    // agrupar por AÇÃO (ranking): LANÇAR (verde) → SEGURAR (amarelo) → BLOQUEIO (vermelho)
+    // agrupa por AÇÃO assinada (v2): PUBLICAR → ISCA/VITRINE → AJUSTAR → SEGURAR → CORTAR → BLOQUEIO legal
+    const vgrp=v=>{ v=(v||'').toUpperCase().trim();
+      if(v.indexOf('PUBLICAR')===0||v.indexOf('LAN')===0) return 'PUBLICAR';
+      if(v.indexOf('ISCA')===0||v.indexOf('VITRINE')===0) return 'ISCA';
+      if(v.indexOf('AJUSTAR')===0||v.indexOf('REDUZIR')===0||v.indexOf('AUMENTAR')===0) return 'AJUSTAR';
+      if(v.indexOf('CORTAR')===0||v.indexOf('ABANDONAR')===0) return 'CORTAR';
+      if(v.indexOf('BLOQUE')===0) return 'BLOQUEAR';
+      return 'SEGURAR'; };
     const GRUPOS=[
-      {v:'PUBLICAR',titulo:'Publicar / Alvo prioritário', cor:'var(--eemerald)', dsc:'anunciar já — margem real boa e bem posicionado no mercado'},
-      {v:'REDUZIR', titulo:'Reduzir preço',               cor:'#38bdf8',         dsc:'você está acima do menor preço; a margem aguenta cortar p/ ganhar a vitrine (Buy Box)'},
-      {v:'AUMENTAR',titulo:'Aumentar preço',              cor:'var(--eamber)',   dsc:'você está abaixo do mercado com margem fina; dá p/ subir sem perder venda'},
-      {v:'SEGURAR', titulo:'Caso a caso',                 cor:'var(--eamber)',   dsc:'cada item tem uma ação própria — leia a observação (RMA, INMETRO, ímã de tráfego, renegociar custo)'},
-      {v:'BLOQUEAR',titulo:'Bloquear / Não anunciar',     cor:'var(--ered)',     dsc:'preço fora do mercado ou margem quase nula — corrigir no Simulador antes'},
-      {v:'ABANDONAR',titulo:'Abandonar',                  cor:'var(--emuted)',   dsc:'sem viabilidade comercial'}
+      {v:'PUBLICAR',titulo:'Publicar — prioridade',   cor:'var(--eemerald)', dsc:'anunciar já — função clara e bem posicionado'},
+      {v:'ISCA',    titulo:'Isca / Vitrine',          cor:'var(--eteal)',    dsc:'margem fraca, mas puxa volume, traz cliente ou dá visibilidade — mantém consciente'},
+      {v:'AJUSTAR', titulo:'Ajustar preço',           cor:'#38bdf8',         dsc:'mexer no preço — leia a sugestão e o gatilho de revisão'},
+      {v:'SEGURAR', titulo:'Segurar / caso a caso',   cor:'var(--eamber)',   dsc:'validar antes — leia observação e gatilho'},
+      {v:'CORTAR',  titulo:'Cortar do portfólio',     cor:'var(--emuted)',   dsc:'sem função e sem margem, ou risco de RMA — sai'},
+      {v:'BLOQUEAR',titulo:'Bloqueio legal',          cor:'var(--ered)',     dsc:'ANATEL/INMETRO ausente — não é escolha, é lei'}
     ];
+    const fcolor=f=>{ f=(f||'').toUpperCase(); return f.indexOf('LUCRO')===0?'var(--eemerald)':f.indexOf('ISCA')===0?'var(--eteal)':f.indexOf('VITRINE')===0?'#38bdf8':f.indexOf('KIT')===0?'var(--eamber)':'var(--emuted2)'; };
     const maxIdx=Math.max(1,...a.map(x=>x.indice||0));
     let html='';
     GRUPOS.forEach(g=>{
-      const items=a.filter(x=>(x.veredito||'').toUpperCase()===g.v).sort((x,y)=>(y.indice||0)-(x.indice||0));
+      const items=a.filter(x=>vgrp(x.veredito)===g.v).sort((x,y)=>(y.indice||0)-(x.indice||0));
       if(!items.length) return;
       html+='<div style="margin-bottom:18px">';
       html+='<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:7px;border-left:3px solid '+g.cor+';padding-left:8px">'
         +'<span style="font-size:13.5px;font-weight:700;color:'+g.cor+'">'+g.titulo+'</span>'
         +'<span style="font-size:11px;color:var(--emuted2)">'+items.length+' SKUs · '+g.dsc+'</span></div>';
       html+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
-      html+='<tr style="color:var(--emuted2);font-size:10px;text-transform:uppercase;letter-spacing:.04em"><td style="padding:3px 6px">#</td><td style="padding:3px 6px">Produto</td><td style="padding:3px 6px;width:120px">Índice</td><td style="padding:3px 6px;text-align:right" title="Margem real do Simulador (imposto, frete, taxa ML, custo NF)">Margem ℹ</td><td style="padding:3px 6px;text-align:center">Giro</td><td style="padding:3px 6px;text-align:right">Sug.</td><td style="padding:3px 6px">Observação</td><td style="padding:3px 6px;text-align:center">Vend.</td></tr>';
+      html+='<tr style="color:var(--emuted2);font-size:10px;text-transform:uppercase;letter-spacing:.04em"><td style="padding:3px 6px">#</td><td style="padding:3px 6px">Produto</td><td style="padding:3px 6px;text-align:center">Função</td><td style="padding:3px 6px;width:110px">Índice</td><td style="padding:3px 6px;text-align:right" title="Margem real do Simulador (imposto, frete, taxa ML, custo NF)">Margem ℹ</td><td style="padding:3px 6px;text-align:right">Sug.</td><td style="padding:3px 6px">Observação + gatilho</td><td style="padding:3px 6px;text-align:center">Conf.</td><td style="padding:3px 6px;text-align:center">Vend.</td></tr>';
       items.forEach((x,i)=>{
         const nv=obs[x.codigo]||0;
         const w=Math.round((x.indice||0)/maxIdx*100);
         const bar='<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:var(--epanel3);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+g.cor+'"></div></div><span style="font-size:10.5px;color:var(--etxt);min-width:20px">'+(x.indice!=null?Math.round(x.indice):'—')+'</span></div>';
+        const funcao=(x.papel||'').toUpperCase();
         html+='<tr style="border-top:1px solid var(--eborder)">'
           +'<td style="padding:4px 6px;color:var(--emuted2)">'+(i+1)+'º</td>'
           +'<td style="padding:4px 6px;color:var(--etxt)"><b'+(pub.has(x.codigo)?' style="color:var(--eemerald)" title="✓ publicado no ML"':'')+'>'+(x.codigo||'')+'</b>'+(this.catNome[x.codigo]?' <span style="color:var(--emuted);font-weight:400">· '+this.catNome[x.codigo]+'</span>':'')+'</td>'
+          +'<td style="padding:4px 6px;text-align:center">'+(funcao?'<span style="font-size:9.5px;font-weight:700;color:'+fcolor(funcao)+';border:1px solid '+fcolor(funcao)+';border-radius:5px;padding:1px 5px;white-space:nowrap">'+funcao+'</span>':'—')+'</td>'
           +'<td style="padding:4px 6px">'+bar+'</td>'
           +'<td style="padding:4px 6px;text-align:right;font-weight:700;color:'+((x.margem_liq||0)>=18?'var(--eemerald)':(x.margem_liq||0)<8?'var(--eamber)':'var(--etxt)')+'">'+(x.margem_liq!=null?(Math.round(x.margem_liq*10)/10)+'%':'—')+'</td>'
-          +'<td style="padding:4px 6px;text-align:center;color:var(--eemerald)">'+(x.giro?'●'.repeat(x.giro):'—')+'</td>'
           +'<td style="padding:4px 6px;text-align:right;color:var(--etxt)">'+(x.preco_sugerido!=null?'R$'+Math.round(x.preco_sugerido):'—')+'</td>'
-          +'<td style="padding:4px 6px;color:var(--emuted)">'+(x.observacao||'')+(x.risco?' <span style="color:var(--ered)">· '+x.risco+'</span>':'')+'</td>'
+          +'<td style="padding:4px 6px;color:var(--emuted)">'+(x.observacao||'')+(x.gatilho?' <span style="color:var(--emuted2)">⟳ revisa se: '+x.gatilho+'</span>':'')+(x.risco?' <span style="color:var(--ered)">· '+x.risco+'</span>':'')+'</td>'
+          +'<td style="padding:4px 6px;text-align:center;font-size:10px;color:'+((x.confianca||'').toLowerCase().indexOf('alta')===0?'var(--eemerald)':(x.confianca||'').toLowerCase().indexOf('baix')===0?'var(--eamber)':'var(--emuted2)')+'">'+(x.confianca||'—')+'</td>'
           +'<td style="padding:4px 6px;text-align:center;color:'+(nv?'var(--eemerald)':'var(--emuted2)')+'">'+(nv||'·')+'</td>'
           +'</tr>';
       });
@@ -3851,7 +3843,8 @@ const ecomAlvo={
       giro:it.giro!=null?+it.giro:null, preco_sugerido:it.preco_sugerido!=null?+it.preco_sugerido:null,
       piso_mercado:it.piso_mercado!=null?+it.piso_mercado:null, veredito:it.veredito||null,
       observacao:it.observacao||it.obs||null, tendencia:it.tendencia||null, concorrencia:it.concorrencia||null,
-      papel:it.papel||null, risco:it.risco||null
+      papel:it.funcao||it.papel||null, risco:it.risco||null,
+      confianca:it.confianca||null, gatilho:it.gatilho_revisao||it.gatilho||null
     }));
     const invalid=rows.filter(r=>!r.codigo);
     if(invalid.length){ msg.className='vmsg err'; msg.textContent=invalid.length+' item(ns) sem código — corrija o JSON.'; return; }
@@ -3868,7 +3861,55 @@ const ecomAlvo={
     try{ const r=await sb.from('ecom_analise_alvo').delete().not('id','is',null); if(r.error) throw r.error; this.loadAnalise(); }
     catch(e){ alert('Erro: '+e.message); }
   },
-  cmdTexto:"COMANDO — Inteligência Comercial da Alvo · Selecta Solution\n(colar no chat junto com os anexos)\n\nClaude, assuma o papel de analista sênior de mercado e-commerce da Selecta Solution. Não me dê só números — me dê o que eu, como gestor, preciso para decidir onde colocar dinheiro e atenção. Pense como quem responde a um CEO.\n\nDIVISÃO DE TRABALHO (inviolável):\n- O SIMULADOR é a matemática pura: a margem real (com imposto, frete, taxa ML e custo NF) já vem calculada no meu export. VOCÊ NUNCA CALCULA MARGEM.\n- VOCÊ é o analista de mercado: pesquisa piso, giro, tendência, concorrência, risco, e sugere preço e ação.\n\nANEXOS DESTA MENSAGEM:\n- Export do cenário do Simulador (.md): tabela de Produtos com Código, Marca, Modelo, Meu preço, Custo NF, Méd/Mín mercado, Frete/fixo, Mordida, Break-even, Margem R$, MARGEM % (a margem real — use esta), e Veredito.\n- [Quando houver] Export de vendas reais da Alvo: código, UF, receita, resultado líquido, status, data.\n\n----------------------------------------------------------------\nPARTE A — MARGEM REAL (vem do meu export, não calcule)\nLeia a coluna MARGEM % da tabela do export. É a margem real do Simulador. NÃO recalcule, NÃO estime. Se um SKU não tiver margem no export, marque como pendente.\n\nPARTE B — PESQUISA DE MERCADO ML (seu trabalho, com rigor de especialista)\n1. Piso DEFENSÁVEL, não o menor preço. Descartar vendedores fake, preço fantasma (baixo demais sem nota/estoque/reputação), frete embutido escondido, dropshipping de 40 dias. Piso válido = menor preço entre vendedores reais e confiáveis (reputação verde, MercadoLíder de preferência, estoque nacional). Dizer explicitamente o que descartou e por quê.\n2. Densidade competitiva. Quantos vendedores sérios disputam cada item. Sinalizar nichos de baixa concorrência (Selecta manda no preço) vs. red ocean (guerra de Buy Box).\n3. Tendência da categoria. Subindo, estável ou morrendo? (Ex.: SATA em declínio vs. NVMe, Wi-Fi 6 vs. AC, câmeras IP em alta.) Não recomendar estoque pesado em categoria em queda, mesmo com margem boa.\n4. Volume e giro reais para fundamentar o giro 1–5 — do volume observado no ML, não suposição.\n\nPARTE C — TERMÔMETRO DE AÇÃO (cruzar minha margem real × seu mercado)\nPara cada SKU, sugerir o movimento de preço, com a lógica explícita:\n- PUBLICAR: margem real boa + mercado favorável.\n- REDUZIR PREÇO: margem aguenta o corte e o mercado pede preço menor p/ Buy Box.\n- AUMENTAR PREÇO: margem apertada mas o mercado permite subir.\n- SEGURAR / ANALISAR: validar antes (margem fina, marca de risco).\n- BLOQUEAR: preço defasado, corrigir no Simulador antes.\nIdentificar também: produto que recruta (ímã de tráfego, vende barato, traz cliente) vs. produto que lucra. Apontar faixa morta de preço se existir.\n\nPARTE D — MAPA DE RISCO\nSinalizar por SKU: histórico de RMA/devolução (Macrovip = sempre teto amarelo, nunca verde), dependência de homologação que não tenho (ANATEL/INMETRO = bloqueio), ticket alto exposto a chargeback.\n\nPARTE E — CRUZAMENTO TRIPLO (quando houver export de vendas)\nCruzar: meu portfólio (custo real) x minha realidade de venda (Alvo) x realidade de mercado (sua pesquisa). O ouro está na divergência: onde a venda real contradiz o que o mercado sugeria.\n\n----------------------------------------------------------------\nRANKING\nDentro de cada bloco de ação, ordenar pelo índice combinado = 50% margem real (a do export, satura em 60%) + 50% giro. Observação de uma frase por SKU.\n\nREGRAS INVIOLÁVEIS\n- A margem é a do meu export. Você NUNCA calcula nem estima margem.\n- Piso fantasma é descartado e reportado, nunca usado como referência.\n- Macrovip = sempre teto amarelo. Apple/sem-ANATEL = bloqueio. Preço defasado no export = BLOQUEIO.\n- Datar a análise (data de hoje + data do export).\n\nENTREGA\n1. PDF marca Selecta, para leitura e aprovação: ranking por ação, campeões, observações, mapa de risco, termômetro de preço, leitura de tendência.\n2. Após meu OK, JSON no formato que a Alvo processa: codigo, categoria, indice, margem_liq (= a margem do export), giro, observacao, veredito (PUBLICAR/REDUZIR/AUMENTAR/SEGURAR/BLOQUEAR), preco_sugerido, data_analise.\n\nAguardar meu OK no PDF antes de gerar o JSON.\n",
+  cmdTexto:"COMANDO — ANÁLISE COMERCIAL (PROJEÇÃO) · Selecta Solution · v2
+(colar no chat com o export do Simulador — SÓ esse anexo)
+
+[QUEM VOCÊ É]
+Você é o sócio responsável nº 1 pelas vendas digitais da Selecta. Não é consultor que pondera e devolve dúvida — é quem DECIDE e assina. Cada SKU sai com uma ação. (Depende) não é entrega. Pense como dono: o que faz a EMPRESA vender e lucrar no conjunto, não o SKU isolado.
+
+[ESCOPO — trava de foco]
+ENTRA: export do Simulador (margem real por SKU, já calculada) + sua pesquisa de mercado (tendência, piso, densidade competitiva).
+NÃO ENTRA AQUI: vendas reais e print do ML — isso é a outra mesa (Controle de Venda por Anúncio). NÃO peça export de vendas nem print. Se não vier, não é falta: é fora de escopo. Trabalhe com Simulador + mercado.
+
+[A MARGEM É DO SIMULADOR]
+A coluna Margem % é verdade fechada. NUNCA recalcule, NUNCA estime.
+
+[EIXO CENTRAL — função no portfólio ANTES da margem]
+Classifique a FUNÇÃO de cada SKU antes de julgar a margem:
+- LUCRO: margem boa, sustenta o caixa.
+- ISCA: margem ruim/nula, mas puxa volume / traz cliente que compra o resto.
+- VITRINE: margem ruim, mas dá visibilidade e reputação no ML.
+- KIT: margem ruim sozinho, mas fecha junto num bundle acima de R$79.
+Margem ruim só condena quem TAMBÉM não tem função. Margem ruim + função = mantém, consciente. Diga a função antes do veredito.
+
+[CAMADAS DE DECISÃO — nesta ordem]
+1. BLOQUEIO LEGAL (vem antes de tudo, não é comercial): exige ANATEL/INMETRO que a Selecta não tem = não anuncia. Apple/Bluetooth sem ANATEL = bloqueio. Trava margem linda também. Não é escolha, é lei.
+2. CORTE POR RISCO: histórico de RMA/devolução corta mesmo com margem boa. Macrovip = sempre rebaixado, nunca verde.
+3. DECISÃO COMERCIAL: função × margem × mercado → ação assinada.
+Capital travado e ticket alto/chargeback NÃO cortam — viram ALERTA de atenção, não veto.
+
+[MERCADO — rigor, e duas verdades que se confundem]
+1. Tendência tem DOIS eixos separados: DEMANDA e PREÇO/SUPRIMENTO. Um cai enquanto o outro sobe. Ex.: DDR4 — demanda caindo, mas EOL dos fabricantes gera escassez e preço subindo 40–90%. Legado pode estar VALORIZANDO. Nunca trate (demanda caindo) como (não estocar) sem checar o suprimento.
+2. Piso DEFENSÁVEL, não o menor número. Descarte fantasma (sem reputação/estoque/nota, dropship 40 dias, frete escondido) e diga o que descartou.
+3. Densidade competitiva: nicho onde a Selecta manda no preço vs. guerra de Buy Box.
+
+[DIVERGÊNCIA — mercado × operação]
+Sua pesquisa é o mercado MÉDIO; você NÃO conhece o custo travado, o prazo de reposição, o cliente nem o caixa da Selecta. Quando seu dado bater com a operação dele, ótimo. Quando DIVERGIR: mostre os dois cenários, mas decida pela REALIDADE OPERACIONAL dele. Diga (mercado sugere X; sua operação indica Y; decido Y porque...).
+
+[REGRA DE OURO]
+Decida. Não devolva o problema. Sem certeza, decida com o que tem, rotule a confiança e diga o que revisaria. Você é o nº 1 do resultado — aja como tal.
+
+[ENTREGA]
+Por SKU: FUNÇÃO (lucro/isca/vitrine/kit) → AÇÃO assinada → confiança (alta/média/baixa) → gatilho de revisão (o que mudaria) → 1 linha de porquê.
+Vocabulário de ação: PUBLICAR · SEGURAR · ISCA · AJUSTAR PREÇO · CORTAR · BLOQUEAR (legal).
+Ranking pelo que move a EMPRESA (campeões de lucro + iscas que sustentam o conjunto), não só margem nominal.
+Visão de dono no fim: os 3 movimentos que mais mudam o resultado do portfólio este ciclo.
+
+ENTREGA FINAL:
+1. PDF marca Selecta: ações por função, ranking, 3 movimentos de dono, alertas (RMA, legal).
+2. Após meu OK, JSON pra Alvo: codigo, funcao, veredito, margem_liq (do export), indice, confianca, gatilho_revisao, observacao, preco_sugerido, data_analise.
+Aguardar meu OK no PDF antes do JSON.
+",
   fillComando(){ const t=this._g('al-cmd-text'); if(t && !t.value) t.value=this.cmdTexto;
     const d=this._g('al-cmd-data'); if(d && !d.value) d.value=new Date().toISOString().slice(0,10);
     const b=this._g('al-cmd-copy'); if(b && !b._bound){ b._bound=true; b.addEventListener('click',()=>this.copiarComando()); }
