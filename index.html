@@ -3844,7 +3844,7 @@ const ecomAlvo={
     const data_export=(payload.data_export)||null;
     const rows=itens.map(it=>({
       lote, data_analise, data_export,
-      codigo:(it.codigo||'').toUpperCase(), categoria:it.categoria||null,
+      codigo:String(it.codigo==null?'':it.codigo).trim().toUpperCase(), categoria:it.categoria||null,
       indice:it.indice!=null?+it.indice:null, margem_liq:it.margem_liq!=null?+it.margem_liq:(it.margem!=null?+it.margem:null),
       giro:it.giro!=null?+it.giro:null, preco_sugerido:it.preco_sugerido!=null?+it.preco_sugerido:null,
       piso_mercado:it.piso_mercado!=null?+it.piso_mercado:null, veredito:it.veredito||null,
@@ -3854,6 +3854,16 @@ const ecomAlvo={
     }));
     const invalid=rows.filter(r=>!r.codigo);
     if(invalid.length){ msg.className='vmsg err'; msg.textContent=invalid.length+' item(ns) sem código — corrija o JSON.'; return; }
+    // TRAVA DE CÓDIGO: cada código precisa existir no catálogo (ecom_produtos). Sem exceção, sem lixo.
+    let validos;
+    try{ const rc=await sb.from('ecom_produtos').select('codigo'); if(rc.error) throw rc.error;
+      validos=new Set((rc.data||[]).map(p=>String(p.codigo==null?'':p.codigo).trim().toUpperCase()).filter(Boolean));
+    }catch(e){ msg.className='vmsg err'; msg.textContent='Não consegui validar contra o catálogo: '+e.message; return; }
+    const orfaos=[...new Set(rows.map(r=>r.codigo).filter(c=>!validos.has(c)))];
+    if(orfaos.length){ msg.className='vmsg err';
+      msg.innerHTML='✗ '+orfaos.length+' código(s) não existe(m) no catálogo — NADA foi importado. Corrija no JSON com o código interno real (ex.: SSD-0001):<br>'+orfaos.slice(0,25).map(c=>'· '+String(c).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')).join('<br>')+(orfaos.length>25?'<br>…(+'+(orfaos.length-25)+' outros)':'');
+      return;
+    }
     try{
       // substitui o lote: apaga linhas do mesmo lote antes de inserir (re-importação limpa)
       await sb.from('ecom_analise_alvo').delete().eq('lote',lote);
