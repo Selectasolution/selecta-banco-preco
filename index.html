@@ -3802,16 +3802,16 @@ const ecomAlvo={
         +'<span style="font-size:13.5px;font-weight:700;color:'+g.cor+'">'+g.titulo+'</span>'
         +'<span style="font-size:11px;color:var(--emuted2)">'+items.length+' SKUs · '+g.dsc+'</span></div>';
       html+='<table style="width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed">';
-      html+='<colgroup><col style="width:3%"><col style="width:6%"><col style="width:16%"><col style="width:4.5%"><col style="width:5.5%"><col style="width:6%"><col style="width:6%"><col style="width:53%"></colgroup>';
+      html+='<colgroup><col style="width:2.5%"><col style="width:5.5%"><col style="width:13%"><col style="width:4%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:60%"></colgroup>';
       html+='<tr style="color:var(--emuted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap">'
-        +'<td style="padding:3px 5px;text-align:right">#</td>'
-        +'<td style="padding:3px 5px">Nº cod</td>'
-        +'<td style="padding:3px 5px">Produto</td>'
-        +'<td style="padding:3px 5px;text-align:center">Índice</td>'
-        +'<td style="padding:3px 5px;text-align:right" title="Margem real do Simulador (imposto, frete, taxa ML, custo NF)">Margem</td>'
-        +'<td style="padding:3px 5px;text-align:right">Preço</td>'
-        +'<td style="padding:3px 5px;text-align:right">Sugestão</td>'
-        +'<td style="padding:3px 5px">Observação</td></tr>';
+        +'<td style="padding:3px 3px;text-align:right">#</td>'
+        +'<td style="padding:3px 3px">Nº cod</td>'
+        +'<td style="padding:3px 3px">Produto</td>'
+        +'<td style="padding:3px 3px;text-align:center">Índice</td>'
+        +'<td style="padding:3px 3px;text-align:right" title="Margem real do Simulador (imposto, frete, taxa ML, custo NF)">Margem</td>'
+        +'<td style="padding:3px 3px;text-align:right">Preço</td>'
+        +'<td style="padding:3px 3px;text-align:right">Sugestão</td>'
+        +'<td style="padding:3px 3px">Observação</td></tr>';
       const ea=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       const nz='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
       items.forEach(x=>{
@@ -3822,14 +3822,14 @@ const ecomAlvo={
         const obsFull=(x.observacao||'')+(x.gatilho?' ⟳ revisa se: '+x.gatilho:'')+(x.risco?' · '+x.risco:'');
         _rn++;
         html+='<tr style="border-top:1px solid var(--eborder);vertical-align:middle">'
-          +'<td style="padding:3px 5px;text-align:right;color:var(--emuted2);font-variant-numeric:tabular-nums">'+_rn+'</td>'
-          +'<td style="padding:3px 5px;font-family:var(--emono);white-space:nowrap"><b'+(pub.has(cod)?' style="color:var(--eemerald)" title="publicado no ML"':' style="color:var(--etxt)"')+'>'+(x.codigo||'')+'</b></td>'
-          +'<td style="padding:3px 5px;color:var(--etxt);'+nz+'" title="'+ea(nome)+'">'+(nome||'<span style="color:var(--emuted2)">—</span>')+'</td>'
-          +'<td style="padding:3px 5px;text-align:center;font-weight:700;font-size:12.5px;color:'+g.cor+'">'+(ind!=null?ind:'—')+'</td>'
-          +'<td style="padding:3px 5px;text-align:right;font-weight:700;white-space:nowrap;color:'+((x.margem_liq||0)>=18?'var(--eemerald)':(x.margem_liq||0)<8?'var(--eamber)':'var(--etxt)')+'">'+(x.margem_liq!=null?(Math.round(x.margem_liq*10)/10)+'%':'—')+'</td>'
-          +'<td style="padding:3px 5px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(pAtual!=null?'R$'+Math.round(pAtual):'<span style="color:var(--emuted2)">—</span>')+'</td>'
-          +'<td style="padding:3px 5px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(x.preco_sugerido!=null?'R$'+Math.round(x.preco_sugerido):'<span style="color:var(--emuted2)">—</span>')+'</td>'
-          +'<td style="padding:3px 5px;color:var(--emuted);'+nz+'" title="'+ea(obsFull)+'">'+(x.observacao||'')+(x.gatilho?' <span style="color:var(--emuted2)">⟳ revisa se: '+x.gatilho+'</span>':'')+(x.risco?' <span style="color:var(--ered)">· '+x.risco+'</span>':'')+'</td>'
+          +'<td style="padding:3px 3px;text-align:right;color:var(--emuted2);font-variant-numeric:tabular-nums">'+_rn+'</td>'
+          +'<td style="padding:3px 3px;font-family:var(--emono);white-space:nowrap"><b'+(pub.has(cod)?' style="color:var(--eemerald)" title="publicado no ML"':' style="color:var(--etxt)"')+'>'+(x.codigo||'')+'</b></td>'
+          +'<td style="padding:3px 3px;color:var(--etxt);'+nz+'" title="'+ea(nome)+'">'+(nome||'<span style="color:var(--emuted2)">—</span>')+'</td>'
+          +'<td style="padding:3px 3px;text-align:center;font-weight:700;font-size:12.5px;color:'+g.cor+'">'+(ind!=null?ind:'—')+'</td>'
+          +'<td style="padding:3px 3px;text-align:right;font-weight:700;white-space:nowrap;color:'+((x.margem_liq||0)>=18?'var(--eemerald)':(x.margem_liq||0)<8?'var(--eamber)':'var(--etxt)')+'">'+(x.margem_liq!=null?(Math.round(x.margem_liq*10)/10)+'%':'—')+'</td>'
+          +'<td style="padding:3px 3px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(pAtual!=null?'R$'+Math.round(pAtual):'<span style="color:var(--emuted2)">—</span>')+'</td>'
+          +'<td style="padding:3px 3px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(x.preco_sugerido!=null?'R$'+Math.round(x.preco_sugerido):'<span style="color:var(--emuted2)">—</span>')+'</td>'
+          +'<td style="padding:3px 3px;color:var(--emuted);'+nz+'" title="'+ea(obsFull)+'">'+(x.observacao||'')+(x.gatilho?' <span style="color:var(--emuted2)">⟳ revisa se: '+x.gatilho+'</span>':'')+(x.risco?' <span style="color:var(--ered)">· '+x.risco+'</span>':'')+'</td>'
           +'</tr>';
       });
       html+='</table></div>';
