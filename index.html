@@ -3768,8 +3768,10 @@ const ecomAlvo={
     const head=this._g('al-an-head'), body=this._g('al-an-body');
     if(!this.analise.length){ if(head) head.innerHTML=''; if(body) body.innerHTML='<div class="ph">Nenhuma análise carregada. Cole o JSON devolvido pelo chat para a Alvo processar suas conclusões.</div>'; return; }
     const a=this.analise; const d=a[0];
-    const pub=new Set((this.anuncios||[]).map(an=>an.produto_codigo).filter(Boolean));
-    const precoAtual={}; (this.anuncios||[]).forEach(an=>{ if(an.produto_codigo!=null && an.preco!=null) precoAtual[an.produto_codigo]=an.preco; });
+    const norm=s=>String(s==null?'':s).trim().toUpperCase();
+    const nameByCod={}; Object.keys(this.catNome||{}).forEach(k=>{ const n=norm(k); if(n) nameByCod[n]=this.catNome[k]; });
+    const pub=new Set((this.anuncios||[]).map(an=>norm(an.produto_codigo)).filter(Boolean));
+    const precoAtual={}; (this.anuncios||[]).forEach(an=>{ const k=norm(an.produto_codigo); if(k && an.preco!=null) precoAtual[k]=an.preco; });
     head.innerHTML='<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:8px 12px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:9px">'
       +'<span style="font-size:12px;color:var(--emuted)">Análise de <b style="color:var(--etxt)">'+(d.data_analise||'—')+'</b></span>'
       +(d.data_export?'<span style="font-size:12px;color:var(--emuted)">· export <b style="color:var(--etxt)">'+d.data_export+'</b></span>':'')
@@ -3812,10 +3814,11 @@ const ecomAlvo={
         +'<td style="padding:3px 6px">Observação</td></tr>';
       items.forEach(x=>{
         const ind=x.indice!=null?Math.round(x.indice):null;
-        const pAtual=precoAtual[x.codigo];
-        const nome=this.catNome[x.codigo]||'';
+        const cod=norm(x.codigo);
+        const pAtual=precoAtual[cod];
+        const nome=nameByCod[cod]||'';
         html+='<tr style="border-top:1px solid var(--eborder);vertical-align:top">'
-          +'<td style="padding:4px 6px;font-family:var(--emono)"><b'+(pub.has(x.codigo)?' style="color:var(--eemerald)" title="publicado no ML"':' style="color:var(--etxt)"')+'>'+(x.codigo||'')+'</b></td>'
+          +'<td style="padding:4px 6px;font-family:var(--emono)"><b'+(pub.has(cod)?' style="color:var(--eemerald)" title="publicado no ML"':' style="color:var(--etxt)"')+'>'+(x.codigo||'')+'</b></td>'
           +'<td style="padding:4px 6px;color:var(--etxt)">'+(nome||'<span style="color:var(--emuted2)">—</span>')+'</td>'
           +'<td style="padding:4px 6px;text-align:center;font-weight:700;font-size:13px;color:'+g.cor+'">'+(ind!=null?ind:'—')+'</td>'
           +'<td style="padding:4px 6px;text-align:right;font-weight:700;color:'+((x.margem_liq||0)>=18?'var(--eemerald)':(x.margem_liq||0)<8?'var(--eamber)':'var(--etxt)')+'">'+(x.margem_liq!=null?(Math.round(x.margem_liq*10)/10)+'%':'—')+'</td>'
