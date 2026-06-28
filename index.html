@@ -890,6 +890,8 @@
         <div class="efield"><label>Produto <span class="req">*</span></label><input class="ainput" id="ecom-f-produto" style="width:170px" placeholder="SSD SATA III 256GB"></div>
         <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px" placeholder="Kingston"></div>
         <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px" placeholder="A400"></div>
+        <div class="efield"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px" placeholder="256GB"></div>
+        <div class="efield"><label>Interface</label><select class="ainput" id="ecom-f-interface" style="width:110px"><option value="">—</option><option value="SATA III">SATA III</option><option value="NVMe">NVMe</option></select></div>
         <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:170px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option></select></div>
         <div class="efield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px" placeholder="ex: 320"></div>
         <div class="efield"><label>Faixa (auto)</label><select class="ainput" id="ecom-f-peso" style="width:130px"></select><span id="ecom-f-peso-warn" style="display:none;font-size:10px;color:var(--eamber);margin-left:6px"></span></div>
@@ -2627,7 +2629,8 @@ const ecom = {
       const mord=r.mordida*100; const mc=mord>=40?'mneg':'';
       const frCell=r.regime==='fixa'?`<span class="gratis">grátis ML<small>fixo ${this.fmt(r.custoFixo)}</small></span>`:this.fmt(r.freteItem);
       const zonaAlert=r.zona!=null?`<div class="ezona">⚠ Zona-vale: a R$78,99 sobra ${this.fmt(r.zona)} a mais</div>`:'';
-      const modeloSub=it.modelo?`<div class="emodel">${it.modelo}</div>`:'';
+      const _det=[it.interface,it.modelo,it.capacidade].filter(Boolean).join(' · ');
+      const modeloSub=_det?`<div class="emodel">${_det}</div>`:'';
       const tipoTag=it.tipo_anuncio==='premium'?' <span class="emodel">· Premium</span>':'';
       return `<tr>
         <td class="l"><span class="eprod">${it.produto}</span>${it.codigo?`<span style="font-family:var(--emono);font-size:11px;color:var(--eteal);background:var(--epanel2);border:1px solid var(--eborder);border-radius:5px;padding:1px 6px;margin-left:6px">${it.codigo}</span>`:`<span style="font-size:10px;color:var(--eamber);margin-left:6px">sem código</span>`} · ${it.marca||''}${tipoTag}${modeloSub}<div class="emodel">${this.pesoLabel(it.peso_faixa)}</div>${zonaAlert}</td>
@@ -2665,9 +2668,9 @@ const ecom = {
     const fr=(this.mtx[this.selDest+'|'+peso]==null?0:this.mtx[this.selDest+'|'+peso])*this.repFactor;
     out.value=this.fmt(this.breakeven(custo,t,fr,pr));
   },
-  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const w=this._g('ecom-f-peso-warn'); if(w){ w.style.display='none'; w.textContent=''; } } this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-categoria').value=''; this._g('ecom-formmsg').textContent=''; this.updateFormBreakeven(); },
+  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-capacidade','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const w=this._g('ecom-f-peso-warn'); if(w){ w.style.display='none'; w.textContent=''; } } this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-interface').value=''; this._g('ecom-f-categoria').value=''; this._g('ecom-formmsg').textContent=''; this.updateFormBreakeven(); },
   edit(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
-    this._g('ecom-f-produto').value=it.produto||''; this._g('ecom-f-marca').value=it.marca||''; this._g('ecom-f-modelo').value=it.modelo||'';
+    this._g('ecom-f-produto').value=it.produto||''; this._g('ecom-f-marca').value=it.marca||''; this._g('ecom-f-modelo').value=it.modelo||''; this._g('ecom-f-capacidade').value=it.capacidade||''; this._g('ecom-f-interface').value=it.interface||'';
     this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico'; this._g('ecom-f-categoria').value=it.categoria||'';
     this._g('ecom-f-preco').value=it.preco; this._g('ecom-f-custo').value=it.custo; this._g('ecom-f-media').value=it.media==null?'':it.media; this._g('ecom-f-menor').value=it.menor==null?'':it.menor;
     this.updateFormBreakeven();
@@ -2681,6 +2684,7 @@ const ecom = {
     this._g('ecom-formmsg').textContent='';
     const pesog=(()=>{ const v=parseInt(this._g('ecom-f-pesog').value,10); return isNaN(v)?null:v; })();
     const dados={ produto, categoria, marca:this._g('ecom-f-marca').value.trim()||null, modelo:this._g('ecom-f-modelo').value.trim()||null,
+      capacidade:this._g('ecom-f-capacidade').value.trim()||null, interface:this._g('ecom-f-interface').value||null,
       preco, custo, media:num('ecom-f-media'), menor:num('ecom-f-menor'), peso_g:pesog, peso_faixa:(pesog!=null?this.faixaFromPeso(pesog):this._g('ecom-f-peso').value), tipo_anuncio:this._g('ecom-f-tipo').value };
     if(this.editId){ const idx=this.itens.findIndex(x=>String(x.id)===String(this.editId)); const prev=idx>=0?Object.assign({},this.itens[idx]):null;
       if(idx>=0) this.itens[idx]=Object.assign({},this.itens[idx],dados);
@@ -3325,9 +3329,9 @@ const ecomVendas={
   async lookup(){
     const cod=this._g('vd-cod').value.trim().toUpperCase(); const box=this._g('vd-nome');
     if(!cod){ this.prod=null; box.innerHTML='digite o código — o nome é puxado do catálogo'; return; }
-    try{ const r=await sb.from('ecom_produtos').select('id,produto,marca,modelo,codigo').eq('codigo',cod).eq('ativo',true).maybeSingle();
+    try{ const r=await sb.from('ecom_produtos').select('id,produto,marca,modelo,codigo,capacidade,interface').eq('codigo',cod).eq('ativo',true).maybeSingle();
       if(r.error) throw r.error;
-      if(r.data){ this.prod=r.data; box.innerHTML='<b>'+r.data.produto+'</b>'+(r.data.marca?' · '+r.data.marca:''); }
+      if(r.data){ this.prod=r.data; box.innerHTML='<b>'+r.data.produto+'</b>'+(r.data.interface?' '+r.data.interface:'')+(r.data.marca?' · '+r.data.marca:'')+(r.data.modelo?' · '+r.data.modelo:'')+(r.data.capacidade?' · '+r.data.capacidade:''); }
       else { this.prod=null; box.innerHTML='<span style="color:var(--eamber)">código não encontrado no catálogo</span>'; }
     }catch(e){ this.prod=null; box.innerHTML='<span style="color:var(--ered)">erro ao buscar: '+e.message+'</span>'; }
   },
@@ -3592,10 +3596,10 @@ const ecomAlvo={
   async load(){
     try{ const rv=await sb.from('ecom_vendas').select('produto,produto_codigo,uf,receita_bruta,resultado_liquido,status,data_solicitacao');
       const ra=await sb.from('ecom_anuncios').select('*').order('data_publicacao',{ascending:false});
-      const rp=await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,preco');
+      const rp=await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,preco,capacidade,interface');
       if(rv.error) throw rv.error; if(ra.error) throw ra.error;
       this.vendas=(rv.data||[]).filter(v=>v.status!=='cancelado'); this.anuncios=ra.data||[];
-      this.catNome={}; this.catPreco={}; (rp.data||[]).forEach(p=>{ if(p.codigo){ this.catNome[p.codigo]=[p.produto,p.marca,p.modelo].filter(Boolean).join(' '); this.catPreco[p.codigo]=p.preco; } });
+      this.catNome={}; this.catPreco={}; (rp.data||[]).forEach(p=>{ if(p.codigo){ this.catNome[p.codigo]=[p.produto,p.interface,p.marca,p.modelo,p.capacidade].filter(Boolean).join(' '); this.catPreco[p.codigo]=p.preco; } });
       await this.loadResultados();
       this.renderImport(); this.renderAnuncios(); this.fillComando(); this.fillComandoResultado(); this.loadAnalise();
     }catch(e){ const b=this._g('al-anuncios'); if(b) b.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
@@ -3802,16 +3806,16 @@ const ecomAlvo={
         +'<span style="font-size:13.5px;font-weight:700;color:'+g.cor+'">'+g.titulo+'</span>'
         +'<span style="font-size:11px;color:var(--emuted2)">'+items.length+' SKUs · '+g.dsc+'</span></div>';
       html+='<table style="width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed">';
-      html+='<colgroup><col style="width:2.5%"><col style="width:5.5%"><col style="width:13%"><col style="width:4%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:60%"></colgroup>';
+      html+='<colgroup><col style="width:2.5%"><col style="width:5.5%"><col style="width:14%"><col style="width:4.5%"><col style="width:4.5%"><col style="width:4.5%"><col style="width:6%"><col style="width:58.5%"></colgroup>';
       html+='<tr style="color:var(--emuted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap">'
         +'<td style="padding:3px 3px;text-align:right">#</td>'
-        +'<td style="padding:3px 3px">Nº cod</td>'
-        +'<td style="padding:3px 3px">Produto</td>'
-        +'<td style="padding:3px 3px;text-align:center">Índice</td>'
-        +'<td style="padding:3px 3px;text-align:right" title="Margem real do Simulador (imposto, frete, taxa ML, custo NF)">Margem</td>'
-        +'<td style="padding:3px 3px;text-align:right">Preço</td>'
-        +'<td style="padding:3px 3px;text-align:right">Sugestão</td>'
-        +'<td style="padding:3px 3px">Observação</td></tr>';
+        +'<td style="padding:3px 6px">Nº cod</td>'
+        +'<td style="padding:3px 6px">Produto</td>'
+        +'<td style="padding:3px 2px 3px 14px;text-align:center">Índice</td>'
+        +'<td style="padding:3px 2px;text-align:right" title="Margem real do Simulador (imposto, frete, taxa ML, custo NF)">Margem</td>'
+        +'<td style="padding:3px 2px;text-align:right">Preço</td>'
+        +'<td style="padding:3px 16px 3px 2px;text-align:center">Sugestão</td>'
+        +'<td style="padding:3px 6px">Observação</td></tr>';
       const ea=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       const nz='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
       items.forEach(x=>{
@@ -3823,13 +3827,13 @@ const ecomAlvo={
         _rn++;
         html+='<tr style="border-top:1px solid var(--eborder);vertical-align:middle">'
           +'<td style="padding:3px 3px;text-align:right;color:var(--emuted2);font-variant-numeric:tabular-nums">'+_rn+'</td>'
-          +'<td style="padding:3px 3px;font-family:var(--emono);white-space:nowrap"><b'+(pub.has(cod)?' style="color:var(--eemerald)" title="publicado no ML"':' style="color:var(--etxt)"')+'>'+(x.codigo||'')+'</b></td>'
-          +'<td style="padding:3px 3px;color:var(--etxt);'+nz+'" title="'+ea(nome)+'">'+(nome||'<span style="color:var(--emuted2)">—</span>')+'</td>'
-          +'<td style="padding:3px 3px;text-align:center;font-weight:700;font-size:12.5px;color:'+g.cor+'">'+(ind!=null?ind:'—')+'</td>'
-          +'<td style="padding:3px 3px;text-align:right;font-weight:700;white-space:nowrap;color:'+((x.margem_liq||0)>=18?'var(--eemerald)':(x.margem_liq||0)<8?'var(--eamber)':'var(--etxt)')+'">'+(x.margem_liq!=null?(Math.round(x.margem_liq*10)/10)+'%':'—')+'</td>'
-          +'<td style="padding:3px 3px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(pAtual!=null?'R$'+Math.round(pAtual):'<span style="color:var(--emuted2)">—</span>')+'</td>'
-          +'<td style="padding:3px 3px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(x.preco_sugerido!=null?'R$'+Math.round(x.preco_sugerido):'<span style="color:var(--emuted2)">—</span>')+'</td>'
-          +'<td style="padding:3px 3px;color:var(--emuted);'+nz+'" title="'+ea(obsFull)+'">'+(x.observacao||'')+(x.gatilho?' <span style="color:var(--emuted2)">⟳ revisa se: '+x.gatilho+'</span>':'')+(x.risco?' <span style="color:var(--ered)">· '+x.risco+'</span>':'')+'</td>'
+          +'<td style="padding:3px 6px;font-family:var(--emono);white-space:nowrap"><b'+(pub.has(cod)?' style="color:var(--eemerald)" title="publicado no ML"':' style="color:var(--etxt)"')+'>'+(x.codigo||'')+'</b></td>'
+          +'<td style="padding:3px 6px;color:var(--etxt);'+nz+'" title="'+ea(nome)+'">'+(nome||'<span style="color:var(--emuted2)">—</span>')+'</td>'
+          +'<td style="padding:3px 2px 3px 14px;text-align:center;font-weight:700;font-size:12.5px;color:'+g.cor+'">'+(ind!=null?ind:'—')+'</td>'
+          +'<td style="padding:3px 2px;text-align:right;font-weight:700;white-space:nowrap;color:'+((x.margem_liq||0)>=18?'var(--eemerald)':(x.margem_liq||0)<8?'var(--eamber)':'var(--etxt)')+'">'+(x.margem_liq!=null?(Math.round(x.margem_liq*10)/10)+'%':'—')+'</td>'
+          +'<td style="padding:3px 2px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(pAtual!=null?'R$'+Math.round(pAtual):'<span style="color:var(--emuted2)">—</span>')+'</td>'
+          +'<td style="padding:3px 16px 3px 2px;text-align:center;white-space:nowrap;color:var(--etxt)">'+(x.preco_sugerido!=null?'R$'+Math.round(x.preco_sugerido):'<span style="color:var(--emuted2)">—</span>')+'</td>'
+          +'<td style="padding:3px 6px;color:var(--emuted);'+nz+'" title="'+ea(obsFull)+'">'+(x.observacao||'')+(x.gatilho?' <span style="color:var(--emuted2)">⟳ revisa se: '+x.gatilho+'</span>':'')+(x.risco?' <span style="color:var(--ered)">· '+x.risco+'</span>':'')+'</td>'
           +'</tr>';
       });
       html+='</table></div>';
