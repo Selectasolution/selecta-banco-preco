@@ -639,6 +639,12 @@
   #tab-ecommerce{color:var(--etxt);font-size:14px;line-height:1.5}
   #tab-ecommerce .esub{color:var(--emuted);font-size:12.5px;margin:0 0 16px}
   #tab-ecommerce .esub b{color:var(--eaccent);font-weight:600}
+  #tab-ecommerce .ffaixa{display:block;font-size:10.5px;color:var(--eteal);margin-top:2px;min-height:13px}
+  #tab-ecommerce .ffaixa.warn{color:var(--eamber)}
+  #tab-ecommerce .simfield label .hsim{font-size:9px;color:var(--emuted2);font-weight:400;text-transform:none;letter-spacing:0}
+  #tab-ecommerce .robe{background:#0c1422;border-style:dashed;color:var(--emuted)}
+  #tab-ecommerce .mgsimf{font-weight:700}
+  #tab-ecommerce .mgsimf.v{color:var(--eemerald)} #tab-ecommerce .mgsimf.a{color:var(--eamber)} #tab-ecommerce .mgsimf.r{color:var(--ered)}
   #tab-ecommerce .ecard{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:16px;margin-bottom:14px}
   #tab-ecommerce .ecard h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin:0 0 12px;font-weight:600}
   #tab-ecommerce .frete-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:18px}
@@ -692,14 +698,15 @@
   #tab-ecommerce .cancelbtn{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:9px 14px;cursor:pointer;font-size:13px}
   #tab-ecommerce .formmsg{font-size:11.5px;color:var(--eamber);margin-top:8px;min-height:14px}
   #tab-ecommerce .tbl-wrap{overflow-x:auto;margin-top:6px}
-  #tab-ecommerce table.emain{width:100%;border-collapse:collapse;font-size:13px;min-width:1060px}
+  #tab-ecommerce table.emain{width:auto;border-collapse:collapse;font-size:13px}
   #tab-ecommerce table.emain thead th{text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--emuted);font-weight:600;padding:0 9px 9px;border-bottom:1px solid var(--eborder);white-space:nowrap}
   #tab-ecommerce table.emain thead th.l{text-align:left}
-  #tab-ecommerce table.emain tbody td{padding:9px;border-bottom:1px solid #1c2740;text-align:right;font-family:var(--emono);white-space:nowrap}
-  #tab-ecommerce table.emain tbody td.l{text-align:left;font-family:inherit}
+  #tab-ecommerce table.emain tbody td{padding:7px 9px;border-bottom:1px solid #1c2740;text-align:right;font-family:var(--emono);white-space:nowrap;vertical-align:middle}
+  #tab-ecommerce table.emain tbody td.l{text-align:left;font-family:inherit;font-size:13.5px}
   #tab-ecommerce table.emain tbody tr:hover{background:#0f1828}
+  #tab-ecommerce table.emain .cellInput.mkt{font-size:11px}
   #tab-ecommerce .eprod{font-weight:600}
-  #tab-ecommerce .emodel{color:var(--emuted2);font-size:11px;font-family:var(--emono)}
+  #tab-ecommerce .emodel{color:var(--emuted2);font-size:12px;font-family:var(--emono)}
   #tab-ecommerce .ezona{font-size:10.5px;color:var(--eamber);margin-top:2px}
   #tab-ecommerce .cellInput{width:74px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:6px;padding:5px 7px;font-family:var(--emono);font-size:12.5px;text-align:right}
   #tab-ecommerce .cellInput:focus{outline:none;border-color:var(--eaccent)}
@@ -713,7 +720,7 @@
   #tab-ecommerce .pill.excluir{background:#2e1517;color:var(--ered)}
   #tab-ecommerce .mneg{color:var(--ered)} #tab-ecommerce .vsacima{color:var(--ered)} #tab-ecommerce .vsabaixo{color:var(--eemerald)} #tab-ecommerce .vsnull{color:var(--emuted2)}
   #tab-ecommerce .smper{font-size:11px;color:var(--emuted)}
-  #tab-ecommerce .acts{display:flex;gap:6px;justify-content:flex-end}
+  #tab-ecommerce .acts{display:flex;gap:6px;justify-content:center}
   #tab-ecommerce .rowbtn{background:none;border:1px solid var(--eborder);color:var(--emuted);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer}
   #tab-ecommerce .rowbtn:hover{border-color:var(--eaccent);color:var(--etxt)}
   #tab-ecommerce .rowbtn.del:hover{border-color:var(--ered);color:var(--ered)}
@@ -887,20 +894,21 @@
     <div class="ecard">
       <h3 id="ecom-form-title">Cadastrar / simular produto</h3>
       <div class="addform">
-        <div class="efield"><label>Produto <span class="req">*</span></label><input class="ainput" id="ecom-f-produto" style="width:170px" placeholder="SSD SATA III 256GB"></div>
-        <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px" placeholder="Kingston"></div>
-        <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px" placeholder="A400"></div>
-        <div class="efield"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px" placeholder="256GB"></div>
-        <div class="efield"><label>Interface</label><select class="ainput" id="ecom-f-interface" style="width:110px"><option value="">—</option><option value="SATA III">SATA III</option><option value="NVMe">NVMe</option></select></div>
-        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:170px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option></select></div>
-        <div class="efield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px" placeholder="ex: 320"></div>
-        <div class="efield"><label>Faixa (auto)</label><select class="ainput" id="ecom-f-peso" style="width:130px"></select><span id="ecom-f-peso-warn" style="display:none;font-size:10px;color:var(--eamber);margin-left:6px"></span></div>
+        <input type="hidden" id="ecom-f-produto">
+        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option></select></div>
+        <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px"></div>
+        <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px"></div>
+        <div class="efield" id="ecom-f-capacidade-wrap" style="display:none"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px"></div>
+        <div class="efield" id="ecom-f-interface-wrap" style="display:none"><label>Interface</label><select class="ainput" id="ecom-f-interface" style="width:110px"><option value="">—</option><option value="SATA III">SATA III</option><option value="NVMe">NVMe</option></select></div>
+        <div class="efield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px"><span id="ecom-f-faixa-msg" class="ffaixa"></span><select id="ecom-f-peso" style="display:none"></select><span id="ecom-f-peso-warn" style="display:none"></span></div>
         <div class="efield"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
-        <div class="efield"><label>Meu preço <span class="req">*</span></label><input class="ainput mono" id="ecom-f-preco" type="number" style="width:90px"></div>
         <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
+        <div class="efield"><label>Mínimo mercado</label><input class="ainput mono" id="ecom-f-menor" type="number" style="width:90px"></div>
         <div class="efield"><label>Média mercado</label><input class="ainput mono" id="ecom-f-media" type="number" style="width:90px"></div>
-        <div class="efield"><label>Menor preço</label><input class="ainput mono" id="ecom-f-menor" type="number" style="width:90px"></div>
-        <div class="efield"><label>Break-even <span style="color:var(--emuted2);font-weight:400">(ref.)</span></label><input class="ainput mono" id="ecom-f-breakeven" type="text" style="width:90px" readonly tabindex="-1" placeholder="—"></div>
+        <div class="efield"><label>Break-even <span style="color:var(--emuted2);font-weight:400">(ref.)</span></label><input class="ainput mono" id="ecom-f-breakeven" type="text" style="width:90px" readonly tabindex="-1"></div>
+        <div class="efield"><label>Meu preço <span class="req">*</span></label><input class="ainput mono" id="ecom-f-preco" type="number" style="width:90px"></div>
+        <div class="efield simfield"><label>Margem R$ <span class="hsim">sim.</span></label><input class="ainput mono robe" id="ecom-f-mgrs" type="text" style="width:84px" readonly tabindex="-1"></div>
+        <div class="efield simfield"><label>Margem % <span class="hsim">sim.</span></label><input class="ainput mono robe mgsimf" id="ecom-f-mgpct" type="text" style="width:72px" readonly tabindex="-1"></div>
         <button class="addbtn" id="ecom-add">+ Adicionar</button>
         <button class="cancelbtn hidden-section" id="ecom-cancel">Cancelar</button>
       </div>
@@ -914,7 +922,7 @@
           <th>Mercado<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">méd / mín</span></th>
           <th>VS<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">méd / mín</span></th>
           <th>Frete / fixo</th><th>Mordida</th><th>Custo (NF)</th><th>Margem</th><th>Veredito</th>
-          <th style="text-align:right">Ações</th>
+          <th style="text-align:center">Ações</th>
         </tr></thead>
         <tbody id="ecom-tbody"></tbody>
       </table>
@@ -2533,7 +2541,8 @@ const ecom = {
   fmtPct(v){ return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'; },
   pesoLabel(c){ const f=this.PESOS.find(p=>p[0]===c); return f?f[1]:c; },
   faixaFromPeso(g){ g=parseInt(g,10); if(isNaN(g)||g<=0) return null; if(g<=300) return 'ate300'; if(g<=500) return 'f301_500'; if(g<=1000) return 'f501_1000'; return 'f1001_2000'; },
-  applyPesoG(){ const g=parseInt(this._g('ecom-f-pesog').value,10); const sel=this._g('ecom-f-peso'); const warn=this._g('ecom-f-peso-warn'); const fx=this.faixaFromPeso(g); if(fx&&sel){ sel.value=fx; } if(warn){ if(!isNaN(g)&&g>2000){ warn.style.display='inline'; warn.textContent='⚠ >2kg: faixa travada em 1–2kg (banda real pendente)'; } else { warn.style.display='none'; warn.textContent=''; } } },
+  applyPesoG(){ const g=parseInt(this._g('ecom-f-pesog').value,10); const sel=this._g('ecom-f-peso'); const msg=this._g('ecom-f-faixa-msg'); const fx=this.faixaFromPeso(g); if(fx&&sel){ sel.value=fx; } if(msg){ if(isNaN(g)||g<=0){ msg.textContent=''; msg.className='ffaixa'; } else if(g>2000){ msg.textContent='⚠ >2kg: faixa travada em 1–2kg'; msg.className='ffaixa warn'; } else { msg.textContent='→ '+this.pesoLabel(fx); msg.className='ffaixa'; } } },
+  toggleCapInterface(){ const ssd=this._g('ecom-f-categoria').value==='SSD'; const cw=this._g('ecom-f-capacidade-wrap'), iw=this._g('ecom-f-interface-wrap'); if(cw) cw.style.display=ssd?'flex':'none'; if(iw) iw.style.display=ssd?'flex':'none'; if(!ssd){ const c=this._g('ecom-f-capacidade'), i=this._g('ecom-f-interface'); if(c)c.value=''; if(i)i.value=''; } },
   zonaLabel(c){ const z=this.ZONAS.find(x=>x[0]===c); return z?z[1]:c; },
   familia(p){ return ((p||'').trim().split(/\s+/)[0]||'').toUpperCase(); },
 
@@ -2592,6 +2601,8 @@ const ecom = {
     g('ecom-cancel').addEventListener('click',()=>this.cancelEdit());
     ['ecom-f-preco','ecom-f-custo','ecom-f-peso','ecom-f-tipo'].forEach(id=>{ const el=g(id); if(el) el.addEventListener('input',()=>this.updateFormBreakeven()); });
     { const pe=g('ecom-f-pesog'); if(pe) pe.addEventListener('input',()=>{ this.applyPesoG(); this.updateFormBreakeven(); }); }
+    { const cat=g('ecom-f-categoria'); if(cat) cat.addEventListener('change',()=>{ this.toggleCapInterface(); this.updateFormBreakeven(); }); }
+    { const tp=g('ecom-f-tipo'); if(tp) tp.addEventListener('change',()=>this.updateFormBreakeven()); }
     { const eb=this._g('ecom-export'); if(eb) eb.addEventListener('click',()=>this.exportarCenario()); }
   },
   updateCtx(){ const rep=this.repFactor===1?'reputação cheia':'verde (−50%)'; const s=`${this.zonaLabel(this.selDest)} · ${rep}`;
@@ -2635,12 +2646,12 @@ const ecom = {
       return `<tr>
         <td class="l"><span class="eprod">${it.produto}</span>${it.codigo?`<span style="font-family:var(--emono);font-size:11px;color:var(--eteal);background:var(--epanel2);border:1px solid var(--eborder);border-radius:5px;padding:1px 6px;margin-left:6px">${it.codigo}</span>`:`<span style="font-size:10px;color:var(--eamber);margin-left:6px">sem código</span>`} · ${it.marca||''}${tipoTag}${modeloSub}<div class="emodel">${this.pesoLabel(it.peso_faixa)}</div>${zonaAlert}</td>
         <td><input class="cellInput me" type="text" inputmode="decimal" data-id="${it.id}" data-f="preco" value="${this.fmt(it.preco)}"></td>
-        <td><div class="stack"><input class="cellInput" type="text" inputmode="decimal" data-id="${it.id}" data-f="media" placeholder="méd" value="${it.media==null?'':this.fmt(it.media)}"><input class="cellInput" type="text" inputmode="decimal" data-id="${it.id}" data-f="menor" placeholder="mín" value="${it.menor==null?'':this.fmt(it.menor)}"></div></td>
+        <td><div class="stack"><input class="cellInput mkt" type="text" inputmode="decimal" data-id="${it.id}" data-f="media" placeholder="méd" value="${it.media==null?'':this.fmt(it.media)}"><input class="cellInput mkt" type="text" inputmode="decimal" data-id="${it.id}" data-f="menor" placeholder="mín" value="${it.menor==null?'':this.fmt(it.menor)}"></div></td>
         <td><div class="stack">${vsCell(it.preco,it.media)}${vsCell(it.preco,it.menor)}</div></td>
         <td>${frCell}</td>
         <td class="${mc}">${this.fmtPct(mord)}</td>
         <td>${this.fmt(it.custo)}</td>
-        <td><div class="stack"><span class="${r.margem<0?'mneg':''}">${this.fmt(r.margem)}</span><span class="smper">${this.fmtPct(r.margemPct*100)}</span></div></td>
+        <td><div class="stack"><span class="${r.margem<0?'mneg':''}">${this.fmt(r.margem)}</span><span class="smper" style="color:${(r.margemPct*100)>=15?'var(--eemerald)':(r.margemPct*100)>=12?'var(--eamber)':'var(--ered)'};font-weight:700">${this.fmtPct(r.margemPct*100)}</span></div></td>
         <td><span class="pill ${v.k}">${v.t}</span></td>
         <td><div class="acts"><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
       </tr>`; }).join('');
@@ -2659,28 +2670,32 @@ const ecom = {
     const P=parseFloat(this._g('ecom-f-preco').value);
     const custo=parseFloat(this._g('ecom-f-custo').value);
     const out=this._g('ecom-f-breakeven');
-    if(!out) return;
-    if(isNaN(P)||isNaN(custo)){ out.value=''; return; }
+    const mr=this._g('ecom-f-mgrs'), mp=this._g('ecom-f-mgpct');
+    const peso=this.faixaFromPeso(parseInt(this._g('ecom-f-pesog').value,10))||'ate300';
+    if(isNaN(P)||isNaN(custo)){ if(out)out.value=''; if(mr)mr.value=''; if(mp){ mp.value=''; mp.className='ainput mono robe mgsimf'; } return; }
     const pr=this.params();
     const comPct=(this._g('ecom-f-tipo').value==='premium'?pr.comP:pr.comC)/100;
     const t=comPct+pr.imp/100+pr.outros/100+pr.colchao/100;
-    const peso=this._g('ecom-f-peso').value;
     const fr=(this.mtx[this.selDest+'|'+peso]==null?0:this.mtx[this.selDest+'|'+peso])*this.repFactor;
-    out.value=this.fmt(this.breakeven(custo,t,fr,pr));
+    if(out) out.value=this.fmt(this.breakeven(custo,t,fr,pr));
+    const r=this.calc({preco:P,custo:custo,tipo_anuncio:this._g('ecom-f-tipo').value,peso_faixa:peso});
+    if(mr) mr.value=this.fmt(r.margem);
+    if(mp){ const pct=r.margemPct*100; mp.value=this.fmtPct(pct); mp.className='ainput mono robe mgsimf '+(pct>=15?'v':pct>=12?'a':'r'); }
   },
-  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-capacidade','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const w=this._g('ecom-f-peso-warn'); if(w){ w.style.display='none'; w.textContent=''; } } this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-interface').value=''; this._g('ecom-f-categoria').value=''; this._g('ecom-formmsg').textContent=''; this.updateFormBreakeven(); },
+  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-capacidade','ecom-f-mgrs','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const m=this._g('ecom-f-faixa-msg'); if(m){ m.textContent=''; m.className='ffaixa'; } } { const mp=this._g('ecom-f-mgpct'); if(mp){ mp.value=''; mp.className='ainput mono robe mgsimf'; } } this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-interface').value=''; this._g('ecom-f-categoria').value=''; this.toggleCapInterface(); { const fm=this._g('ecom-formmsg'); fm.textContent=''; fm.style.color=''; } this.updateFormBreakeven(); },
   edit(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
     this._g('ecom-f-produto').value=it.produto||''; this._g('ecom-f-marca').value=it.marca||''; this._g('ecom-f-modelo').value=it.modelo||''; this._g('ecom-f-capacidade').value=it.capacidade||''; this._g('ecom-f-interface').value=it.interface||'';
-    this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico'; this._g('ecom-f-categoria').value=it.categoria||'';
+    this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico'; this._g('ecom-f-categoria').value=it.categoria||''; this.toggleCapInterface();
     this._g('ecom-f-preco').value=it.preco; this._g('ecom-f-custo').value=it.custo; this._g('ecom-f-media').value=it.media==null?'':it.media; this._g('ecom-f-menor').value=it.menor==null?'':it.menor;
     this.updateFormBreakeven();
-    this.editId=id; this._g('ecom-add').textContent='Salvar alteração'; show('#ecom-cancel'); this._g('ecom-f-produto').focus(); },
+    this.editId=id; this._g('ecom-add').textContent='Salvar alteração'; show('#ecom-cancel'); this._g('ecom-f-marca').focus(); },
   cancelEdit(){ this.editId=null; this.clearForm(); this._g('ecom-add').textContent='+ Adicionar'; hide('#ecom-cancel'); },
 
   async save(){ const num=id=>{ const v=parseFloat(this._g(id).value); return isNaN(v)?null:v; };
-    const produto=this._g('ecom-f-produto').value.trim(); const preco=num('ecom-f-preco'), custo=num('ecom-f-custo');
-    const categoria=this._g('ecom-f-categoria').value||null;
-    if(!produto||preco==null||custo==null||!categoria){ this._g('ecom-formmsg').textContent='Produto, Categoria, Meu preço e Custo são obrigatórios.'; return; }
+    const catSel=this._g('ecom-f-categoria'); const categoria=catSel.value||null;
+    const produto=categoria?(((catSel.options[catSel.selectedIndex]||{}).text)||'').trim():''; this._g('ecom-f-produto').value=produto;
+    const preco=num('ecom-f-preco'), custo=num('ecom-f-custo');
+    if(!categoria||preco==null||custo==null){ const fm=this._g('ecom-formmsg'); fm.textContent='Categoria, Meu preço e Custo são obrigatórios.'; fm.style.color='var(--eamber)'; return; }
     this._g('ecom-formmsg').textContent='';
     const pesog=(()=>{ const v=parseInt(this._g('ecom-f-pesog').value,10); return isNaN(v)?null:v; })();
     const dados={ produto, categoria, marca:this._g('ecom-f-marca').value.trim()||null, modelo:this._g('ecom-f-modelo').value.trim()||null,
@@ -2689,10 +2704,10 @@ const ecom = {
     if(this.editId){ const idx=this.itens.findIndex(x=>String(x.id)===String(this.editId)); const prev=idx>=0?Object.assign({},this.itens[idx]):null;
       if(idx>=0) this.itens[idx]=Object.assign({},this.itens[idx],dados);
       try{ const r=await sb.from('ecom_produtos').update(Object.assign({},dados,{atualizado_em:new Date().toISOString()})).eq('id',this.editId).select().single(); if(r.error) throw r.error; if(idx>=0&&r.data) this.itens[idx]=r.data; this.cancelEdit(); this.render(); }
-      catch(e){ if(idx>=0&&prev) this.itens[idx]=prev; this._g('ecom-formmsg').textContent='Erro ao salvar: '+e.message; this.render(); } }
+      catch(e){ if(idx>=0&&prev) this.itens[idx]=prev; const fm=this._g('ecom-formmsg'); fm.textContent='Erro ao salvar: '+e.message; fm.style.color='var(--ered)'; this.render(); } }
     else { const codigo=this.nextCodigo(categoria);
-      try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{codigo,ativo:true})).select().single(); if(r.error) throw r.error; this.itens.push(r.data); this.clearForm(); this.render(); }
-      catch(e){ this._g('ecom-formmsg').textContent='Erro ao cadastrar: '+e.message; } } },
+      try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{codigo,ativo:true})).select().single(); if(r.error) throw r.error; this.itens.push(r.data); this.clearForm(); this.render(); const fm=this._g('ecom-formmsg'); fm.textContent='✓ Salvo no banco: '+r.data.codigo+' — campos limpos para o próximo.'; fm.style.color='var(--eemerald)'; }
+      catch(e){ const fm=this._g('ecom-formmsg'); fm.textContent='Erro ao cadastrar: '+e.message; fm.style.color='var(--ered)'; } } },
 
   nextCodigo(sigla){ const re=new RegExp('^'+sigla+'-(\\d+)$'); let max=0;
     this.itens.forEach(it=>{ const m=(it.codigo||'').match(re); if(m){ const n=parseInt(m[1],10); if(n>max) max=n; } });
