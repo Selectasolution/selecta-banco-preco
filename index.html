@@ -653,7 +653,7 @@
   #tab-ecommerce .robe{background:#0c1422;border-style:dashed;color:var(--emuted)}
   #tab-ecommerce .mgsimf{font-weight:700}
   #tab-ecommerce .mgsimf.v{color:var(--eemerald)} #tab-ecommerce .mgsimf.a{color:var(--eamber)} #tab-ecommerce .mgsimf.r{color:var(--ered)}
-  #tab-ecommerce .ecard{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:16px;margin-bottom:14px}
+  #tab-ecommerce .ecard{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:13px 16px;margin-bottom:10px}
   #tab-ecommerce .ecard h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin:0 0 12px;font-weight:600}
   #tab-ecommerce .frete-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:18px}
   @media(max-width:880px){#tab-ecommerce .frete-grid{grid-template-columns:1fr}}
@@ -3800,7 +3800,6 @@ const ecomAlvo={
     const imp=this._g('al-an-import'); if(imp && !imp._b){ imp._b=true; imp.addEventListener('click',()=>this.importarAnalise()); }
     const cl=this._g('al-an-clear'); if(cl && !cl._b){ cl._b=true; cl.addEventListener('click',()=>this.limparAnalise()); }
   },
-  _vcolor(v){ v=(v||'').toUpperCase(); return v==='PUBLICAR'?'var(--eemerald)':v==='REDUZIR'?'#38bdf8':v==='AUMENTAR'||v==='SEGURAR'?'var(--eamber)':v==='BLOQUEAR'?'var(--ered)':v==='ABANDONAR'?'var(--emuted)':'var(--etxt)'; },
   _tend(t){ return t==='SUBINDO'?'↑ subindo':t==='CAINDO'?'↓ caindo':t==='ESTAVEL'?'→ estável':''; },
   renderAnalise(){
     const head=this._g('al-an-head'), body=this._g('al-an-body');
