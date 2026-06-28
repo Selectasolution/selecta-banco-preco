@@ -674,11 +674,10 @@
   #tab-ecommerce .mcell.sel{border-color:var(--eaccent);box-shadow:0 0 0 1px var(--eaccent)}
   #tab-ecommerce .mnote{font-size:11px;color:var(--eamber);margin-top:8px;line-height:1.45}
   #tab-ecommerce .mnote b{color:#f3e6a8}
-  #tab-ecommerce .param-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  @media(max-width:880px){#tab-ecommerce .param-grid{grid-template-columns:1fr 1fr}}
+  #tab-ecommerce .param-grid{display:flex;flex-wrap:wrap;gap:11px 16px;align-items:flex-end}
   #tab-ecommerce .efield label{display:block;font-size:11px;color:var(--emuted);margin-bottom:5px}
   #tab-ecommerce .field-row{display:flex;align-items:center;gap:6px}
-  #tab-ecommerce .num{width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:7px 9px;font-family:var(--emono);font-size:14px}
+  #tab-ecommerce .num{width:56px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:7px 8px;font-family:var(--emono);font-size:14px;text-align:right}
   #tab-ecommerce .num:focus{outline:none;border-color:var(--eaccent)}
   #tab-ecommerce .unit{color:var(--emuted2);font-family:var(--emono);font-size:13px}
   #tab-ecommerce .toggle-row{display:flex;gap:6px;margin-top:5px}
@@ -689,9 +688,9 @@
   #tab-ecommerce .modtog .tg{background:var(--ebg);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:12px}
   #tab-ecommerce .modtog .tg.active{background:#0c2c22;border-color:var(--eaccent);color:var(--eaccent);font-weight:600}
   #tab-ecommerce .modwarn{font-size:11px;color:var(--eamber)}
-  #tab-ecommerce .fixgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+  #tab-ecommerce .fixgrid{display:flex;flex-wrap:wrap;gap:11px 14px;margin-top:8px}
   #tab-ecommerce .fixgrid .fx label{font-size:10px;color:var(--emuted2);display:block;margin-bottom:4px;white-space:nowrap}
-  #tab-ecommerce .fixnum{width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:6px;padding:6px 7px;font-family:var(--emono);font-size:12.5px;text-align:right}
+  #tab-ecommerce .fixnum{width:66px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:6px;padding:6px 7px;font-family:var(--emono);font-size:12.5px;text-align:right}
   #tab-ecommerce .fixnum:focus{outline:none;border-color:var(--eaccent)}
   #tab-ecommerce .fixnum.locked{background:#0c1320;color:var(--emuted2)}
   #tab-ecommerce .efiltrow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
@@ -872,17 +871,18 @@
       <div class="param-grid">
         <div class="efield"><label>Comissão Clássico</label><div class="field-row"><input class="num" id="ecom-com-classico" type="number" step="0.5" value="13"><span class="unit">%</span></div></div>
         <div class="efield"><label>Comissão Premium</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Imposto (regime)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" step="0.5" value="4"><span class="unit">%</span></div><p class="note">Simples Anexo I 1ª faixa = 4%.</p></div>
-        <div class="efield"><label>Outros custos (antecip./parcel.)</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Colchão (devolução/embalagem)</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="2"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Imposto (regime)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" step="0.5" value="4"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Outros custos</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Colchão</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="2"><span class="unit">%</span></div></div>
       </div>
+      <p class="note">Simples Anexo I 1ª faixa = 4% · Outros = antecip./parcel. · Colchão = devolução/embalagem.</p>
       <div style="margin-top:14px">
         <label style="display:block;font-size:11px;color:var(--emuted);margin-bottom:2px">Custo fixo ML <b>abaixo de R$79</b> <span style="color:var(--emuted2);font-weight:400">— tabela oficial Flex/Correios (mai/2026). Edite só se o ML mudar.</span></label>
         <div class="fixgrid">
-          <div class="fx"><label>&lt;R$12,50</label><input class="fixnum locked" value="50% do preço" disabled></div>
-          <div class="fx"><label>R$12,50–29</label><input class="fixnum" id="ecom-fix1" type="number" step="0.05" value="6.25"></div>
-          <div class="fx"><label>R$29–50</label><input class="fixnum" id="ecom-fix2" type="number" step="0.05" value="6.50"></div>
-          <div class="fx"><label>R$50–79</label><input class="fixnum" id="ecom-fix3" type="number" step="0.05" value="6.75"></div>
+          <div class="fx"><label>&lt;R$12,50</label><div class="field-row"><input class="fixnum locked" value="50% do preço" style="width:96px" disabled></div></div>
+          <div class="fx"><label>R$12,50–29</label><div class="field-row"><span class="unit">R$</span><input class="fixnum" id="ecom-fix1" type="number" step="0.05" value="6.25"></div></div>
+          <div class="fx"><label>R$29–50</label><div class="field-row"><span class="unit">R$</span><input class="fixnum" id="ecom-fix2" type="number" step="0.05" value="6.50"></div></div>
+          <div class="fx"><label>R$50–79</label><div class="field-row"><span class="unit">R$</span><input class="fixnum" id="ecom-fix3" type="number" step="0.05" value="6.75"></div></div>
         </div>
       </div>
     </div>
