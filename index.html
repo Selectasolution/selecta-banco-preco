@@ -639,8 +639,16 @@
   #tab-ecommerce{color:var(--etxt);font-size:14px;line-height:1.5}
   #tab-ecommerce .esub{color:var(--emuted);font-size:12.5px;margin:0 0 16px}
   #tab-ecommerce .esub b{color:var(--eaccent);font-weight:600}
-  #tab-ecommerce .ffaixa{display:block;font-size:10.5px;color:var(--eteal);margin-top:2px;min-height:13px}
+  #tab-ecommerce .addform .pesofield{position:relative}
+  #tab-ecommerce .ffaixa{position:absolute;top:100%;left:0;margin-top:4px;font-size:10.5px;color:var(--eteal);white-space:nowrap}
   #tab-ecommerce .ffaixa.warn{color:var(--eamber)}
+  #tab-ecommerce .ecom-sentinela{border-radius:10px;padding:9px 13px;margin-bottom:12px;font-size:12px;border:1px solid var(--eborder)}
+  #tab-ecommerce .ecom-sentinela.ok{background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.28);color:var(--eemerald)}
+  #tab-ecommerce .ecom-sentinela.warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.32);color:var(--etxt)}
+  #tab-ecommerce .ecom-sentinela.crit{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.38);color:var(--etxt)}
+  #tab-ecommerce .ecom-sentinela .sent-h{font-weight:600;margin-bottom:5px}
+  #tab-ecommerce .ecom-sentinela ul{margin:0;padding-left:18px}
+  #tab-ecommerce .ecom-sentinela li{margin:2px 0;color:var(--emuted)}
   #tab-ecommerce .simfield label .hsim{font-size:9px;color:var(--emuted2);font-weight:400;text-transform:none;letter-spacing:0}
   #tab-ecommerce .robe{background:#0c1422;border-style:dashed;color:var(--emuted)}
   #tab-ecommerce .mgsimf{font-weight:700}
@@ -823,7 +831,7 @@
 
     <div id="ecom-sub-simulador" class="ecom-subpanel">
 
-    <p class="esub">Simulador de margem <b>Mercado Livre</b> com a regra dos <b>R$79</b> (tarifa pós 02/03/2026). Abaixo de R$79 o ML banca o frete e cobra custo fixo por faixa; a partir de R$79 você paga o frete da matriz. Dados salvos no banco. Veredito: <b style="color:var(--eemerald)">Priorizar</b> · <b style="color:var(--eamber)">Analisar</b> · <b style="color:var(--ered)">Excluir</b>.</p>
+    <div id="ecom-sentinela" class="ecom-sentinela"></div>
 
     <!-- MODALIDADE -->
     <div class="modbar">
@@ -879,17 +887,6 @@
       </div>
     </div>
 
-    <!-- CONSULTA -->
-    <div class="ecard">
-      <h3>Consultar <span style="color:var(--emuted2);font-weight:400;text-transform:none;letter-spacing:0">— filtre o banco conforme ele cresce</span></h3>
-      <div class="efiltrow">
-        <div class="efield"><label>Produto</label><select class="ainput" id="ecom-flt-prod" style="width:240px"><option value="">Todos os produtos</option></select></div>
-        <div class="efield"><label>Veredito</label><select class="ainput" id="ecom-flt-ver" style="width:170px"><option value="">Todos os vereditos</option><option value="priorizar">Priorizar</option><option value="analisar">Analisar</option><option value="excluir">Excluir</option></select></div>
-        <button class="cancelbtn" id="ecom-flt-clear">Limpar filtros</button>
-        <span class="note" id="ecom-flt-count" style="margin:0 0 7px"></span>
-      </div>
-    </div>
-
     <!-- CADASTRO -->
     <div class="ecard">
       <h3 id="ecom-form-title">Cadastrar / simular produto</h3>
@@ -900,7 +897,7 @@
         <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px"></div>
         <div class="efield" id="ecom-f-capacidade-wrap" style="display:none"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px"></div>
         <div class="efield" id="ecom-f-interface-wrap" style="display:none"><label>Interface</label><select class="ainput" id="ecom-f-interface" style="width:110px"><option value="">—</option><option value="SATA III">SATA III</option><option value="NVMe">NVMe</option></select></div>
-        <div class="efield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px"><span id="ecom-f-faixa-msg" class="ffaixa"></span><select id="ecom-f-peso" style="display:none"></select><span id="ecom-f-peso-warn" style="display:none"></span></div>
+        <div class="efield pesofield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px"><span id="ecom-f-faixa-msg" class="ffaixa"></span><select id="ecom-f-peso" style="display:none"></select><span id="ecom-f-peso-warn" style="display:none"></span></div>
         <div class="efield"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
         <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
         <div class="efield"><label>Mínimo mercado</label><input class="ainput mono" id="ecom-f-menor" type="number" style="width:90px"></div>
@@ -913,6 +910,17 @@
         <button class="cancelbtn hidden-section" id="ecom-cancel">Cancelar</button>
       </div>
       <div class="formmsg" id="ecom-formmsg"></div>
+    </div>
+
+    <!-- CONSULTA -->
+    <div class="ecard">
+      <h3>Consultar <span style="color:var(--emuted2);font-weight:400;text-transform:none;letter-spacing:0">— filtre o banco conforme ele cresce</span></h3>
+      <div class="efiltrow">
+        <div class="efield"><label>Produto</label><select class="ainput" id="ecom-flt-prod" style="width:240px"><option value="">Todos os produtos</option></select></div>
+        <div class="efield"><label>Veredito</label><select class="ainput" id="ecom-flt-ver" style="width:170px"><option value="">Todos os vereditos</option><option value="priorizar">Priorizar</option><option value="analisar">Analisar</option><option value="excluir">Excluir</option></select></div>
+        <button class="cancelbtn" id="ecom-flt-clear">Limpar filtros</button>
+        <span class="note" id="ecom-flt-count" style="margin:0 0 7px"></span>
+      </div>
     </div>
 
     <div class="tbl-wrap">
@@ -2631,7 +2639,7 @@ const ecom = {
   updateCount(){ const vis=this.itens.filter(it=>this.isVis(it)).length;
     this._g('ecom-flt-count').textContent=(this.fProd||this.fVer)?`${vis} de ${this.itens.length} itens`:`${this.itens.length} itens no banco`; },
 
-  render(){ this.populateProdFilter(); const tb=this._g('ecom-tbody');
+  render(){ this.populateProdFilter(); this.sentinela(); const tb=this._g('ecom-tbody');
     if(!this.itens.length){ tb.innerHTML=''; show('#ecom-vazio'); this.updateCount(); return; }
     hide('#ecom-vazio');
     const vsCell=(p,ref)=>{ if(!ref||ref<=0) return '<span class="vsnull">—</span>'; const d=(p-ref)/ref*100; return `<span class="${d>0?'vsacima':'vsabaixo'}">${d>0?'+':''}${d.toFixed(1)}%</span>`; };
@@ -2660,6 +2668,19 @@ const ecom = {
     tb.querySelectorAll('.ecom-edit').forEach(b=>b.addEventListener('click',()=>this.edit(b.dataset.id)));
     tb.querySelectorAll('.ecom-del').forEach(b=>b.addEventListener('click',()=>this.del(b.dataset.id)));
     this.updateCount(); },
+
+  sentinela(){ const box=this._g('ecom-sentinela'); if(!box) return; const itens=this.itens||[]; const probs=[];
+    const ssdInc=itens.filter(it=>it.categoria==='SSD'&&(!it.capacidade||!it.interface));
+    if(ssdInc.length) probs.push({sev:'warn',txt:ssdInc.length+' SSD(s) sem capacidade/interface: '+ssdInc.map(x=>x.codigo||x.produto).join(', ')});
+    const semCod=itens.filter(it=>!it.codigo);
+    if(semCod.length) probs.push({sev:'warn',txt:semCod.length+' produto(s) sem código'});
+    const cod={}; itens.forEach(it=>{ if(it.codigo){ cod[it.codigo]=(cod[it.codigo]||0)+1; } });
+    const dup=Object.keys(cod).filter(c=>cod[c]>1);
+    if(dup.length) probs.push({sev:'crit',txt:'Código(s) duplicado(s): '+dup.join(', ')});
+    if(!this.mtx||!Object.keys(this.mtx).length) probs.push({sev:'crit',txt:'Matriz de frete vazia — fretes zerados no cálculo'});
+    if(!probs.length){ box.className='ecom-sentinela ok'; box.innerHTML='● Integridade do catálogo: tudo certo ('+itens.length+' produtos).'; return; }
+    const crit=probs.some(p=>p.sev==='crit'); box.className='ecom-sentinela '+(crit?'crit':'warn');
+    box.innerHTML='<div class="sent-h">'+(crit?'🔴':'🟠')+' Integridade do catálogo — '+probs.length+' ponto(s) a revisar</div><ul>'+probs.map(p=>'<li>'+(p.sev==='crit'?'🔴':'🟠')+' '+p.txt+'</li>').join('')+'</ul>'; },
 
   async inlineEdit(el){ const id=el.dataset.id, f=el.dataset.f; const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
     const prev=it[f]; const raw=String(el.value).trim().replace(/[R$\s]/g,''); let v=raw==='' ? NaN : (raw.indexOf(',')>=0 ? parseFloat(raw.replace(/\./g,'').replace(',','.')) : parseFloat(raw)); if(isNaN(v)) v=(f==='preco'?it.preco:null); it[f]=v;
