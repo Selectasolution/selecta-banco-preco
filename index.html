@@ -892,7 +892,7 @@
       <h3 id="ecom-form-title">Cadastrar / simular produto</h3>
       <div class="addform">
         <input type="hidden" id="ecom-f-produto">
-        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option></select></div>
+        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option><option value="RBL">Robô de Limpeza</option><option value="ALX">Alexa</option><option value="PWB">Power Bank</option><option value="CXS">Caixa de Som</option></select></div>
         <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px"></div>
         <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px"></div>
         <div class="efield" id="ecom-f-capacidade-wrap" style="display:none"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px"></div>
@@ -3719,7 +3719,7 @@ const ecomAlvo={
   async salvarEdicao(id){ const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
     const get=f=>{ const el=box.querySelector('[data-ef="'+f+'"]'); return el?el.value:''; };
     const msg=box.querySelector('[data-alemsg="'+id+'"]'); if(msg) msg.className='vmsg';
-    const cod=get('cod').trim().toUpperCase(), mlb=get('mlb').trim().toUpperCase().replace(/[#\s]/g,''), tit=get('tit').trim(), preco=parseFloat(get('preco')), pub=get('pub');
+    const cod=get('cod').trim().toUpperCase(), mlb=this._normMlb(get('mlb')), tit=get('tit').trim(), preco=parseFloat(get('preco')), pub=get('pub');
     if(!cod||!mlb||!tit||!pub){ if(msg){ msg.className='vmsg err'; msg.textContent='Código, MLB, título e data são obrigatórios.'; } return; }
     if(!/^(MLB)?\d{6,}$/.test(mlb)){ if(msg){ msg.className='vmsg err'; msg.textContent='MLB inválido.'; } return; }
     try{ const chk=await sb.from('ecom_produtos').select('codigo').eq('codigo',cod).maybeSingle(); if(chk.error) throw chk.error; if(!chk.data){ if(msg){ msg.className='vmsg err'; msg.textContent='Código não existe no catálogo.'; } return; }
@@ -3740,7 +3740,7 @@ const ecomAlvo={
     if(!arr||!arr.length){ if(msg){ msg.className='vmsg err'; msg.textContent='Nenhum anúncio no JSON.'; } return; }
     const hoje=new Date().toISOString().slice(0,10);
     const data_analise=payload.data_analise||hoje;
-    const rows=arr.map(it=>({ anuncio_mlb:String(it.mlb||it.anuncio_mlb||'').toUpperCase().replace(/[#\s]/g,''), data_analise,
+    const rows=arr.map(it=>({ anuncio_mlb:this._normMlb(it.mlb||it.anuncio_mlb), data_analise,
       veredito:it.veredito||null, cls:it.cls||null, texto:it.texto||null, diagnostico:it.diagnostico||null, acao:it.acao||null,
       visitas:it.visitas!=null?+it.visitas:null, status_ml:it.status_ml||null, preco_sugerido:it.preco_sugerido!=null?+it.preco_sugerido:null,
       dados:it.dados||null }));
@@ -3776,7 +3776,8 @@ const ecomAlvo={
       if(msg){ msg.className='vmsg ok'; msg.textContent='✓ Pacote baixado — anexe no chat com o comando e o print'; setTimeout(()=>msg.textContent='',4000); }
     }catch(e){ if(msg){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; } }
   },
-  async cadastrar(){ const cod=this._g('al-cod').value.trim().toUpperCase(), mlb=this._g('al-mlb').value.trim().toUpperCase().replace(/[#\s]/g,''), tit=this._g('al-tit').value.trim(), preco=parseFloat(this._g('al-preco').value), pub=this._g('al-pub').value; const msg=this._g('al-amsg'); msg.className='vmsg';
+  _normMlb(raw){ const m=String(raw||'').trim().toUpperCase().replace(/[#\s]/g,'').replace(/^(MLB)+/,''); return m?'MLB'+m:''; },
+  async cadastrar(){ const cod=this._g('al-cod').value.trim().toUpperCase(), mlb=this._normMlb(this._g('al-mlb').value), tit=this._g('al-tit').value.trim(), preco=parseFloat(this._g('al-preco').value), pub=this._g('al-pub').value; const msg=this._g('al-amsg'); msg.className='vmsg';
     if(!cod||!mlb||!tit||!pub){ msg.className='vmsg err'; msg.textContent='Código, MLB, título e data de publicação são obrigatórios.'; return; }
     if(!/^(MLB)?\d{6,}$/.test(mlb)){ msg.className='vmsg err'; msg.textContent='MLB inválido. Use o nº do anúncio (ex.: MLB4811359527 ou 4811359527).'; return; }
     try{ const chk=await sb.from('ecom_produtos').select('codigo').eq('codigo',cod).maybeSingle(); if(chk.error) throw chk.error; if(!chk.data){ msg.className='vmsg err'; msg.textContent='Código não existe no catálogo.'; return; }
