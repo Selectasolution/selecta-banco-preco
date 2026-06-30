@@ -3380,7 +3380,7 @@ const ecomVendas={
     const cod=this._g('vd-cod').value.trim().toUpperCase(); const box=this._g('vd-nome'); const wrap=this._g('vd-anuncio-wrap'); box.style.cssText='';
     this.anuncios=[]; this.anuncioMlb=null;
     if(!cod){ this.prod=null; box.innerHTML='digite o SKU — produto, anúncio e preço são puxados'; if(wrap) wrap.innerHTML=''; return; }
-    try{ const r=await sb.from('ecom_produtos').select('id,produto,marca,modelo,codigo,capacidade,interface').eq('codigo',cod).eq('ativo',true).maybeSingle();
+    try{ const r=await sb.from('ecom_produtos').select('id,produto,marca,modelo,codigo,capacidade,interface,custo').eq('codigo',cod).eq('ativo',true).maybeSingle();
       if(r.error) throw r.error;
       if(!r.data){ this.prod=null; box.innerHTML='<span style="color:var(--eamber)">código não encontrado no catálogo</span>'; if(wrap) wrap.innerHTML=''; return; }
       this.prod=r.data; box.style.cssText='background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.5);color:var(--etxt)'; box.innerHTML='<b>'+r.data.produto+'</b>'+(r.data.interface?' '+r.data.interface:'')+(r.data.marca?' · '+r.data.marca:'')+(r.data.modelo?' · '+r.data.modelo:'')+(r.data.capacidade?' · '+r.data.capacidade:'');
@@ -3420,7 +3420,7 @@ const ecomVendas={
     const pp=this._g('vd-pp').value, pe=this._g('vd-pe').value;
     const dados={ canal:'mercado_livre', ml_pedido_id:ped, comprador:this._g('vd-comp').value.trim()||null,
       produto_id:this.prod.id, produto:this.prod.produto, marca:this.prod.marca, modelo:this.prod.modelo, produto_codigo:this.prod.codigo,
-      anuncio_mlb:this.anuncioMlb,
+      anuncio_mlb:this.anuncioMlb, custo_unitario:(this.prod.custo!=null?this.prod.custo:null),
       quantidade:qtd, preco_venda:preco, uf,
       data_solicitacao:new Date(dt).toISOString(),
       prazo_postagem: pp?new Date(pp+'T23:59:59').toISOString():null,
