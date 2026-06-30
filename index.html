@@ -3364,13 +3364,13 @@ const ecomVendas={
   fmt:v=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
   nowLocal(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); },
   async lookup(){
-    const cod=this._g('vd-cod').value.trim().toUpperCase(); const box=this._g('vd-nome'); const wrap=this._g('vd-anuncio-wrap');
+    const cod=this._g('vd-cod').value.trim().toUpperCase(); const box=this._g('vd-nome'); const wrap=this._g('vd-anuncio-wrap'); box.style.cssText='';
     this.anuncios=[]; this.anuncioMlb=null;
     if(!cod){ this.prod=null; box.innerHTML='digite o SKU — produto, anúncio e preço são puxados'; if(wrap) wrap.innerHTML=''; return; }
     try{ const r=await sb.from('ecom_produtos').select('id,produto,marca,modelo,codigo,capacidade,interface').eq('codigo',cod).eq('ativo',true).maybeSingle();
       if(r.error) throw r.error;
       if(!r.data){ this.prod=null; box.innerHTML='<span style="color:var(--eamber)">código não encontrado no catálogo</span>'; if(wrap) wrap.innerHTML=''; return; }
-      this.prod=r.data; box.innerHTML='<b>'+r.data.produto+'</b>'+(r.data.interface?' '+r.data.interface:'')+(r.data.marca?' · '+r.data.marca:'')+(r.data.modelo?' · '+r.data.modelo:'')+(r.data.capacidade?' · '+r.data.capacidade:'');
+      this.prod=r.data; box.style.cssText='background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.5);color:var(--etxt)'; box.innerHTML='<b>'+r.data.produto+'</b>'+(r.data.interface?' '+r.data.interface:'')+(r.data.marca?' · '+r.data.marca:'')+(r.data.modelo?' · '+r.data.modelo:'')+(r.data.capacidade?' · '+r.data.capacidade:'');
       const a=await sb.from('ecom_anuncios').select('anuncio_mlb,preco,titulo').eq('produto_codigo',cod).eq('ativo',true).order('anuncio_mlb');
       if(a.error) throw a.error; this.anuncios=a.data||[]; this.renderAnuncio();
     }catch(e){ this.prod=null; this.anuncios=[]; box.innerHTML='<span style="color:var(--ered)">erro ao buscar: '+e.message+'</span>'; if(wrap) wrap.innerHTML=''; }
@@ -3379,7 +3379,7 @@ const ecomVendas={
     const wrap=this._g('vd-anuncio-wrap'); if(!wrap) return; const ans=this.anuncios;
     if(ans.length===0){ this.anuncioMlb=null; wrap.innerHTML='<div class="vpulled" style="border-style:solid;border-color:var(--eamber);color:var(--eamber)">⚠ nenhum anúncio cadastrado para este SKU — cadastre na aba Alvo antes de lançar</div>'; return; }
     if(ans.length===1){ const an=ans[0]; this.anuncioMlb=an.anuncio_mlb; if(an.preco!=null) this._g('vd-preco').value=an.preco;
-      wrap.innerHTML='<div class="vpulled" style="border-style:solid;border-color:rgba(16,185,129,.45)">Anúncio: <b style="color:var(--eemerald)">'+an.anuncio_mlb+'</b> · R$ '+(an.preco!=null?this.fmt(an.preco):'—')+'</div>'; return; }
+      wrap.innerHTML='<div class="vpulled" style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.5);color:var(--etxt)">Anúncio: <b style="color:var(--eemerald)">'+an.anuncio_mlb+'</b> · R$ '+(an.preco!=null?this.fmt(an.preco):'—')+'</div>'; return; }
     this.anuncioMlb=ans[0].anuncio_mlb; if(ans[0].preco!=null) this._g('vd-preco').value=ans[0].preco;
     const opts=ans.map((an,i)=>'<option value="'+i+'">'+an.anuncio_mlb+' — R$ '+(an.preco!=null?this.fmt(an.preco):'—')+(an.titulo?' · '+an.titulo:'')+'</option>').join('');
     wrap.innerHTML='<div class="efield" style="margin-top:8px"><label style="color:var(--eamber)">⚠ '+ans.length+' anúncios neste SKU — escolha qual vendeu</label><select class="vinput mono" id="vd-mlbsel">'+opts+'</select></div>';
@@ -3416,7 +3416,7 @@ const ecomVendas={
     try{ const r=await sb.from('ecom_vendas').insert(dados).select().single(); if(r.error) throw r.error;
       ['vd-ped','vd-comp','vd-cod','vd-preco','vd-uf','vd-pp','vd-pe'].forEach(i=>this._g(i).value='');
       this._g('vd-qtd').value='1'; this._g('vd-dt').value=this.nowLocal(); this.prod=null; this.anuncios=[]; this.anuncioMlb=null;
-      this._g('vd-nome').innerHTML='digite o SKU — produto, anúncio e preço são puxados';
+      this._g('vd-nome').style.cssText=''; this._g('vd-nome').innerHTML='digite o SKU — produto, anúncio e preço são puxados';
       this._g('vd-anuncio-wrap').innerHTML=''; this.calcPostarAte();
       msg.className='vmsg ok'; msg.textContent='✓ Venda lançada · pedido criado no Financeiro'; setTimeout(()=>{msg.textContent='';},3000);
       this.load();
