@@ -873,9 +873,9 @@
         <div class="efield"><label>Comissão Premium</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
         <div class="efield"><label>Imposto (regime)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" step="0.5" value="4"><span class="unit">%</span></div></div>
         <div class="efield"><label>Outros custos</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Colchão</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="2"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Colchão</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="3"><span class="unit">%</span></div></div>
       </div>
-      <p class="note">Simples Anexo I 1ª faixa = 4% · Outros = antecip./parcel. · Colchão = devolução/embalagem.</p>
+      <p class="note">Simples Anexo I 1ª faixa = 4% · Outros = antecip./parcel. · Colchão = % sobre a compra (custos operacionais).</p>
       <div style="margin-top:14px">
         <label style="display:block;font-size:11px;color:var(--emuted);margin-bottom:2px">Custo fixo ML <b>abaixo de R$79</b> <span style="color:var(--emuted2);font-weight:400">— tabela oficial Flex/Correios (mai/2026). Edite só se o ML mudar.</span></label>
         <div class="fixgrid">
@@ -986,7 +986,7 @@
           <h3 id="fn-titulo">Selecione um pedido</h3>
           <div id="fn-form" style="display:none">
             <div class="vrow3">
-              <div class="efield"><label>Comissão ML (R$)</label><input class="vinput mono" id="fn-com" type="number" step="0.01" placeholder="extrato"></div>
+              <div class="efield"><label>Tarifa de venda total (Comissão ML) · R$</label><input class="vinput mono" id="fn-com" type="number" step="0.01" placeholder="extrato"></div>
               <div class="efield"><label>Tarifa fixa (R$)</label><input class="vinput mono" id="fn-tar" type="number" step="0.01" value="0"></div>
               <div class="efield"><label>Frete seu (R$)</label><input class="vinput mono" id="fn-fre" type="number" step="0.01" value="0"></div>
             </div>
@@ -1021,7 +1021,7 @@
             <div class="efield"><label>Custo un.</label><input class="vinput mono" id="hs-cus" type="number" step="0.01"></div>
           </div>
           <div class="vrow3">
-            <div class="efield"><label>Comissão ML</label><input class="vinput mono" id="hs-com" type="number" step="0.01"></div>
+            <div class="efield"><label>Tarifa de venda total (Comissão ML)</label><input class="vinput mono" id="hs-com" type="number" step="0.01"></div>
             <div class="efield"><label>Tarifa fixa</label><input class="vinput mono" id="hs-tar" type="number" step="0.01"></div>
             <div class="efield"><label>Frete seu</label><input class="vinput mono" id="hs-fre" type="number" step="0.01"></div>
           </div>
@@ -2581,13 +2581,14 @@ const ecom = {
     return c.length?Math.min.apply(null,c):(custo+fr)/(1-t); },
   calc(it){ const pr=this.params(); const P=+it.preco;
     const comPct=(it.tipo_anuncio==='premium'?pr.comP:pr.comC)/100;
-    const t=comPct+pr.imp/100+pr.outros/100+pr.colchao/100;
+    const t=comPct+pr.imp/100+pr.outros/100;
     const fr=this.freteDe(it); let regime,freteItem,custoFixo=0,custoML;
     if(P>=79){ regime='frete'; freteItem=fr; custoML=P*t+freteItem; }
     else { regime='fixa'; freteItem=0; custoFixo=this.custoFixoML(P,pr); custoML=P*t+custoFixo; }
-    const custo=+it.custo; const margem=P-custoML-custo; const mordida=P>0?custoML/P:0;
-    const be=this.breakeven(custo,t,fr,pr); let zona=null;
-    if(P>=79){ const m=78.99-(78.99*t+this.custoFixoML(78.99,pr))-custo; if(m>margem) zona=m-margem; }
+    const custo=+it.custo; const colchao=custo*pr.colchao/100; const custoTotal=custo+colchao;
+    const margem=P-custoML-custoTotal; const mordida=P>0?custoML/P:0;
+    const be=this.breakeven(custoTotal,t,fr,pr); let zona=null;
+    if(P>=79){ const m=78.99-(78.99*t+this.custoFixoML(78.99,pr))-custoTotal; if(m>margem) zona=m-margem; }
     return {regime,freteItem,custoFixo,custoML,margem,margemPct:P>0?margem/P:0,mordida,breakeven:be,zona}; },
   veredito(regime,m,pct,vsMin){
     if(m<=0) return {k:'excluir',t:'Excluir'};
@@ -2710,9 +2711,9 @@ const ecom = {
     if(isNaN(P)||isNaN(custo)){ if(out)out.value=''; if(mr)mr.value=''; if(mp){ mp.value=''; mp.className='ainput mono robe mgsimf'; } return; }
     const pr=this.params();
     const comPct=(this._g('ecom-f-tipo').value==='premium'?pr.comP:pr.comC)/100;
-    const t=comPct+pr.imp/100+pr.outros/100+pr.colchao/100;
+    const t=comPct+pr.imp/100+pr.outros/100;
     const fr=(this.mtx[this.selDest+'|'+peso]==null?0:this.mtx[this.selDest+'|'+peso])*this.repFactor;
-    if(out) out.value=this.fmt(this.breakeven(custo,t,fr,pr));
+    if(out) out.value=this.fmt(this.breakeven(custo+custo*pr.colchao/100,t,fr,pr));
     const r=this.calc({preco:P,custo:custo,tipo_anuncio:this._g('ecom-f-tipo').value,peso_faixa:peso});
     if(mr) mr.value=this.fmt(r.margem);
     if(mp){ const pct=r.margemPct*100; mp.value=this.fmtPct(pct); mp.className='ainput mono robe mgsimf '+(pct>=15?'v':pct>=12?'a':'r'); }
@@ -2795,7 +2796,7 @@ const ecom = {
 '- Comiss\u00e3o Cl\u00e1ssico: '+pr.comC+'% \u00b7 Comiss\u00e3o Premium: '+pr.comP+'%\n'+
 '- Imposto (regime): '+pr.imp+'%\n'+
 '- Outros custos: '+pr.outros+'%\n'+
-'- Colch\u00e3o (devolu\u00e7\u00e3o/embalagem): '+pr.colchao+'%\n'+
+'- Colch\u00e3o (sobre a compra · custos operacionais): '+pr.colchao+'%\n'+
 '- Custo fixo ML <R$79: R$12,50\u201329 = '+this.fmt(pr.f1)+' \u00b7 R$29\u201350 = '+this.fmt(pr.f2)+' \u00b7 R$50\u201379 = '+this.fmt(pr.f3)+' \u00b7 <R$12,50 = 50% do pre\u00e7o\n\n'+
 '## Resumo\n'+
 '- Itens no banco: '+this.itens.length+'\n'+
