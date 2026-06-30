@@ -948,17 +948,18 @@
       <div class="vgrid">
         <div class="ecard vform">
           <h3>Lançar venda</h3>
-          <div class="vrow">
+          <div class="vrow3">
             <div class="efield"><label>Nº do pedido ML *</label><input class="vinput mono" id="vd-ped" placeholder="2000000000000"></div>
             <div class="efield"><label>Comprador (apelido)</label><input class="vinput" id="vd-comp" placeholder="opcional"></div>
+            <div class="efield"><label>UF</label><input class="vinput mono" id="vd-uf" maxlength="2" placeholder="SP"></div>
           </div>
           <div class="efield"><label>Data/hora da solicitação *</label><input class="vinput mono" id="vd-dt" type="datetime-local"></div>
-          <div class="efield"><label>Código do produto *</label><input class="vinput mono" id="vd-cod" placeholder="ex.: SSD-0001"></div>
-          <div class="vpulled" id="vd-nome">digite o código — o nome é puxado do catálogo</div>
-          <div class="vrow3" style="margin-top:12px">
+          <div class="efield"><label>Código do produto · SKU *</label><input class="vinput mono" id="vd-cod" placeholder="ex.: SSD-0001"></div>
+          <div class="vpulled" id="vd-nome">digite o SKU — produto, anúncio e preço são puxados</div>
+          <div id="vd-anuncio-wrap"></div>
+          <div class="vrow" style="margin-top:12px">
             <div class="efield"><label>Qtd *</label><input class="vinput mono" id="vd-qtd" type="number" value="1" min="1"></div>
-            <div class="efield"><label>Preço un. *</label><input class="vinput mono" id="vd-preco" type="number" step="0.01" placeholder="0,00"></div>
-            <div class="efield"><label>UF comprador</label><input class="vinput mono" id="vd-uf" maxlength="2" placeholder="SP"></div>
+            <div class="efield"><label>Preço un. * <span style="color:var(--emuted);font-weight:400">(do anúncio · editável)</span></label><input class="vinput mono" id="vd-preco" type="number" step="0.01" placeholder="0,00"></div>
           </div>
           <div class="vrow">
             <div class="efield"><label>Postar até</label><input class="vinput mono" id="vd-pp" type="date"></div>
@@ -3358,29 +3359,55 @@ $$('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.
 // ===== E-COMMERCE · sub-navegação + aba Vendas =====
 const UFS=['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 const ecomVendas={
-  prod:null, loaded:false,
+  prod:null, anuncios:[], anuncioMlb:null, loaded:false,
   _g:id=>document.getElementById(id),
   fmt:v=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
   nowLocal(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); },
   async lookup(){
-    const cod=this._g('vd-cod').value.trim().toUpperCase(); const box=this._g('vd-nome');
-    if(!cod){ this.prod=null; box.innerHTML='digite o código — o nome é puxado do catálogo'; return; }
+    const cod=this._g('vd-cod').value.trim().toUpperCase(); const box=this._g('vd-nome'); const wrap=this._g('vd-anuncio-wrap');
+    this.anuncios=[]; this.anuncioMlb=null;
+    if(!cod){ this.prod=null; box.innerHTML='digite o SKU — produto, anúncio e preço são puxados'; if(wrap) wrap.innerHTML=''; return; }
     try{ const r=await sb.from('ecom_produtos').select('id,produto,marca,modelo,codigo,capacidade,interface').eq('codigo',cod).eq('ativo',true).maybeSingle();
       if(r.error) throw r.error;
-      if(r.data){ this.prod=r.data; box.innerHTML='<b>'+r.data.produto+'</b>'+(r.data.interface?' '+r.data.interface:'')+(r.data.marca?' · '+r.data.marca:'')+(r.data.modelo?' · '+r.data.modelo:'')+(r.data.capacidade?' · '+r.data.capacidade:''); }
-      else { this.prod=null; box.innerHTML='<span style="color:var(--eamber)">código não encontrado no catálogo</span>'; }
-    }catch(e){ this.prod=null; box.innerHTML='<span style="color:var(--ered)">erro ao buscar: '+e.message+'</span>'; }
+      if(!r.data){ this.prod=null; box.innerHTML='<span style="color:var(--eamber)">código não encontrado no catálogo</span>'; if(wrap) wrap.innerHTML=''; return; }
+      this.prod=r.data; box.innerHTML='<b>'+r.data.produto+'</b>'+(r.data.interface?' '+r.data.interface:'')+(r.data.marca?' · '+r.data.marca:'')+(r.data.modelo?' · '+r.data.modelo:'')+(r.data.capacidade?' · '+r.data.capacidade:'');
+      const a=await sb.from('ecom_anuncios').select('anuncio_mlb,preco,titulo').eq('produto_codigo',cod).eq('ativo',true).order('anuncio_mlb');
+      if(a.error) throw a.error; this.anuncios=a.data||[]; this.renderAnuncio();
+    }catch(e){ this.prod=null; this.anuncios=[]; box.innerHTML='<span style="color:var(--ered)">erro ao buscar: '+e.message+'</span>'; if(wrap) wrap.innerHTML=''; }
+  },
+  renderAnuncio(){
+    const wrap=this._g('vd-anuncio-wrap'); if(!wrap) return; const ans=this.anuncios;
+    if(ans.length===0){ this.anuncioMlb=null; wrap.innerHTML='<div class="vpulled" style="border-style:solid;border-color:var(--eamber);color:var(--eamber)">⚠ nenhum anúncio cadastrado para este SKU — cadastre na aba Alvo antes de lançar</div>'; return; }
+    if(ans.length===1){ const an=ans[0]; this.anuncioMlb=an.anuncio_mlb; if(an.preco!=null) this._g('vd-preco').value=an.preco;
+      wrap.innerHTML='<div class="vpulled" style="border-style:solid;border-color:rgba(16,185,129,.45)">Anúncio: <b style="color:var(--eemerald)">'+an.anuncio_mlb+'</b> · R$ '+(an.preco!=null?this.fmt(an.preco):'—')+'</div>'; return; }
+    this.anuncioMlb=ans[0].anuncio_mlb; if(ans[0].preco!=null) this._g('vd-preco').value=ans[0].preco;
+    const opts=ans.map((an,i)=>'<option value="'+i+'">'+an.anuncio_mlb+' — R$ '+(an.preco!=null?this.fmt(an.preco):'—')+(an.titulo?' · '+an.titulo:'')+'</option>').join('');
+    wrap.innerHTML='<div class="efield" style="margin-top:8px"><label style="color:var(--eamber)">⚠ '+ans.length+' anúncios neste SKU — escolha qual vendeu</label><select class="vinput mono" id="vd-mlbsel">'+opts+'</select></div>';
+    const sel=this._g('vd-mlbsel'); if(sel) sel.addEventListener('change',()=>{ const an=this.anuncios[parseInt(sel.value)]; this.anuncioMlb=an.anuncio_mlb; if(an.preco!=null) this._g('vd-preco').value=an.preco; });
+  },
+  calcPostarAte(){
+    const dtv=this._g('vd-dt').value; if(!dtv) return; const d=new Date(dtv); const alvo=new Date(d);
+    if(d.getHours()>=18){ alvo.setDate(alvo.getDate()+1); }
+    const y=alvo.getFullYear(), m=String(alvo.getMonth()+1).padStart(2,'0'), dd=String(alvo.getDate()).padStart(2,'0');
+    this._g('vd-pp').value=y+'-'+m+'-'+dd;
   },
   async lancar(){
     const msg=this._g('vd-msg'); msg.className='vmsg';
     const ped=this._g('vd-ped').value.trim(); const preco=parseFloat(this._g('vd-preco').value);
     const qtd=parseInt(this._g('vd-qtd').value)||1; const dt=this._g('vd-dt').value;
     const uf=(this._g('vd-uf').value.trim().toUpperCase())||null;
-    if(!ped||!this.prod||isNaN(preco)||!dt){ msg.className='vmsg err'; msg.textContent='Pedido, código válido, preço e data são obrigatórios.'; return; }
+    const faltas=[];
+    if(!ped) faltas.push('Nº do pedido');
+    if(!this.prod) faltas.push('SKU válido');
+    if(!this.anuncioMlb) faltas.push('anúncio cadastrado (MLB)');
+    if(isNaN(preco)) faltas.push('preço');
+    if(!dt) faltas.push('data da venda');
+    if(faltas.length){ msg.className='vmsg err'; msg.textContent='Falta preencher: '+faltas.join(', ')+'.'; return; }
     if(uf && !UFS.includes(uf)){ msg.className='vmsg err'; msg.textContent='UF inválida.'; return; }
     const pp=this._g('vd-pp').value, pe=this._g('vd-pe').value;
     const dados={ canal:'mercado_livre', ml_pedido_id:ped, comprador:this._g('vd-comp').value.trim()||null,
       produto_id:this.prod.id, produto:this.prod.produto, marca:this.prod.marca, modelo:this.prod.modelo, produto_codigo:this.prod.codigo,
+      anuncio_mlb:this.anuncioMlb,
       quantidade:qtd, preco_venda:preco, uf,
       data_solicitacao:new Date(dt).toISOString(),
       prazo_postagem: pp?new Date(pp+'T23:59:59').toISOString():null,
@@ -3388,8 +3415,9 @@ const ecomVendas={
       status:'a_enviar' };
     try{ const r=await sb.from('ecom_vendas').insert(dados).select().single(); if(r.error) throw r.error;
       ['vd-ped','vd-comp','vd-cod','vd-preco','vd-uf','vd-pp','vd-pe'].forEach(i=>this._g(i).value='');
-      this._g('vd-qtd').value='1'; this._g('vd-dt').value=this.nowLocal(); this.prod=null;
-      this._g('vd-nome').innerHTML='digite o código — o nome é puxado do catálogo';
+      this._g('vd-qtd').value='1'; this._g('vd-dt').value=this.nowLocal(); this.prod=null; this.anuncios=[]; this.anuncioMlb=null;
+      this._g('vd-nome').innerHTML='digite o SKU — produto, anúncio e preço são puxados';
+      this._g('vd-anuncio-wrap').innerHTML=''; this.calcPostarAte();
       msg.className='vmsg ok'; msg.textContent='✓ Venda lançada · pedido criado no Financeiro'; setTimeout(()=>{msg.textContent='';},3000);
       this.load();
     }catch(e){ msg.className='vmsg err'; msg.textContent=(e.code==='23505'||/duplicate|unique/i.test(e.message||''))?'Essa venda (pedido + produto) já foi lançada.':'Erro: '+e.message; }
@@ -3948,7 +3976,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
   const sub=b.dataset.sub;
   $$('.ecom-subpanel').forEach(p=>{ p.style.display=(p.id==='ecom-sub-'+sub)?'':'none'; });
-  if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value) dt.value=ecomVendas.nowLocal(); ecomVendas.loaded=true; ecomVendas.load(); }
+  if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value){ dt.value=ecomVendas.nowLocal(); } ecomVendas.calcPostarAte(); ecomVendas.loaded=true; ecomVendas.load(); }
   if(sub==='financeiro'){ ecomFinanceiro.load(); }
   if(sub==='reputacao'){ ecomReputacao.load(); }
   if(sub==='historico'){ ecomHistorico.load(); }
@@ -3986,6 +4014,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
 })();
 (function(){
   const cod=ecomVendas._g('vd-cod'); if(cod) cod.addEventListener('input',()=>ecomVendas.lookup());
+  const vddt=ecomVendas._g('vd-dt'); if(vddt) vddt.addEventListener('change',()=>ecomVendas.calcPostarAte());
   const add=ecomVendas._g('vd-add'); if(add) add.addEventListener('click',()=>ecomVendas.lancar());
   const uf=ecomVendas._g('vd-uf'); if(uf) uf.addEventListener('input',()=>{ uf.value=uf.value.toUpperCase(); });
   const list=ecomVendas._g('vd-list');
