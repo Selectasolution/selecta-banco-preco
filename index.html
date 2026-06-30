@@ -3804,7 +3804,7 @@ const ecomAlvo={
       if(msg){ msg.className='vmsg ok'; msg.textContent='✓ Pacote baixado — anexe no chat com o comando e o print'; setTimeout(()=>msg.textContent='',4000); }
     }catch(e){ if(msg){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; } }
   },
-  _normMlb(raw){ const m=String(raw||'').trim().toUpperCase().replace(/[#\s]/g,'').replace(/^(MLB)+/,''); return m?'MLB'+m:''; },
+  _normMlb(raw){ const m=String(raw||'').trim().toUpperCase().replace(/[#\s]/g,'').replace(/^(MLB)+/,''); return m||''; },
   async cadastrar(){ const cod=this._g('al-cod').value.trim().toUpperCase(), mlb=this._normMlb(this._g('al-mlb').value), tit=this._g('al-tit').value.trim(), preco=parseFloat(this._g('al-preco').value), pub=this._g('al-pub').value; const msg=this._g('al-amsg'); msg.className='vmsg';
     if(!cod||!mlb||!tit||!pub){ msg.className='vmsg err'; msg.textContent='Código, MLB, título e data de publicação são obrigatórios.'; return; }
     if(!/^(MLB)?\d{6,}$/.test(mlb)){ msg.className='vmsg err'; msg.textContent='MLB inválido. Use o nº do anúncio (ex.: MLB4811359527 ou 4811359527).'; return; }
