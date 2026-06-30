@@ -1069,6 +1069,7 @@
 
       <div class="alsubbar" id="alsubbar">
         <button class="alsub-btn active" data-alsub="analise">📊 Análise Comercial</button>
+        <button class="alsub-btn" data-alsub="estrategia">🎯 Estratégia de Anúncios</button>
         <button class="alsub-btn" data-alsub="controle">📈 Controle de venda por anúncio</button>
       </div>
 
@@ -1134,6 +1135,13 @@
         <div id="al-anuncios"><div class="ph">nenhum anúncio cadastrado</div></div>
       </div>
 
+      </div><!-- /alsub-controle -->
+
+      <div id="alsub-estrategia" class="alsub" style="display:none">
+      <div class="ecard" style="border-color:var(--eteal);border-width:1px;margin-bottom:4px">
+        <h3 style="font-size:13px">🎯 Estratégia de Anúncios <span class="faint" style="font-weight:400;font-size:12px">· mesa de veredito — alavanca por anúncio (preço · parcelamento · Full · conteúdo)</span></h3>
+        <p class="hint" style="font-size:11.5px;color:var(--emuted2);margin-top:4px">Exporte o pacote, traga o veredito do chat e importe o JSON abaixo. Cada linha grava por MLB, com histórico datado.</p>
+      </div>
       <div class="ecard" style="margin-top:18px;border-style:dashed">
         <h3>📋 Resultados: Exportar pacote + Comando <span class="faint" style="font-weight:400;font-size:12px">· o que já está no ar</span></h3>
         <p class="hint" style="font-size:12.5px;color:var(--emuted);margin:2px 0 14px;line-height:1.6"><b style="color:var(--etxt)">Fluxo:</b> exporto o <b>pacote</b> (margem do Simulador + publicações ativas) → copio o <b>comando</b> ao lado → colo os <b>dois juntos</b> + o <b>print do ML</b> no chat → recebo a fila de exceção → colo o JSON do veredito abaixo. <b>v0.1 (calibração)</b>.</p>
@@ -1160,9 +1168,7 @@
           </div>
         </details>
       </div>
-      </div><!-- /alsub-controle -->
-
-      <div id="alsub-comando" class="alsub" style="display:none"></div>
+      </div><!-- /alsub-estrategia -->
     </div>
 
   </section>
@@ -3804,7 +3810,7 @@ const ecomAlvo={
       if(msg){ msg.className='vmsg ok'; msg.textContent='✓ Pacote baixado — anexe no chat com o comando e o print'; setTimeout(()=>msg.textContent='',4000); }
     }catch(e){ if(msg){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; } }
   },
-  _normMlb(raw){ const m=String(raw||'').trim().toUpperCase().replace(/[#\s]/g,'').replace(/^(MLB)+/,''); return m||''; },
+  _normMlb(raw){ const m=String(raw||'').trim().toUpperCase().replace(/[#\s]/g,'').replace(/^(MLB)+/,''); return m?'MLB'+m:''; },
   async cadastrar(){ const cod=this._g('al-cod').value.trim().toUpperCase(), mlb=this._normMlb(this._g('al-mlb').value), tit=this._g('al-tit').value.trim(), preco=parseFloat(this._g('al-preco').value), pub=this._g('al-pub').value; const msg=this._g('al-amsg'); msg.className='vmsg';
     if(!cod||!mlb||!tit||!pub){ msg.className='vmsg err'; msg.textContent='Código, MLB, título e data de publicação são obrigatórios.'; return; }
     if(!/^(MLB)?\d{6,}$/.test(mlb)){ msg.className='vmsg err'; msg.textContent='MLB inválido. Use o nº do anúncio (ex.: MLB4811359527 ou 4811359527).'; return; }
