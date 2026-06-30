@@ -3691,11 +3691,16 @@ const ecomAlvo={
         if(!this.resultados[k]) this.resultados[k]={texto:row.texto||row.veredito||'—',cls:row.cls||'n',veredito:row.veredito,data:row.data_analise,acao:row.acao,diagnostico:row.diagnostico,preco_sugerido:row.preco_sugerido};
       });
     }catch(e){ console.warn('loadResultados:',e.message); }
+    // índice dedicado da mesa: imune ao this.anuncios (que o módulo de Vendas zera)
+    this.mesaAnuncios={};
+    try{ const ma=await sb.from('ecom_anuncios').select('anuncio_mlb,titulo,produto_codigo');
+      if(!ma.error){ (ma.data||[]).forEach(a=>{ if(a.anuncio_mlb) this.mesaAnuncios[a.anuncio_mlb]={titulo:a.titulo,produto_codigo:a.produto_codigo}; }); }
+    }catch(e){ console.warn('mesaAnuncios:',e.message); }
   },
   renderMesa(){
     const box=this._g('al-mesa'); if(!box) return;
     const cnt=this._g('al-mesa-count');
-    const anByMlb={}; (this.anuncios||[]).forEach(a=>{ if(a.anuncio_mlb) anByMlb[a.anuncio_mlb]=a; });
+    const anByMlb=this.mesaAnuncios||{};
     const itens=Object.values(this.resultados||{});
     if(!itens.length){ box.innerHTML='<div class="ph" style="color:var(--emuted2);font-size:12px">Nenhum veredito importado ainda. Use o card abaixo para importar o JSON.</div>'; if(cnt) cnt.textContent=''; return; }
     const LABELS={'PARCELAMENTO':'💳 Parcelamento','AJUSTAR PRECO':'🏷️ Ajustar preço','PRECO':'🏷️ Ajustar preço','DEFENDER':'🛡️ Defender','INVESTIGAR':'🔎 Investigar','CONTEUDO':'📝 Conteúdo / Ficha','BLOQUEAR':'⛔ Bloquear'};
