@@ -3697,7 +3697,7 @@ const ecomAlvo={
       if(r.error) throw r.error;
       (r.data||[]).forEach(row=>{ const k=row.anuncio_mlb; if(!k) return;
         (this.resHist[k]=this.resHist[k]||[]).push(row);
-        if(!this.resultados[k]) this.resultados[k]={texto:row.texto||row.veredito||'—',cls:row.cls||'n',veredito:row.veredito,data:row.data_analise,acao:row.acao,diagnostico:row.diagnostico,preco_sugerido:row.preco_sugerido};
+        if(!this.resultados[k]) this.resultados[k]={anuncio_mlb:k,texto:row.texto||row.veredito||'—',cls:row.cls||'n',veredito:row.veredito,data:row.data_analise,acao:row.acao,diagnostico:row.diagnostico,preco_sugerido:row.preco_sugerido};
       });
     }catch(e){ console.warn('loadResultados:',e.message); }
     // índice dedicado da mesa: imune ao this.anuncios (que o módulo de Vendas zera)
