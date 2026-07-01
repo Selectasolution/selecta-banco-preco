@@ -1124,6 +1124,10 @@
           <div class="efield"><label>Preço anunciado</label><input class="vinput mono" id="al-preco" type="number" step="0.01" placeholder="0,00"></div>
           <div class="efield"><label>Data de publicação *</label><input class="vinput mono" id="al-pub" type="date"></div>
         </div>
+        <div class="vrow">
+          <div class="efield"><label>Tipo de anúncio *</label><select class="vinput" id="al-tipo"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
+          <div class="efield"></div>
+        </div>
         <div class="efield"><label>Título do anúncio *</label><input class="vinput" id="al-tit" placeholder="como está no ML"></div>
         <button class="vbtn" id="al-cadastrar">Cadastrar anúncio</button>
         <div class="vmsg" id="al-amsg"></div>
@@ -3489,7 +3493,9 @@ const ecomFinanceiro={
     const freInput=this._g('fn-fre'); freInput.disabled=(onus==='comprador'); if(onus==='comprador') freInput.value='0';
     const com=this.num('fn-com'), tar=this.num('fn-tar')||0, fre=(onus==='vendedor'?(this.num('fn-fre')||0):0), cus=this.num('fn-cus');
     const rec=P*Q, tax=com!=null?com+tar+fre:null, mp=com!=null?rec-tax:null, cusT=cus!=null?cus*Q:null;
-    const pronto=com!=null&&cus!=null, luc=pronto?rec-tax-cusT:null, mar=pronto&&rec?luc/rec*100:null;
+    const r2=x=>Math.round(x*100)/100;
+    const imp=r2(rec*0.04), colch=cus!=null?r2(cusT*0.03):null;
+    const pronto=com!=null&&cus!=null, luc=pronto?r2(rec-tax-cusT-colch-imp):null, mar=pronto&&rec?luc/rec*100:null;
     const F=this.fmt;
     const line=(k,v,bg,kc)=>'<div style="display:flex;justify-content:space-between;padding:9px 13px;background:'+(bg||'var(--epanel)')+'"><span'+(kc?' style="color:'+kc+'"':'')+'>'+k+'</span><span style="font-family:var(--emono)">'+v+'</span></div>';
     const tot='<div style="display:flex;justify-content:space-between;padding:13px;background:#1a2740"><span style="font-weight:700">Lucro real</span><span style="font-family:var(--emono);font-size:18px;font-weight:700;color:'+(luc==null?'var(--emuted2)':(luc>=0?'var(--eemerald)':'var(--ered)'))+'">'+(luc==null?'—':'R$ '+F(luc))+'</span></div>';
@@ -3498,6 +3504,8 @@ const ecomFinanceiro={
       +line('(–) Taxas do ML',tax==null?'—':'– R$ '+F(tax))
       +line('= Depósito Mercado Pago',mp==null?'—':'R$ '+F(mp),'#08231f','var(--eteal)')
       +line('(–) Custo do fornecedor',cusT==null?'—':'– R$ '+F(cusT),'#241c08','var(--eamber)')
+      +line('(–) Colchão · 3% do custo',colch==null?'—':'– R$ '+F(colch),'#241c08','var(--eamber)')
+      +line('(–) Imposto · 4% da receita','– R$ '+F(imp),'#241c08','var(--eamber)')
       +tot
       +line('Margem',mar==null?'—':F(mar)+' %')
       +'</div>';
@@ -3573,7 +3581,7 @@ const ecomHistorico={
     doc.text('Pedido ML: #'+v.ml_pedido_id,14,28);
     doc.text('Produto: '+v.produto+(v.produto_codigo?' ('+v.produto_codigo+')':''),14,34);
     doc.text('Solicitado: '+this.fmtD(v.data_solicitacao)+'     Entregue: '+this.fmtD(v.data_entrega),14,40);
-    const rows=[['Receita bruta','R$ '+F(v.receita_bruta)],['Comissao ML',v.comissao_valor!=null?'R$ '+F(v.comissao_valor):'-'],['Tarifa fixa',v.tarifa_fixa_valor!=null?'R$ '+F(v.tarifa_fixa_valor):'-'],['Frete (seu)',v.frete_valor!=null?'R$ '+F(v.frete_valor):'-'],['Deposito Mercado Pago',v.valor_recebido_ml!=null?'R$ '+F(v.valor_recebido_ml):'-'],['Custo do fornecedor',v.custo_total!=null?'R$ '+F(v.custo_total):'-'],['Lucro real',v.resultado_liquido!=null?'R$ '+F(v.resultado_liquido):'-'],['Margem',v.margem_pct!=null?F(v.margem_pct)+' %':'-']];
+    const rows=[['Receita bruta','R$ '+F(v.receita_bruta)],['Tarifa de venda total (Comissao ML)',v.comissao_valor!=null?'R$ '+F(v.comissao_valor):'-'],['Tarifa fixa',v.tarifa_fixa_valor!=null?'R$ '+F(v.tarifa_fixa_valor):'-'],['Frete (seu)',v.frete_valor!=null?'R$ '+F(v.frete_valor):'-'],['Deposito Mercado Pago',v.valor_recebido_ml!=null?'R$ '+F(v.valor_recebido_ml):'-'],['Custo do fornecedor',v.custo_total!=null?'R$ '+F(v.custo_total):'-'],['Colchao (3% custo operacional)',v.colchao_valor!=null?'R$ '+F(v.colchao_valor):'-'],['Resultado antes do imposto',v.resultado_antes_imposto!=null?'R$ '+F(v.resultado_antes_imposto):'-'],['Imposto (4% da receita)',v.imposto_valor!=null?'R$ '+F(v.imposto_valor):'-'],['Lucro real',v.resultado_liquido!=null?'R$ '+F(v.resultado_liquido):'-'],['Margem',v.margem_pct!=null?F(v.margem_pct)+' %':'-']];
     doc.autoTable({startY:48,head:[['Item','Valor']],body:rows,theme:'striped',headStyles:{fillColor:[16,185,129]},columnStyles:{1:{halign:'right'}}});
     doc.save('venda-'+v.ml_pedido_id+'.pdf');
   },
@@ -3766,12 +3774,13 @@ const ecomAlvo={
       else { sug='🟢 performando ('+vendas+' vendas)'; cls='o'; }
       const diasTxt = dias==null?'—':(dias<0?'agendado':dias+' dias no ar');
       const mlbTxt = an.anuncio_mlb ? ' · <span class="mono">#'+esc(an.anuncio_mlb)+'</span>' : ' · <span style="color:var(--eamber)">sem MLB</span>';
+      const tipoTxt = an.tipo_anuncio==='premium' ? ' · <span style="color:var(--eteal)">Premium</span>' : ' · <span style="color:var(--emuted2)">Clássico</span>';
       const hist=(an.anuncio_mlb && this.resHist[an.anuncio_mlb])?this.resHist[an.anuncio_mlb]:[];
       const histLink = hist.length?'<button data-alhist="'+esc(an.anuncio_mlb)+'" style="background:none;border:0;color:var(--emuted2);font-size:10.5px;cursor:pointer;padding:0;margin-top:6px;text-decoration:underline">histórico ('+hist.length+')</button>':'';
       return '<div class="vli" style="align-items:flex-start">'
         +'<div style="font-weight:700;color:var(--emuted2);min-width:24px;text-align:right;font-size:13px">'+(i+1)+'</div>'
         +'<div class="vmain"><div class="vp">'+esc(an.titulo)+'</div>'
-        +'<div class="vm">'+esc(an.produto_codigo)+mlbTxt+' · '+diasTxt+' · '+vendas+' venda(s)</div>'
+        +'<div class="vm">'+esc(an.produto_codigo)+mlbTxt+tipoTxt+' · '+diasTxt+' · '+vendas+' venda(s)</div>'
         +'<div style="margin-top:5px"><span class="rpfar '+cls+'">'+sug+'</span></div>'
         +histLink
         +'<div data-alhistbox="'+esc(an.anuncio_mlb||'')+'" style="display:none;margin-top:8px"></div>'
@@ -3791,6 +3800,7 @@ const ecomAlvo={
       +'<div class="efield"><label>MLB *</label><input class="vinput mono" data-ef="mlb" value="'+v(an.anuncio_mlb)+'" placeholder="4811359527"></div></div>'
       +'<div class="vrow"><div class="efield"><label>Preço</label><input class="vinput mono" data-ef="preco" type="number" step="0.01" value="'+v(an.preco)+'"></div>'
       +'<div class="efield"><label>Data publicação *</label><input class="vinput mono" data-ef="pub" type="date" value="'+v(String(an.data_publicacao||'').slice(0,10))+'"></div></div>'
+      +'<div class="vrow"><div class="efield"><label>Tipo de anúncio *</label><select class="vinput" data-ef="tipo"><option value="classico"'+(an.tipo_anuncio!=='premium'?' selected':'')+'>Clássico</option><option value="premium"'+(an.tipo_anuncio==='premium'?' selected':'')+'>Premium</option></select></div><div class="efield"></div></div>'
       +'<div class="efield"><label>Título *</label><input class="vinput" data-ef="tit" value="'+v(an.titulo)+'"></div>'
       +'<div style="display:flex;gap:8px;align-items:center"><button class="vbtn sm" data-alsave="'+id+'">Salvar</button><button class="vbtn sm" data-alcancel="'+id+'" style="background:var(--epanel3);color:var(--emuted)">Cancelar</button><span class="vmsg" data-alemsg="'+id+'"></span></div>';
     box.style.display='';
@@ -3798,11 +3808,11 @@ const ecomAlvo={
   async salvarEdicao(id){ const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
     const get=f=>{ const el=box.querySelector('[data-ef="'+f+'"]'); return el?el.value:''; };
     const msg=box.querySelector('[data-alemsg="'+id+'"]'); if(msg) msg.className='vmsg';
-    const cod=get('cod').trim().toUpperCase(), mlb=this._normMlb(get('mlb')), tit=get('tit').trim(), preco=parseFloat(get('preco')), pub=get('pub');
+    const cod=get('cod').trim().toUpperCase(), mlb=this._normMlb(get('mlb')), tit=get('tit').trim(), preco=parseFloat(get('preco')), pub=get('pub'), tipo=get('tipo');
     if(!cod||!mlb||!tit||!pub){ if(msg){ msg.className='vmsg err'; msg.textContent='Código, MLB, título e data são obrigatórios.'; } return; }
     if(!/^(MLB)?\d{6,}$/.test(mlb)){ if(msg){ msg.className='vmsg err'; msg.textContent='MLB inválido.'; } return; }
     try{ const chk=await sb.from('ecom_produtos').select('codigo').eq('codigo',cod).maybeSingle(); if(chk.error) throw chk.error; if(!chk.data){ if(msg){ msg.className='vmsg err'; msg.textContent='Código não existe no catálogo.'; } return; }
-      const r=await sb.from('ecom_anuncios').update({produto_codigo:cod,anuncio_mlb:mlb,titulo:tit,preco:isNaN(preco)?null:preco,data_publicacao:pub}).eq('id',id); if(r.error) throw r.error;
+      const r=await sb.from('ecom_anuncios').update({produto_codigo:cod,anuncio_mlb:mlb,titulo:tit,preco:isNaN(preco)?null:preco,data_publicacao:pub,tipo_anuncio:tipo}).eq('id',id); if(r.error) throw r.error;
       this.load();
     }catch(e){ if(msg){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; } }
   },
@@ -3856,12 +3866,12 @@ const ecomAlvo={
     }catch(e){ if(msg){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; } }
   },
   _normMlb(raw){ const m=String(raw||'').trim().toUpperCase().replace(/[#\s]/g,'').replace(/^(MLB)+/,''); return m||''; },
-  async cadastrar(){ const cod=this._g('al-cod').value.trim().toUpperCase(), mlb=this._normMlb(this._g('al-mlb').value), tit=this._g('al-tit').value.trim(), preco=parseFloat(this._g('al-preco').value), pub=this._g('al-pub').value; const msg=this._g('al-amsg'); msg.className='vmsg';
+  async cadastrar(){ const cod=this._g('al-cod').value.trim().toUpperCase(), mlb=this._normMlb(this._g('al-mlb').value), tit=this._g('al-tit').value.trim(), preco=parseFloat(this._g('al-preco').value), pub=this._g('al-pub').value, tipo=this._g('al-tipo').value; const msg=this._g('al-amsg'); msg.className='vmsg';
     if(!cod||!mlb||!tit||!pub){ msg.className='vmsg err'; msg.textContent='Código, MLB, título e data de publicação são obrigatórios.'; return; }
     if(!/^(MLB)?\d{6,}$/.test(mlb)){ msg.className='vmsg err'; msg.textContent='MLB inválido. Use o nº do anúncio (ex.: MLB4811359527 ou 4811359527).'; return; }
     try{ const chk=await sb.from('ecom_produtos').select('codigo').eq('codigo',cod).maybeSingle(); if(chk.error) throw chk.error; if(!chk.data){ msg.className='vmsg err'; msg.textContent='Código não existe no catálogo.'; return; }
-      const r=await sb.from('ecom_anuncios').insert({produto_codigo:cod,anuncio_mlb:mlb,titulo:tit,preco:isNaN(preco)?null:preco,data_publicacao:pub,ativo:true}).select().single(); if(r.error) throw r.error;
-      ['al-cod','al-mlb','al-tit','al-preco','al-pub'].forEach(i=>this._g(i).value=''); msg.className='vmsg ok'; msg.textContent='✓ Anúncio cadastrado'; setTimeout(()=>msg.textContent='',2500); this.load();
+      const r=await sb.from('ecom_anuncios').insert({produto_codigo:cod,anuncio_mlb:mlb,titulo:tit,preco:isNaN(preco)?null:preco,data_publicacao:pub,tipo_anuncio:tipo,ativo:true}).select().single(); if(r.error) throw r.error;
+      ['al-cod','al-mlb','al-tit','al-preco','al-pub'].forEach(i=>this._g(i).value=''); this._g('al-tipo').value='classico'; msg.className='vmsg ok'; msg.textContent='✓ Anúncio cadastrado'; setTimeout(()=>msg.textContent='',2500); this.load();
     }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
   },
   async remover(id){ if(!confirm('Remover este anúncio? (não afeta as vendas)')) return; try{ const r=await sb.from('ecom_anuncios').delete().eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } },
