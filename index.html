@@ -1123,10 +1123,7 @@
         <div class="vrow">
           <div class="efield"><label>Preço anunciado</label><input class="vinput mono" id="al-preco" type="number" step="0.01" placeholder="0,00"></div>
           <div class="efield"><label>Data de publicação *</label><input class="vinput mono" id="al-pub" type="date"></div>
-        </div>
-        <div class="vrow">
-          <div class="efield"><label>Tipo de anúncio *</label><select class="vinput" id="al-tipo"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
-          <div class="efield"></div>
+          <div class="efield"><label>Tipo *</label><select class="vinput" id="al-tipo"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
         </div>
         <div class="efield"><label>Título do anúncio *</label><input class="vinput" id="al-tit" placeholder="como está no ML"></div>
         <button class="vbtn" id="al-cadastrar">Cadastrar anúncio</button>
@@ -3697,7 +3694,7 @@ const ecomAlvo={
       if(r.error) throw r.error;
       (r.data||[]).forEach(row=>{ const k=row.anuncio_mlb; if(!k) return;
         (this.resHist[k]=this.resHist[k]||[]).push(row);
-        if(!this.resultados[k]) this.resultados[k]={anuncio_mlb:k,texto:row.texto||row.veredito||'—',cls:row.cls||'n',veredito:row.veredito,data:row.data_analise,acao:row.acao,diagnostico:row.diagnostico,preco_sugerido:row.preco_sugerido};
+        if(!this.resultados[k]) this.resultados[k]={texto:row.texto||row.veredito||'—',cls:row.cls||'n',veredito:row.veredito,data:row.data_analise,acao:row.acao,diagnostico:row.diagnostico,preco_sugerido:row.preco_sugerido};
       });
     }catch(e){ console.warn('loadResultados:',e.message); }
     // índice dedicado da mesa: imune ao this.anuncios (que o módulo de Vendas zera)
@@ -3728,9 +3725,9 @@ const ecomAlvo={
         html+='<div class="vli" style="align-items:flex-start;margin-bottom:6px">'
           +'<div class="vmain">'
           +'<div class="vp" style="font-size:12.5px">'+esc(tit)+'</div>'
-          +'<div class="vm" style="font-size:12.5px;color:var(--emuted2)">'+esc(cod)+' · <span class="mono">#'+esc(r.anuncio_mlb)+'</span>'+preco+'</div>'
+          +'<div class="vm">'+esc(cod)+' · <span class="mono">#'+esc(r.anuncio_mlb)+'</span>'+preco+'</div>'
           +(r.acao?'<div style="margin-top:5px"><span class="rpfar '+(r.cls||'n')+'">'+esc(r.acao)+'</span></div>':'')
-          +(r.diagnostico?'<div class="hint" style="font-size:12.5px;color:var(--emuted);margin-top:6px;line-height:1.55">'+esc(r.diagnostico)+'</div>':'')
+          +(r.diagnostico?'<div class="hint" style="font-size:11px;color:var(--emuted2);margin-top:5px;line-height:1.5">'+esc(r.diagnostico)+'</div>':'')
           +'</div></div>';
       });
       html+='</div>';
@@ -3799,8 +3796,8 @@ const ecomAlvo={
     box.innerHTML='<div class="vrow"><div class="efield"><label>Código *</label><input class="vinput mono" data-ef="cod" value="'+v(an.produto_codigo)+'"></div>'
       +'<div class="efield"><label>MLB *</label><input class="vinput mono" data-ef="mlb" value="'+v(an.anuncio_mlb)+'" placeholder="4811359527"></div></div>'
       +'<div class="vrow"><div class="efield"><label>Preço</label><input class="vinput mono" data-ef="preco" type="number" step="0.01" value="'+v(an.preco)+'"></div>'
-      +'<div class="efield"><label>Data publicação *</label><input class="vinput mono" data-ef="pub" type="date" value="'+v(String(an.data_publicacao||'').slice(0,10))+'"></div></div>'
-      +'<div class="vrow"><div class="efield"><label>Tipo de anúncio *</label><select class="vinput" data-ef="tipo"><option value="classico"'+(an.tipo_anuncio!=='premium'?' selected':'')+'>Clássico</option><option value="premium"'+(an.tipo_anuncio==='premium'?' selected':'')+'>Premium</option></select></div><div class="efield"></div></div>'
+      +'<div class="efield"><label>Data publicação *</label><input class="vinput mono" data-ef="pub" type="date" value="'+v(String(an.data_publicacao||'').slice(0,10))+'"></div>'
+      +'<div class="efield"><label>Tipo *</label><select class="vinput" data-ef="tipo"><option value="classico"'+(an.tipo_anuncio!=='premium'?' selected':'')+'>Clássico</option><option value="premium"'+(an.tipo_anuncio==='premium'?' selected':'')+'>Premium</option></select></div></div>'
       +'<div class="efield"><label>Título *</label><input class="vinput" data-ef="tit" value="'+v(an.titulo)+'"></div>'
       +'<div style="display:flex;gap:8px;align-items:center"><button class="vbtn sm" data-alsave="'+id+'">Salvar</button><button class="vbtn sm" data-alcancel="'+id+'" style="background:var(--epanel3);color:var(--emuted)">Cancelar</button><span class="vmsg" data-alemsg="'+id+'"></span></div>';
     box.style.display='';
