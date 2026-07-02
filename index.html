@@ -813,24 +813,35 @@
     #tab-ecommerce .rep-pill{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.45);color:#fca5a5;padding:2px 10px;border-radius:6px;font-family:var(--emono);font-variant-numeric:tabular-nums;font-size:12px}
     #tab-ecommerce .al-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;line-height:1.4}
     #tab-ecommerce .al-line > span:not(:last-child)::after{content:"·";color:var(--emuted2);margin-left:10px;font-weight:400}
+    #tab-ecommerce .al-code{color:var(--etxt);font-weight:600;font-size:13px;font-family:var(--emono);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+    #tab-ecommerce .al-title{color:var(--etxt);font-weight:600;font-size:13px}
+    #tab-ecommerce .al-info{font-size:11.5px;font-family:var(--emono);font-variant-numeric:tabular-nums}
+    #tab-ecommerce .al-info.novo{color:var(--emuted2)}
+    #tab-ecommerce .al-info.ok{color:#6ee7b7}
+    #tab-ecommerce .al-info.med{color:#fcd34d}
+    #tab-ecommerce .al-info.crit{color:#fca5a5}
     #tab-ecommerce .al-actions{display:flex;gap:10px;align-items:center;margin-top:6px}
-    #tab-ecommerce .al-sug{background:none;border:0;padding:0;cursor:pointer;font-size:12px;font-weight:600;text-decoration:underline;font-family:inherit}
-    #tab-ecommerce .al-sug.gray{color:var(--emuted2)}
-    #tab-ecommerce .al-sug.o{color:var(--eemerald)}
-    #tab-ecommerce .al-sug.a{color:var(--eamber)}
-    #tab-ecommerce .al-sug.c{color:var(--ered)}
-    #tab-ecommerce .al-sug.n{color:var(--emuted2)}
-    #tab-ecommerce .al-sug:hover{filter:brightness(1.2)}
+    #tab-ecommerce .al-sug{background:none;border:0;padding:0;cursor:pointer;font-size:11.5px;font-weight:600;text-decoration:underline;font-family:inherit}
+    #tab-ecommerce .al-sug.gray,#tab-ecommerce .al-sug.n{color:var(--emuted2)}
+    #tab-ecommerce .al-sug.o{color:#6ee7b7}
+    #tab-ecommerce .al-sug.a{color:#fcd34d}
+    #tab-ecommerce .al-sug.c{color:#fca5a5}
+    #tab-ecommerce .al-sug:hover{filter:brightness(1.15)}
     #tab-ecommerce .al-histlink{background:none;border:0;color:var(--emuted2);font-size:11.5px;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit}
     #tab-ecommerce .al-histlink:hover{color:var(--etxt)}
     #tab-ecommerce .al-sugbox{background:var(--epanel2);border:1px solid var(--eborder);border-left-width:3px;border-radius:8px;padding:10px 14px}
-    #tab-ecommerce .al-sugbox.o{border-left-color:var(--eemerald)}
-    #tab-ecommerce .al-sugbox.a{border-left-color:var(--eamber)}
-    #tab-ecommerce .al-sugbox.c{border-left-color:var(--ered)}
+    #tab-ecommerce .al-sugbox.o{border-left-color:#6ee7b7}
+    #tab-ecommerce .al-sugbox.a{border-left-color:#fcd34d}
+    #tab-ecommerce .al-sugbox.c{border-left-color:#fca5a5}
     #tab-ecommerce .al-sugbox.n,#tab-ecommerce .al-sugbox.gray{border-left-color:var(--emuted2)}
     #tab-ecommerce .al-sugh{font-size:12.5px;color:var(--etxt);margin-bottom:6px}
     #tab-ecommerce .al-sugp{font-size:12px;color:var(--emuted);line-height:1.55}
     #tab-ecommerce .al-sugmeta{font-size:10.5px;color:var(--emuted2);margin-top:8px;text-transform:uppercase;letter-spacing:.05em}
+    #tab-ecommerce .al-header{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding-bottom:10px;margin-bottom:14px;border-bottom:1px solid var(--eborder);flex-wrap:wrap}
+    #tab-ecommerce .al-header-l{display:flex;flex-direction:column;gap:3px;min-width:0}
+    #tab-ecommerce .al-htitle{font-size:15px;font-weight:700;color:var(--etxt);margin:0;letter-spacing:-.01em;text-transform:none}
+    #tab-ecommerce .al-hsub{font-size:11.5px;color:var(--emuted);font-weight:400;letter-spacing:.02em}
+    #tab-ecommerce .al-hcount{font-size:11.5px;color:var(--emuted2);font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.02em}
     #tab-ecommerce .rep-pill.amarela{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.45);color:#fcd34d}
     #tab-ecommerce .rep-pill.verde{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.45);color:#6ee7b7}
     #tab-ecommerce .msim-h .rep-pill{font-size:10.5px;padding:1px 8px}
@@ -1187,7 +1198,13 @@
       </div>
 
       <div class="ecard" style="margin-top:18px">
-        <h3 style="font-size:14px;color:var(--eaccent);letter-spacing:.09em">Anúncios ativos <span class="faint" style="font-weight:500;font-size:12px;color:var(--emuted)">· ranking por vendas (foco: o que está no ar)</span></h3>
+        <div class="al-header">
+          <div class="al-header-l">
+            <h3 class="al-htitle">Anúncios ativos</h3>
+            <span class="al-hsub">ranking por vendas</span>
+          </div>
+          <span id="al-anuncios-count" class="al-hcount"></span>
+        </div>
         <div id="al-anuncios"><div class="ph">nenhum anúncio cadastrado</div></div>
       </div>
 
@@ -3871,17 +3888,16 @@ const ecomAlvo={
     lista.sort((a,b)=> (b.vendas-a.vendas) || ((b.dias==null?-1:b.dias)-(a.dias==null?-1:a.dias)) );
     const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     // Semáforo pelo fato (dias × vendas). Cor entra no texto do "dias no ar · N venda(s)" — Opção 1.
-    const infoCor=(dias,vendas)=>{
-      if(dias==null) return 'var(--emuted2)';
-      if(dias<0) return 'var(--eamber)';
-      if(dias<7) return 'var(--emuted2)';
-      if(vendas===0) return 'var(--ered)';
-      if(vendas/Math.max(dias,1)<0.1) return 'var(--eamber)';
-      return 'var(--eemerald)';
+    const infoCls=(dias,vendas)=>{
+      if(dias==null||dias<7) return 'novo';
+      if(dias<0) return 'med';
+      if(vendas===0) return 'crit';
+      if(vendas/Math.max(dias,1)<0.1) return 'med';
+      return 'ok';
     };
     box.innerHTML=lista.map((row,i)=>{ const an=row.an, dias=row.dias, vendas=row.vendas;
       const diasTxt = dias==null?'sem data':(dias<0?'agendado':dias+' dias no ar');
-      const infoStyle='color:'+infoCor(dias,vendas);
+      const infoClass=infoCls(dias,vendas);
       // Sugestão: cinza se não há análise importada; cor do cls se há.
       const res = an.anuncio_mlb ? this.resultados[an.anuncio_mlb] : null;
       const sugCls = res ? (res.cls||'n') : 'gray';
@@ -3893,9 +3909,9 @@ const ecomAlvo={
         +'<div style="font-weight:700;color:var(--emuted2);min-width:24px;text-align:right;font-size:13px">'+(i+1)+'</div>'
         +'<div class="vmain">'
         +'<div class="al-line">'
-          +'<span class="mono" style="color:var(--emuted2);font-size:11.5px">'+esc(an.produto_codigo)+'</span>'
-          +'<span style="color:var(--etxt);font-weight:600;font-size:13px">'+esc(an.titulo)+'</span>'
-          +'<span style="'+infoStyle+';font-size:11.5px">'+diasTxt+' · '+vendas+' venda(s)</span>'
+          +'<span class="al-code">'+esc(an.produto_codigo)+'</span>'
+          +'<span class="al-title">'+esc(an.titulo)+'</span>'
+          +'<span class="al-info '+infoClass+'">'+diasTxt+' · '+vendas+' venda(s)</span>'
         +'</div>'
         +'<div class="al-actions">'+sugBtn+histLink+'</div>'
         +'<div data-alsugbox="'+an.id+'" style="display:none;margin-top:8px"></div>'
@@ -3905,6 +3921,8 @@ const ecomAlvo={
         +'<div style="display:flex;flex-direction:column;gap:5px"><button class="vbtn sm" data-aledit="'+an.id+'">editar</button><button class="vbtn sm" data-aldel="'+an.id+'" style="background:var(--epanel3);color:var(--emuted)">remover</button></div>'
         +'</div>';
     }).join('');
+    const cnt=this._g('al-anuncios-count');
+    if(cnt) cnt.textContent = lista.length+' anúncio'+(lista.length===1?'':'s')+' ativo'+(lista.length===1?'':'s');
   },
   toggleSug(anid, mlb){
     const box=document.querySelector('[data-alsugbox="'+anid+'"]'); if(!box) return;
