@@ -798,7 +798,12 @@
     #tab-ecommerce .msim-piso.ok{background:rgba(16,185,129,.10);color:var(--eemerald);border:1px solid rgba(16,185,129,.25)}
     #tab-ecommerce .msim-piso.no{background:rgba(239,68,68,.10);color:var(--ered);border:1px solid rgba(239,68,68,.30)}
     #tab-ecommerce .msim-piso.warn{background:rgba(245,158,11,.10);color:var(--eamber);border:1px solid rgba(245,158,11,.30)}
-    #tab-ecommerce .msim-meta{font-size:11px;color:var(--emuted2);font-family:var(--emono);font-variant-numeric:tabular-nums;margin-top:8px;line-height:1.5}
+    #tab-ecommerce .msim-meta{font-size:13px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;margin-top:10px;line-height:1.5}
+    #tab-ecommerce .msim-meta b{color:var(--etxt);font-weight:600}
+    #tab-ecommerce .rep-pill{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.45);color:#fca5a5;padding:2px 10px;border-radius:6px;font-family:var(--emono);font-variant-numeric:tabular-nums;font-size:12px}
+    #tab-ecommerce .rep-pill.amarela{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.45);color:#fcd34d}
+    #tab-ecommerce .rep-pill.verde{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.45);color:#6ee7b7}
+    #tab-ecommerce .msim-h .rep-pill{font-size:10.5px;padding:1px 8px}
     #tab-ecommerce .vbtn.sm[disabled]{opacity:.45;cursor:not-allowed;border-color:var(--eborder)}
     #tab-ecommerce .vbtn.sm[disabled]:hover{border-color:var(--eborder)}
     #tab-ecommerce .rp-idxrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
@@ -883,7 +888,7 @@
           <p class="note">Frete calculado por lookup na tabela oficial ML: peso do produto × faixa de preço do anúncio × reputação. Zonas geográficas aposentadas em 02/07/2026 — frete ML é nacional.</p>
         </div>
         <div>
-          <div class="mtitle">Tabela oficial ML — reputação vigente <span style="color:var(--emuted2);font-size:11px;font-weight:400">· somente leitura</span></div>
+          <div class="mtitle">Tabela oficial ML — reputação vigente <span style="color:var(--emuted2);font-size:11px;font-weight:400">· somente leitura · até 3kg</span></div>
           <table class="mtx" id="ecom-mtx"></table>
           <div class="mnote"><b>Fonte:</b> páginas oficiais MercadoLivre Ajuda (verde/amarela/laranja-vermelha), carregadas em <span id="ecom-frete-carga">02/07/2026</span>. Manutenção via SQL Editor quando o ML atualizar tarifas.</div>
         </div>
@@ -1137,16 +1142,16 @@
       <div id="alsub-controle" class="alsub" style="display:none">
       <div class="ecard" style="margin-top:18px">
         <h3>Cadastro de anúncio <span class="faint" style="font-weight:400;font-size:12px">· vincula o anúncio do ML ao SKU do catálogo</span></h3>
-        <div class="vrow">
+        <div class="vrow3" style="margin-bottom:8px">
           <div class="efield"><label>Código do produto *</label><input class="vinput mono" id="al-cod" placeholder="SSD-0001"></div>
           <div class="efield"><label>Nº do anúncio · MLB *</label><input class="vinput mono" id="al-mlb" placeholder="MLB4811359527 ou 4811359527"></div>
-        </div>
-        <div class="vrow">
-          <div class="efield"><label>Preço anunciado</label><input class="vinput mono" id="al-preco" type="number" step="0.01" placeholder="0,00"></div>
           <div class="efield"><label>Data de publicação *</label><input class="vinput mono" id="al-pub" type="date"></div>
+        </div>
+        <div class="efield" style="margin-bottom:8px"><label>Título do anúncio *</label><input class="vinput" id="al-tit" placeholder="como está no ML"></div>
+        <div class="vrow" style="margin-bottom:10px">
+          <div class="efield"><label>Preço anunciado</label><input class="vinput mono" id="al-preco" type="number" step="0.01" placeholder="0,00"></div>
           <div class="efield"><label>Tipo *</label><select class="vinput" id="al-tipo"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
         </div>
-        <div class="efield"><label>Título do anúncio *</label><input class="vinput" id="al-tit" placeholder="como está no ML"></div>
         <button class="vbtn" id="al-cadastrar">Cadastrar anúncio</button>
         <div class="vmsg" id="al-amsg"></div>
         <p class="hint" style="font-size:11px;color:var(--emuted2);margin-top:10px">O <b>MLB</b> é o nº do anúncio no ML (aparece como #4811359527 no painel). É a chave que casa pedido ↔ SKU ↔ margem. Sem ele, a Análise de Resultados não liga venda a anúncio.</p>
@@ -2699,14 +2704,18 @@ const ecom = {
     { const tp=g('ecom-f-tipo'); if(tp) tp.addEventListener('change',()=>this.updateFormBreakeven()); }
     { const eb=this._g('ecom-export'); if(eb) eb.addEventListener('click',()=>this.exportarCenario()); }
   },
-  updateCtx(){ const s='Reputação '+this.repLabel(this.reputacao)+' · lookup FRETE_TBL oficial ML';
+  updateCtx(){
+    const rep=this.reputacao;
+    const pillHtml='<span class="rep-pill '+rep+'">Reputação '+this.repLabel(rep)+'</span> · lookup FRETE_TBL oficial ML';
     const a=this._g('ecom-frete-ctx'), b=this._g('ecom-frete-ctxtop');
-    if(a) a.textContent=s; if(b) b.textContent=s; this.updateFormBreakeven(); },
+    if(a) a.innerHTML=pillHtml; if(b) b.innerHTML=pillHtml; this.updateFormBreakeven(); },
 
   // Substitui buildMtx: renderiza a tabela oficial ML da reputação vigente (só leitura)
   buildFreteRef(){ const t=this._g('ecom-mtx'); if(!t) return;
     const rep=this.reputacao;
-    const rows=(this.freteTbl||[]).filter(r=>r.reputacao===rep);
+    // Corte visual: mostra só até 3kg (catálogo Selecta cabe nesse range com folga).
+    // Dados completos até 11kg seguem no banco para lookup.
+    const rows=(this.freteTbl||[]).filter(r=>r.reputacao===rep && r.peso_max_g<=3000);
     if(!rows.length){ t.innerHTML='<tr><td class="faint" style="padding:12px">Tabela oficial de frete não carregada — verifique se ecom_frete_tbl existe e tem dados para reputação '+this.repLabel(rep)+'.</td></tr>'; return; }
     // Agrupa por peso
     const bandas=[...new Set(rows.map(r=>r.peso_min_g+'-'+r.peso_max_g))].sort((a,b)=>parseInt(a)-parseInt(b));
@@ -3873,16 +3882,18 @@ const ecomAlvo={
       else if(ecom.loadComissoes && (!ecom.comMap||!Object.keys(ecom.comMap).length)){ await ecom.loadComissoes(); }
     } }catch(e){ console.warn('ecom lazy load:',e.message); }
     const v=s=>String(s==null?'':s).replace(/"/g,'&quot;');
-    box.innerHTML='<div class="vrow"><div class="efield"><label>Código *</label><input class="vinput mono" data-ef="cod" value="'+v(an.produto_codigo)+'"></div>'
-      +'<div class="efield"><label>MLB *</label><input class="vinput mono" data-ef="mlb" value="'+v(an.anuncio_mlb)+'" placeholder="4811359527"></div></div>'
-      +'<div class="vrow"><div class="efield"><label>Preço</label><input class="vinput mono" data-ef="preco" type="number" step="0.01" value="'+v(an.preco)+'"></div>'
-      +'<div class="efield"><label>Data publicação *</label><input class="vinput mono" data-ef="pub" type="date" value="'+v(String(an.data_publicacao||'').slice(0,10))+'"></div>'
-      +'<div class="efield"><label>Tipo *</label><select class="vinput" data-ef="tipo"><option value="classico"'+(an.tipo_anuncio!=='premium'?' selected':'')+'>Clássico</option><option value="premium"'+(an.tipo_anuncio==='premium'?' selected':'')+'>Premium</option></select></div></div>'
+    // Layout aprovado 02/07/2026:
+    // L1: Código · MLB · Data pub    L2: Título    L3: Preço · Tipo    L4: Motivo (livre)   L5: Simulador
+    box.innerHTML=
+      '<div class="vrow3"><div class="efield"><label>Código *</label><input class="vinput mono" data-ef="cod" value="'+v(an.produto_codigo)+'"></div>'
+      +'<div class="efield"><label>MLB *</label><input class="vinput mono" data-ef="mlb" value="'+v(an.anuncio_mlb)+'" placeholder="4811359527"></div>'
+      +'<div class="efield"><label>Data publicação *</label><input class="vinput mono" data-ef="pub" type="date" value="'+v(String(an.data_publicacao||'').slice(0,10))+'"></div></div>'
       +'<div class="efield"><label>Título *</label><input class="vinput" data-ef="tit" value="'+v(an.titulo)+'"></div>'
-      +'<div class="vrow"><div class="efield"><label>Motivo da alteração *</label><select class="vinput" data-ef="motivo"><option value="">— selecionar —</option><option value="concorrencia">Concorrência</option><option value="giro">Giro parado</option><option value="ajuste_margem">Ajuste de margem</option><option value="correcao">Correção</option><option value="outro">Outro</option></select></div>'
-      +'<div class="efield"><label>Detalhe (opcional)</label><input class="vinput" data-ef="motivo_detalhe" placeholder="ex: baixou 5% pra bater Buy Box"></div></div>'
+      +'<div class="vrow"><div class="efield"><label>Preço</label><input class="vinput mono" data-ef="preco" type="number" step="0.01" value="'+v(an.preco)+'"></div>'
+      +'<div class="efield"><label>Tipo *</label><select class="vinput" data-ef="tipo"><option value="classico"'+(an.tipo_anuncio!=='premium'?' selected':'')+'>Clássico</option><option value="premium"'+(an.tipo_anuncio==='premium'?' selected':'')+'>Premium</option></select></div></div>'
+      +'<div class="efield"><label>Motivo da alteração *</label><input class="vinput" data-ef="motivo" placeholder="descreva por que está alterando (obrigatório para gravar)"></div>'
       +'<div class="msim" data-alsim="'+id+'">'
-      +'<div class="msim-h"><span>Margem líquida · tempo real</span><span class="msim-hint">reputação verde · agência (fixos)</span></div>'
+      +'<div class="msim-h"><span>Margem líquida · tempo real</span><span data-msim-rep></span></div>'
       +'<div class="msim-zonas" data-msim-zonas></div>'
       +'<div class="msim-piso" data-msim-piso></div>'
       +'<div class="msim-meta" data-msim-meta></div>'
@@ -3925,15 +3936,28 @@ const ecomAlvo={
     const margem=P-custoML-custoTotal;
     return {ok:true,margem,margemPct:P>0?margem/P:0,comPct,frete:fr};
   },
-  _faixasAdjacentes(preco){
-    // Retorna [faixa_anterior, faixa_atual, faixa_seguinte] baseado nas 8 faixas oficiais ML
+  _faixasAdjacentes(preco, custoNF){
+    // Retorna [faixa_anterior?, faixa_atual, faixa_seguinte?] com preços de teste na FRONTEIRA REAL.
+    // Ponto 8 (02/07/2026): fronteira = X.99 (anterior) ou X.00 (seguinte), não meio da faixa.
+    // Card só é gerado se o preço-teste for viável vs custo NF (≥ custoNF * 0.9).
     const F=[[0,18.99],[19,48.99],[49,78.99],[79,99.99],[100,119.99],[120,149.99],[150,199.99],[200,null]];
     const idx=F.findIndex(f=>preco>=f[0] && (f[1]==null || preco<=f[1]));
     if(idx<0) return [];
     const out=[];
-    if(idx>0) out.push({label:this._faixaLabel(F[idx-1]), preco:(F[idx-1][0]+F[idx-1][1])/2, marker:'anterior'});
+    if(idx>0){
+      const fAnt=F[idx-1];
+      const precoTeste=fAnt[1]; // fronteira superior da faixa anterior (ex: 199,99)
+      // Ponto 8: só mostra se faz sentido operacional (preço-teste cobre pelo menos 90% do custo)
+      if(precoTeste >= custoNF * 0.9){
+        out.push({label:this._faixaLabel(fAnt), preco:precoTeste, marker:'anterior'});
+      }
+    }
     out.push({label:this._faixaLabel(F[idx]), preco:preco, marker:'atual'});
-    if(idx<F.length-1) out.push({label:this._faixaLabel(F[idx+1]), preco:F[idx+1][1]==null?F[idx+1][0]+1:(F[idx+1][0]+F[idx+1][1])/2, marker:'seguinte'});
+    if(idx<F.length-1){
+      const fSeg=F[idx+1];
+      const precoTeste=fSeg[0]; // fronteira inferior da faixa seguinte (ex: 200,00)
+      out.push({label:this._faixaLabel(fSeg), preco:precoTeste, marker:'seguinte'});
+    }
     return out;
   },
   _faixaLabel(f){ if(f[1]==null) return '≥R$200'; return 'R$'+f[0].toFixed(0)+'–'+f[1].toFixed(0); },
@@ -3941,50 +3965,54 @@ const ecomAlvo={
     const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
     const wrap=box.querySelector('[data-alsim="'+id+'"]'); if(!wrap) return;
     const elZ=wrap.querySelector('[data-msim-zonas]'), elP=wrap.querySelector('[data-msim-piso]'), elM=wrap.querySelector('[data-msim-meta]');
+    const elRep=wrap.querySelector('[data-msim-rep]');
     const btnSave=box.querySelector('[data-alsave="'+id+'"]');
+    // Corrige rótulo de reputação: dinâmico, não hardcoded
+    const rep=(typeof ecom!=='undefined' && ecom.reputacao)?ecom.reputacao:'vermelha';
+    const repLabel=(typeof ecom!=='undefined' && ecom.repLabel)?ecom.repLabel(rep):rep;
+    if(elRep) elRep.innerHTML='<span class="rep-pill '+rep+'">Reputação '+repLabel+'</span>';
     const gate=this._simAvalGate(id);
     if(!gate){ elZ.innerHTML=''; elP.className='msim-piso warn'; elP.textContent='—'; elM.textContent=''; if(btnSave) btnSave.setAttribute('disabled',''); return; }
     if(gate.status==='warn'){
       elZ.innerHTML='';
-      elP.className='msim-piso warn'; elP.textContent='⚠ DADO INCOMPLETO · '+gate.reason;
+      elP.className='msim-piso warn'; elP.innerHTML='<span>⚠ DADO INCOMPLETO · '+gate.reason+'</span><span>PISO 12%</span>';
       elM.textContent='piso não verificável — gravação bloqueada até resolver';
       if(btnSave) btnSave.setAttribute('disabled','');
       return;
     }
-    const rep=(typeof ecom!=='undefined' && ecom.reputacao)?ecom.reputacao:'vermelha';
-    const repLabel=(typeof ecom!=='undefined' && ecom.repLabel)?ecom.repLabel(rep):rep;
-    // Avalia a margem no preço atual + faixas adjacentes (o que muda quando ela sobe/desce preço)
-    const faixas=this._faixasAdjacentes(gate.preco);
-    if(!faixas.length){ elZ.innerHTML=''; elP.className='msim-piso warn'; elP.textContent='⚠ preço fora do range da tabela'; elM.textContent=''; if(btnSave) btnSave.setAttribute('disabled',''); return; }
-    // Cenário principal: preço atual, reputação vigente
+    // Cenário principal
     const rAtual=this._simMargem(gate.prod, gate.preco, gate.tipo, rep);
     if(!rAtual.ok){
       elZ.innerHTML='';
-      elP.className='msim-piso warn'; elP.innerHTML='<span>⚠ DADO INCOMPLETO · '+rAtual.reason+'</span><span>PISO 12%: não verificável</span>';
+      elP.className='msim-piso warn'; elP.innerHTML='<span>⚠ DADO INCOMPLETO · '+rAtual.reason+'</span><span>PISO 12%</span>';
       elM.textContent='verificar carga de ecom_frete_tbl e peso_g do produto';
       if(btnSave) btnSave.setAttribute('disabled','');
       return;
     }
-    // Cards: uma célula por faixa adjacente (preço mediano da faixa)
-    const cards=faixas.map(f=>{
-      const r=this._simMargem(gate.prod, f.preco, gate.tipo, rep);
-      return {label:f.label, marker:f.marker, r};
-    });
+    // Faixas adjacentes (Ponto 8: fronteira real + filtro de viabilidade)
+    const faixas=this._faixasAdjacentes(gate.preco, +gate.prod.custo || 0);
+    const cards=faixas.map(f=>({label:f.label, marker:f.marker, r:this._simMargem(gate.prod, f.preco, gate.tipo, rep), precoTeste:f.preco}));
     elZ.innerHTML=cards.map(x=>{
       if(!x.r.ok) return '<div class="msim-z"><div class="msim-zl">'+x.label+'</div><div class="msim-zv" style="color:var(--emuted2);font-size:12px">—</div></div>';
       const pct=x.r.margemPct*100; const cls=pct>=15?'v':(pct>=12?'a':'r');
-      const mk=x.marker==='atual'?' ◄ atual':(x.marker==='anterior'?' ↓':' ↑');
-      const pior=x.marker==='atual'?' pior':'';
-      return '<div class="msim-z '+cls+pior+'"><div class="msim-zl">'+x.label+mk+'</div><div class="msim-zv">'+pct.toFixed(1)+'%</div></div>';
+      const mk=x.marker==='atual'?' ◄ atual':(x.marker==='anterior'?' ↓ se ≤R$'+x.precoTeste.toFixed(2).replace('.',','):' ↑ se ≥R$'+x.precoTeste.toFixed(2).replace('.',','));
+      const dest=x.marker==='atual'?' pior':'';
+      return '<div class="msim-z '+cls+dest+'"><div class="msim-zl">'+x.label+mk+'</div><div class="msim-zv">'+pct.toFixed(1)+'%</div></div>';
     }).join('');
     const pctAtual=rAtual.margemPct*100;
     const liberado=pctAtual>=12;
     elP.className='msim-piso '+(liberado?'ok':'no');
-    elP.innerHTML='<span>'+(liberado?'✔ LIBERADO':'✖ BLOQUEADO')+' · margem no preço atual: '+pctAtual.toFixed(1)+'%</span><span>PISO 12%</span>';
+    // Ponto 7: PISO 12% só aparece quando bloqueado
+    if(liberado){
+      elP.innerHTML='<span>✔ LIBERADO · margem no preço atual: '+pctAtual.toFixed(1)+'%</span>';
+    } else {
+      elP.innerHTML='<span>✖ BLOQUEADO · margem no preço atual: '+pctAtual.toFixed(1)+'%</span><span>PISO 12%</span>';
+    }
     const comPct=rAtual.comPct*100;
     const catRow=(typeof ecom!=='undefined' && ecom.comMap)?ecom.comMap[gate.prod.categoria]:null;
     const comOrigem=(catRow&&catRow.origem==='reconciliacao')?'real':(catRow&&(catRow.origem==='manual'||catRow.origem==='api_ml')?'aferida':'est.');
-    elM.innerHTML='comissão '+comPct.toFixed(2)+'% ('+comOrigem+') · frete '+this._fmtBR(rAtual.frete)+' (reputação '+repLabel+') · custo NF R$ '+this._fmtBR(gate.prod.custo);
+    // Ponto 6: fonte maior + bold nos números — feito via CSS (.msim-meta base 13px, <b> nos números)
+    elM.innerHTML='comissão <b>'+comPct.toFixed(2)+'%</b> ('+comOrigem+') · frete <b>R$ '+this._fmtBR(rAtual.frete)+'</b> · custo NF <b>R$ '+this._fmtBR(gate.prod.custo)+'</b>';
     if(btnSave){ if(liberado) btnSave.removeAttribute('disabled'); else btnSave.setAttribute('disabled',''); }
     wrap._simState={ok:liberado, piorPct:pctAtual, resultados:cards, comPct};
   },
@@ -3993,10 +4021,10 @@ const ecomAlvo={
     const get=f=>{ const el=box.querySelector('[data-ef="'+f+'"]'); return el?el.value:''; };
     const msg=box.querySelector('[data-alemsg="'+id+'"]'); if(msg) msg.className='vmsg';
     const cod=get('cod').trim().toUpperCase(), mlb=this._normMlb(get('mlb')), tit=get('tit').trim(), preco=parseFloat(get('preco')), pub=get('pub'), tipo=get('tipo');
-    const motivo=get('motivo'), motivoDet=get('motivo_detalhe').trim();
+    const motivo=get('motivo').trim();
     if(!cod||!mlb||!tit||!pub){ if(msg){ msg.className='vmsg err'; msg.textContent='Código, MLB, título e data são obrigatórios.'; } return; }
     if(!/^(MLB)?\d{6,}$/.test(mlb)){ if(msg){ msg.className='vmsg err'; msg.textContent='MLB inválido.'; } return; }
-    if(!motivo){ if(msg){ msg.className='vmsg err'; msg.textContent='Selecione o motivo da alteração.'; } return; }
+    if(!motivo){ if(msg){ msg.className='vmsg err'; msg.textContent='Descreva o motivo da alteração antes de salvar.'; } return; }
     // Reavaliação server-side do piso (defesa em profundidade: não confia só no botão desabilitado)
     const wrap=box.querySelector('[data-alsim="'+id+'"]');
     const st=wrap&&wrap._simState;
@@ -4011,10 +4039,9 @@ const ecomAlvo={
       const houvePreco=(Number(precoAnterior)||0)!==(Number(precoNovo)||0);
       const houveTipo=(anAtual&&anAtual.tipo_anuncio||'classico')!==tipo;
       if(houvePreco||houveTipo){
-        const motivoTxt=motivo+(motivoDet?(' · '+motivoDet):'');
         const logRow={ anuncio_sku:cod, mlb:mlb, campo:houvePreco?'preco':'tipo_anuncio',
           preco_anterior:houvePreco?precoAnterior:null, preco_novo:houvePreco?precoNovo:null,
-          margem_pior_zona_pct:st.piorPct!=null?Number(st.piorPct.toFixed(2)):null, motivo:motivoTxt };
+          margem_pior_zona_pct:st.piorPct!=null?Number(st.piorPct.toFixed(2)):null, motivo:motivo };
         const rl=await sb.from('ecom_anuncio_alteracao').insert(logRow);
         if(rl.error){ if(msg){ msg.className='vmsg err'; msg.textContent='Anúncio salvo, mas log falhou: '+rl.error.message; } this.load(); return; }
       }
