@@ -877,8 +877,8 @@
     <div class="ecard">
       <h3>Parâmetros comerciais</h3>
       <div class="param-grid">
-        <div class="efield"><label>Comissão Clássico</label><div class="field-row"><input class="num" id="ecom-com-classico" type="number" step="0.5" value="13"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Comissão Premium</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
+        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Clássico (fallback)</label><div class="field-row"><input class="num" id="ecom-com-classico" type="number" step="0.5" value="13"><span class="unit">%</span></div></div>
+        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Premium (fallback)</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
         <div class="efield"><label>Imposto (regime)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" step="0.5" value="4"><span class="unit">%</span></div></div>
         <div class="efield"><label>Outros custos</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
         <div class="efield"><label>Colchão</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="3"><span class="unit">%</span></div></div>
@@ -900,7 +900,7 @@
       <h3 id="ecom-form-title">Cadastrar / simular produto</h3>
       <div class="addform">
         <input type="hidden" id="ecom-f-produto">
-        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option><option value="RBL">Robô de Limpeza</option><option value="ALX">Alexa</option><option value="PWB">Power Bank</option><option value="CXS">Caixa de Som</option></select></div>
+        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="PLR">Placa de rede</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option><option value="RBL">Robô de Limpeza</option><option value="ALX">Alexa</option><option value="PWB">Power Bank</option><option value="CXS">Caixa de Som</option></select></div>
         <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px"></div>
         <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px"></div>
         <div class="efield" id="ecom-f-capacidade-wrap" style="display:none"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px"></div>
@@ -2563,7 +2563,7 @@ function generatePDFs() {
 const ecom = {
   ZONAS: [['local_ne','Local / NE'],['centro','Centro'],['sudeste','Sudeste'],['sul','Sul']],
   PESOS: [['ate300','≤300g'],['f301_500','301–500g'],['f501_1000','501g–1kg'],['f1001_2000','1–2kg']],
-  itens: [], mtx: {}, mtxCal: {}, loaded:false, wired:false,
+  itens: [], mtx: {}, mtxCal: {}, comMap: {}, loaded:false, wired:false,
   selDest:'local_ne', repFactor:1, modalidade:'flex', editId:null, fProd:'', fVer:'',
 
   _g(id){ return document.getElementById(id); },
@@ -2589,7 +2589,7 @@ const ecom = {
     { const p=(custo+fr)/(1-t); if(p>=79)c.push(p); }
     return c.length?Math.min.apply(null,c):(custo+fr)/(1-t); },
   calc(it){ const pr=this.params(); const P=+it.preco;
-    const comPct=(it.tipo_anuncio==='premium'?pr.comP:pr.comC)/100;
+    const comPct=this.comPctDe(it.categoria,it.tipo_anuncio,pr);
     const t=comPct+pr.imp/100+pr.outros/100;
     const fr=this.freteDe(it); let regime,freteItem,custoFixo=0,custoML;
     if(P>=79){ regime='frete'; freteItem=fr; custoML=P*t+freteItem; }
@@ -2609,13 +2609,18 @@ const ecom = {
   isVis(it){ if(this.fProd){ if(this.fProd.indexOf('fam:')===0){ if(this.familia(it.produto)!==this.fProd.slice(4)) return false; } else if(it.produto!==this.fProd) return false; } if(this.fVer && this.itemVer(it)!==this.fVer) return false; return true; },
 
   async onEnter(){
-    if(!this.loaded){ await this.loadMatrix(); await this.loadProdutos(); this.loaded=true; }
+    if(!this.loaded){ await this.loadMatrix(); await this.loadComissoes(); await this.loadProdutos(); this.loaded=true; }
     if(!this.wired){ this.wire(); this.wired=true; }
     this.buildMtx(); this.updateCtx(); this.render();
   },
   async loadMatrix(){ try{ const r=await sb.from('ecom_frete_matriz').select('zona,peso_faixa,valor,calibrado_em'); if(r.error) throw r.error;
       this.mtx={}; this.mtxCal={}; (r.data||[]).forEach(x=>{ const k=x.zona+'|'+x.peso_faixa; this.mtx[k]=Number(x.valor); this.mtxCal[k]=x.calibrado_em||null; }); }
     catch(e){ console.warn('ecom_frete_matriz load:',e.message); } },
+  async loadComissoes(){ try{ const r=await sb.from('ecom_categoria_comissao').select('sigla,comissao_classico,comissao_premium,origem'); if(r.error) throw r.error;
+      this.comMap={}; (r.data||[]).forEach(x=>{ this.comMap[x.sigla]={c:(x.comissao_classico==null?null:Number(x.comissao_classico)),p:(x.comissao_premium==null?null:Number(x.comissao_premium)),origem:x.origem||null}; }); }
+    catch(e){ console.warn('ecom_categoria_comissao load:',e.message); this.comMap={}; } },
+  comPctDe(categoria,tipo,pr){ const m=categoria?this.comMap[categoria]:null; const prem=(tipo==='premium');
+    const v=m?(prem?m.p:m.c):null; return ((v==null||isNaN(v))?(prem?pr.comP:pr.comC):v)/100; },
   async loadProdutos(){ try{ const r=await sb.from('ecom_produtos').select('*').eq('ativo',true).order('criado_em'); if(r.error) throw r.error; this.itens=r.data||[]; }
     catch(e){ console.warn('ecom_produtos load:',e.message); this.itens=[]; } },
 
@@ -2724,11 +2729,12 @@ const ecom = {
     const peso=this.faixaFromPeso(parseInt(this._g('ecom-f-pesog').value,10))||'ate300';
     if(isNaN(P)||isNaN(custo)){ if(out)out.value=''; if(mr)mr.value=''; if(mp){ mp.value=''; mp.className='ainput mono robe mgsimf'; } return; }
     const pr=this.params();
-    const comPct=(this._g('ecom-f-tipo').value==='premium'?pr.comP:pr.comC)/100;
+    const catForm=this._g('ecom-f-categoria').value||null;
+    const comPct=this.comPctDe(catForm,this._g('ecom-f-tipo').value,pr);
     const t=comPct+pr.imp/100+pr.outros/100;
     const fr=(this.mtx[this.selDest+'|'+peso]==null?0:this.mtx[this.selDest+'|'+peso])*this.repFactor;
     if(out) out.value=this.fmt(this.breakeven(custo+custo*pr.colchao/100,t,fr,pr));
-    const r=this.calc({preco:P,custo:custo,tipo_anuncio:this._g('ecom-f-tipo').value,peso_faixa:peso});
+    const r=this.calc({preco:P,custo:custo,tipo_anuncio:this._g('ecom-f-tipo').value,peso_faixa:peso,categoria:catForm});
     if(mr) mr.value=this.fmt(r.margem);
     if(mp){ const pct=r.margemPct*100; mp.value=this.fmtPct(pct); mp.className='ainput mono robe mgsimf '+(pct>=15?'v':pct>=12?'a':'r'); }
   },
@@ -2807,7 +2813,7 @@ const ecom = {
 '- Destino / rota precificada: **'+this.zonaLabel(this.selDest)+'**\n'+
 '- Reputa\u00e7\u00e3o: **'+repTxt+'**\n'+
 '- Modalidade de envio: **'+modTxt+'**\n'+
-'- Comiss\u00e3o Cl\u00e1ssico: '+pr.comC+'% \u00b7 Comiss\u00e3o Premium: '+pr.comP+'%\n'+
+'- Comiss\u00e3o fallback \u2014 Cl\u00e1ssico: '+pr.comC+'% \u00b7 Premium: '+pr.comP+'% (categorias com al\u00edquota pr\u00f3pria usam ecom_categoria_comissao)\n'+
 '- Imposto (regime): '+pr.imp+'%\n'+
 '- Outros custos: '+pr.outros+'%\n'+
 '- Colch\u00e3o (sobre a compra · custos operacionais): '+pr.colchao+'%\n'+
