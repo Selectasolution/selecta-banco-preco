@@ -782,6 +782,25 @@
     #tab-ecommerce .vpill.ok{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
     #tab-ecommerce .vmsg{font-size:12px;margin-top:8px;min-height:16px}
     #tab-ecommerce .vmsg.ok{color:var(--eemerald)} #tab-ecommerce .vmsg.err{color:var(--ered)}
+    #tab-ecommerce .msim{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:12px 14px;margin:10px 0 4px}
+    #tab-ecommerce .msim-h{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin-bottom:9px;font-weight:600}
+    #tab-ecommerce .msim-h .msim-hint{text-transform:none;letter-spacing:0;font-weight:400;color:var(--emuted2);font-size:11px}
+    #tab-ecommerce .msim-zonas{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+    #tab-ecommerce .msim-z{background:var(--epanel);border:1px solid var(--eborder);border-radius:8px;padding:8px 10px;font-family:var(--emono);font-variant-numeric:tabular-nums}
+    #tab-ecommerce .msim-z .msim-zl{font-size:10px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.05em;font-family:inherit;display:flex;align-items:center;gap:5px}
+    #tab-ecommerce .msim-z .msim-zv{font-size:15px;font-weight:600;margin-top:2px}
+    #tab-ecommerce .msim-z.v .msim-zv{color:var(--eemerald)} #tab-ecommerce .msim-z.a .msim-zv{color:var(--eamber)} #tab-ecommerce .msim-z.r .msim-zv{color:var(--ered)}
+    #tab-ecommerce .msim-z.pior{border-color:var(--eamber)}
+    #tab-ecommerce .msim-z .msim-dot{display:inline-block;width:7px;height:7px;border-radius:50%}
+    #tab-ecommerce .msim-z .msim-dot.calib{background:var(--eemerald)}
+    #tab-ecommerce .msim-z .msim-dot.est{background:transparent;border:1px solid var(--emuted2)}
+    #tab-ecommerce .msim-piso{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:7px;font-size:12px;font-weight:500}
+    #tab-ecommerce .msim-piso.ok{background:rgba(16,185,129,.10);color:var(--eemerald);border:1px solid rgba(16,185,129,.25)}
+    #tab-ecommerce .msim-piso.no{background:rgba(239,68,68,.10);color:var(--ered);border:1px solid rgba(239,68,68,.30)}
+    #tab-ecommerce .msim-piso.warn{background:rgba(245,158,11,.10);color:var(--eamber);border:1px solid rgba(245,158,11,.30)}
+    #tab-ecommerce .msim-meta{font-size:11px;color:var(--emuted2);font-family:var(--emono);font-variant-numeric:tabular-nums;margin-top:8px;line-height:1.5}
+    #tab-ecommerce .vbtn.sm[disabled]{opacity:.45;cursor:not-allowed;border-color:var(--eborder)}
+    #tab-ecommerce .vbtn.sm[disabled]:hover{border-color:var(--eborder)}
     #tab-ecommerce .rp-idxrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
     @media(max-width:900px){#tab-ecommerce .rp-idxrow{grid-template-columns:repeat(2,1fr)}}
     #tab-ecommerce .rp-idx{background:var(--epanel);border:1px solid var(--eborder);border-radius:10px;padding:13px}
@@ -3806,11 +3825,16 @@ const ecomAlvo={
         +'</div>';
     }).join('');
   },
-  editAnuncio(id){ const an=this.anuncios.find(x=>String(x.id)===String(id)); if(!an) return;
+  async editAnuncio(id){ const an=this.anuncios.find(x=>String(x.id)===String(id)); if(!an) return;
     const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
     const open=box.style.display!=='none';
     document.querySelectorAll('[data-aleditbox]').forEach(b=>{ b.style.display='none'; b.innerHTML=''; });
     if(open) return;
+    // Garante que catálogo, matriz de frete e comissões por categoria estejam carregados
+    try{ if(typeof ecom!=='undefined'){
+      if(!ecom.loaded){ await ecom.loadMatrix(); if(ecom.loadComissoes) await ecom.loadComissoes(); await ecom.loadProdutos(); ecom.loaded=true; }
+      else if(ecom.loadComissoes && (!ecom.comMap||!Object.keys(ecom.comMap).length)){ await ecom.loadComissoes(); }
+    } }catch(e){ console.warn('ecom lazy load:',e.message); }
     const v=s=>String(s==null?'':s).replace(/"/g,'&quot;');
     box.innerHTML='<div class="vrow"><div class="efield"><label>Código *</label><input class="vinput mono" data-ef="cod" value="'+v(an.produto_codigo)+'"></div>'
       +'<div class="efield"><label>MLB *</label><input class="vinput mono" data-ef="mlb" value="'+v(an.anuncio_mlb)+'" placeholder="4811359527"></div></div>'
@@ -3818,17 +3842,133 @@ const ecomAlvo={
       +'<div class="efield"><label>Data publicação *</label><input class="vinput mono" data-ef="pub" type="date" value="'+v(String(an.data_publicacao||'').slice(0,10))+'"></div>'
       +'<div class="efield"><label>Tipo *</label><select class="vinput" data-ef="tipo"><option value="classico"'+(an.tipo_anuncio!=='premium'?' selected':'')+'>Clássico</option><option value="premium"'+(an.tipo_anuncio==='premium'?' selected':'')+'>Premium</option></select></div></div>'
       +'<div class="efield"><label>Título *</label><input class="vinput" data-ef="tit" value="'+v(an.titulo)+'"></div>'
+      +'<div class="vrow"><div class="efield"><label>Motivo da alteração *</label><select class="vinput" data-ef="motivo"><option value="">— selecionar —</option><option value="concorrencia">Concorrência</option><option value="giro">Giro parado</option><option value="ajuste_margem">Ajuste de margem</option><option value="correcao">Correção</option><option value="outro">Outro</option></select></div>'
+      +'<div class="efield"><label>Detalhe (opcional)</label><input class="vinput" data-ef="motivo_detalhe" placeholder="ex: baixou 5% pra bater Buy Box"></div></div>'
+      +'<div class="msim" data-alsim="'+id+'">'
+      +'<div class="msim-h"><span>Margem líquida · tempo real</span><span class="msim-hint">reputação verde · agência (fixos)</span></div>'
+      +'<div class="msim-zonas" data-msim-zonas></div>'
+      +'<div class="msim-piso" data-msim-piso></div>'
+      +'<div class="msim-meta" data-msim-meta></div>'
+      +'</div>'
       +'<div style="display:flex;gap:8px;align-items:center"><button class="vbtn sm" data-alsave="'+id+'">Salvar</button><button class="vbtn sm" data-alcancel="'+id+'" style="background:var(--epanel3);color:var(--emuted)">Cancelar</button><span class="vmsg" data-alemsg="'+id+'"></span></div>';
     box.style.display='';
+    box.querySelectorAll('[data-ef="cod"],[data-ef="preco"],[data-ef="tipo"]').forEach(el=>el.addEventListener('input',()=>this.renderSim(id)));
+    box.querySelector('[data-ef="tipo"]').addEventListener('change',()=>this.renderSim(id));
+    this.renderSim(id);
   },
+  _simAvalGate(id){
+    const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return null;
+    const get=f=>{ const el=box.querySelector('[data-ef="'+f+'"]'); return el?el.value:''; };
+    const cod=get('cod').trim().toUpperCase(); const preco=parseFloat(get('preco')); const tipo=get('tipo');
+    const prod=(typeof ecom!=='undefined' && ecom.itens)?ecom.itens.find(p=>String(p.codigo).toUpperCase()===cod):null;
+    if(!prod) return {status:'warn',reason:'produto não encontrado no catálogo — não é possível avaliar piso',prod:null,preco,tipo};
+    if(isNaN(preco)||preco<=0) return {status:'warn',reason:'preço não informado',prod,preco,tipo};
+    if(prod.custo==null||isNaN(+prod.custo)||+prod.custo<=0) return {status:'warn',reason:'custo NF ausente no cadastro do produto',prod,preco,tipo};
+    if(!prod.peso_faixa) return {status:'warn',reason:'faixa de peso ausente no cadastro do produto',prod,preco,tipo};
+    return {status:'ok',prod,preco,tipo};
+  },
+  _simMargem(prod,preco,tipo,zonaKey){
+    // Espelha ecom.calc, forçando zona/reputação e usando comMap (fallback global)
+    const pr={ comC:13, comP:17, imp:(typeof ecom!=='undefined'?(ecom._n?ecom._n('ecom-imp'):4):4),
+      outros:(typeof ecom!=='undefined'?(ecom._n?ecom._n('ecom-outros'):0):0),
+      colchao:(typeof ecom!=='undefined'?(ecom._n?ecom._n('ecom-colchao'):3):3),
+      f1:6.25,f2:6.50,f3:6.75 };
+    const comPct=(typeof ecom!=='undefined' && ecom.comPctDe)?ecom.comPctDe(prod.categoria,tipo,pr):((tipo==='premium'?pr.comP:pr.comC)/100);
+    const t=comPct+pr.imp/100+pr.outros/100;
+    const mtxKey=zonaKey+'|'+prod.peso_faixa;
+    const frRaw=(typeof ecom!=='undefined' && ecom.mtx)?ecom.mtx[mtxKey]:null;
+    const frCal=(typeof ecom!=='undefined' && ecom.mtxCal)?ecom.mtxCal[mtxKey]:null;
+    if(frRaw==null||isNaN(+frRaw)||+frRaw<=0) return {ok:false,reason:'frete não aferido para esta zona/faixa'};
+    const fr=+frRaw; // reputação verde fixa (repFactor=1 já embutido no valor calibrado real)
+    const P=+preco;
+    let custoFixo=0,custoML,freteItem;
+    if(P>=79){ freteItem=fr; custoML=P*t+freteItem; }
+    else {
+      const cf=P<12.50?P*0.5:(P<29?pr.f1:(P<50?pr.f2:pr.f3));
+      custoFixo=cf; freteItem=0; custoML=P*t+cf;
+    }
+    const custo=+prod.custo; const colchao=custo*pr.colchao/100; const custoTotal=custo+colchao;
+    const margem=P-custoML-custoTotal;
+    return {ok:true,margem,margemPct:P>0?margem/P:0,comPct,freteCalib:!!frCal,frete:fr};
+  },
+  renderSim(id){
+    const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
+    const wrap=box.querySelector('[data-alsim="'+id+'"]'); if(!wrap) return;
+    const elZ=wrap.querySelector('[data-msim-zonas]'), elP=wrap.querySelector('[data-msim-piso]'), elM=wrap.querySelector('[data-msim-meta]');
+    const btnSave=box.querySelector('[data-alsave="'+id+'"]');
+    const gate=this._simAvalGate(id);
+    if(!gate){ elZ.innerHTML=''; elP.className='msim-piso warn'; elP.textContent='—'; elM.textContent=''; if(btnSave) btnSave.setAttribute('disabled',''); return; }
+    if(gate.status==='warn'){
+      elZ.innerHTML='';
+      elP.className='msim-piso warn'; elP.textContent='⚠ DADO INCOMPLETO · '+gate.reason;
+      elM.textContent='piso não verificável — gravação bloqueada até resolver';
+      if(btnSave) btnSave.setAttribute('disabled','');
+      return;
+    }
+    const zonas=(typeof ecom!=='undefined' && ecom.ZONAS)?ecom.ZONAS:[['local_ne','Local / NE'],['centro','Centro'],['sudeste','Sudeste'],['sul','Sul']];
+    const resultados=zonas.map(z=>({key:z[0],label:z[1],r:this._simMargem(gate.prod,gate.preco,gate.tipo,z[0])}));
+    const faltando=resultados.filter(x=>!x.r.ok);
+    if(faltando.length){
+      elZ.innerHTML=resultados.map(x=>{
+        if(!x.r.ok) return '<div class="msim-z"><div class="msim-zl">'+x.label+'</div><div class="msim-zv" style="color:var(--emuted2);font-size:12px">—</div></div>';
+        const pct=x.r.margemPct*100; const cls=pct>=15?'v':(pct>=12?'a':'r'); const dot=x.r.freteCalib?'calib':'est';
+        return '<div class="msim-z '+cls+'"><div class="msim-zl"><span class="msim-dot '+dot+'"></span>'+x.label+'</div><div class="msim-zv">'+pct.toFixed(1)+'%</div></div>';
+      }).join('');
+      elP.className='msim-piso warn';
+      elP.innerHTML='<span>⚠ DADO INCOMPLETO · frete não aferido em '+faltando.length+' zona(s)</span><span>PISO 12%: não verificável</span>';
+      elM.innerHTML='comissão '+(resultados.find(x=>x.r.ok)?.r.comPct*100||0).toFixed(2)+'% · custo NF R$ '+this._fmtBR(gate.prod.custo)+' · gravação bloqueada';
+      if(btnSave) btnSave.setAttribute('disabled','');
+      return;
+    }
+    // Todas as zonas OK
+    const piorIdx=resultados.reduce((mi,x,i,arr)=>x.r.margemPct<arr[mi].r.margemPct?i:mi,0);
+    elZ.innerHTML=resultados.map((x,i)=>{
+      const pct=x.r.margemPct*100; const cls=pct>=15?'v':(pct>=12?'a':'r'); const dot=x.r.freteCalib?'calib':'est';
+      const pior=i===piorIdx?' pior':'';
+      return '<div class="msim-z '+cls+pior+'"><div class="msim-zl"><span class="msim-dot '+dot+'"></span>'+x.label+(i===piorIdx?' ◄ pior':'')+'</div><div class="msim-zv">'+pct.toFixed(1)+'%</div></div>';
+    }).join('');
+    const pior=resultados[piorIdx].r.margemPct*100;
+    const liberado=pior>=12;
+    elP.className='msim-piso '+(liberado?'ok':'no');
+    elP.innerHTML='<span>'+(liberado?'✔ LIBERADO':'✖ BLOQUEADO')+' · pior zona: '+resultados[piorIdx].label+' '+pior.toFixed(1)+'%</span><span>PISO 12%</span>';
+    const comPct=resultados[0].r.comPct*100;
+    const catRow=(typeof ecom!=='undefined' && ecom.comMap)?ecom.comMap[gate.prod.categoria]:null;
+    const comOrigem=(catRow&&catRow.origem==='reconciliacao')?'real':(catRow&&(catRow.origem==='manual'||catRow.origem==='api_ml')?'aferida':'est.');
+    const anyEst=resultados.some(x=>!x.r.freteCalib);
+    elM.innerHTML='comissão '+comPct.toFixed(2)+'% ('+comOrigem+') · custo NF R$ '+this._fmtBR(gate.prod.custo)+' · '+(anyEst?'○ = frete estimado nesta zona':'todos os fretes calibrados');
+    if(btnSave){ if(liberado) btnSave.removeAttribute('disabled'); else btnSave.setAttribute('disabled',''); }
+    wrap._simState={ok:liberado, piorPct:pior, resultados, comPct};
+  },
+  _fmtBR(n){ const v=Number(n); if(isNaN(v)) return '—'; return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); },
   async salvarEdicao(id){ const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
     const get=f=>{ const el=box.querySelector('[data-ef="'+f+'"]'); return el?el.value:''; };
     const msg=box.querySelector('[data-alemsg="'+id+'"]'); if(msg) msg.className='vmsg';
     const cod=get('cod').trim().toUpperCase(), mlb=this._normMlb(get('mlb')), tit=get('tit').trim(), preco=parseFloat(get('preco')), pub=get('pub'), tipo=get('tipo');
+    const motivo=get('motivo'), motivoDet=get('motivo_detalhe').trim();
     if(!cod||!mlb||!tit||!pub){ if(msg){ msg.className='vmsg err'; msg.textContent='Código, MLB, título e data são obrigatórios.'; } return; }
     if(!/^(MLB)?\d{6,}$/.test(mlb)){ if(msg){ msg.className='vmsg err'; msg.textContent='MLB inválido.'; } return; }
+    if(!motivo){ if(msg){ msg.className='vmsg err'; msg.textContent='Selecione o motivo da alteração.'; } return; }
+    // Reavaliação server-side do piso (defesa em profundidade: não confia só no botão desabilitado)
+    const wrap=box.querySelector('[data-alsim="'+id+'"]');
+    const st=wrap&&wrap._simState;
+    if(!st||!st.ok){ if(msg){ msg.className='vmsg err'; msg.textContent='Gravação bloqueada: piso 12% não atendido ou dado incompleto.'; } return; }
     try{ const chk=await sb.from('ecom_produtos').select('codigo').eq('codigo',cod).maybeSingle(); if(chk.error) throw chk.error; if(!chk.data){ if(msg){ msg.className='vmsg err'; msg.textContent='Código não existe no catálogo.'; } return; }
-      const r=await sb.from('ecom_anuncios').update({produto_codigo:cod,anuncio_mlb:mlb,titulo:tit,preco:isNaN(preco)?null:preco,data_publicacao:pub,tipo_anuncio:tipo}).eq('id',id); if(r.error) throw r.error;
+      // Snapshot do estado ANTES do update (preço anterior vem de this.anuncios)
+      const anAtual=this.anuncios.find(x=>String(x.id)===String(id));
+      const precoAnterior=anAtual?anAtual.preco:null;
+      const precoNovo=isNaN(preco)?null:preco;
+      const r=await sb.from('ecom_anuncios').update({produto_codigo:cod,anuncio_mlb:mlb,titulo:tit,preco:precoNovo,data_publicacao:pub,tipo_anuncio:tipo}).eq('id',id); if(r.error) throw r.error;
+      // Log em ecom_anuncio_alteracao (imutável) — só quando houver de fato mudança de preço ou tipo
+      const houvePreco=(Number(precoAnterior)||0)!==(Number(precoNovo)||0);
+      const houveTipo=(anAtual&&anAtual.tipo_anuncio||'classico')!==tipo;
+      if(houvePreco||houveTipo){
+        const motivoTxt=motivo+(motivoDet?(' · '+motivoDet):'');
+        const logRow={ anuncio_sku:cod, mlb:mlb, campo:houvePreco?'preco':'tipo_anuncio',
+          preco_anterior:houvePreco?precoAnterior:null, preco_novo:houvePreco?precoNovo:null,
+          margem_pior_zona_pct:st.piorPct!=null?Number(st.piorPct.toFixed(2)):null, motivo:motivoTxt };
+        const rl=await sb.from('ecom_anuncio_alteracao').insert(logRow);
+        if(rl.error){ if(msg){ msg.className='vmsg err'; msg.textContent='Anúncio salvo, mas log falhou: '+rl.error.message; } this.load(); return; }
+      }
       this.load();
     }catch(e){ if(msg){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; } }
   },
