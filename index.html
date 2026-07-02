@@ -672,6 +672,14 @@
   #tab-ecommerce .mcell{width:100%;background:#26220c;border:1px solid #4a4118;color:#f3e6a8;border-radius:6px;padding:5px 6px;font-family:var(--emono);font-size:12px;text-align:right}
   #tab-ecommerce .mcell:focus{outline:none;border-color:var(--eamber)}
   #tab-ecommerce .mcell.sel{border-color:var(--eaccent);box-shadow:0 0 0 1px var(--eaccent)}
+  #tab-ecommerce .mcell.calib{background:#082418;border-color:#1c5c44;color:#a8f3d0}
+  #tab-ecommerce .mcell.calib:focus{border-color:var(--eemerald)}
+  #tab-ecommerce .mcell.calib.sel{box-shadow:0 0 0 1px var(--eemerald)}
+  #tab-ecommerce .mtxlegend{display:flex;gap:14px;font-size:10.5px;color:var(--emuted2);margin-top:6px;flex-wrap:wrap}
+  #tab-ecommerce .mtxlegend .lg{display:inline-flex;align-items:center;gap:5px}
+  #tab-ecommerce .mtxlegend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;border:1px solid}
+  #tab-ecommerce .mtxlegend .sw.c{background:#082418;border-color:#1c5c44}
+  #tab-ecommerce .mtxlegend .sw.e{background:#26220c;border-color:#4a4118}
   #tab-ecommerce .mnote{font-size:11px;color:var(--eamber);margin-top:8px;line-height:1.45}
   #tab-ecommerce .mnote b{color:#f3e6a8}
   #tab-ecommerce .param-grid{display:flex;flex-wrap:wrap;gap:11px 16px;align-items:flex-end}
@@ -2555,7 +2563,7 @@ function generatePDFs() {
 const ecom = {
   ZONAS: [['local_ne','Local / NE'],['centro','Centro'],['sudeste','Sudeste'],['sul','Sul']],
   PESOS: [['ate300','≤300g'],['f301_500','301–500g'],['f501_1000','501g–1kg'],['f1001_2000','1–2kg']],
-  itens: [], mtx: {}, loaded:false, wired:false,
+  itens: [], mtx: {}, mtxCal: {}, loaded:false, wired:false,
   selDest:'local_ne', repFactor:1, modalidade:'flex', editId:null, fProd:'', fVer:'',
 
   _g(id){ return document.getElementById(id); },
@@ -2605,8 +2613,8 @@ const ecom = {
     if(!this.wired){ this.wire(); this.wired=true; }
     this.buildMtx(); this.updateCtx(); this.render();
   },
-  async loadMatrix(){ try{ const r=await sb.from('ecom_frete_matriz').select('zona,peso_faixa,valor'); if(r.error) throw r.error;
-      this.mtx={}; (r.data||[]).forEach(x=>{ this.mtx[x.zona+'|'+x.peso_faixa]=Number(x.valor); }); }
+  async loadMatrix(){ try{ const r=await sb.from('ecom_frete_matriz').select('zona,peso_faixa,valor,calibrado_em'); if(r.error) throw r.error;
+      this.mtx={}; this.mtxCal={}; (r.data||[]).forEach(x=>{ const k=x.zona+'|'+x.peso_faixa; this.mtx[k]=Number(x.valor); this.mtxCal[k]=x.calibrado_em||null; }); }
     catch(e){ console.warn('ecom_frete_matriz load:',e.message); } },
   async loadProdutos(){ try{ const r=await sb.from('ecom_produtos').select('*').eq('ativo',true).order('criado_em'); if(r.error) throw r.error; this.itens=r.data||[]; }
     catch(e){ console.warn('ecom_produtos load:',e.message); this.itens=[]; } },
@@ -2635,14 +2643,19 @@ const ecom = {
   buildMtx(){ const t=this._g('ecom-mtx');
     let h='<tr><th></th>'+this.PESOS.map(p=>`<th>${p[1]}</th>`).join('')+'</tr>';
     this.ZONAS.forEach(z=>{ h+=`<tr><td class="rl">${z[1]}</td>`;
-      this.PESOS.forEach(p=>{ const v=this.mtx[z[0]+'|'+p[0]]; h+=`<td><input class="mcell${z[0]===this.selDest?' sel':''}" type="number" data-z="${z[0]}" data-p="${p[0]}" value="${v==null?0:v}"></td>`; });
+      this.PESOS.forEach(p=>{ const k=z[0]+'|'+p[0]; const v=this.mtx[k]; const cal=this.mtxCal[k];
+        const cls='mcell'+(z[0]===this.selDest?' sel':'')+(cal?' calib':'');
+        const tip=cal?('Calibrado em '+new Date(cal).toLocaleString('pt-BR')+' (valor real cobrado pelo ML)'):'Estimado — nunca aferido com venda real';
+        h+=`<td><input class="${cls}" type="number" data-z="${z[0]}" data-p="${p[0]}" value="${v==null?0:v}" title="${tip}"></td>`; });
       h+='</tr>'; });
+    h+=`<tr><td colspan="${this.PESOS.length+1}" style="padding-top:8px;border:0"><div class="mtxlegend"><span class="lg"><span class="sw c"></span>Calibrada · valor real cobrado pelo ML em venda</span><span class="lg"><span class="sw e"></span>Estimada · nunca aferida (revisar antes de operar)</span></div></td></tr>`;
     t.innerHTML=h;
     t.querySelectorAll('.mcell').forEach(inp=>inp.addEventListener('change',e=>this.saveMtxCell(e.target))); },
   async saveMtxCell(el){ const zona=el.dataset.z, peso=el.dataset.p, valor=parseFloat(el.value)||0;
-    const prev=this.mtx[zona+'|'+peso]; this.mtx[zona+'|'+peso]=valor; this.render();
-    try{ const r=await sb.from('ecom_frete_matriz').upsert({zona,peso_faixa:peso,valor,atualizado_em:new Date().toISOString()},{onConflict:'zona,peso_faixa'}); if(r.error) throw r.error; }
-    catch(e){ this.mtx[zona+'|'+peso]=prev; console.error('upsert frete:',e.message); alert('Não foi possível salvar o frete: '+e.message); this.buildMtx(); this.render(); } },
+    const k=zona+'|'+peso; const prev=this.mtx[k]; const prevCal=this.mtxCal[k]; const nowIso=new Date().toISOString();
+    this.mtx[k]=valor; this.mtxCal[k]=nowIso; this.buildMtx(); this.render();
+    try{ const r=await sb.from('ecom_frete_matriz').upsert({zona,peso_faixa:peso,valor,calibrado_em:nowIso,atualizado_em:nowIso},{onConflict:'zona,peso_faixa'}); if(r.error) throw r.error; }
+    catch(e){ this.mtx[k]=prev; this.mtxCal[k]=prevCal; console.error('upsert frete:',e.message); alert('Não foi possível salvar o frete: '+e.message); this.buildMtx(); this.render(); } },
 
   populateProdFilter(){ const sel=this._g('ecom-flt-prod'); const cur=sel.value; const fams={};
     this.itens.forEach(it=>{ const f=this.familia(it.produto); (fams[f]=fams[f]||new Set()).add(it.produto); });
@@ -2751,12 +2764,12 @@ const ecom = {
     return sigla+'-'+String(max+1).padStart(4,'0'); },
 
   async del(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
-    if(!confirm(`Excluir "${it.produto} · ${it.marca||''}" em definitivo? Apaga a linha do banco e não tem volta.`)) return;
+    if(!confirm(`Inativar "${it.produto} · ${it.marca||''}"? O produto sai da lista mas fica salvo no banco (preserva vínculo com vendas históricas). Não é destrutivo.`)) return;
     if(this.editId&&String(this.editId)===String(id)) this.cancelEdit();
     const idx=this.itens.findIndex(x=>String(x.id)===String(id)); const rem=this.itens[idx];
     this.itens=this.itens.filter(x=>String(x.id)!==String(id)); this.render();
-    try{ const r=await sb.from('ecom_produtos').delete().eq('id',id); if(r.error) throw r.error; }
-    catch(e){ if(rem) this.itens.splice(idx,0,rem); console.error('excluir:',e.message); alert('Não foi possível excluir: '+e.message); this.render(); } },
+    try{ const r=await sb.from('ecom_produtos').update({ativo:false,atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; }
+    catch(e){ if(rem) this.itens.splice(idx,0,rem); console.error('inativar:',e.message); alert('Não foi possível inativar: '+e.message); this.render(); } },
 
   gerarMdCenario(){
     const pr=this.params();
