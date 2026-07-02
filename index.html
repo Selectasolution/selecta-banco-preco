@@ -820,7 +820,7 @@
     #tab-ecommerce .al-info.ok{color:#6ee7b7}
     #tab-ecommerce .al-info.med{color:#fcd34d}
     #tab-ecommerce .al-info.crit{color:#fca5a5}
-    #tab-ecommerce .al-actions{display:flex;gap:10px;align-items:center;margin-top:6px}
+    #tab-ecommerce .al-actions{display:flex;gap:12px;align-items:center;margin-top:4px}
     #tab-ecommerce .al-sug{background:none;border:0;padding:0;cursor:pointer;font-size:11.5px;font-weight:600;text-decoration:underline;font-family:inherit}
     #tab-ecommerce .al-sug.gray,#tab-ecommerce .al-sug.n{color:var(--emuted2)}
     #tab-ecommerce .al-sug.o{color:#6ee7b7}
@@ -829,19 +829,28 @@
     #tab-ecommerce .al-sug:hover{filter:brightness(1.15)}
     #tab-ecommerce .al-histlink{background:none;border:0;color:var(--emuted2);font-size:11.5px;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit}
     #tab-ecommerce .al-histlink:hover{color:var(--etxt)}
-    #tab-ecommerce .al-sugbox{background:var(--epanel2);border:1px solid var(--eborder);border-left-width:3px;border-radius:8px;padding:10px 14px}
-    #tab-ecommerce .al-sugbox.o{border-left-color:#6ee7b7}
-    #tab-ecommerce .al-sugbox.a{border-left-color:#fcd34d}
-    #tab-ecommerce .al-sugbox.c{border-left-color:#fca5a5}
+    #tab-ecommerce .al-sugbox{background:var(--epanel2);border:1px solid var(--eborder);border-left-width:4px;border-radius:8px;padding:10px 14px;position:relative}
+    #tab-ecommerce .al-sugbox.o{border-left-color:#6ee7b7;background:linear-gradient(90deg,rgba(16,185,129,.08),var(--epanel2) 30%)}
+    #tab-ecommerce .al-sugbox.a{border-left-color:#fcd34d;background:linear-gradient(90deg,rgba(245,158,11,.08),var(--epanel2) 30%)}
+    #tab-ecommerce .al-sugbox.c{border-left-color:#fca5a5;background:linear-gradient(90deg,rgba(239,68,68,.08),var(--epanel2) 30%)}
     #tab-ecommerce .al-sugbox.n,#tab-ecommerce .al-sugbox.gray{border-left-color:var(--emuted2)}
-    #tab-ecommerce .al-sugh{font-size:12.5px;color:var(--etxt);margin-bottom:6px}
+    #tab-ecommerce .al-sugh{font-size:12.5px;color:var(--etxt);margin-bottom:6px;font-weight:600}
     #tab-ecommerce .al-sugp{font-size:12px;color:var(--emuted);line-height:1.55}
-    #tab-ecommerce .al-sugmeta{font-size:10.5px;color:var(--emuted2);margin-top:8px;text-transform:uppercase;letter-spacing:.05em}
-    #tab-ecommerce .al-header{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding-bottom:10px;margin-bottom:14px;border-bottom:1px solid var(--eborder);flex-wrap:wrap}
-    #tab-ecommerce .al-header-l{display:flex;flex-direction:column;gap:3px;min-width:0}
+    #tab-ecommerce .al-sugmeta{font-size:10px;color:var(--emuted2);margin-top:8px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+    #tab-ecommerce .al-histli{display:flex;gap:10px;align-items:center;font-size:11px;padding:5px 0;border-top:1px solid var(--eborder)}
+    #tab-ecommerce .al-histli:first-of-type{border-top:0}
+    #tab-ecommerce .al-histdt{color:var(--emuted2);font-family:var(--emono);font-variant-numeric:tabular-nums;min-width:80px;font-size:10.5px}
+    #tab-ecommerce .al-histtag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.02em}
+    #tab-ecommerce .al-histtag.o{background:rgba(16,185,129,.15);color:#6ee7b7}
+    #tab-ecommerce .al-histtag.a{background:rgba(245,158,11,.15);color:#fcd34d}
+    #tab-ecommerce .al-histtag.c{background:rgba(239,68,68,.15);color:#fca5a5}
+    #tab-ecommerce .al-histtag.n{background:rgba(138,153,180,.15);color:var(--emuted2)}
+    #tab-ecommerce .al-histmeta{color:var(--emuted2);font-size:10.5px;flex:1}
+    #tab-ecommerce .al-header{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding:12px 14px 10px;margin:0 -14px 10px;border-top:2px solid var(--eaccent);border-bottom:1px solid var(--eborder);background:linear-gradient(180deg,rgba(45,212,191,.06),transparent);flex-wrap:wrap}
+    #tab-ecommerce .al-header-l{display:flex;flex-direction:column;gap:2px;min-width:0}
     #tab-ecommerce .al-htitle{font-size:15px;font-weight:700;color:var(--etxt);margin:0;letter-spacing:-.01em;text-transform:none}
-    #tab-ecommerce .al-hsub{font-size:11.5px;color:var(--emuted);font-weight:400;letter-spacing:.02em}
-    #tab-ecommerce .al-hcount{font-size:11.5px;color:var(--emuted2);font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.02em}
+    #tab-ecommerce .al-hsub{font-size:11px;color:var(--emuted2);font-weight:400;letter-spacing:.03em;text-transform:uppercase}
+    #tab-ecommerce .al-hcount{font-size:11.5px;color:var(--eaccent);font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.02em;font-weight:600}
     #tab-ecommerce .rep-pill.amarela{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.45);color:#fcd34d}
     #tab-ecommerce .rep-pill.verde{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.45);color:#6ee7b7}
     #tab-ecommerce .msim-h .rep-pill{font-size:10.5px;padding:1px 8px}
@@ -3904,7 +3913,7 @@ const ecomAlvo={
       const sugTxt = res ? 'Sugestão' : 'Sugestão';
       const sugBtn = '<button data-alsug="'+esc(an.anuncio_mlb||'')+'" data-anid="'+an.id+'" class="al-sug '+sugCls+'"'+(res?'':' title="Nenhuma análise importada"')+'>'+sugTxt+'</button>';
       const hist=(an.anuncio_mlb && this.resHist[an.anuncio_mlb])?this.resHist[an.anuncio_mlb]:[];
-      const histLink = hist.length?'<button data-alhist="'+esc(an.anuncio_mlb)+'" class="al-histlink">histórico ('+hist.length+')</button>':'';
+      const histLink = hist.length?'<button data-alhist="'+esc(an.anuncio_mlb)+'" class="al-histlink">Histórico ('+hist.length+')</button>':'';
       return '<div class="vli" style="align-items:flex-start">'
         +'<div style="font-weight:700;color:var(--emuted2);min-width:24px;text-align:right;font-size:13px">'+(i+1)+'</div>'
         +'<div class="vmain">'
@@ -3914,9 +3923,9 @@ const ecomAlvo={
           +'<span class="al-info '+infoClass+'">'+diasTxt+' · '+vendas+' venda(s)</span>'
         +'</div>'
         +'<div class="al-actions">'+sugBtn+histLink+'</div>'
-        +'<div data-alsugbox="'+an.id+'" style="display:none;margin-top:8px"></div>'
-        +'<div data-alhistbox="'+esc(an.anuncio_mlb||'')+'" style="display:none;margin-top:8px"></div>'
-        +'<div data-aleditbox="'+an.id+'" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--eborder)"></div>'
+        +'<div data-alsugbox="'+an.id+'" style="display:none;margin-top:6px"></div>'
+        +'<div data-alhistbox="'+esc(an.anuncio_mlb||'')+'" style="display:none;margin-top:6px"></div>'
+        +'<div data-aleditbox="'+an.id+'" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--eborder)"></div>''
         +'</div>'
         +'<div style="display:flex;flex-direction:column;gap:5px"><button class="vbtn sm" data-aledit="'+an.id+'">editar</button><button class="vbtn sm" data-aldel="'+an.id+'" style="background:var(--epanel3);color:var(--emuted)">remover</button></div>'
         +'</div>';
@@ -4087,8 +4096,20 @@ const ecomAlvo={
   toggleHist(mlb){ const box=document.querySelector('[data-alhistbox="'+mlb+'"]'); if(!box) return;
     if(box.style.display!=='none'){ box.style.display='none'; box.innerHTML=''; return; }
     const hist=this.resHist[mlb]||[];
-    box.innerHTML='<div style="font-size:10.5px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">histórico de veredito</div>'
-      +hist.map(h=>'<div style="display:flex;gap:8px;align-items:center;font-size:11px;padding:3px 0;border-top:1px solid var(--eborder)"><span class="mono" style="color:var(--emuted2);min-width:80px">'+(h.data_analise||'—')+'</span><span class="rpfar '+(h.cls||'n')+'" style="font-size:10px">'+(h.veredito||h.texto||'—')+'</span>'+(h.visitas!=null?'<span style="color:var(--emuted2)">'+h.visitas+' vis.</span>':'')+(h.status_ml?'<span style="color:var(--emuted2)">'+h.status_ml+'</span>':'')+'</div>').join('');
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    if(!hist.length){
+      box.innerHTML='<div class="al-sugbox n"><div class="al-sugmeta">Histórico de Estratégias</div><div class="al-sugp faint">Nenhuma estratégia importada ainda.</div></div>';
+    } else {
+      const linhas=hist.map(h=>{
+        const dt=h.data_analise||'—';
+        const tag=(h.veredito||h.texto||'—');
+        const cls=h.cls||'n';
+        const vis=(h.visitas!=null)?' · '+h.visitas+' vis.':'';
+        const st=h.status_ml?' · '+esc(h.status_ml):'';
+        return '<div class="al-histli"><span class="al-histdt">'+esc(dt)+'</span><span class="al-histtag '+cls+'">'+esc(tag)+'</span><span class="al-histmeta">'+vis+st+'</span></div>';
+      }).join('');
+      box.innerHTML='<div class="al-sugbox n"><div class="al-sugmeta">Histórico de Estratégias · '+hist.length+'</div>'+linhas+'</div>';
+    }
     box.style.display='';
   },
   async importarResultado(){ const ta=this._g('al-res-json'), msg=this._g('al-res-msg'); if(!ta) return; if(msg) msg.className='vmsg';
