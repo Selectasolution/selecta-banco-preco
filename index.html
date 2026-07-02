@@ -811,6 +811,26 @@
     #tab-ecommerce .msim-meta{font-size:13px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;margin-top:6px;line-height:1.5;padding-top:8px;border-top:1px solid var(--eborder)}
     #tab-ecommerce .msim-meta b{color:var(--etxt);font-weight:600}
     #tab-ecommerce .rep-pill{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.45);color:#fca5a5;padding:2px 10px;border-radius:6px;font-family:var(--emono);font-variant-numeric:tabular-nums;font-size:12px}
+    #tab-ecommerce .al-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;line-height:1.4}
+    #tab-ecommerce .al-line > span:not(:last-child)::after{content:"·";color:var(--emuted2);margin-left:10px;font-weight:400}
+    #tab-ecommerce .al-actions{display:flex;gap:10px;align-items:center;margin-top:6px}
+    #tab-ecommerce .al-sug{background:none;border:0;padding:0;cursor:pointer;font-size:12px;font-weight:600;text-decoration:underline;font-family:inherit}
+    #tab-ecommerce .al-sug.gray{color:var(--emuted2)}
+    #tab-ecommerce .al-sug.o{color:var(--eemerald)}
+    #tab-ecommerce .al-sug.a{color:var(--eamber)}
+    #tab-ecommerce .al-sug.c{color:var(--ered)}
+    #tab-ecommerce .al-sug.n{color:var(--emuted2)}
+    #tab-ecommerce .al-sug:hover{filter:brightness(1.2)}
+    #tab-ecommerce .al-histlink{background:none;border:0;color:var(--emuted2);font-size:11.5px;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit}
+    #tab-ecommerce .al-histlink:hover{color:var(--etxt)}
+    #tab-ecommerce .al-sugbox{background:var(--epanel2);border:1px solid var(--eborder);border-left-width:3px;border-radius:8px;padding:10px 14px}
+    #tab-ecommerce .al-sugbox.o{border-left-color:var(--eemerald)}
+    #tab-ecommerce .al-sugbox.a{border-left-color:var(--eamber)}
+    #tab-ecommerce .al-sugbox.c{border-left-color:var(--ered)}
+    #tab-ecommerce .al-sugbox.n,#tab-ecommerce .al-sugbox.gray{border-left-color:var(--emuted2)}
+    #tab-ecommerce .al-sugh{font-size:12.5px;color:var(--etxt);margin-bottom:6px}
+    #tab-ecommerce .al-sugp{font-size:12px;color:var(--emuted);line-height:1.55}
+    #tab-ecommerce .al-sugmeta{font-size:10.5px;color:var(--emuted2);margin-top:8px;text-transform:uppercase;letter-spacing:.05em}
     #tab-ecommerce .rep-pill.amarela{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.45);color:#fcd34d}
     #tab-ecommerce .rep-pill.verde{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.45);color:#6ee7b7}
     #tab-ecommerce .msim-h .rep-pill{font-size:10.5px;padding:1px 8px}
@@ -1164,11 +1184,10 @@
         </div>
         <button class="vbtn" id="al-cadastrar">Cadastrar anúncio</button>
         <div class="vmsg" id="al-amsg"></div>
-        <p class="hint" style="font-size:11px;color:var(--emuted2);margin-top:10px">O <b>MLB</b> é o nº do anúncio no ML (aparece como #4811359527 no painel). É a chave que casa pedido ↔ SKU ↔ margem. Sem ele, a Análise de Resultados não liga venda a anúncio.</p>
       </div>
 
       <div class="ecard" style="margin-top:18px">
-        <h3>Anúncios ativos <span class="faint" style="font-weight:400;font-size:12px">· ranking por vendas (foco: o que está no ar)</span></h3>
+        <h3 style="font-size:14px;color:var(--eaccent);letter-spacing:.09em">Anúncios ativos <span class="faint" style="font-weight:500;font-size:12px;color:var(--emuted)">· ranking por vendas (foco: o que está no ar)</span></h3>
         <div id="al-anuncios"><div class="ph">nenhum anúncio cadastrado</div></div>
       </div>
 
@@ -3849,37 +3868,63 @@ const ecomAlvo={
       const pub=new Date(String(an.data_publicacao||'').slice(0,10)+'T00:00:00');
       const vendas=this.vendas.filter(v=>v.produto_codigo===an.produto_codigo && v.data_solicitacao && new Date(v.data_solicitacao)>=pub).length;
       return {an,dias,vendas}; });
-    // ranking: vendas ↓ → dias no ar ↓ (mais tempo sem vender sobe). visitas entra aqui quando a Análise de Resultados alimentar.
     lista.sort((a,b)=> (b.vendas-a.vendas) || ((b.dias==null?-1:b.dias)-(a.dias==null?-1:a.dias)) );
     const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    // Semáforo pelo fato (dias × vendas). Cor entra no texto do "dias no ar · N venda(s)" — Opção 1.
+    const infoCor=(dias,vendas)=>{
+      if(dias==null) return 'var(--emuted2)';
+      if(dias<0) return 'var(--eamber)';
+      if(dias<7) return 'var(--emuted2)';
+      if(vendas===0) return 'var(--ered)';
+      if(vendas/Math.max(dias,1)<0.1) return 'var(--eamber)';
+      return 'var(--eemerald)';
+    };
     box.innerHTML=lista.map((row,i)=>{ const an=row.an, dias=row.dias, vendas=row.vendas;
-      // slot: prioriza o veredito da Análise de Resultados (por MLB) quando houver; senão, semáforo automático.
-      const res=an.anuncio_mlb ? this.resultados[an.anuncio_mlb] : null;
-      let sug,cls;
-      if(res){ sug=res.texto; cls=res.cls||'n'; }
-      else if(dias==null){ sug='sem data de publicação'; cls='n'; }
-      else if(dias<0){ sug='⚠ data de publicação no futuro — verifique'; cls='a'; }
-      else if(dias<7){ sug='recém-publicado, aguarde'; cls='n'; }
-      else if(vendas===0){ sug='🔴 '+dias+' dias sem vender — revise título, foto ou preço'; cls='c'; }
-      else if(vendas/Math.max(dias,1)<0.1){ sug='🟡 baixa conversão ('+vendas+' em '+dias+'d)'; cls='a'; }
-      else { sug='🟢 performando ('+vendas+' vendas)'; cls='o'; }
-      const diasTxt = dias==null?'—':(dias<0?'agendado':dias+' dias no ar');
-      const mlbTxt = an.anuncio_mlb ? ' · <span class="mono">#'+esc(an.anuncio_mlb)+'</span>' : ' · <span style="color:var(--eamber)">sem MLB</span>';
-      const tipoTxt = an.tipo_anuncio==='premium' ? ' · <span style="color:var(--eteal)">Premium</span>' : ' · <span style="color:var(--emuted2)">Clássico</span>';
+      const diasTxt = dias==null?'sem data':(dias<0?'agendado':dias+' dias no ar');
+      const infoStyle='color:'+infoCor(dias,vendas);
+      // Sugestão: cinza se não há análise importada; cor do cls se há.
+      const res = an.anuncio_mlb ? this.resultados[an.anuncio_mlb] : null;
+      const sugCls = res ? (res.cls||'n') : 'gray';
+      const sugTxt = res ? 'Sugestão' : 'Sugestão';
+      const sugBtn = '<button data-alsug="'+esc(an.anuncio_mlb||'')+'" data-anid="'+an.id+'" class="al-sug '+sugCls+'"'+(res?'':' title="Nenhuma análise importada"')+'>'+sugTxt+'</button>';
       const hist=(an.anuncio_mlb && this.resHist[an.anuncio_mlb])?this.resHist[an.anuncio_mlb]:[];
-      const histLink = hist.length?'<button data-alhist="'+esc(an.anuncio_mlb)+'" style="background:none;border:0;color:var(--emuted2);font-size:10.5px;cursor:pointer;padding:0;margin-top:6px;text-decoration:underline">histórico ('+hist.length+')</button>':'';
+      const histLink = hist.length?'<button data-alhist="'+esc(an.anuncio_mlb)+'" class="al-histlink">histórico ('+hist.length+')</button>':'';
       return '<div class="vli" style="align-items:flex-start">'
         +'<div style="font-weight:700;color:var(--emuted2);min-width:24px;text-align:right;font-size:13px">'+(i+1)+'</div>'
-        +'<div class="vmain"><div class="vp">'+esc(an.titulo)+'</div>'
-        +'<div class="vm">'+esc(an.produto_codigo)+mlbTxt+tipoTxt+' · '+diasTxt+' · '+vendas+' venda(s)</div>'
-        +'<div style="margin-top:5px"><span class="rpfar '+cls+'">'+sug+'</span></div>'
-        +histLink
+        +'<div class="vmain">'
+        +'<div class="al-line">'
+          +'<span class="mono" style="color:var(--emuted2);font-size:11.5px">'+esc(an.produto_codigo)+'</span>'
+          +'<span style="color:var(--etxt);font-weight:600;font-size:13px">'+esc(an.titulo)+'</span>'
+          +'<span style="'+infoStyle+';font-size:11.5px">'+diasTxt+' · '+vendas+' venda(s)</span>'
+        +'</div>'
+        +'<div class="al-actions">'+sugBtn+histLink+'</div>'
+        +'<div data-alsugbox="'+an.id+'" style="display:none;margin-top:8px"></div>'
         +'<div data-alhistbox="'+esc(an.anuncio_mlb||'')+'" style="display:none;margin-top:8px"></div>'
         +'<div data-aleditbox="'+an.id+'" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--eborder)"></div>'
         +'</div>'
         +'<div style="display:flex;flex-direction:column;gap:5px"><button class="vbtn sm" data-aledit="'+an.id+'">editar</button><button class="vbtn sm" data-aldel="'+an.id+'" style="background:var(--epanel3);color:var(--emuted)">remover</button></div>'
         +'</div>';
     }).join('');
+  },
+  toggleSug(anid, mlb){
+    const box=document.querySelector('[data-alsugbox="'+anid+'"]'); if(!box) return;
+    if(box.style.display!=='none'){ box.style.display='none'; box.innerHTML=''; return; }
+    const res = mlb ? this.resultados[mlb] : null;
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    if(!res){
+      box.innerHTML='<div class="al-sugbox gray"><div class="al-sugh">Sugestão</div><div class="al-sugp">Nenhuma análise da Estratégia de Anúncios foi importada para este MLB ainda.</div></div>';
+    } else {
+      const acao=res.acao||res.texto||null;
+      const diag=res.diagnostico||null;
+      const dataTxt=res.data?(' · '+res.data):'';
+      let inner='';
+      if(acao) inner+='<div class="al-sugh"><b>'+esc(acao)+'</b></div>';
+      if(diag) inner+='<div class="al-sugp">'+esc(diag)+'</div>';
+      if(!acao && !diag) inner='<div class="al-sugp faint">Veredito registrado sem detalhe salvo'+dataTxt+'.</div>';
+      else inner+='<div class="al-sugmeta">Estratégia de Anúncios'+dataTxt+'</div>';
+      box.innerHTML='<div class="al-sugbox '+(res.cls||'n')+'">'+inner+'</div>';
+    }
+    box.style.display='';
   },
   async editAnuncio(id){ const an=this.anuncios.find(x=>String(x.id)===String(id)); if(!an) return;
     const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
@@ -4257,6 +4302,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
     const sv=e.target.closest('[data-alsave]'); if(sv){ ecomAlvo.salvarEdicao(sv.dataset.alsave); return; }
     const cc=e.target.closest('[data-alcancel]'); if(cc){ const id=cc.dataset.alcancel; const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(box){ box.style.display='none'; box.innerHTML=''; } return; }
     const h=e.target.closest('[data-alhist]'); if(h){ ecomAlvo.toggleHist(h.dataset.alhist); return; }
+    const sg=e.target.closest('[data-alsug]'); if(sg){ ecomAlvo.toggleSug(sg.dataset.anid, sg.dataset.alsug); return; }
   });
   const bar=document.getElementById('alsubbar'); if(bar) bar.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
     const tgt=b.dataset.alsub;
