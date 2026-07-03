@@ -811,8 +811,8 @@
     #tab-ecommerce .msim-meta{font-size:13px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;margin-top:6px;line-height:1.5;padding-top:8px;border-top:1px solid var(--eborder)}
     #tab-ecommerce .msim-meta b{color:var(--etxt);font-weight:600}
     #tab-ecommerce .rep-pill{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.45);color:#fca5a5;padding:2px 10px;border-radius:6px;font-family:var(--emono);font-variant-numeric:tabular-nums;font-size:12px}
-    #tab-ecommerce .al-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;line-height:1.4}
-    #tab-ecommerce .al-line > span:not(:last-child)::after{content:"·";color:var(--emuted2);margin-left:10px;font-weight:400}
+    #tab-ecommerce .al-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:7px;line-height:1.35}
+    #tab-ecommerce .al-line > span:not(:last-child)::after{content:"·";color:var(--emuted2);margin-left:7px;font-weight:400}
     #tab-ecommerce .al-code{color:var(--etxt);font-weight:600;font-size:13px;font-family:var(--emono);font-variant-numeric:tabular-nums;letter-spacing:.01em}
     #tab-ecommerce .al-title{color:var(--etxt);font-weight:600;font-size:13px}
     #tab-ecommerce .al-info{font-size:11.5px;font-family:var(--emono);font-variant-numeric:tabular-nums}
@@ -820,7 +820,8 @@
     #tab-ecommerce .al-info.ok{color:#6ee7b7}
     #tab-ecommerce .al-info.med{color:#fcd34d}
     #tab-ecommerce .al-info.crit{color:#fca5a5}
-    #tab-ecommerce .al-actions{display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin-top:4px}
+    #tab-ecommerce .al-actions{display:flex;flex-direction:column;gap:2px;align-items:flex-start;margin-top:2px}
+    #tab-ecommerce #al-anuncios .vli{padding:6px 0}
     #tab-ecommerce .al-sug{background:none;border:0;padding:0;cursor:pointer;font-size:11.5px;font-weight:600;text-decoration:underline;font-family:inherit}
     #tab-ecommerce .al-sug.gray,#tab-ecommerce .al-sug.n{color:var(--emuted2)}
     #tab-ecommerce .al-sug.o{color:#6ee7b7}
@@ -848,11 +849,11 @@
     #tab-ecommerce .al-histtag.c{background:rgba(239,68,68,.15);color:#fca5a5}
     #tab-ecommerce .al-histtag.n{background:rgba(138,153,180,.15);color:var(--emuted2)}
     #tab-ecommerce .al-histmeta{color:var(--emuted2);font-size:10.5px;flex:1}
-    #tab-ecommerce .al-header{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 18px;margin:0 -14px 12px;background:linear-gradient(135deg,var(--eemerald),var(--eteal));border-radius:12px;color:#06231a;flex-wrap:wrap;box-shadow:0 4px 12px -4px rgba(16,185,129,.3)}
-    #tab-ecommerce .al-header-l{display:flex;flex-direction:column;gap:2px;min-width:0}
-    #tab-ecommerce .al-htitle{font-size:15px;font-weight:700;color:#06231a;margin:0;letter-spacing:-.01em;text-transform:none}
-    #tab-ecommerce .al-hsub{font-size:11px;color:rgba(6,35,26,.75);font-weight:500;letter-spacing:.05em;text-transform:uppercase}
-    #tab-ecommerce .al-hcount{font-size:12px;color:#06231a;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.02em;font-weight:700;background:rgba(6,35,26,.15);padding:4px 10px;border-radius:6px}
+    #tab-ecommerce .al-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;margin:0 -14px 10px;background:rgba(16,185,129,.07);border-radius:10px;flex-wrap:wrap}
+    #tab-ecommerce .al-header-l{display:flex;flex-direction:row;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+    #tab-ecommerce .al-htitle{font-size:13px;font-weight:600;color:#06231a;margin:0;padding:8px 14px;border-radius:9px;background:linear-gradient(135deg,var(--eemerald),var(--eteal));letter-spacing:-.01em;text-transform:none;box-shadow:0 3px 10px -4px rgba(16,185,129,.35)}
+    #tab-ecommerce .al-hsub{font-size:11px;color:var(--emuted2);font-weight:500;letter-spacing:.05em;text-transform:uppercase}
+    #tab-ecommerce .al-hcount{font-size:12px;color:#6ee7b7;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.02em;font-weight:700;background:rgba(16,185,129,.14);padding:4px 10px;border-radius:6px}
     #tab-ecommerce .rep-pill.amarela{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.45);color:#fcd34d}
     #tab-ecommerce .rep-pill.verde{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.45);color:#6ee7b7}
     #tab-ecommerce .msim-h .rep-pill{font-size:10.5px;padding:1px 8px}
@@ -3835,7 +3836,7 @@ const ecomAlvo={
       if(r.error) throw r.error;
       (r.data||[]).forEach(row=>{ const k=row.anuncio_mlb; if(!k) return;
         (this.resHist[k]=this.resHist[k]||[]).push(row);
-        if(!this.resultados[k]) this.resultados[k]={anuncio_mlb:k,texto:row.texto||row.veredito||'—',cls:row.cls||'n',veredito:row.veredito,data:row.data_analise,acao:row.acao,diagnostico:row.diagnostico,preco_sugerido:row.preco_sugerido};
+        if(!this.resultados[k]) this.resultados[k]={anuncio_mlb:k,texto:row.texto||row.veredito||'—',cls:row.cls||'n',veredito:row.veredito,data:row.data_analise,criadoEm:row.created_at||null,acao:row.acao,diagnostico:row.diagnostico,preco_sugerido:row.preco_sugerido};
       });
     }catch(e){ console.warn('loadResultados:',e.message); }
     // índice dedicado da mesa: imune ao this.anuncios (que o módulo de Vendas zera)
@@ -3924,14 +3925,14 @@ const ecomAlvo={
       if(!res){ sugCls='gray'; }
       else {
         const tAlt = an.anuncio_mlb ? this.ultAlteracao[an.anuncio_mlb] : null;
-        const tAna = res.data || null;
+        const tAna = res.criadoEm || res.data || null;
         if(tAlt && (!tAna || new Date(tAlt) > new Date(tAna))) sugCls='b';
         else sugCls = res.cls || 'n';
       }
       const sugTxt = res ? 'Sugestão' : 'Sugestão';
       const sugBtn = '<button data-alsug="'+esc(an.anuncio_mlb||'')+'" data-anid="'+an.id+'" class="al-sug '+sugCls+'"'+(res?'':' title="Nenhuma análise importada"')+'>'+sugTxt+'</button>';
       const hist=(an.anuncio_mlb && this.resHist[an.anuncio_mlb])?this.resHist[an.anuncio_mlb]:[];
-      const histLink = hist.length?'<button data-alhist="'+esc(an.anuncio_mlb)+'" class="al-histlink">Histórico ('+hist.length+')</button>':'';
+      const histLink = an.anuncio_mlb?'<button data-alhist="'+esc(an.anuncio_mlb)+'" class="al-histlink">Histórico ('+hist.length+')</button>':'';
       return '<div class="vli" style="align-items:flex-start">'
         +'<div style="font-weight:700;color:var(--emuted2);min-width:18px;text-align:right;font-size:12.5px">'+(i+1)+'</div>'
         +'<div class="vmain">'
@@ -3965,7 +3966,7 @@ const ecomAlvo={
     } else {
       // Estado azul: Alexia agiu depois da última análise
       const tAlt = mlb ? this.ultAlteracao[mlb] : null;
-      const tAna = res.data || null;
+      const tAna = res.criadoEm || res.data || null;
       const acionado = tAlt && (!tAna || new Date(tAlt) > new Date(tAna));
       const acao=res.acao||res.texto||null;
       const diag=res.diagnostico||null;
@@ -4025,7 +4026,8 @@ const ecomAlvo={
     if(!prod) return {status:'warn',reason:'produto não encontrado no catálogo — não é possível avaliar piso',prod:null,preco,tipo};
     if(isNaN(preco)||preco<=0) return {status:'warn',reason:'preço não informado',prod,preco,tipo};
     if(prod.custo==null||isNaN(+prod.custo)||+prod.custo<=0) return {status:'warn',reason:'custo NF ausente no cadastro do produto',prod,preco,tipo};
-    if(!prod.peso_faixa) return {status:'warn',reason:'faixa de peso ausente no cadastro do produto',prod,preco,tipo};
+    const pesoEf=(typeof ecom!=='undefined'&&ecom.pesoEfetivoG)?ecom.pesoEfetivoG(prod):null;
+    if(pesoEf==null) return {status:'warn',reason:'peso ausente no cadastro do produto (peso_g / banda efetiva)',prod,preco,tipo};
     return {status:'ok',prod,preco,tipo};
   },
   _simMargem(prod,preco,tipo,rep){
@@ -4115,7 +4117,7 @@ const ecomAlvo={
       const houvePreco=(Number(precoAnterior)||0)!==(Number(precoNovo)||0);
       const houveTipo=(anAtual&&anAtual.tipo_anuncio||'classico')!==tipo;
       if(houvePreco||houveTipo){
-        const logRow={ anuncio_sku:cod, mlb:mlb, campo:houvePreco?'preco':'tipo_anuncio',
+        const logRow={ anuncio_sku:cod, mlb:mlb, campo:(houvePreco&&houveTipo)?'preco+tipo':(houvePreco?'preco':'tipo_anuncio'),
           preco_anterior:houvePreco?precoAnterior:null, preco_novo:houvePreco?precoNovo:null,
           margem_pior_zona_pct:st.piorPct!=null?Number(st.piorPct.toFixed(2)):null, motivo:motivo };
         const rl=await sb.from('ecom_anuncio_alteracao').insert(logRow);
