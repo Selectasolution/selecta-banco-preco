@@ -3824,10 +3824,10 @@ const ecomAlvo={
   async load(){
     try{ const rv=await sb.from('ecom_vendas').select('produto,produto_codigo,uf,receita_bruta,resultado_liquido,status,data_solicitacao');
       const ra=await sb.from('ecom_anuncios').select('*').order('data_publicacao',{ascending:false});
-      const rp=await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,preco,capacidade,interface');
+      const rp=await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,preco,capacidade,interface,ativo');
       if(rv.error) throw rv.error; if(ra.error) throw ra.error;
       this.vendas=(rv.data||[]).filter(v=>v.status!=='cancelado'); this.anuncios=ra.data||[];
-      this.catNome={}; this.catPreco={}; (rp.data||[]).forEach(p=>{ if(p.codigo){ this.catNome[p.codigo]=[p.produto,p.interface,p.marca,p.modelo,p.capacidade].filter(Boolean).join(' '); this.catPreco[p.codigo]=p.preco; } });
+      this.catNome={}; this.catPreco={}; this.catAtivo={}; (rp.data||[]).forEach(p=>{ if(p.codigo){ this.catNome[p.codigo]=[p.produto,p.interface,p.marca,p.modelo,p.capacidade].filter(Boolean).join(' '); this.catPreco[p.codigo]=p.preco; this.catAtivo[p.codigo]=(p.ativo!==false); } });
       await this.loadResultados();
       this.renderImport(); this.renderAnuncios(); this.fillComando(); this.fillComandoResultado(); this.loadAnalise(); this.renderMesa();
     }catch(e){ const b=this._g('al-anuncios'); if(b) b.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
@@ -4219,8 +4219,13 @@ const ecomAlvo={
   renderAnalise(){
     const head=this._g('al-an-head'), body=this._g('al-an-body');
     if(!this.analise.length){ if(head) head.innerHTML=''; if(body) body.innerHTML='<div class="ph">Nenhuma análise carregada. Cole o JSON devolvido pelo chat para a Alvo processar suas conclusões.</div>'; return; }
-    const a=this.analise; const d=a[0];
     const norm=s=>String(s==null?'':s).trim().toUpperCase();
+    const aAll=this.analise;
+    const ativoN={}; Object.keys(this.catAtivo||{}).forEach(k=>{ const n=norm(k); if(n) ativoN[n]=this.catAtivo[k]; });
+    const temCat=Object.keys(ativoN).length>0; // fallback: se o catálogo não carregou, não oculta nada
+    const a=temCat?aAll.filter(x=>ativoN[norm(x.codigo)]===true):aAll;
+    const d=aAll[0];
+    if(!a.length){ if(head) head.innerHTML=''; if(body) body.innerHTML='<div class="ph">Todos os itens deste lote estão excluídos do banco (Simulador).</div>'; return; }
     const nameByCod={}; Object.keys(this.catNome||{}).forEach(k=>{ const n=norm(k); if(n) nameByCod[n]=this.catNome[k]; });
     const pub=new Set((this.anuncios||[]).map(an=>norm(an.produto_codigo)).filter(Boolean));
     const precoAtual={}; (this.anuncios||[]).forEach(an=>{ const k=norm(an.produto_codigo); if(k && an.preco!=null) precoAtual[k]=an.preco; });
@@ -4228,7 +4233,7 @@ const ecomAlvo={
     head.innerHTML='<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:8px 12px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:9px">'
       +'<span style="font-size:12px;color:var(--emuted)">Análise de <b style="color:var(--etxt)">'+(d.data_analise||'—')+'</b></span>'
       +(d.data_export?'<span style="font-size:12px;color:var(--emuted)">· export <b style="color:var(--etxt)">'+d.data_export+'</b></span>':'')
-      +'<span style="font-size:12px;color:var(--emuted)">· <b style="color:var(--etxt)">'+a.length+'</b> SKUs</span>'
+      +'<span style="font-size:12px;color:var(--emuted)">· <b style="color:var(--etxt)">'+a.length+'</b> SKUs</span>'+(aAll.length>a.length?'<span style="font-size:12px;color:var(--emuted2)">· '+(aAll.length-a.length)+' excluído(s) do banco — oculto(s)</span>':'')
       +'<span style="font-size:11px;color:var(--emuted2);margin-left:auto">leitura externa de mercado · opinião datada, não venda real</span></div>'
       +'<div style="font-size:10.5px;color:var(--emuted2);margin:-6px 0 12px;padding-left:2px"><b style="color:var(--eemerald)">■</b> sigla em verde = anúncio já publicado no ML</div>';
     // agrupa por AÇÃO assinada (v2): PUBLICAR → ISCA/VITRINE → AJUSTAR → SEGURAR → CORTAR → BLOQUEIO legal
