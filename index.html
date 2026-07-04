@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-04-A | selecta-banco-preco | super-comando (base 5841 md5 a65f9d01) + carimbo de build -->
+<!-- BUILD 2026-07-04-B | selecta-banco-preco | fix nextCodigo: máximo GLOBAL (ativos+inativos) — colisão com soft-delete -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2892,12 +2892,19 @@ const ecom = {
       if(idx>=0) this.itens[idx]=Object.assign({},this.itens[idx],dados);
       try{ const r=await sb.from('ecom_produtos').update(Object.assign({},dados,{atualizado_em:new Date().toISOString()})).eq('id',this.editId).select().single(); if(r.error) throw r.error; if(idx>=0&&r.data) this.itens[idx]=r.data; this.cancelEdit(); this.render(); }
       catch(e){ if(idx>=0&&prev) this.itens[idx]=prev; const fm=this._g('ecom-formmsg'); fm.textContent='Erro ao salvar: '+e.message; fm.style.color='var(--ered)'; this.render(); } }
-    else { const codigo=this.nextCodigo(categoria);
+    else { const codigo=await this.nextCodigo(categoria);
       try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{codigo,ativo:true})).select().single(); if(r.error) throw r.error; this.itens.push(r.data); this.clearForm(); this.render(); const fm=this._g('ecom-formmsg'); fm.textContent='✓ Salvo no banco: '+r.data.codigo+' — campos limpos para o próximo.'; fm.style.color='var(--eemerald)'; }
       catch(e){ const fm=this._g('ecom-formmsg'); fm.textContent='Erro ao cadastrar: '+e.message; fm.style.color='var(--ered)'; } } },
 
-  nextCodigo(sigla){ const re=new RegExp('^'+sigla+'-(\\d+)$'); let max=0;
-    this.itens.forEach(it=>{ const m=(it.codigo||'').match(re); if(m){ const n=parseInt(m[1],10); if(n>max) max=n; } });
+  async nextCodigo(sigla){ const re=new RegExp('^'+sigla+'-(\\d+)$'); let max=0;
+    // Máximo GLOBAL no banco (ativos + desativados): soft-delete mantém o código
+    // ocupado mesmo invisível na tela — gerar só pelo que está carregado colide
+    // com fantasma (uq_ecom_produtos_codigo). Provado em produção 04/07/2026.
+    try{ const r=await sb.from('ecom_produtos').select('codigo').like('codigo', sigla+'-%');
+      if(r.error) throw r.error;
+      (r.data||[]).forEach(it=>{ const m=(it.codigo||'').match(re); if(m){ const n=parseInt(m[1],10); if(n>max) max=n; } });
+    }catch(e){ console.warn('nextCodigo: consulta global falhou, usando máximo local', e);
+      this.itens.forEach(it=>{ const m=(it.codigo||'').match(re); if(m){ const n=parseInt(m[1],10); if(n>max) max=n; } }); }
     return sigla+'-'+String(max+1).padStart(4,'0'); },
 
   async del(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
