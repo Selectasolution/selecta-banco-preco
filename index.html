@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-05-F | selecta-banco-preco | Radar de Nicho v0.2: visões Mais Vendidos (acordeão por categoria, top3 no cabeçalho, top20 com idade/desconto/velocidade*/link e KPIs de concentração) e Mais Procurados (trends em aba própria, chips abrem busca real do ML) | base: -E -->
+<!-- BUILD 2026-07-05-G | selecta-banco-preco | Radar v0.2.1: link Ver com fallback determinístico p/ página de catálogo (/p/{product_id}); colunas Vend./Veloc. condicionais — omitidas com nota de limitação quando a API nega sold_quantity de terceiros (403 provado em 05/07); rótulo fino da Idade em catálogo | base: -F -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -4625,12 +4625,14 @@ const ecomRadar={
         const orig=d.original_price!=null?Number(d.original_price):(bb&&bb.original_price!=null?Number(bb.original_price):null);
         const preco=x.preco!=null?Number(x.preco):null;
         const desc=(orig&&preco&&orig>preco)?Math.round((1-preco/orig)*100)+'%':null;
-        const link=d.permalink||(bb?bb.permalink:null)||null;
+        // Ver: permalink do anúncio > permalink do vencedor > página de catálogo determinística
+        const link=d.permalink||(bb?bb.permalink:null)||(x.product_id?('https://www.mercadolivre.com.br/p/'+encodeURIComponent(x.product_id)):null);
         const oficial=(d.official_store_id!=null)||(bb&&bb.official_store_id!=null);
         const id8=this.idade(created);
         return {x,preco,orig,desc,link,oficial,idade:id8,vel:this.velocidade(x.vendidos_faixa,id8.meses)};
       });
-      // KPIs verdadeiros da categoria (calculados do top 20 capturado)
+      // colunas de vendidos só aparecem se a API entregou o dado em ao menos 1 linha
+      const temVend=rows.some(r=>r.x.vendidos_faixa!=null);
       const precos=rows.map(r=>r.preco).filter(v=>v!=null).sort((a,b)=>a-b);
       const med=precos.length?precos[Math.floor(precos.length/2)]:null;
       const sellers=new Set(rows.map(r=>r.x.seller_id).filter(Boolean)).size;
@@ -4641,10 +4643,11 @@ const ecomRadar={
         '<span class="rd-kpi">sellers distintos no ranking: <b>'+sellers+'</b></span>'+
         '<span class="rd-kpi">no Full: <b>'+pFull+'%</b></span>'+
         '<span class="rd-kpi">lojas oficiais: <b>'+pOfi+'%</b></span></div>';
-      const html=kpis+'<div style="overflow-x:auto"><table class="rd-tbl"><thead><tr><th>#</th><th>Produto</th><th>Preço</th><th>De</th><th>Desc.</th><th>Vend.*</th><th>Idade</th><th>Veloc.*</th><th>Marca</th><th>Full</th><th>Oficial</th><th>Ver</th></tr></thead><tbody>'+
-        rows.map(r=>'<tr><td class="mono">'+(r.x.posicao??'—')+'</td><td>'+this.esc(r.x.titulo||'—')+'</td><td class="mono">'+this.brl(r.preco)+'</td><td class="mono" style="color:var(--emuted2)">'+(r.orig&&r.desc?this.brl(r.orig):'—')+'</td><td class="mono">'+(r.desc||'—')+'</td><td class="mono">'+this.esc(r.x.vendidos_faixa?r.x.vendidos_faixa+'+':'—')+'</td><td class="mono">'+r.idade.txt+'</td><td class="mono">'+r.vel+'</td><td>'+this.esc(r.x.marca||'—')+'</td><td>'+(r.x.full_logistica===true?'✅':'—')+'</td><td>'+(r.oficial?'🏬':'—')+'</td><td>'+(r.link?'<a href="'+this.esc(r.link)+'" target="_blank" rel="noopener" style="color:var(--eteal)">↗</a>':'—')+'</td></tr>').join('')+
+      const cabVend=temVend?'<th>Vend.*</th><th>Veloc.*</th>':'';
+      const html=kpis+'<div style="overflow-x:auto"><table class="rd-tbl"><thead><tr><th>#</th><th>Produto</th><th>Preço</th><th>De</th><th>Desc.</th>'+cabVend+'<th>Idade</th><th>Marca</th><th>Full</th><th>Oficial</th><th>Ver</th></tr></thead><tbody>'+
+        rows.map(r=>'<tr><td class="mono">'+(r.x.posicao??'—')+'</td><td>'+this.esc(r.x.titulo||'—')+'</td><td class="mono">'+this.brl(r.preco)+'</td><td class="mono" style="color:var(--emuted2)">'+(r.orig&&r.desc?this.brl(r.orig):'—')+'</td><td class="mono">'+(r.desc||'—')+'</td>'+(temVend?'<td class="mono">'+this.esc(r.x.vendidos_faixa?r.x.vendidos_faixa+'+':'—')+'</td><td class="mono">'+r.vel+'</td>':'')+'<td class="mono">'+r.idade.txt+'</td><td>'+this.esc(r.x.marca||'—')+'</td><td>'+(r.x.full_logistica===true?'✅':'—')+'</td><td>'+(r.oficial?'🏬':'—')+'</td><td>'+(r.link?'<a href="'+this.esc(r.link)+'" target="_blank" rel="noopener" style="color:var(--eteal)">↗</a>':'—')+'</td></tr>').join('')+
         '</tbody></table></div>'+
-        '<div style="font-size:11px;color:var(--emuted2);margin-top:6px">* Vendidos = faixa referencial da API (ordinal). Velocidade = faixa ÷ idade do anúncio: estimativa de piso para ranquear ritmo, não faturamento. KPIs calculados sobre o ranking capturado, nada simulado.</div>';
+        '<div style="font-size:11px;color:var(--emuted2);margin-top:6px">Posição no ranking = ordenação por venda feita pelo próprio ML (dado oficial). '+(temVend?'* Vendidos = faixa referencial (ordinal); Velocidade = faixa ÷ idade — piso de ritmo, não faturamento. ':'Faixa de vendidos: a API oficial restringe esse campo para anúncios de terceiros (HTTP 403) — colunas omitidas por honestidade, em vez de estimar. ')+'Idade nos itens de catálogo = idade do produto no catálogo ML (proxy). KPIs calculados sobre o ranking capturado, nada simulado.</div>';
       this.cacheHi[pid]=html; body.innerHTML=html;
     }catch(e){ body.innerHTML='<div class="ph" style="color:var(--ered)">erro ao detalhar: '+this.esc(e.message)+'</div>'; }
   },
