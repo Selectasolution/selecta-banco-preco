@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-05-C | selecta-banco-preco | Cadastro de anuncio movido para o cabecalho da Analise Comercial (Controle = so Alexia) + Manual v1.3 embedado -->
+<!-- BUILD 2026-07-05-D | selecta-banco-preco | Radar de Anuncios na Estrategia (delta lote x lote + KPIs + sparklines + zumbi + radar no pacote) + cadastro na Analise + Manual v1.3 -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1195,7 +1195,7 @@
       </div>
 
       <div class="ecard" style="margin-top:18px;border-style:dashed">
-        <h3>📋 Manual/Comando GERAL <span class="faint" style="font-weight:400;font-size:12px">· Análise Comercial + Estratégia de Anúncios · v1.0</span></h3>
+        <h3>📋 Manual/Comando GERAL <span class="faint" style="font-weight:400;font-size:12px">· Análise Comercial + Estratégia de Anúncios · v1.3</span></h3>
         <p class="hint" style="font-size:12.5px;color:var(--emuted);margin:2px 0 14px;line-height:1.6"><b style="color:var(--etxt)">Fluxo único:</b> exporto o <b>cenário</b> → copio o <b>comando geral</b> → colo os dois no chat. O chat roda os <b>dois atos</b> (Análise Comercial → Estratégia de Anúncios) e pede os arquivos certos na hora certa.</p>
         <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:6px">
           <button class="vbtn" id="al-cmd-export" style="background:var(--eteal)">⬇ Exportar cenário (.md)</button>
@@ -1230,6 +1230,15 @@
         <h3 style="font-size:13px">🎯 Estratégia de Anúncios <span class="faint" style="font-weight:400;font-size:12px">· mesa de veredito — alavanca por anúncio (preço · parcelamento · Full · conteúdo)</span></h3>
         <p class="hint" style="font-size:11.5px;color:var(--emuted2);margin-top:4px">Exporte o pacote, traga o veredito do chat e importe o JSON abaixo. Cada linha grava por MLB, com histórico datado.</p>
       </div>
+      <div class="ecard" id="al-radar-card" style="margin-top:14px;border-color:var(--eteal);border-width:1px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h3 style="font-size:13px;margin:0">📡 Radar de Anúncios <span class="faint" style="font-weight:400;font-size:12px">· delta entre os 2 últimos lotes · capturas 04h50 e 14h50 BRT</span></h3>
+          <div style="display:flex;gap:8px;align-items:center"><span id="al-radar-hora" class="faint" style="font-size:11px"></span><button class="vbtn sm" id="al-radar-refresh">↻ Atualizar</button></div>
+        </div>
+        <div id="al-radar-kpis" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"></div>
+        <div id="al-radar-body" style="margin-top:12px"><div class="ph" style="color:var(--emuted2);font-size:12px">carregando radar…</div></div>
+        <p class="hint" style="font-size:10.5px;color:var(--emuted2);margin-top:10px">Linha teal = winner · linha verde = nosso preço (últimos 10 lotes). Quem movimentou fica no topo; sem movimento vai ao final. ☠️ = produto inativo com anúncio vivo (ordem de exclusão imediata).</p>
+      </div>
       <div class="ecard" style="margin-top:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h3 style="font-size:13px;margin:0">📑 Mesa de veredito <span class="faint" style="font-weight:400;font-size:12px">· vereditos ativos por alavanca</span></h3>
@@ -1239,7 +1248,7 @@
       </div>
       <div class="ecard" style="margin-top:18px;border-style:dashed">
         <h3>📋 Resultados: Exportar pacote <span class="faint" style="font-weight:400;font-size:12px">· Ato 2 do comando geral (aba Análise Comercial)</span></h3>
-        <p class="hint" style="font-size:12.5px;color:var(--emuted);margin:2px 0 14px;line-height:1.6"><b style="color:var(--etxt)">Fluxo (Ato 2):</b> o comando geral fica na aba <b>Análise Comercial</b>. Aqui: exporto o <b>pacote</b> e colo no chat junto com o resultado da <b>query do dossiê</b> (o próprio chat fornece a query) → recebo a fila de exceção → colo o JSON abaixo. <b>Sem print e sem captura manual</b> — o mercado entra sozinho às 06h.</p>
+        <p class="hint" style="font-size:12.5px;color:var(--emuted);margin:2px 0 14px;line-height:1.6"><b style="color:var(--etxt)">Fluxo (Ato 2):</b> o comando geral fica na aba <b>Análise Comercial</b>. Aqui: exporto o <b>pacote</b> e colo no chat junto com o resultado da <b>query do dossiê</b> (o próprio chat fornece a query) → recebo a fila de exceção → colo o JSON abaixo. <b>Sem print e sem captura manual</b> — o mercado entra sozinho às 04h50 e às 14h50 (Radar acima).</p>
         <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:6px">
           <button class="vbtn" id="al-cmdr-export" style="background:var(--eteal)">⬇ Exportar pacote (.md)</button>
           <span class="vmsg" id="al-cmdr-msg" style="align-self:center"></span>
@@ -3829,7 +3838,7 @@ const ecomAlvo={
       this.vendas=(rv.data||[]).filter(v=>v.status!=='cancelado'); this.anuncios=ra.data||[];
       this.catNome={}; this.catPreco={}; this.catAtivo={}; (rp.data||[]).forEach(p=>{ if(p.codigo){ this.catNome[p.codigo]=[p.produto,p.interface,p.marca,p.modelo,p.capacidade].filter(Boolean).join(' '); this.catPreco[p.codigo]=p.preco; this.catAtivo[p.codigo]=(p.ativo!==false); } });
       await this.loadResultados();
-      this.renderImport(); this.renderAnuncios(); this.fillComando(); this.fillComandoResultado(); this.loadAnalise(); this.renderMesa();
+      this.renderImport(); this.renderAnuncios(); this.fillComando(); this.fillComandoResultado(); this.loadAnalise(); this.renderMesa(); this.radar();
     }catch(e){ const b=this._g('al-anuncios'); if(b) b.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
   },
   resHist:{},
@@ -3852,6 +3861,106 @@ const ecomAlvo={
     try{ const ua=await sb.from('ecom_anuncio_alteracao').select('mlb,criado_em').order('criado_em',{ascending:false});
       if(!ua.error){ (ua.data||[]).forEach(a=>{ if(a.mlb && !this.ultAlteracao[a.mlb]) this.ultAlteracao[a.mlb]=a.criado_em; }); }
     }catch(e){ console.warn('ultAlteracao:',e.message); }
+  },
+  async radar(){
+    const body=this._g('al-radar-body'), kpis=this._g('al-radar-kpis'), hora=this._g('al-radar-hora');
+    if(!body) return;
+    const btn=this._g('al-radar-refresh'); if(btn && !btn._bound){ btn._bound=true; btn.addEventListener('click',()=>this.radar()); }
+    body.innerHTML='<div class="ph" style="color:var(--emuted2);font-size:12px">lendo lotes…</div>';
+    try{
+      const snap=await sb.from('ecom_mercado_snapshot')
+        .select('lote,capturado_em,anuncio_mlb,produto_codigo,titulo,preco,winner_price,price_to_win,comp_status,visit_share,visitas,status_ml')
+        .order('capturado_em',{ascending:false}).limit(900);
+      if(snap.error) throw snap.error;
+      const rows=snap.data||[];
+      const lotes=[]; const vist={};
+      rows.forEach(r=>{ if(!vist[r.lote]){ vist[r.lote]=true; lotes.push({lote:r.lote,quando:r.capturado_em}); } });
+      if(!lotes.length){ body.innerHTML='<div class="ph" style="font-size:12px">sem capturas ainda</div>'; return; }
+      const atualId=lotes[0].lote, antId=lotes[1]?lotes[1].lote:null;
+      const atual={}, ant={}, serie={};
+      rows.forEach(r=>{
+        if(!r.produto_codigo) return; /* escopo Selecta: paralelos fora */
+        if(r.lote===atualId) atual[r.anuncio_mlb]=r;
+        else if(antId && r.lote===antId) ant[r.anuncio_mlb]=r;
+        (serie[r.anuncio_mlb]=serie[r.anuncio_mlb]||[]).push(r);
+      });
+      let marg={};
+      try{ const m=await sb.rpc('ecom_fn_margem_alvo'); if(!m.error) (m.data||[]).forEach(x=>{ marg[x.codigo]=x; }); }catch(_e){}
+      let inativos={};
+      try{ const p=await sb.from('ecom_produtos').select('codigo').eq('ativo',false); if(!p.error) (p.data||[]).forEach(x=>{ inativos[x.codigo]=true; }); }catch(_e){}
+      const num=v=>(v==null?null:+v);
+      const eventos=[], parados=[];
+      Object.keys(atual).forEach(mlb=>{
+        const a=atual[mlb], b=ant?ant[mlb]:null;
+        const m=marg[a.produto_codigo]||{};
+        const evs=[];
+        if(b){
+          const wA=num(a.winner_price), wB=num(b.winner_price);
+          if(wA!=null&&wB!=null&&wA!==wB) evs.push('winner '+this.fmt(wB)+' → '+this.fmt(wA)+(wA>wB?' ▲':' ▼'));
+          if(wA!=null&&wB==null) evs.push('winner apareceu: '+this.fmt(wA));
+          if(wA==null&&wB!=null) evs.push('winner sumiu (era '+this.fmt(wB)+')');
+          const pA=num(a.preco), pB=num(b.preco);
+          if(pA!=null&&pB!=null&&pA!==pB) evs.push('nosso preço '+this.fmt(pB)+' → '+this.fmt(pA));
+          if(String(a.comp_status)!==String(b.comp_status)) evs.push('status '+b.comp_status+' → '+a.comp_status);
+          if(String(a.visit_share)!==String(b.visit_share)) evs.push('visit_share '+b.visit_share+' → '+a.visit_share+' ⚡');
+        } else if(antId){ evs.push('novo no radar'); }
+        const it={mlb,cod:a.produto_codigo,preco:num(a.preco),winner:num(a.winner_price),visitas:(a.visitas==null?0:+a.visitas),margem:(m.margem_pct!=null?m.margem_pct*100:null),passa:m.passa_piso,zumbi:!!inativos[a.produto_codigo],evs};
+        if(evs.length||it.zumbi) eventos.push(it); else parados.push(it);
+      });
+      const sumiram=antId?Object.keys(ant).filter(m=>!atual[m]).map(m=>ant[m]):[];
+      const codigos={}; Object.keys(atual).forEach(m=>{ codigos[atual[m].produto_codigo]=1; });
+      const foraPiso=Object.keys(codigos).filter(c=>marg[c]&&marg[c].passa_piso===false).length;
+      const zumbis=eventos.filter(e=>e.zumbi).length;
+      eventos.sort((x,y)=>((y.zumbi?1:0)-(x.zumbi?1:0))||(y.evs.length-x.evs.length)||(y.visitas-x.visitas));
+      parados.sort((x,y)=>y.visitas-x.visitas);
+      const spark=mlb=>{
+        const s=(serie[mlb]||[]).slice(0,10).reverse();
+        if(s.length<2) return '';
+        const vals=[]; s.forEach(r=>{ if(r.preco!=null) vals.push(+r.preco); if(r.winner_price!=null) vals.push(+r.winner_price); });
+        if(vals.length<2) return '';
+        const mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), sp=(mx-mn)||1, W=110, H=26;
+        const pts=key=>s.map((r,i)=>{ const v=r[key]; if(v==null) return null; const x=(s.length>1?i/(s.length-1)*W:0); const y=(H-3)-(((+v-mn)/sp)*(H-6)); return x.toFixed(1)+','+y.toFixed(1); }).filter(Boolean).join(' ');
+        const pw=pts('winner_price'), pm=pts('preco');
+        return '<svg width="'+W+'" height="'+H+'" style="flex:none" aria-hidden="true">'+(pw?'<polyline points="'+pw+'" fill="none" stroke="var(--eteal)" stroke-width="1.5"/>':'')+(pm?'<polyline points="'+pm+'" fill="none" stroke="var(--eemerald)" stroke-width="1.5"/>':'')+'</svg>';
+      };
+      const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const chip=(txt,cor)=>'<span style="background:var(--epanel2);border:1px solid '+(cor||'var(--eborder)')+';border-radius:999px;padding:4px 10px;font-size:11px;color:var(--etxt)">'+txt+'</span>';
+      kpis.innerHTML=[
+        chip('SKUs no lote: <b>'+Object.keys(atual).length+'</b>'),
+        chip('movimentaram: <b>'+eventos.length+'</b>', eventos.length?'var(--eteal)':null),
+        chip('fora do piso 12%: <b>'+foraPiso+'</b>', foraPiso?'var(--eamber)':null),
+        chip('zumbis: <b>'+zumbis+'</b>', zumbis?'#ef4444':'var(--eemerald)'),
+        chip('saíram do lote: <b>'+sumiram.length+'</b>', sumiram.length?'var(--eamber)':null)
+      ].join(' ');
+      if(hora) hora.textContent='lote '+new Date(lotes[0].quando).toLocaleString('pt-BR')+(lotes[1]?' × '+new Date(lotes[1].quando).toLocaleString('pt-BR'):' · 1º lote, sem comparação');
+      const linha=(e,dim)=>{
+        const mg=(e.margem!=null)?(' · marg <b style="color:'+(e.passa===false?'var(--eamber)':'var(--eemerald)')+'">'+e.margem.toFixed(1)+'%</b>'):'';
+        const gap=(e.preco!=null&&e.winner!=null)?(' · gap '+this.fmt(e.preco-e.winner)):'';
+        return '<div class="vli" style="align-items:center;gap:10px;margin-bottom:6px'+(dim?';opacity:.55':'')+'">'
+          +'<div class="vmain"><div class="vp" style="font-size:12px">'+(e.zumbi?'☠️ ':'')+esc(e.cod)+' <span class="faint">· #'+esc(e.mlb)+'</span></div>'
+          +'<div class="vm" style="font-size:11px">'+(e.evs.length?e.evs.map(esc).join(' · '):'sem movimento')+' · '+e.visitas+' visitas'+mg+gap+'</div></div>'
+          +spark(e.mlb)+'</div>';
+      };
+      let html='';
+      if(eventos.length) html+=eventos.map(e=>linha(e,false)).join('');
+      else html+='<div class="ph" style="font-size:12px;color:var(--emuted2)">nenhum movimento entre os 2 últimos lotes</div>';
+      if(sumiram.length) html+='<div style="margin:10px 0 4px;font-size:11px;color:var(--eamber)">saíram do lote atual (apagado/pausado — fecho de ciclo?): '+sumiram.map(r=>esc(r.produto_codigo)+' #'+esc(r.anuncio_mlb)).join(' · ')+'</div>';
+      if(parados.length) html+='<details style="margin-top:10px"><summary style="cursor:pointer;font-size:11.5px;color:var(--emuted2)">sem movimento · '+parados.length+' anúncio(s) · ao final da fila</summary><div style="margin-top:8px">'+parados.map(e=>linha(e,true)).join('')+'</div></details>';
+      body.innerHTML=html;
+      const md=[];
+      md.push('## Radar — delta entre os 2 últimos lotes');
+      md.push('Lote atual: '+new Date(lotes[0].quando).toLocaleString('pt-BR')+(lotes[1]?' · anterior: '+new Date(lotes[1].quando).toLocaleString('pt-BR'):' · sem lote anterior'));
+      md.push('KPIs: SKUs '+Object.keys(atual).length+' · movimentaram '+eventos.length+' · fora do piso '+foraPiso+' · zumbis '+zumbis+' · sairam do lote '+sumiram.length);
+      md.push('');
+      md.push('| Código | MLB | Evento(s) | Nosso | Winner | Visitas | Margem% |');
+      md.push('|---|---|---|---|---|---|---|');
+      const cel=s=>String(s==null?'':s).replace(/\|/g,'/');
+      eventos.forEach(e=>{ md.push('| '+[cel(e.cod)+(e.zumbi?' (ZUMBI)':''),cel(e.mlb),cel(e.evs.join(' · ')||'-'),(e.preco!=null?this.fmt(e.preco):'—'),(e.winner!=null?this.fmt(e.winner):'—'),e.visitas,(e.margem!=null?e.margem.toFixed(1):'—')].join(' | ')+' |'); });
+      if(!eventos.length) md.push('| (sem movimento) | | | | | | |');
+      md.push('');
+      md.push('Sem movimento: '+parados.length+' anúncio(s)'+(sumiram.length?(' · Sairam do lote: '+sumiram.map(r=>r.produto_codigo+' #'+r.anuncio_mlb).join(', ')):''));
+      this._radarMd=md.join('\n')+'\n\n';
+    }catch(e){ body.innerHTML='<div class="ph" style="color:#ef4444;font-size:12px">Radar falhou: '+String(e&&e.message||e)+'</div>'; }
   },
   renderMesa(){
     const box=this._g('al-mesa'); if(!box) return;
@@ -4167,6 +4276,7 @@ const ecomAlvo={
   async exportarPacote(){ const msg=this._g('al-cmdr-msg'); if(msg){ msg.className='vmsg'; msg.textContent='gerando…'; }
     try{
       if(typeof ecom!=='undefined' && !ecom.loaded){ await ecom.loadFreteTbl(); await ecom.loadProdutos(); ecom.loaded=true; }
+      try{ await this.radar(); }catch(_e){}
       const cenario=(typeof ecom!=='undefined' && ecom.gerarMdCenario)?ecom.gerarMdCenario():'> (Simulador indisponível — cenário não incluído)\n';
       const hoje0=new Date(); hoje0.setHours(0,0,0,0);
       const diasDe=s=>{ const p=String(s||'').slice(0,10).split('-').map(Number); if(p.length<3||!p[0]) return null; return Math.round((hoje0-new Date(p[0],p[1]-1,p[2]))/864e5); };
@@ -4181,13 +4291,14 @@ const ecomAlvo={
         +'## Publicações ativas (quadro de anúncios)\n'
         +'| MLB | Código | Título | Preço anunciado | Dias no ar | Vendas |\n|---|---|---|---|---|---|\n'
         +(linhas||'| (nenhum anúncio cadastrado) | | | | | |')+'\n\n'
-        +'> Cruze por **Código**: a margem de cada SKU está na tabela "Produtos" do cenário abaixo. Visitas e status de competição vêm do dossiê (ecom_vw_dossie), capturado automaticamente às 06h — cole a query padrão do comando geral.\n\n'
+        +'> Cruze por **Código**: a margem de cada SKU está na tabela "Produtos" do cenário abaixo. Visitas e status de competição vêm do dossiê (ecom_vw_dossie), capturado automaticamente às 04h50/14h50 — cole a query padrão do comando geral.\n\n'
+        +(this._radarMd||'')
         +'---\n\n'+cenario;
       const blob=new Blob([pacote],{type:'text/markdown;charset=utf-8'});
       const url=URL.createObjectURL(blob); const a=document.createElement('a');
       a.href=url; a.download='pacote_alvo_'+new Date().toISOString().slice(0,10)+'.md';
       document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-      if(msg){ msg.className='vmsg ok'; msg.textContent='✓ Pacote baixado — anexe no chat com o comando e o print'; setTimeout(()=>msg.textContent='',4000); }
+      if(msg){ msg.className='vmsg ok'; msg.textContent='✓ Pacote baixado — anexe no chat com o comando geral'; setTimeout(()=>msg.textContent='',4000); }
     }catch(e){ if(msg){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; } }
   },
   _normMlb(raw){ const m=String(raw||'').trim().toUpperCase().replace(/[#\s]/g,'').replace(/^(MLB)+/,''); return m||''; },
