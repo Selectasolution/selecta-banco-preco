@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-05-E | selecta-banco-preco | + Radar de Nicho v0.1 (sub-aba E-commerce: varredura por categoria via Edge ml-radar, highlights top-20 + trends top-50, descoberta pura sem filtros) | base: 2026-07-05-D -->
+<!-- BUILD 2026-07-05-F | selecta-banco-preco | Radar de Nicho v0.2: visões Mais Vendidos (acordeão por categoria, top3 no cabeçalho, top20 com idade/desconto/velocidade*/link e KPIs de concentração) e Mais Procurados (trends em aba própria, chips abrem busca real do ML) | base: -E -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -766,6 +766,22 @@
     #tab-ecommerce .rd-badge.ok{background:rgba(16,185,129,.14);color:var(--eemerald)}
     #tab-ecommerce .rd-badge.warn{background:rgba(245,158,11,.14);color:var(--eamber)}
     #tab-ecommerce .rd-badge.err{background:rgba(239,68,68,.14);color:var(--ered)}
+    #tab-ecommerce .rd-acc-head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px}
+    #tab-ecommerce .rd-acc-tit{font-size:13.5px;font-weight:600;color:var(--etxt)}
+    #tab-ecommerce .rd-acc-id{color:var(--emuted2);font-family:var(--emono);font-size:11px;font-weight:400;margin-left:4px}
+    #tab-ecommerce .rd-acc-sub{font-size:11.5px;color:var(--emuted);margin-top:2px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    #tab-ecommerce .rd-acc-chev{color:var(--eamber);font-size:15px;flex-shrink:0}
+    #tab-ecommerce .rd-acc-top3{margin-top:9px;border-top:1px dashed var(--eborder);padding-top:8px}
+    #tab-ecommerce .rd-top3{font-size:12.5px;color:var(--etxt);padding:3px 0}
+    #tab-ecommerce .rd-top3 .n{color:var(--eamber);font-family:var(--emono);font-weight:700;margin-right:4px}
+    #tab-ecommerce .rd-top3 .p{color:var(--eemerald);font-family:var(--emono);margin-left:6px}
+    #tab-ecommerce .rd-top3 .v{color:var(--emuted2);font-size:11px;margin-left:6px}
+    #tab-ecommerce .rd-acc-body{margin-top:10px;border-top:1px solid var(--eborder);padding-top:10px}
+    #tab-ecommerce .rd-kpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    #tab-ecommerce .rd-kpi{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:8px;padding:6px 10px;font-size:11.5px}
+    #tab-ecommerce .rd-kpi b{color:var(--etxt);font-family:var(--emono);font-weight:600}
+    #tab-ecommerce a.rd-kw{text-decoration:none;cursor:pointer}
+    #tab-ecommerce a.rd-kw:hover{border-color:var(--eamber);color:var(--eamber)}
     #tab-ecommerce .alsubbar{display:flex;gap:8px;align-items:center;margin:6px 0 18px;flex-wrap:wrap}
     #tab-ecommerce .alsub-btn{background:var(--epanel2);color:var(--emuted);border:1px solid var(--eborder);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all .12s}
     #tab-ecommerce .alsub-btn:hover{color:var(--etxt);border-color:var(--emuted2)}
@@ -1284,11 +1300,13 @@
     </div>
 
     <!-- =====================================================================
-         RADAR DE NICHO v0.1 — descoberta pura (sem filtros eliminatórios)
-         Fontes oficiais: /highlights (top 20 vendidos) + /trends (top 50 buscas)
+         RADAR DE NICHO v0.2 — descoberta pura, duas visões
+         🏆 Mais Vendidos (highlights top 20 + enriquecimento do jsonb)
+         🔎 Mais Procurados (trends top 50)
+         Sem filtros eliminatórios (decisão 05/07/2026). Dado oficial ML.
          ===================================================================== -->
     <div id="ecom-sub-radar" class="ecom-subpanel" style="display:none">
-      <p class="esub">Descoberta de nicho por categoria com dado oficial do ML: o que mais vende (highlights) e o que o comprador busca (trends). Fase de mapeamento — nenhum filtro de marca ou margem aplicado; capturar tudo, entender primeiro.</p>
+      <p class="esub">Pesquisa de mercado com dado oficial do ML — o que mais vende (highlights) e o que o comprador busca (trends). Fase de mapeamento: nenhum filtro de marca ou margem. Toda métrica estimada carrega asterisco; nada aqui é simulado.</p>
 
       <div class="ecard" style="border-color:var(--eamber)">
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
@@ -1298,27 +1316,27 @@
           </div>
           <div style="flex:1;min-width:180px">
             <label style="display:block;font-size:11px;color:var(--emuted);margin-bottom:4px">Nome (referência sua)</label>
-            <input id="rd-cat-nome" placeholder="ex: Informática" style="width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:8px 10px;font-size:13px">
+            <input id="rd-cat-nome" placeholder="ex: Memórias RAM" style="width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:8px 10px;font-size:13px">
           </div>
           <button id="rd-varrer" class="chip" style="border-color:var(--eamber);color:var(--eamber);padding:9px 16px;font-weight:600">📡 Nova varredura</button>
         </div>
         <div id="rd-msg" style="font-size:12.5px;margin-top:8px;color:var(--emuted)"></div>
+        <details style="margin-top:10px">
+          <summary style="font-size:12px;color:var(--emuted);cursor:pointer">Log de varreduras</summary>
+          <div id="rd-pesquisas" style="margin-top:8px"><div class="ph">carregando…</div></div>
+        </details>
       </div>
 
-      <div class="ecard">
-        <div style="font-size:13px;font-weight:600;color:var(--etxt);margin-bottom:8px">Varreduras realizadas</div>
-        <div id="rd-pesquisas"><div class="ph">carregando…</div></div>
+      <div class="alsubbar" id="rdviewbar" style="margin-top:2px">
+        <button class="alsub-btn active" data-rdview="vend">🏆 Mais Vendidos</button>
+        <button class="alsub-btn" data-rdview="proc">🔎 Mais Procurados</button>
       </div>
 
-      <div id="rd-detalhe" style="display:none">
-        <div class="ecard">
-          <div id="rd-det-titulo" style="font-size:13px;font-weight:600;color:var(--etxt);margin-bottom:2px"></div>
-          <div id="rd-det-sub" style="font-size:11.5px;color:var(--emuted2);margin-bottom:12px"></div>
-          <div style="font-size:12.5px;font-weight:600;color:var(--eamber);margin-bottom:6px">🏆 Mais vendidos da categoria (highlights)</div>
-          <div id="rd-det-highlights" style="overflow-x:auto"></div>
-          <div style="font-size:12.5px;font-weight:600;color:var(--eamber);margin:16px 0 6px">🔎 O que o comprador busca (trends — 50 termos, atualização semanal)</div>
-          <div id="rd-det-trends"></div>
-        </div>
+      <div id="rdview-vend">
+        <div id="rd-vend-cards"><div class="ph">carregando…</div></div>
+      </div>
+      <div id="rdview-proc" style="display:none">
+        <div id="rd-proc-cards"><div class="ph">carregando…</div></div>
       </div>
     </div>
 
@@ -4521,33 +4539,114 @@ const ecomAlvo={
     const ri=this._g('al-res-import'); if(ri && !ri._bound){ ri._bound=true; ri.addEventListener('click',()=>this.importarResultado()); } },
 };
 // =====================================================================
-// RADAR DE NICHO v0.1 — descoberta pura
-// Lê ecom_radar_pesquisa / ecom_radar_item; dispara Edge Function ml-radar.
-// Sem filtros eliminatórios por decisão de 05/07/2026 (fase de mapeamento).
+// RADAR DE NICHO v0.2 — descoberta pura, duas visões
+// 🏆 Mais Vendidos: acordeão por categoria (top 3 no cabeçalho, top 20 ao
+//    expandir, enriquecido do jsonb bruto: idade, desconto, velocidade*, link)
+// 🔎 Mais Procurados: trends top 50 por categoria, chips clicáveis (busca ML)
+// Fonte: ecom_radar_pesquisa/ecom_radar_item. Edge: ml-radar.
+// Regra: métrica estimada leva asterisco; faixa referencial declarada.
 // =====================================================================
 const ecomRadar={
   _g:id=>document.getElementById(id),
-  sel:null,
+  grupos:null, aberto:{}, cacheHi:{},
   brl:v=>v==null?'—':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),
   esc:s=>s==null?'':String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
   badge(st){ const m={concluida:'ok',parcial:'warn',erro:'err'}; return '<span class="rd-badge '+(m[st]||'warn')+'">'+this.esc(st)+'</span>'; },
+  dtBR:s=>s?new Date(s).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—',
+
+  // idade do anúncio a partir do date_created do payload bruto
+  idade(created){ if(!created) return {txt:'—',meses:null};
+    const m=(Date.now()-new Date(created).getTime())/2629800000; if(!isFinite(m)||m<0) return {txt:'—',meses:null};
+    const a=Math.floor(m/12), r=Math.round(m%12);
+    return {txt: a>0 ? a+'a'+(r>0?' '+r+'m':'') : Math.max(1,Math.round(m))+'m', meses:Math.max(m,0.5)}; },
+
+  // velocidade* = faixa de vendidos / idade — ordinal declarado
+  velocidade(vend,meses){ const v=Number(vend); if(!v||!meses) return '—';
+    const x=v/meses; return (x>=100?Math.round(x/10)*10:x>=10?Math.round(x):x.toFixed(1)).toString().replace('.',',')+'/mês*'; },
 
   async load(){
-    const box=this._g('rd-pesquisas');
+    const vbox=this._g('rd-vend-cards'), pbox=this._g('rd-proc-cards'), lbox=this._g('rd-pesquisas');
     try{
-      const p=await sb.from('ecom_radar_pesquisa').select('id,categoria_id,categoria_nome,status,executado_em,observacao').order('id',{ascending:false}).limit(40);
+      const p=await sb.from('ecom_radar_pesquisa').select('id,categoria_id,categoria_nome,status,executado_em,observacao').order('id',{ascending:false}).limit(120);
       if(p.error) throw p.error;
       const pesq=p.data||[];
-      if(!pesq.length){ box.innerHTML='<div class="ph">nenhuma varredura ainda — dispare a primeira acima</div>'; return; }
-      const ids=pesq.map(x=>x.id);
-      const it=await sb.from('ecom_radar_item').select('pesquisa_id,fonte').in('pesquisa_id',ids);
-      const cnt={}; (it.data||[]).forEach(r=>{ const k=r.pesquisa_id; cnt[k]=cnt[k]||{highlights:0,trends:0,outros:0}; if(r.fonte==='highlights')cnt[k].highlights++; else if(r.fonte==='trends')cnt[k].trends++; else cnt[k].outros++; });
-      box.innerHTML='<table class="rd-tbl"><thead><tr><th>#</th><th>Categoria</th><th>Executada em</th><th>Status</th><th>Highlights</th><th>Trends</th></tr></thead><tbody>'+
-        pesq.map(x=>{ const c=cnt[x.id]||{highlights:0,trends:0};
-          const dt=x.executado_em?new Date(x.executado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
-          return '<tr class="rd-row-pesq'+(this.sel===x.id?' sel':'')+'" data-rdver="'+x.id+'"><td class="mono">'+x.id+'</td><td>'+this.esc(x.categoria_nome||'—')+' <span style="color:var(--emuted2);font-family:var(--emono);font-size:11px">'+this.esc(x.categoria_id||'')+'</span></td><td class="mono">'+dt+'</td><td>'+this.badge(x.status)+(x.observacao?' <span title="'+this.esc(x.observacao)+'" style="cursor:help">ℹ️</span>':'')+'</td><td class="mono">'+c.highlights+'</td><td class="mono">'+c.trends+'</td></tr>'; }).join('')+
-        '</tbody></table>';
-    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar varreduras: '+this.esc(e.message)+'</div>'; }
+      // log completo
+      lbox.innerHTML = pesq.length
+        ? '<table class="rd-tbl"><thead><tr><th>#</th><th>Categoria</th><th>Executada</th><th>Status</th></tr></thead><tbody>'+
+          pesq.map(x=>'<tr><td class="mono">'+x.id+'</td><td>'+this.esc(x.categoria_nome||'—')+' <span style="color:var(--emuted2);font-family:var(--emono);font-size:11px">'+this.esc(x.categoria_id||'')+'</span></td><td class="mono">'+this.dtBR(x.executado_em)+'</td><td>'+this.badge(x.status)+(x.observacao?' <span title="'+this.esc(x.observacao)+'" style="cursor:help">ℹ️</span>':'')+'</td></tr>').join('')+'</tbody></table>'
+        : '<div class="ph">nenhuma varredura ainda</div>';
+      if(!pesq.length){ vbox.innerHTML='<div class="ph">nenhuma varredura ainda — dispare a primeira acima</div>'; pbox.innerHTML='<div class="ph">nenhuma varredura ainda</div>'; return; }
+      // última varredura por categoria = retrato vigente
+      const vistos={}; const grupos=[];
+      pesq.forEach(x=>{ const k=x.categoria_id||('#'+x.id); if(!vistos[k]){ vistos[k]=true; grupos.push(x); } });
+      this.grupos=grupos;
+      const ids=grupos.map(x=>x.id);
+      const it=await sb.from('ecom_radar_item').select('pesquisa_id,fonte,posicao,titulo,preco,vendidos_faixa,marca,keyword').in('pesquisa_id',ids).order('posicao');
+      if(it.error) throw it.error;
+      const porP={}; (it.data||[]).forEach(r=>{ (porP[r.pesquisa_id]=porP[r.pesquisa_id]||[]).push(r); });
+
+      // 🏆 Mais Vendidos — cartões-acordeão
+      vbox.innerHTML = grupos.map(g=>{
+        const hi=(porP[g.id]||[]).filter(r=>r.fonte==='highlights');
+        const top3=hi.slice(0,3).map(r=>'<div class="rd-top3"><span class="n">'+(r.posicao??'')+'º</span> '+this.esc(r.titulo||'—')+' <span class="p">'+this.brl(r.preco)+'</span>'+(r.vendidos_faixa?' <span class="v">'+this.esc(r.vendidos_faixa)+'+ vend.</span>':'')+'</div>').join('');
+        return '<div class="ecard rd-acc" data-rdpid="'+g.id+'">'+
+          '<div class="rd-acc-head" data-rdacc="'+g.id+'">'+
+            '<div><div class="rd-acc-tit">'+this.esc(g.categoria_nome||g.categoria_id||('Varredura #'+g.id))+' <span class="rd-acc-id">'+this.esc(g.categoria_id||'')+'</span></div>'+
+            '<div class="rd-acc-sub">'+hi.length+' itens no ranking · varrido em '+this.dtBR(g.executado_em)+' · '+this.badge(g.status)+'</div></div>'+
+            '<span class="rd-acc-chev">▾</span></div>'+
+          (top3?'<div class="rd-acc-top3">'+top3+'</div>':'<div class="ph" style="padding:10px">sem highlights nesta varredura — provável categoria alta na árvore; varra uma folha</div>')+
+          '<div class="rd-acc-body" id="rd-body-'+g.id+'" style="display:none"><div class="ph">…</div></div>'+
+        '</div>'; }).join('');
+
+      // 🔎 Mais Procurados — chips por categoria (link para a busca real do ML)
+      pbox.innerHTML = grupos.map(g=>{
+        const tr=(porP[g.id]||[]).filter(r=>r.fonte==='trends');
+        return '<div class="ecard">'+
+          '<div class="rd-acc-tit" style="margin-bottom:2px">'+this.esc(g.categoria_nome||g.categoria_id||'')+' <span class="rd-acc-id">'+this.esc(g.categoria_id||'')+'</span></div>'+
+          '<div class="rd-acc-sub" style="margin-bottom:10px">'+tr.length+' termos · atualização semanal do ML · varrido em '+this.dtBR(g.executado_em)+' · clique abre a busca real no ML</div>'+
+          (tr.length?tr.map(r=>'<a class="rd-kw" target="_blank" rel="noopener" href="https://lista.mercadolivre.com.br/'+encodeURIComponent((r.keyword||'').replace(/ /g,'-'))+'"><span class="n">'+(r.posicao??'')+'</span>'+this.esc(r.keyword||'')+'</a>').join(''):'<div class="ph">sem termos nesta varredura</div>')+
+        '</div>'; }).join('');
+    }catch(e){ vbox.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar: '+this.esc(e.message)+'</div>'; }
+  },
+
+  async expandir(pid){
+    const body=this._g('rd-body-'+pid); if(!body) return;
+    const aberto=body.style.display!=='none';
+    body.style.display=aberto?'none':'';
+    const card=document.querySelector('.rd-acc[data-rdpid="'+pid+'"] .rd-acc-chev'); if(card) card.textContent=aberto?'▾':'▴';
+    if(aberto) return;
+    if(this.cacheHi[pid]){ body.innerHTML=this.cacheHi[pid]; return; }
+    try{
+      const r=await sb.from('ecom_radar_item').select('posicao,item_id,product_id,titulo,preco,vendidos_faixa,marca,seller_id,full_logistica,frete_gratis,listing_type,dados').eq('pesquisa_id',pid).eq('fonte','highlights').order('posicao');
+      if(r.error) throw r.error;
+      const rows=(r.data||[]).map(x=>{
+        const d=x.dados||{}; const bb=d.buy_box_winner||null;
+        const created=d.date_created||d.start_time||(bb?bb.date_created:null)||null;
+        const orig=d.original_price!=null?Number(d.original_price):(bb&&bb.original_price!=null?Number(bb.original_price):null);
+        const preco=x.preco!=null?Number(x.preco):null;
+        const desc=(orig&&preco&&orig>preco)?Math.round((1-preco/orig)*100)+'%':null;
+        const link=d.permalink||(bb?bb.permalink:null)||null;
+        const oficial=(d.official_store_id!=null)||(bb&&bb.official_store_id!=null);
+        const id8=this.idade(created);
+        return {x,preco,orig,desc,link,oficial,idade:id8,vel:this.velocidade(x.vendidos_faixa,id8.meses)};
+      });
+      // KPIs verdadeiros da categoria (calculados do top 20 capturado)
+      const precos=rows.map(r=>r.preco).filter(v=>v!=null).sort((a,b)=>a-b);
+      const med=precos.length?precos[Math.floor(precos.length/2)]:null;
+      const sellers=new Set(rows.map(r=>r.x.seller_id).filter(Boolean)).size;
+      const pFull=rows.length?Math.round(rows.filter(r=>r.x.full_logistica===true).length/rows.length*100):0;
+      const pOfi=rows.length?Math.round(rows.filter(r=>r.oficial).length/rows.length*100):0;
+      const kpis='<div class="rd-kpis">'+
+        '<span class="rd-kpi">preço: <b>'+(precos.length?this.brl(precos[0])+' – '+this.brl(precos[precos.length-1]):'—')+'</b> · mediana <b>'+this.brl(med)+'</b></span>'+
+        '<span class="rd-kpi">sellers distintos no ranking: <b>'+sellers+'</b></span>'+
+        '<span class="rd-kpi">no Full: <b>'+pFull+'%</b></span>'+
+        '<span class="rd-kpi">lojas oficiais: <b>'+pOfi+'%</b></span></div>';
+      const html=kpis+'<div style="overflow-x:auto"><table class="rd-tbl"><thead><tr><th>#</th><th>Produto</th><th>Preço</th><th>De</th><th>Desc.</th><th>Vend.*</th><th>Idade</th><th>Veloc.*</th><th>Marca</th><th>Full</th><th>Oficial</th><th>Ver</th></tr></thead><tbody>'+
+        rows.map(r=>'<tr><td class="mono">'+(r.x.posicao??'—')+'</td><td>'+this.esc(r.x.titulo||'—')+'</td><td class="mono">'+this.brl(r.preco)+'</td><td class="mono" style="color:var(--emuted2)">'+(r.orig&&r.desc?this.brl(r.orig):'—')+'</td><td class="mono">'+(r.desc||'—')+'</td><td class="mono">'+this.esc(r.x.vendidos_faixa?r.x.vendidos_faixa+'+':'—')+'</td><td class="mono">'+r.idade.txt+'</td><td class="mono">'+r.vel+'</td><td>'+this.esc(r.x.marca||'—')+'</td><td>'+(r.x.full_logistica===true?'✅':'—')+'</td><td>'+(r.oficial?'🏬':'—')+'</td><td>'+(r.link?'<a href="'+this.esc(r.link)+'" target="_blank" rel="noopener" style="color:var(--eteal)">↗</a>':'—')+'</td></tr>').join('')+
+        '</tbody></table></div>'+
+        '<div style="font-size:11px;color:var(--emuted2);margin-top:6px">* Vendidos = faixa referencial da API (ordinal). Velocidade = faixa ÷ idade do anúncio: estimativa de piso para ranquear ritmo, não faturamento. KPIs calculados sobre o ranking capturado, nada simulado.</div>';
+      this.cacheHi[pid]=html; body.innerHTML=html;
+    }catch(e){ body.innerHTML='<div class="ph" style="color:var(--ered)">erro ao detalhar: '+this.esc(e.message)+'</div>'; }
   },
 
   async varrer(){
@@ -4562,38 +4661,10 @@ const ecomRadar={
       const d=r.data||{};
       if(d.erro) throw new Error(d.erro+(d.detalhe?' — '+d.detalhe:''));
       msg.style.color='var(--eemerald)';
-      msg.textContent='✓ Varredura #'+d.pesquisa_id+' concluída: '+d.capturados+' registros ('+d.status+')'+((d.avisos&&d.avisos.length)?' — avisos: '+d.avisos.join(' | '):'');
-      await this.load();
-      if(d.pesquisa_id) this.ver(d.pesquisa_id);
+      msg.textContent='✓ Varredura #'+d.pesquisa_id+': '+d.capturados+' registros ('+d.status+')'+((d.avisos&&d.avisos.length)?' — avisos: '+d.avisos.join(' | '):'');
+      this.cacheHi={}; await this.load();
     }catch(e){ msg.style.color='var(--ered)'; msg.textContent='✗ '+this.esc(e.message); }
     finally{ btn.disabled=false; }
-  },
-
-  async ver(pid){
-    this.sel=pid;
-    const det=this._g('rd-detalhe'), hbox=this._g('rd-det-highlights'), tbox=this._g('rd-det-trends');
-    det.style.display=''; hbox.innerHTML='<div class="ph">carregando…</div>'; tbox.innerHTML='';
-    try{
-      const [p,it]=await Promise.all([
-        sb.from('ecom_radar_pesquisa').select('*').eq('id',pid).single(),
-        sb.from('ecom_radar_item').select('fonte,posicao,item_id,product_id,keyword,titulo,preco,vendidos_faixa,seller_id,marca,full_logistica,frete_gratis,listing_type').eq('pesquisa_id',pid).order('posicao')
-      ]);
-      if(p.error) throw p.error; if(it.error) throw it.error;
-      const pes=p.data, itens=it.data||[];
-      this._g('rd-det-titulo').textContent='Varredura #'+pid+' — '+(pes.categoria_nome||pes.categoria_id||'');
-      this._g('rd-det-sub').textContent=(pes.categoria_id||'')+' · '+(pes.executado_em?new Date(pes.executado_em).toLocaleString('pt-BR'):'')+' · status: '+pes.status;
-      const hi=itens.filter(x=>x.fonte==='highlights');
-      const tr=itens.filter(x=>x.fonte==='trends');
-      hbox.innerHTML = hi.length
-        ? '<table class="rd-tbl"><thead><tr><th>#</th><th>Produto</th><th>Preço</th><th>Vendidos*</th><th>Marca</th><th>Seller</th><th>Full</th><th>Frete grátis</th><th>ID</th></tr></thead><tbody>'+
-          hi.map(x=>'<tr><td class="mono">'+(x.posicao??'—')+'</td><td>'+this.esc(x.titulo||'—')+'</td><td class="mono">'+this.brl(x.preco)+'</td><td class="mono">'+this.esc(x.vendidos_faixa||'—')+'</td><td>'+this.esc(x.marca||'—')+'</td><td class="mono">'+(x.seller_id??'—')+'</td><td>'+(x.full_logistica===true?'✅':x.full_logistica===false?'—':'?')+'</td><td>'+(x.frete_gratis===true?'✅':x.frete_gratis===false?'—':'?')+'</td><td class="mono" style="font-size:11px">'+this.esc(x.item_id||x.product_id||'—')+'</td></tr>').join('')+
-          '</tbody></table><div style="font-size:11px;color:var(--emuted2);margin-top:6px">* faixa referencial da API (sinal ordinal — serve para ranquear, não para projetar faturamento)</div>'
-        : '<div class="ph">sem itens de highlights nesta varredura — categoria possivelmente alta demais na árvore; tente uma subcategoria folha</div>';
-      tbox.innerHTML = tr.length
-        ? tr.map(x=>'<span class="rd-kw"><span class="n">'+(x.posicao??'')+'</span>'+this.esc(x.keyword||'')+'</span>').join('')
-        : '<div class="ph">sem termos de trends nesta varredura</div>';
-      await this.load(); // atualiza seleção visual
-    }catch(e){ hbox.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar detalhe: '+this.esc(e.message)+'</div>'; }
   },
 };
 
@@ -4610,7 +4681,11 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   if(sub==='radar'){ ecomRadar.load(); }
 }));
 (function(){ const v=document.getElementById('rd-varrer'); if(v) v.addEventListener('click',()=>ecomRadar.varrer());
-  const lp=document.getElementById('rd-pesquisas'); if(lp) lp.addEventListener('click',e=>{ const r=e.target.closest('[data-rdver]'); if(r) ecomRadar.ver(Number(r.dataset.rdver)); });
+  const vc=document.getElementById('rd-vend-cards'); if(vc) vc.addEventListener('click',e=>{ const hAcc=e.target.closest('[data-rdacc]'); if(hAcc) ecomRadar.expandir(Number(hAcc.dataset.rdacc)); });
+  const bar=document.getElementById('rdviewbar'); if(bar) bar.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
+    bar.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x===b));
+    document.getElementById('rdview-vend').style.display=(b.dataset.rdview==='vend')?'':'none';
+    document.getElementById('rdview-proc').style.display=(b.dataset.rdview==='proc')?'':'none'; });
 })();
 (function(){ const c=ecomAlvo._g('al-cadastrar'); if(c) c.addEventListener('click',()=>ecomAlvo.cadastrar());
   const imp=ecomAlvo._g('al-import'); if(imp) imp.addEventListener('click',e=>{ if(e.target.closest('[data-alimport]')) alert('Leva à Mesa de Análise / Import OS para estudar fornecedor e tributação da importação direta (DUIMP).'); });
