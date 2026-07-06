@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-05-G | selecta-banco-preco | Radar v0.2.1: link Ver com fallback determinístico p/ página de catálogo (/p/{product_id}); colunas Vend./Veloc. condicionais — omitidas com nota de limitação quando a API nega sold_quantity de terceiros (403 provado em 05/07); rótulo fino da Idade em catálogo | base: -F -->
+<!-- BUILD 2026-07-06-A | selecta-banco-preco | Radar v0.3: seletor de categorias mapeadas (nome automático) + botão Consultar (abre última varredura sem gastar API) + gate de token na Nova Varredura (lê ecom_vw_token_status; bloqueio com msg de janela 04h50–10h50 / 14h50–20h50 BRT) + selo de status do token na aba | base: -G -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1309,15 +1309,21 @@
       <p class="esub">Pesquisa de mercado com dado oficial do ML — o que mais vende (highlights) e o que o comprador busca (trends). Fase de mapeamento: nenhum filtro de marca ou margem. Toda métrica estimada carrega asterisco; nada aqui é simulado.</p>
 
       <div class="ecard" style="border-color:var(--eamber)">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:6px"><span id="rd-token-selo" style="font-size:11.5px;color:var(--emuted2);font-family:var(--emono)">🔑 token…</span></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
-          <div>
+          <div style="flex:1;min-width:260px">
+            <label style="display:block;font-size:11px;color:var(--emuted);margin-bottom:4px">Categoria ML (mapeadas)</label>
+            <select id="rd-cat-sel" style="width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:8px 10px;font-size:13px"></select>
+          </div>
+          <div id="rd-custom-id" style="display:none">
             <label style="display:block;font-size:11px;color:var(--emuted);margin-bottom:4px">Categoria ML (ID)</label>
             <input id="rd-cat-id" placeholder="ex: MLB1648" style="width:130px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:8px 10px;font-family:var(--emono);font-size:13px">
           </div>
-          <div style="flex:1;min-width:180px">
+          <div id="rd-custom-nome" style="flex:1;min-width:180px;display:none">
             <label style="display:block;font-size:11px;color:var(--emuted);margin-bottom:4px">Nome (referência sua)</label>
             <input id="rd-cat-nome" placeholder="ex: Memórias RAM" style="width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:8px 10px;font-size:13px">
           </div>
+          <button id="rd-consultar" class="chip" style="border-color:var(--eteal);color:var(--eteal);padding:9px 16px;font-weight:600">🔎 Consultar</button>
           <button id="rd-varrer" class="chip" style="border-color:var(--eamber);color:var(--eamber);padding:9px 16px;font-weight:600">📡 Nova varredura</button>
         </div>
         <div id="rd-msg" style="font-size:12.5px;margin-top:8px;color:var(--emuted)"></div>
@@ -4549,6 +4555,47 @@ const ecomAlvo={
 const ecomRadar={
   _g:id=>document.getElementById(id),
   grupos:null, aberto:{}, cacheHi:{},
+  // Categorias mapeadas (plano 05/07 + varridas). Fora da lista: opção "outra…".
+  CATS:[
+    {id:'MLB1712',   nome:'Componentes para PC'},
+    {id:'MLB1700',   nome:'Conectividade e Redes'},
+    {id:'MLB454379', nome:'Periféricos para PC'},
+    {id:'MLB430598', nome:'Armazenamento'},
+    {id:'MLB430918', nome:'Cabos e Hubs USB'},
+    {id:'MLB447778', nome:'Acessórios PC Gaming'},
+    {id:'MLB14370',  nome:'Monitores e Acessórios'},
+    {id:'MLB1648',   nome:'Informática (raiz — highlights magro; útil p/ trends)'},
+  ],
+  initSel(){
+    const sel=this._g('rd-cat-sel'); if(!sel||sel._init) return; sel._init=true;
+    sel.innerHTML=this.CATS.map(c=>'<option value="'+c.id+'">'+c.id+' — '+this.esc(c.nome)+'</option>').join('')
+      +'<option value="__outra">— outra categoria (digitar ID) —</option>';
+    sel.addEventListener('change',()=>{ const outra=sel.value==='__outra';
+      this._g('rd-custom-id').style.display=outra?'':'none';
+      this._g('rd-custom-nome').style.display=outra?'':'none'; });
+  },
+  // Resolve {id,nome} do seletor ou dos campos livres
+  catAtual(){
+    const sel=this._g('rd-cat-sel');
+    if(sel && sel.value && sel.value!=='__outra'){
+      const c=this.CATS.find(x=>x.id===sel.value);
+      return {id:sel.value, nome:c?c.nome.replace(/ \(raiz.*\)$/,''):null};
+    }
+    return {id:(this._g('rd-cat-id').value||'').trim().toUpperCase(), nome:(this._g('rd-cat-nome').value||'').trim()||null};
+  },
+  // Selo de status do token (lê ecom_vw_token_status — nunca o token em si)
+  async tokenStatus(){
+    try{ const r=await sb.from('ecom_vw_token_status').select('expires_at,valido').limit(1);
+      if(r.error||!r.data||!r.data.length) return null; return r.data[0];
+    }catch(_e){ return null; }
+  },
+  async selo(){
+    const el=this._g('rd-token-selo'); if(!el) return;
+    const t=await this.tokenStatus();
+    if(!t){ el.textContent='🔑 token: status indisponível'; el.style.color='var(--emuted2)'; return; }
+    if(t.valido){ el.textContent='🔑 Token ML ✅ válido até '+new Date(t.expires_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); el.style.color='var(--eemerald)'; }
+    else { el.textContent='🔑 Token ML ❌ expirado — renovação automática ~:45'; el.style.color='var(--ered)'; }
+  },
   brl:v=>v==null?'—':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),
   esc:s=>s==null?'':String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
   badge(st){ const m={concluida:'ok',parcial:'warn',erro:'err'}; return '<span class="rd-badge '+(m[st]||'warn')+'">'+this.esc(st)+'</span>'; },
@@ -4565,6 +4612,7 @@ const ecomRadar={
     const x=v/meses; return (x>=100?Math.round(x/10)*10:x>=10?Math.round(x):x.toFixed(1)).toString().replace('.',',')+'/mês*'; },
 
   async load(){
+    this.initSel(); this.selo();
     const vbox=this._g('rd-vend-cards'), pbox=this._g('rd-proc-cards'), lbox=this._g('rd-pesquisas');
     try{
       const p=await sb.from('ecom_radar_pesquisa').select('id,categoria_id,categoria_nome,status,executado_em,observacao').order('id',{ascending:false}).limit(120);
@@ -4652,12 +4700,40 @@ const ecomRadar={
     }catch(e){ body.innerHTML='<div class="ph" style="color:var(--ered)">erro ao detalhar: '+this.esc(e.message)+'</div>'; }
   },
 
+  // Consultar = abrir a última varredura da categoria selecionada (zero API do ML)
+  async consultar(){
+    const {id}=this.catAtual(); const msg=this._g('rd-msg');
+    if(!/^MLB\d+$/.test(id)){ msg.style.color='var(--ered)'; msg.textContent='Selecione (ou digite) um ID de categoria válido.'; return; }
+    if(!this.grupos){ await this.load(); }
+    const g=(this.grupos||[]).find(x=>x.categoria_id===id);
+    if(!g){ msg.style.color='var(--eamber)'; msg.textContent='Nenhuma varredura de '+id+' ainda — use 📡 Nova varredura para a primeira.'; return; }
+    msg.style.color='var(--emuted)'; msg.textContent='🔎 Última varredura de '+id+': #'+g.id+' em '+this.dtBR(g.executado_em)+' ('+g.status+').';
+    // garante a visão Mais Vendidos visível
+    const bar=document.getElementById('rdviewbar');
+    if(bar){ bar.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x.dataset.rdview==='vend'));
+      document.getElementById('rdview-vend').style.display='';
+      document.getElementById('rdview-proc').style.display='none'; }
+    const body=this._g('rd-body-'+g.id);
+    if(body && body.style.display==='none') await this.expandir(g.id);
+    const card=document.querySelector('.rd-acc[data-rdpid="'+g.id+'"]');
+    if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
+  },
+
   async varrer(){
-    const id=(this._g('rd-cat-id').value||'').trim().toUpperCase();
-    const nome=(this._g('rd-cat-nome').value||'').trim();
+    const {id,nome}=this.catAtual();
     const msg=this._g('rd-msg'), btn=this._g('rd-varrer');
     if(!/^MLB\d+$/.test(id)){ msg.style.color='var(--ered)'; msg.textContent='Informe um ID de categoria válido (formato MLB + números, ex: MLB1648).'; return; }
-    btn.disabled=true; msg.style.color='var(--emuted)'; msg.textContent='📡 Varrendo '+id+'… (highlights + trends via API oficial)';
+    // Gate de token: verifica a validade REAL antes de gastar chamada na Edge.
+    // Se o keepalive estiver operando, este bloqueio nunca aparece.
+    btn.disabled=true; msg.style.color='var(--emuted)'; msg.textContent='🔑 Verificando token ML…';
+    const t=await this.tokenStatus();
+    if(t && t.valido===false){
+      btn.disabled=false; this.selo();
+      msg.style.color='var(--ered)';
+      msg.textContent='⛔ Token ML expirado — solicite entre 04h50–10h50 e 14h50–20h50 (BRT) ou aguarde a renovação automática (~minuto :45) e tente de novo.';
+      return;
+    }
+    msg.textContent='📡 Varrendo '+id+'… (highlights + trends via API oficial)';
     try{
       const r=await sb.functions.invoke('ml-radar',{ body:{ categoria_id:id, categoria_nome:nome||null } });
       if(r.error) throw new Error(r.error.message||'falha na Edge Function');
@@ -4684,6 +4760,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   if(sub==='radar'){ ecomRadar.load(); }
 }));
 (function(){ const v=document.getElementById('rd-varrer'); if(v) v.addEventListener('click',()=>ecomRadar.varrer());
+  const cq=document.getElementById('rd-consultar'); if(cq) cq.addEventListener('click',()=>ecomRadar.consultar());
   const vc=document.getElementById('rd-vend-cards'); if(vc) vc.addEventListener('click',e=>{ const hAcc=e.target.closest('[data-rdacc]'); if(hAcc) ecomRadar.expandir(Number(hAcc.dataset.rdacc)); });
   const bar=document.getElementById('rdviewbar'); if(bar) bar.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
     bar.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x===b));
