@@ -1327,6 +1327,7 @@
       <div class="alsubbar" id="rdviewbar" style="margin-top:2px">
         <button class="alsub-btn active" data-rdview="vend">🏆 Mais Vendidos</button>
         <button class="alsub-btn" data-rdview="proc">🔎 Mais Procurados</button>
+        <button class="alsub-btn" data-rdview="pesq">🎯 Itens alvo pesquisa</button>
       </div>
 
       <div id="rdview-vend">
@@ -1334,6 +1335,53 @@
       </div>
       <div id="rdview-proc" style="display:none">
         <div id="rd-proc-cards"><div class="ph">carregando…</div></div>
+      </div>
+
+      <!-- =====================================================================
+           ITENS ALVO PESQUISA v1.0 (07/07/2026) — inteligência EXTERNA de mercado
+           Radar descobre → alvo entra aqui → rodada de sábado (export → chat →
+           prints → retorno .md → import) → série temporal por alvo (top-3).
+           Não analisa anúncio Selecta. Não alimenta importação. Campo de estudo.
+           ===================================================================== -->
+      <div id="rdview-pesq" style="display:none">
+        <p class="esub" style="margin-top:6px">Inteligência externa e silenciosa: quem vende mais, como, por quanto, com que marca. Top-3 por item alvo, medição semanal por prints (rodada de sábado). Dado bruto do print — nada estimado. <span id="pq-versao" style="color:var(--emuted2);font-family:var(--emono);font-size:11px">v1.0</span></p>
+        <div id="pq-fresh" style="margin:0 0 10px"></div>
+
+        <div class="ecard">
+          <h3>Cadastrar item alvo <span style="color:var(--emuted2);font-weight:400;text-transform:none;letter-spacing:0">— chave = produto (marca+modelo+categoria); anúncios/MLB são mutáveis</span></h3>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+            <div class="efield"><label>Marca <span class="req">*</span></label><input class="ainput" id="pq-f-marca" style="width:130px"></div>
+            <div class="efield"><label>Modelo / termo <span class="req">*</span></label><input class="ainput" id="pq-f-modelo" style="width:190px"></div>
+            <div class="efield"><label>Categoria <span class="req">*</span></label><input class="ainput" id="pq-f-categoria" style="width:150px" placeholder="ex.: Suportes"></div>
+            <div class="efield"><label>Nicho (ref. Radar)</label><input class="ainput" id="pq-f-nicho" style="width:170px" placeholder="ex.: C1 ergonomia"></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-top:8px">
+            <div class="efield"><label>Link líder (P1)</label><input class="ainput mono" id="pq-f-link1" style="width:250px" placeholder="URL do anúncio 1º"></div>
+            <div class="efield"><label>Link P2</label><input class="ainput mono" id="pq-f-link2" style="width:250px" placeholder="URL do 2º (opcional)"></div>
+            <div class="efield"><label>Link P3</label><input class="ainput mono" id="pq-f-link3" style="width:250px" placeholder="URL do 3º (opcional)"></div>
+            <button class="addbtn" id="pq-add">+ Adicionar alvo</button>
+          </div>
+          <div class="formmsg" id="pq-formmsg"></div>
+        </div>
+
+        <div class="ecard">
+          <h3>Rodada de sábado</h3>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button class="chip" id="pq-export" style="border-color:var(--eteal);color:var(--eteal);padding:9px 16px;font-weight:600">📤 Exportar comando + estado (.md)</button>
+            <span class="note" style="margin:0" id="pq-exp-msg">1) exporte · 2) cole no chat · 3) envie os prints pedidos · 4) cole o retorno abaixo</span>
+          </div>
+          <textarea id="pq-retorno" placeholder="Cole aqui o retorno do chat (bloco ===MEDICOES_V1=== … ===FIM_MEDICOES===)" style="width:100%;min-height:110px;margin-top:10px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:10px;font-family:var(--emono);font-size:12px"></textarea>
+          <div style="display:flex;gap:10px;margin-top:8px;align-items:center">
+            <button class="chip" id="pq-preview" style="padding:8px 14px">🔎 Pré-visualizar</button>
+            <button class="chip" id="pq-gravar" style="display:none;border-color:var(--eemerald);color:var(--eemerald);padding:8px 14px;font-weight:600">💾 Confirmar e gravar</button>
+            <span id="pq-msg" style="font-size:12.5px;color:var(--emuted)"></span>
+          </div>
+          <div id="pq-prevbox" style="margin-top:10px"></div>
+        </div>
+
+        <div id="pq-alvos"><div class="ph">carregando…</div></div>
+
+        <p class="note" style="margin-top:10px">Método declarado: velocidade = Δ avaliações/semana do anúncio; fluxo estimado do nicho = soma do top-3 × razão 1:10–1:30 (avaliação→venda, ML) — <b>piso conservador com asterisco, nunca faturamento</b>. Faixa "+N vendidos" entra como texto exato do print (salto de faixa = piso garantido). Arquivar alvo é decisão exclusiva do Igor. Rodada parada não afeta nada do dia a dia — no máximo atrasa uma decisão.</p>
       </div>
     </div>
 
@@ -4722,6 +4770,219 @@ const ecomRadar={
   },
 };
 
+
+// =====================================================================
+// ITENS ALVO PESQUISA v1.0 (07/07/2026) — ecomPesq
+// Inteligência EXTERNA de mercado (top-3 por item alvo, medição semanal
+// por prints). Tabelas: ecom_pesquisa_alvo / ecom_pesquisa_medicao.
+// Escrita SEMPRE por ação explícita do Igor (cadastrar / confirmar e
+// gravar). O comando do agente vive AQUI (fonte única) e sai no export.
+// =====================================================================
+const ecomPesq={
+  VERSAO:'v1.0 · 07/07/2026',
+  _g:id=>document.getElementById(id),
+  esc:s=>s==null?'':String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+  brl:v=>v==null?'—':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),
+  dt:s=>s?new Date(s+'T12:00:00').toLocaleDateString('pt-BR'):'—',
+  alvos:[], med:{}, loaded:false, _parsed:null,
+
+  COMANDO:[
+'COMANDO — AGENTE ML PESQUISA · Selecta Solution · v1.0 (07/07/2026)',
+'',
+'[PAPEL] Você é o Agente ML Pesquisa: inteligência EXTERNA de mercado do Mercado Livre, silenciosa. Mede, semana a semana, o fluxo real dos nichos-alvo pelos proxies públicos dos 3 anúncios líderes de cada item alvo. NÃO analisa anúncios da Selecta, NÃO alimenta decisão de importação, NÃO opina sobre portfólio — outras mesas cuidam disso. PT-BR sempre. Tom: analista objetivo, zero romantização. NA DÚVIDA: PARE e pergunte (uma pergunta por vez).',
+'',
+'[INSUMOS DESTA SESSÃO] (1) Este arquivo: comando + estado dos alvos + baselines da última rodada. (2) Prints que o Igor enviará, um por anúncio: topo da página do anúncio, mostrando título, preço, "+N vendidos", nota e nº de avaliações, selo Full e nome do vendedor.',
+'',
+'[FLUXO — EXATAMENTE NESTA ORDEM]',
+'1. LISTAR: para cada item alvo ATIVO abaixo, liste ao Igor os links a fotografar (P1, P2, P3). Posição sem link: peça a ele que abra a busca do ML pelo termo do alvo, identifique o anúncio da posição e envie print + link — registre o MLB novo.',
+'2. EXTRAIR: por anúncio, SOMENTE o que estiver visível no print: preco; faixa_vendidos (texto exato, ex.: +500); avaliacoes_qtd; avaliacoes_nota; full (S/N — selo raio/FULL); vendedor (nome exibido). Ilegível = campo VAZIO. PROIBIDO estimar, completar de memória ou converter faixa em número.',
+'3. TRAVAS (contra as baselines deste arquivo, por alvo+posição):',
+'   a. MONOTONIA: avaliacoes_qtd do MESMO MLB nunca diminui. Diminuiu = erro de leitura ou anúncio trocado -> PARAR e confirmar com o Igor.',
+'   b. ORDEM DE GRANDEZA: avaliacoes_qtd fora de ±50% da baseline -> PARAR e confirmar (pega 14->1487; tolera 1437->1487).',
+'   c. PREÇO: fora de ±30% da baseline -> confirmar antes de seguir.',
+'   d. MLB diferente do cadastrado -> perguntar se o líder mudou; se sim, usar o MLB novo e anotar "troca de lider" em obs.',
+'4. ECO: mostre a tabela extraída completa (todas as linhas) e aguarde o OK do Igor. Nada segue sem OK explícito.',
+'5. SAÍDA (após o OK): emita o bloco abaixo EXATO — ele é importado por máquina. Regras: data AAAA-MM-DD; decimal com PONTO; full = S ou N; campo sem valor = vazio (nada entre os ;); obs sem ponto-e-vírgula; NENHUM outro texto dentro dos marcadores.',
+'===MEDICOES_V1===',
+'alvo_id;data;posicao;mlb;preco;faixa_vendidos;avaliacoes_qtd;avaliacoes_nota;full;vendedor;obs',
+'===FIM_MEDICOES===',
+'6. LEITURA EXECUTIVA (fora do bloco, máx. 5 linhas): por alvo — velocidade vs rodada anterior, tendência de preço, troca de líder, e qualquer sinal que mereça atenção do Igor na varredura do Radar.',
+'',
+'[PROIBIÇÕES] Não acessar nem raspar o ML automaticamente (dado entra SÓ por print do Igor — regra de conformidade). Não estimar valor não visível. Não escrever nada dentro dos marcadores além das linhas de dados. Não transformar faixa (+500) em número exato.'
+].join('\n'),
+
+  async load(){
+    const box=this._g('pq-alvos');
+    try{
+      const a=await sb.from('ecom_pesquisa_alvo').select('*').order('id');
+      if(a.error) throw a.error;
+      this.alvos=a.data||[];
+      this.med={};
+      if(this.alvos.length){
+        const m=await sb.from('ecom_pesquisa_medicao').select('*').in('alvo_id',this.alvos.map(x=>x.id)).order('data_medicao').order('posicao');
+        if(m.error) throw m.error;
+        (m.data||[]).forEach(r=>{ (this.med[r.alvo_id]=this.med[r.alvo_id]||[]).push(r); });
+      }
+      this.loaded=true; this.render();
+    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar (tabelas ecom_pesquisa_* já criadas?): '+this.esc(e.message)+'</div>'; }
+  },
+
+  // última e penúltima medição de um alvo+posição
+  ult(aid,pos){ const arr=(this.med[aid]||[]).filter(r=>r.posicao===pos); return {u:arr[arr.length-1]||null, p:arr[arr.length-2]||null}; },
+  velo(aid,pos){ const {u,p}=this.ult(aid,pos);
+    if(!u||!p||u.avaliacoes_qtd==null||p.avaliacoes_qtd==null) return null;
+    const dias=(new Date(u.data_medicao)-new Date(p.data_medicao))/86400000; if(dias<=0) return null;
+    return (u.avaliacoes_qtd-p.avaliacoes_qtd)/dias*7; },
+
+  fresh(){
+    const el=this._g('pq-fresh'); if(!el) return;
+    let max=null; Object.values(this.med).forEach(arr=>arr.forEach(r=>{ if(!max||r.data_medicao>max) max=r.data_medicao; }));
+    if(!max){ el.innerHTML='<span class="chip" style="border-color:var(--eamber);color:var(--eamber)">nenhuma rodada registrada ainda — primeira coleta pendente</span>'; return; }
+    const dias=Math.floor((Date.now()-new Date(max+'T12:00:00'))/86400000);
+    const cor=dias>14?'var(--ered)':dias>7?'var(--eamber)':'var(--eemerald)';
+    el.innerHTML='<span class="chip" style="border-color:'+cor+';color:'+cor+'">última rodada: '+this.dt(max)+' — há '+dias+' dia(s)'+(dias>7?' · rodada de sábado ATRASADA':'')+'</span>';
+  },
+
+  render(){
+    this.fresh();
+    const box=this._g('pq-alvos');
+    if(!this.alvos.length){ box.innerHTML='<div class="ph">nenhum item alvo — cadastre acima (nasce da varredura do Radar)</div>'; return; }
+    const stCor={ativo:'var(--eemerald)',pausado:'var(--eamber)',arquivado:'var(--emuted2)'};
+    box.innerHTML=this.alvos.map(a=>{
+      const meds=this.med[a.id]||[];
+      const datas=[...new Set(meds.map(r=>r.data_medicao))].sort();
+      const semanas=datas.length>1?((new Date(datas[datas.length-1])-new Date(datas[0]))/604800000).toFixed(1):null;
+      let somaV=0,nV=0;
+      const posHtml=[1,2,3].map(p=>{
+        const {u}=this.ult(a.id,p); const v=this.velo(a.id,p); if(v!=null){ somaV+=v; nV++; }
+        const link=a['link'+p]?'<a href="'+this.esc(a['link'+p])+'" target="_blank" rel="noopener" style="color:var(--eteal)">↗</a>':'';
+        return '<div style="font-size:12px;padding:3px 0;border-bottom:1px dashed var(--eborder)"><b>P'+p+'</b> '+link+' <span class="mono" style="color:var(--emuted2)">'+this.esc(a['mlb'+p]||'—')+'</span>'
+          +(u?' · '+this.dt(u.data_medicao)+' · aval <b>'+(u.avaliacoes_qtd==null?'—':u.avaliacoes_qtd)+'</b>'+(u.avaliacoes_nota!=null?' ('+u.avaliacoes_nota+'★)':'')+' · '+this.brl(u.preco)+' · '+this.esc(u.faixa_vendidos||'—')+(u.full_flag===true?' · ⚡Full':'')+(u.vendedor?' · '+this.esc(u.vendedor):''):' · <span style="color:var(--emuted2)">sem medição</span>')
+          +(v!=null?' · <b style="color:var(--eteal)">'+v.toFixed(1)+' aval/sem</b>':'')+'</div>';
+      }).join('');
+      const fluxo=nV?('<span class="chip" style="border-color:var(--eteal);color:var(--eteal)">fluxo nicho (top-'+nV+'): <b>'+Math.round(somaV*10)+'–'+Math.round(somaV*30)+' vendas/sem*</b></span>'):'';
+      const histRows=datas.slice(-8).reverse().map(d=>{
+        const cel=[1,2,3].map(p=>{ const r=meds.find(x=>x.data_medicao===d&&x.posicao===p);
+          return '<td class="mono">'+(r?((r.avaliacoes_qtd==null?'—':r.avaliacoes_qtd)+' · '+(r.preco==null?'—':Number(r.preco).toFixed(2))):'—')+'</td>'; }).join('');
+        return '<tr><td class="mono">'+this.dt(d)+'</td>'+cel+'</tr>'; }).join('');
+      return '<div class="ecard">'
+        +'<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">'
+        +'<div><span class="rd-acc-tit">'+this.esc(a.marca)+' '+this.esc(a.modelo)+'</span> <span class="rd-acc-id">'+this.esc(a.categoria)+(a.nicho?' · '+this.esc(a.nicho):'')+' · ID '+a.id+'</span></div>'
+        +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+fluxo
+        +'<span class="chip" style="border-color:'+stCor[a.status]+';color:'+stCor[a.status]+'">'+this.esc(a.status)+'</span>'
+        +(semanas?'<span class="note" style="margin:0">'+semanas+' sem. de acompanhamento</span>':'')
+        +(a.status==='ativo'?'<button class="rowbtn" data-pqst="pausado" data-pqid="'+a.id+'">Pausar</button><button class="rowbtn del" data-pqst="arquivado" data-pqid="'+a.id+'">Arquivar</button>':'<button class="rowbtn" data-pqst="ativo" data-pqid="'+a.id+'">Reativar</button>')
+        +'</div></div>'
+        +'<div style="margin-top:8px">'+posHtml+'</div>'
+        +(histRows?'<details style="margin-top:8px"><summary style="font-size:12px;color:var(--emuted);cursor:pointer">histórico (aval · preço por posição)</summary><div style="overflow-x:auto"><table class="rd-tbl" style="margin-top:6px"><thead><tr><th>Data</th><th>P1</th><th>P2</th><th>P3</th></tr></thead><tbody>'+histRows+'</tbody></table></div></details>':'')
+        +'</div>';
+    }).join('');
+  },
+
+  async cadastrar(){
+    const g=id=>this._g(id), msg=g('pq-formmsg');
+    const marca=g('pq-f-marca').value.trim(), modelo=g('pq-f-modelo').value.trim(), cat=g('pq-f-categoria').value.trim();
+    if(!marca||!modelo||!cat){ msg.textContent='Marca, modelo e categoria são obrigatórios.'; msg.style.color='var(--ered)'; return; }
+    const row={marca,modelo,categoria:cat,nicho:g('pq-f-nicho').value.trim()||null,
+      link1:g('pq-f-link1').value.trim()||null,link2:g('pq-f-link2').value.trim()||null,link3:g('pq-f-link3').value.trim()||null,status:'ativo'};
+    ['1','2','3'].forEach(p=>{ const l=row['link'+p]; if(l){ const m=l.match(/MLB-?\d+/i); row['mlb'+p]=m?m[0].replace('-','').toUpperCase():null; } });
+    try{ const r=await sb.from('ecom_pesquisa_alvo').insert(row); if(r.error) throw r.error;
+      msg.textContent='✓ Alvo cadastrado.'; msg.style.color='var(--eemerald)';
+      ['pq-f-marca','pq-f-modelo','pq-f-categoria','pq-f-nicho','pq-f-link1','pq-f-link2','pq-f-link3'].forEach(id=>g(id).value='');
+      await this.load();
+    }catch(e){ msg.textContent='Erro: '+e.message; msg.style.color='var(--ered)'; }
+  },
+
+  async setStatus(id,st){
+    const a=this.alvos.find(x=>String(x.id)===String(id)); if(!a) return;
+    if(!confirm('Confirmar: '+a.marca+' '+a.modelo+' → '+st+'?'+(st==='arquivado'?' (histórico é preservado)':''))) return;
+    try{ const r=await sb.from('ecom_pesquisa_alvo').update({status:st,atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; await this.load(); }
+    catch(e){ alert('Erro: '+e.message); }
+  },
+
+  exportar(){
+    const hoje=new Date().toISOString().slice(0,10);
+    const ativos=this.alvos.filter(a=>a.status==='ativo');
+    const msg=this._g('pq-exp-msg');
+    if(!ativos.length){ msg.textContent='Nenhum alvo ATIVO para exportar — cadastre primeiro.'; msg.style.color='var(--ered)'; return; }
+    let md=this.COMANDO+'\n\n## ESTADO — alvos ativos ('+hoje+')\n';
+    ativos.forEach(a=>{
+      md+='\n### ALVO '+a.id+' · '+a.marca+' '+a.modelo+' · '+a.categoria+(a.nicho?' ('+a.nicho+')':'')+'\n';
+      [1,2,3].forEach(p=>{
+        const {u}=this.ult(a.id,p);
+        md+='- P'+p+': '+(a['mlb'+p]||'MLB?')+' · '+(a['link'+p]||'SEM LINK — pedir ao Igor')
+          +(u?' · BASELINE '+u.data_medicao+': aval='+(u.avaliacoes_qtd==null?'?':u.avaliacoes_qtd)+' preco='+(u.preco==null?'?':u.preco)+' faixa='+(u.faixa_vendidos||'?'):' · BASELINE: nenhuma (primeira medição)')+'\n';
+      });
+    });
+    const paus=this.alvos.filter(a=>a.status!=='ativo');
+    if(paus.length) md+='\nAlvos pausados/arquivados (NÃO coletar): '+paus.map(a=>a.id+' '+a.marca+' '+a.modelo).join(' · ')+'\n';
+    md+='\n(fim do export — aguardar prints do Igor)\n';
+    const blob=new Blob([md],{type:'text/markdown;charset=utf-8'});
+    const url=URL.createObjectURL(blob); const el=document.createElement('a');
+    el.href=url; el.download='pesquisa_alvo_'+hoje+'.md'; el.click(); URL.revokeObjectURL(url);
+    msg.textContent='✓ Exportado ('+ativos.length+' alvo(s)). Cole o arquivo inteiro no chat.'; msg.style.color='var(--eemerald)';
+  },
+
+  preview(){
+    const box=this._g('pq-prevbox'), msg=this._g('pq-msg'), btn=this._g('pq-gravar');
+    this._parsed=null; btn.style.display='none'; box.innerHTML='';
+    const txt=this._g('pq-retorno').value;
+    const m=txt.match(/===MEDICOES_V1===([\s\S]*?)===FIM_MEDICOES===/);
+    if(!m){ msg.textContent='Bloco ===MEDICOES_V1=== … ===FIM_MEDICOES=== não encontrado no texto colado.'; msg.style.color='var(--ered)'; return; }
+    const linhas=m[1].split('\n').map(s=>s.trim()).filter(s=>s&&!s.startsWith('alvo_id'));
+    if(!linhas.length){ msg.textContent='Bloco vazio.'; msg.style.color='var(--ered)'; return; }
+    const num=v=>{ v=(v||'').trim(); if(v==='') return null; const n=parseFloat(v.replace(',','.')); return isNaN(n)?null:n; };
+    const rows=[]; const avisos=[]; let erros=0;
+    linhas.forEach((ln,i)=>{
+      const c=ln.split(';');
+      const r={alvo_id:parseInt(c[0],10), data_medicao:(c[1]||'').trim(), posicao:parseInt(c[2],10),
+        mlb:(c[3]||'').trim()||null, preco:num(c[4]), faixa_vendidos:(c[5]||'').trim()||null,
+        avaliacoes_qtd:c[6]&&c[6].trim()!==''?parseInt(c[6],10):null, avaliacoes_nota:num(c[7]),
+        full_flag:(c[8]||'').trim().toUpperCase()==='S'?true:((c[8]||'').trim().toUpperCase()==='N'?false:null),
+        vendedor:(c[9]||'').trim()||null, obs:(c[10]||'').trim()||null};
+      const probs=[];
+      const alvo=this.alvos.find(a=>a.id===r.alvo_id);
+      if(!alvo){ probs.push({e:1,t:'alvo_id inexistente'}); }
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(r.data_medicao)) probs.push({e:1,t:'data inválida'});
+      if(!(r.posicao>=1&&r.posicao<=3)) probs.push({e:1,t:'posição fora de 1–3'});
+      if(alvo){
+        const dup=(this.med[r.alvo_id]||[]).some(x=>x.data_medicao===r.data_medicao&&x.posicao===r.posicao);
+        if(dup) probs.push({e:1,t:'já existe medição nesse alvo/posição/data'});
+        const {u}=this.ult(r.alvo_id,r.posicao);
+        if(u&&u.avaliacoes_qtd!=null&&r.avaliacoes_qtd!=null){
+          const mesmoMlb=!r.mlb||!u.mlb||r.mlb===u.mlb;
+          if(mesmoMlb&&r.avaliacoes_qtd<u.avaliacoes_qtd) probs.push({e:1,t:'MONOTONIA: aval caiu ('+u.avaliacoes_qtd+'→'+r.avaliacoes_qtd+')'});
+          if(Math.abs(r.avaliacoes_qtd-u.avaliacoes_qtd)/u.avaliacoes_qtd>0.5) probs.push({e:0,t:'±50%: aval '+u.avaliacoes_qtd+'→'+r.avaliacoes_qtd});
+          if(!mesmoMlb) probs.push({e:0,t:'MLB trocado ('+u.mlb+'→'+r.mlb+') — líder mudou?'});
+        }
+        if(u&&u.preco!=null&&r.preco!=null&&Math.abs(r.preco-u.preco)/u.preco>0.3) probs.push({e:0,t:'±30%: preço '+u.preco+'→'+r.preco});
+      }
+      if(probs.some(p=>p.e)) erros++;
+      rows.push({r,probs,ln:i+1});
+    });
+    this._parsed=erros?null:rows.map(x=>x.r);
+    box.innerHTML='<div style="overflow-x:auto"><table class="rd-tbl"><thead><tr><th>#</th><th>Alvo</th><th>Data</th><th>P</th><th>MLB</th><th>Preço</th><th>Faixa</th><th>Aval</th><th>Nota</th><th>Full</th><th>Vendedor</th><th>Validação</th></tr></thead><tbody>'
+      +rows.map(x=>{ const a=this.alvos.find(z=>z.id===x.r.alvo_id);
+        const val=x.probs.length?x.probs.map(p=>'<div style="color:'+(p.e?'var(--ered)':'var(--eamber)')+'">'+(p.e?'⛔ ':'⚠ ')+this.esc(p.t)+'</div>').join(''):'<span style="color:var(--eemerald)">✓</span>';
+        return '<tr><td class="mono">'+x.ln+'</td><td>'+(a?this.esc(a.marca+' '+a.modelo):'<span style="color:var(--ered)">?'+x.r.alvo_id+'</span>')+'</td><td class="mono">'+this.esc(x.r.data_medicao)+'</td><td class="mono">'+x.r.posicao+'</td><td class="mono">'+this.esc(x.r.mlb||'—')+'</td><td class="mono">'+(x.r.preco==null?'—':x.r.preco.toFixed(2))+'</td><td>'+this.esc(x.r.faixa_vendidos||'—')+'</td><td class="mono">'+(x.r.avaliacoes_qtd==null?'—':x.r.avaliacoes_qtd)+'</td><td class="mono">'+(x.r.avaliacoes_nota==null?'—':x.r.avaliacoes_nota)+'</td><td>'+(x.r.full_flag===true?'S':x.r.full_flag===false?'N':'—')+'</td><td>'+this.esc(x.r.vendedor||'—')+'</td><td>'+val+'</td></tr>'; }).join('')
+      +'</tbody></table></div>';
+    if(erros){ msg.textContent='⛔ '+erros+' linha(s) com erro bloqueante — corrija o texto (ou peça correção ao chat) e pré-visualize de novo. Nada foi gravado.'; msg.style.color='var(--ered)'; }
+    else{ msg.textContent='✓ '+rows.length+' linha(s) válida(s)'+(rows.some(x=>x.probs.length)?' (com alertas ⚠ — confira antes de gravar)':'')+'. Nada gravado ainda — confirme ao lado.'; msg.style.color='var(--eemerald)'; this._g('pq-gravar').style.display=''; }
+  },
+
+  async gravar(){
+    const msg=this._g('pq-msg'), btn=this._g('pq-gravar');
+    if(!this._parsed||!this._parsed.length) return;
+    btn.disabled=true;
+    try{ const r=await sb.from('ecom_pesquisa_medicao').insert(this._parsed); if(r.error) throw r.error;
+      msg.textContent='✓ '+this._parsed.length+' medição(ões) gravada(s).'; msg.style.color='var(--eemerald)';
+      this._g('pq-retorno').value=''; this._g('pq-prevbox').innerHTML=''; btn.style.display='none'; this._parsed=null;
+      await this.load();
+    }catch(e){ msg.textContent='Erro ao gravar: '+e.message; msg.style.color='var(--ered)'; }
+    finally{ btn.disabled=false; }
+  },
+};
+
 $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
   const sub=b.dataset.sub;
@@ -4739,8 +5000,14 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const vc=document.getElementById('rd-vend-cards'); if(vc) vc.addEventListener('click',e=>{ const hAcc=e.target.closest('[data-rdacc]'); if(hAcc) ecomRadar.expandir(Number(hAcc.dataset.rdacc)); });
   const bar=document.getElementById('rdviewbar'); if(bar) bar.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
     bar.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x===b));
-    document.getElementById('rdview-vend').style.display=(b.dataset.rdview==='vend')?'':'none';
-    document.getElementById('rdview-proc').style.display=(b.dataset.rdview==='proc')?'':'none'; });
+    ['vend','proc','pesq'].forEach(v=>{ const el=document.getElementById('rdview-'+v); if(el) el.style.display=(b.dataset.rdview===v)?'':'none'; });
+    if(b.dataset.rdview==='pesq' && !ecomPesq.loaded) ecomPesq.load(); });
+  // ITENS ALVO PESQUISA v1.0 — wiring
+  const pqAdd=document.getElementById('pq-add'); if(pqAdd) pqAdd.addEventListener('click',()=>ecomPesq.cadastrar());
+  const pqExp=document.getElementById('pq-export'); if(pqExp) pqExp.addEventListener('click',()=>ecomPesq.exportar());
+  const pqPrev=document.getElementById('pq-preview'); if(pqPrev) pqPrev.addEventListener('click',()=>ecomPesq.preview());
+  const pqGrav=document.getElementById('pq-gravar'); if(pqGrav) pqGrav.addEventListener('click',()=>ecomPesq.gravar());
+  const pqBox=document.getElementById('pq-alvos'); if(pqBox) pqBox.addEventListener('click',e=>{ const s=e.target.closest('[data-pqst]'); if(s) ecomPesq.setStatus(s.dataset.pqid, s.dataset.pqst); });
 })();
 (function(){ const c=ecomAlvo._g('al-cadastrar'); if(c) c.addEventListener('click',()=>ecomAlvo.cadastrar());
   const imp=ecomAlvo._g('al-import'); if(imp) imp.addEventListener('click',e=>{ if(e.target.closest('[data-alimport]')) alert('Leva à Mesa de Análise / Import OS para estudar fornecedor e tributação da importação direta (DUIMP).'); });
