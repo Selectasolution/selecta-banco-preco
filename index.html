@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-07-F | selecta-banco-preco | Controle de Anúncios: campo de consulta por código do produto abaixo de "Anúncios ativos" (filtro vivo sobre a lista, botão limpar, contador N de total) | base: -E (7 categorias novas no Simulador) -->
+<!-- BUILD 2026-07-07-G | selecta-banco-preco | (1) Controle de Anúncios: campo de consulta por código do produto abaixo de "Anúncios ativos" (filtro vivo, botão limpar, contador N de total); (2) default de reputação do frontend vermelha→verde (estado do Simulador + fallback do simulador PC) para espelhar o banco já verde — CHIP manual segue disponível; NÃO é fonte-viva (hardcode, pendente ecom_reputacao_snapshot travado em 1_red) | base: -E -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2774,7 +2774,7 @@ const ecom = {
     [9000,11000,'9–11 kg']
   ],
   itens: [], freteTbl: [], comMap: {}, loaded:false, wired:false,
-  reputacao:'vermelha', modalidade:'flex', editId:null, fProd:'', fVer:'',
+  reputacao:'verde', modalidade:'flex', editId:null, fProd:'', fVer:'',
 
   _g(id){ return document.getElementById(id); },
   _n(id){ const v=parseFloat(this._g(id).value); return isNaN(v)?0:v; },
@@ -4281,7 +4281,7 @@ const ecomAlvo={
     const elRep=wrap.querySelector('[data-msim-rep]');
     const btnSave=box.querySelector('[data-alsave="'+id+'"]');
     // Rótulo de reputação dinâmico (segue chip da aba Simulador)
-    const rep=(typeof ecom!=='undefined' && ecom.reputacao)?ecom.reputacao:'vermelha';
+    const rep=(typeof ecom!=='undefined' && ecom.reputacao)?ecom.reputacao:'verde';
     const repLabel=(typeof ecom!=='undefined' && ecom.repLabel)?ecom.repLabel(rep):rep;
     if(elRep) elRep.innerHTML='<span class="rep-pill '+rep+'">Reputação '+repLabel+'</span>';
     const gate=this._simAvalGate(id);
