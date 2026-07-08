@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-07-E | selecta-banco-preco | 7 categorias novas no Simulador (CAM Câmera Digital, CPS Controle PS5, FLM Filamento Imp. 3D, GBL Câmera Estabilizadora, MPD Mouse Pad, PDR Pen Drive, SPM Suporte Monitor) — comissões certificadas api_ml em ecom_categoria_comissao (CAM 11/16; demais 13/18) | anula o carimbo 2026-07-06-D (nunca publicado) | base: -C -->
+<!-- BUILD 2026-07-07-F | selecta-banco-preco | Controle de Anúncios: campo de consulta por código do produto abaixo de "Anúncios ativos" (filtro vivo sobre a lista, botão limpar, contador N de total) | base: -E (7 categorias novas no Simulador) -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1250,6 +1250,11 @@
             <span class="al-hsub">ranking por vendas</span>
           </div>
           <span id="al-anuncios-count" class="al-hcount"></span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin:4px 0 12px;flex-wrap:wrap">
+          <input class="vinput mono" id="al-anuncios-busca" type="text" placeholder="consultar por código do produto (ex.: SSD-0001)" style="flex:1;min-width:220px;max-width:360px" spellcheck="false" autocomplete="off">
+          <button class="vbtn sm" id="al-anuncios-busca-clear" style="background:var(--epanel3);color:var(--emuted)">limpar</button>
+          <span class="faint" id="al-anuncios-busca-msg" style="font-size:11.5px"></span>
         </div>
         <div id="al-anuncios"><div class="ph">nenhum anúncio cadastrado</div></div>
       </div>
@@ -4116,6 +4121,11 @@ const ecomAlvo={
       const vendas=this.vendas.filter(v=>v.produto_codigo===an.produto_codigo && v.data_solicitacao && new Date(v.data_solicitacao)>=pub).length;
       return {an,dias,vendas}; });
     lista.sort((a,b)=> (b.vendas-a.vendas) || ((b.dias==null?-1:b.dias)-(a.dias==null?-1:a.dias)) );
+    const _flt=(this.anunciosFiltro||'').trim().toLowerCase();
+    const listaF=_flt?lista.filter(r=>String(r.an.produto_codigo||'').toLowerCase().includes(_flt)):lista;
+    const _bmsg=this._g('al-anuncios-busca-msg');
+    if(_bmsg) _bmsg.textContent=_flt?(listaF.length+' de '+lista.length):'';
+    if(_flt && !listaF.length){ box.innerHTML='<div class="ph">nenhum anúncio com o código «'+String(this.anunciosFiltro).trim()+'»</div>'; const c0=this._g('al-anuncios-count'); if(c0) c0.textContent='0 de '+lista.length; return; }
     const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     // Semáforo pelo fato (dias × vendas). Cor entra no texto do "dias no ar · N venda(s)" — Opção 1.
     const infoCls=(dias,vendas)=>{
@@ -4125,7 +4135,7 @@ const ecomAlvo={
       if(vendas/Math.max(dias,1)<0.1) return 'med';
       return 'ok';
     };
-    box.innerHTML=lista.map((row,i)=>{ const an=row.an, dias=row.dias, vendas=row.vendas;
+    box.innerHTML=listaF.map((row,i)=>{ const an=row.an, dias=row.dias, vendas=row.vendas;
       const diasTxt = dias==null?'sem data':(dias<0?'agendado':dias+' dias no ar');
       const infoClass=infoCls(dias,vendas);
       // Sugestão: cinza se não há análise importada; cor do cls se há.
@@ -4166,7 +4176,7 @@ const ecomAlvo={
         +'</div>';
     }).join('');
     const cnt=this._g('al-anuncios-count');
-    if(cnt) cnt.textContent = lista.length+' anúncio'+(lista.length===1?'':'s')+' ativo'+(lista.length===1?'':'s');
+    if(cnt) cnt.textContent = (_flt ? listaF.length+' de '+lista.length : lista.length+' anúncio'+(lista.length===1?'':'s')+' ativo'+(lista.length===1?'':'s'));
   },
   toggleSug(anid, mlb){
     const box=document.querySelector('[data-alsugbox="'+anid+'"]'); if(!box) return;
@@ -5019,6 +5029,8 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
     const h=e.target.closest('[data-alhist]'); if(h){ ecomAlvo.toggleHist(h.dataset.alhist); return; }
     const sg=e.target.closest('[data-alsug]'); if(sg){ ecomAlvo.toggleSug(sg.dataset.anid, sg.dataset.alsug); return; }
   });
+  const abz=ecomAlvo._g('al-anuncios-busca'); if(abz) abz.addEventListener('input',()=>{ ecomAlvo.anunciosFiltro=abz.value; ecomAlvo.renderAnuncios(); });
+  const abzc=ecomAlvo._g('al-anuncios-busca-clear'); if(abzc) abzc.addEventListener('click',()=>{ const i=ecomAlvo._g('al-anuncios-busca'); if(i) i.value=''; ecomAlvo.anunciosFiltro=''; ecomAlvo.renderAnuncios(); if(i) i.focus(); });
   const bar=document.getElementById('alsubbar'); if(bar) bar.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
     const tgt=b.dataset.alsub;
     document.querySelectorAll('#ecom-sub-alvo .alsub').forEach(p=>{ p.style.display=(p.id==='alsub-'+tgt)?'':'none'; });
