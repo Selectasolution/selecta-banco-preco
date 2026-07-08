@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-07-G | selecta-banco-preco | (1) Controle de Anúncios: campo de consulta por código do produto abaixo de "Anúncios ativos" (filtro vivo, botão limpar, contador N de total); (2) default de reputação do frontend vermelha→verde (estado do Simulador + fallback do simulador PC) para espelhar o banco já verde — CHIP manual segue disponível; NÃO é fonte-viva (hardcode, pendente ecom_reputacao_snapshot travado em 1_red) | base: -E -->
+<!-- BUILD 2026-07-08-H | selecta-banco-preco | MODO EDIÇÃO: a caixa de editar anúncio (Controle de Anúncios) agora aparece em verde clarinho com selo "Editando anúncio", só enquanto está em edição — diferencia edição de cadastro novo (pedido da Alexia, aprovado 08/07). Puramente visual: classe .editing adicionada ao abrir e removida ao fechar/cancelar/salvar; zero mudança em campo, cálculo de margem, gravação (ecom_anuncios/ecom_anuncio_alteracao) ou cadastro novo | base: -G (Controle de Anúncios + default reputação verde) -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -813,6 +813,12 @@
     #tab-ecommerce .vpill.ok{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
     #tab-ecommerce .vmsg{font-size:12px;margin-top:8px;min-height:16px}
     #tab-ecommerce .vmsg.ok{color:var(--eemerald)} #tab-ecommerce .vmsg.err{color:var(--ered)}
+    /* modo edição — sinal visual (aprovado 08/07/2026): caixa verde clarinho só ao editar */
+    #tab-ecommerce [data-aleditbox].editing{background:rgba(16,185,129,.06);border:1px solid rgba(52,211,153,.42)!important;border-left:3px solid var(--eemerald)!important;border-radius:10px;padding:12px 14px 14px!important;box-shadow:0 0 0 1px rgba(52,211,153,.06) inset}
+    #tab-ecommerce [data-aleditbox].editing .efield label{color:#9fe6c6}
+    #tab-ecommerce [data-aleditbox].editing .vinput{border-color:rgba(52,211,153,.28)}
+    #tab-ecommerce [data-aleditbox].editing .msim{border-color:rgba(52,211,153,.22)}
+    #tab-ecommerce .al-editflag{display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,.14);color:var(--eemerald);border:1px solid rgba(52,211,153,.3);border-radius:7px;padding:3px 9px;font-size:11px;font-weight:700;margin-bottom:11px}
     #tab-ecommerce .msim{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:8px 12px;margin:8px 0 4px}
     #tab-ecommerce .msim-h{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin-bottom:4px;font-weight:600}
     #tab-ecommerce .msim-h .msim-hint{text-transform:none;letter-spacing:0;font-weight:400;color:var(--emuted2);font-size:11px}
@@ -4211,7 +4217,7 @@ const ecomAlvo={
   async editAnuncio(id){ const an=this.anuncios.find(x=>String(x.id)===String(id)); if(!an) return;
     const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
     const open=box.style.display!=='none';
-    document.querySelectorAll('[data-aleditbox]').forEach(b=>{ b.style.display='none'; b.innerHTML=''; });
+    document.querySelectorAll('[data-aleditbox]').forEach(b=>{ b.style.display='none'; b.innerHTML=''; b.classList.remove('editing'); });
     if(open) return;
     // Garante que catálogo, matriz de frete e comissões por categoria estejam carregados
     try{ if(typeof ecom!=='undefined'){
@@ -4222,7 +4228,8 @@ const ecomAlvo={
     // Layout aprovado 02/07/2026:
     // L1: Código · MLB · Data pub    L2: Título    L3: Preço · Tipo    L4: Motivo (livre)   L5: Simulador
     box.innerHTML=
-      '<div class="vrow3"><div class="efield"><label>Código *</label><input class="vinput mono" data-ef="cod" value="'+v(an.produto_codigo)+'"></div>'
+      '<span class="al-editflag">\u270F Editando an\u00FAncio</span>'
+      +'<div class="vrow3"><div class="efield"><label>Código *</label><input class="vinput mono" data-ef="cod" value="'+v(an.produto_codigo)+'"></div>'
       +'<div class="efield"><label>MLB *</label><input class="vinput mono" data-ef="mlb" value="'+v(an.anuncio_mlb)+'" placeholder="4811359527"></div>'
       +'<div class="efield"><label>Data publicação *</label><input class="vinput mono" data-ef="pub" type="date" value="'+v(String(an.data_publicacao||'').slice(0,10))+'"></div></div>'
       +'<div class="efield"><label>Título *</label><input class="vinput" data-ef="tit" value="'+v(an.titulo)+'"></div>'
@@ -4237,6 +4244,7 @@ const ecomAlvo={
       +'</div>'
       +'<div style="display:flex;gap:8px;align-items:center"><button class="vbtn sm" data-alsave="'+id+'">Salvar</button><button class="vbtn sm" data-alcancel="'+id+'" style="background:var(--epanel3);color:var(--emuted)">Cancelar</button><span class="vmsg" data-alemsg="'+id+'"></span></div>';
     box.style.display='';
+    box.classList.add('editing');
     box.querySelectorAll('[data-ef="cod"],[data-ef="preco"],[data-ef="tipo"]').forEach(el=>el.addEventListener('input',()=>this.renderSim(id)));
     box.querySelector('[data-ef="tipo"]').addEventListener('change',()=>this.renderSim(id));
     this.renderSim(id);
@@ -5025,7 +5033,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
     const d=e.target.closest('[data-aldel]'); if(d){ ecomAlvo.remover(d.dataset.aldel); return; }
     const ed=e.target.closest('[data-aledit]'); if(ed){ ecomAlvo.editAnuncio(ed.dataset.aledit); return; }
     const sv=e.target.closest('[data-alsave]'); if(sv){ ecomAlvo.salvarEdicao(sv.dataset.alsave); return; }
-    const cc=e.target.closest('[data-alcancel]'); if(cc){ const id=cc.dataset.alcancel; const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(box){ box.style.display='none'; box.innerHTML=''; } return; }
+    const cc=e.target.closest('[data-alcancel]'); if(cc){ const id=cc.dataset.alcancel; const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(box){ box.style.display='none'; box.innerHTML=''; box.classList.remove('editing'); } return; }
     const h=e.target.closest('[data-alhist]'); if(h){ ecomAlvo.toggleHist(h.dataset.alhist); return; }
     const sg=e.target.closest('[data-alsug]'); if(sg){ ecomAlvo.toggleSug(sg.dataset.anid, sg.dataset.alsug); return; }
   });
