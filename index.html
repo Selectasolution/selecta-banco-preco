@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-08-H | selecta-banco-preco | MODO EDIÇÃO: a caixa de editar anúncio (Controle de Anúncios) agora aparece em verde clarinho com selo "Editando anúncio", só enquanto está em edição — diferencia edição de cadastro novo (pedido da Alexia, aprovado 08/07). Puramente visual: classe .editing adicionada ao abrir e removida ao fechar/cancelar/salvar; zero mudança em campo, cálculo de margem, gravação (ecom_anuncios/ecom_anuncio_alteracao) ou cadastro novo | base: -G (Controle de Anúncios + default reputação verde) -->
+<!-- BUILD 2026-07-08-I | selecta-banco-preco | BOTÃO ATUALIZAR: no Controle de Anúncios, ao lado do contador de anúncios ativos — chama ecomAlvo.load() (re-busca anúncios+resultados+ecom_anuncio_alteracao e re-renderiza), fazendo aparecer as sugestões azuis (ação da Alexia após a estratégia) sem F5 na página. Motivo: sistema multiusuário sem realtime — a tela só lia o banco no load da aba, deixando o 2º usuário com estado velho. Feedback visual no botão (atualizando/✓). Zero mudança em dados ou gravação. | base: -H (modo edição verde) -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1255,7 +1255,10 @@
             <h3 class="al-htitle">Anúncios ativos</h3>
             <span class="al-hsub">ranking por vendas</span>
           </div>
-          <span id="al-anuncios-count" class="al-hcount"></span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="al-anuncios-count" class="al-hcount"></span>
+            <button class="vbtn sm" id="al-anuncios-refresh" title="Puxar as últimas alterações da Alexia e atualizar as sugestões (azul = ação registrada após a estratégia)">🔄 Atualizar</button>
+          </div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin:4px 0 12px;flex-wrap:wrap">
           <input class="vinput mono" id="al-anuncios-busca" type="text" placeholder="consultar por código do produto (ex.: SSD-0001)" style="flex:1;min-width:220px;max-width:360px" spellcheck="false" autocomplete="off">
@@ -5039,6 +5042,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   });
   const abz=ecomAlvo._g('al-anuncios-busca'); if(abz) abz.addEventListener('input',()=>{ ecomAlvo.anunciosFiltro=abz.value; ecomAlvo.renderAnuncios(); });
   const abzc=ecomAlvo._g('al-anuncios-busca-clear'); if(abzc) abzc.addEventListener('click',()=>{ const i=ecomAlvo._g('al-anuncios-busca'); if(i) i.value=''; ecomAlvo.anunciosFiltro=''; ecomAlvo.renderAnuncios(); if(i) i.focus(); });
+  const arf=ecomAlvo._g('al-anuncios-refresh'); if(arf) arf.addEventListener('click',async()=>{ const prev=arf.textContent; arf.disabled=true; arf.textContent='atualizando\u2026'; try{ await ecomAlvo.load(); arf.textContent='\u2713 atualizado'; }catch(e){ arf.textContent='erro ao atualizar'; } setTimeout(()=>{ arf.disabled=false; arf.textContent=prev; },1400); });
   const bar=document.getElementById('alsubbar'); if(bar) bar.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
     const tgt=b.dataset.alsub;
     document.querySelectorAll('#ecom-sub-alvo .alsub').forEach(p=>{ p.style.display=(p.id==='alsub-'+tgt)?'':'none'; });
