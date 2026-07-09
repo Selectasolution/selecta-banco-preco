@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-08-I | selecta-banco-preco | BOTÃO ATUALIZAR: no Controle de Anúncios, ao lado do contador de anúncios ativos — chama ecomAlvo.load() (re-busca anúncios+resultados+ecom_anuncio_alteracao e re-renderiza), fazendo aparecer as sugestões azuis (ação da Alexia após a estratégia) sem F5 na página. Motivo: sistema multiusuário sem realtime — a tela só lia o banco no load da aba, deixando o 2º usuário com estado velho. Feedback visual no botão (atualizando/✓). Zero mudança em dados ou gravação. | base: -H (modo edição verde) -->
+<!-- BUILD 2026-07-08-J | selecta-banco-preco | HISTÓRICO POR PAPEL (pedido da Alexia): no Controle de venda por anúncio, o botão Histórico agora mostra as ALTERAÇÕES dela (ecom_anuncio_alteracao: data + motivo + campo + preço anterior→novo) em vez das estratégias. O histórico de ESTRATÉGIAS (ecom_resultado_anuncio) migrou para a Mesa de veredito (aba Estratégia de Anúncios), abaixo de cada anúncio — é lá que o chat cruza resultados. Zero mudança em gravação ou banco: só troca de tela. | base: -I (botão atualizar) -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -888,6 +888,7 @@
     #tab-ecommerce .al-histtag.a{background:rgba(245,158,11,.15);color:#fcd34d}
     #tab-ecommerce .al-histtag.c{background:rgba(239,68,68,.15);color:#fca5a5}
     #tab-ecommerce .al-histtag.n{background:rgba(138,153,180,.15);color:var(--emuted2)}
+    #tab-ecommerce .al-histtag.b{background:rgba(56,189,248,.15);color:#7dd3fc}
     #tab-ecommerce .al-histmeta{color:var(--emuted2);font-size:10.5px;flex:1}
     #tab-ecommerce .al-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;margin:0 -14px 10px;background:rgba(16,185,129,.07);border-radius:10px;flex-wrap:wrap}
     #tab-ecommerce .al-header-l{display:flex;flex-direction:row;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
@@ -3997,9 +3998,9 @@ const ecomAlvo={
       }
     }catch(e){ console.warn('mesaAnuncios fallback snapshot:',e.message); }
     // Última alteração da Alexia por MLB — usado pra pintar Sugestão de AZUL quando ela agiu depois da última análise
-    this.ultAlteracao={};
-    try{ const ua=await sb.from('ecom_anuncio_alteracao').select('mlb,criado_em').order('criado_em',{ascending:false});
-      if(!ua.error){ (ua.data||[]).forEach(a=>{ if(a.mlb && !this.ultAlteracao[a.mlb]) this.ultAlteracao[a.mlb]=a.criado_em; }); }
+    this.ultAlteracao={}; this.altHist={};
+    try{ const ua=await sb.from('ecom_anuncio_alteracao').select('mlb,criado_em,campo,preco_anterior,preco_novo,motivo').order('criado_em',{ascending:false});
+      if(!ua.error){ (ua.data||[]).forEach(a=>{ if(!a.mlb) return; if(!this.ultAlteracao[a.mlb]) this.ultAlteracao[a.mlb]=a.criado_em; (this.altHist[a.mlb]=this.altHist[a.mlb]||[]).push(a); }); }
     }catch(e){ console.warn('ultAlteracao:',e.message); }
   },
   async radar(){
@@ -4096,12 +4097,14 @@ const ecomAlvo={
         const cod=an.produto_codigo||'SEM-C\u00D3DIGO';
         const tit=an.titulo||'(fora do cadastro e do lote atual — identificar e cadastrar)';
         const preco=(r.preco_sugerido!=null)?' \u00B7 <span class="mono" style="color:var(--eteal);font-weight:700">R$ '+r.preco_sugerido+'</span>':'';
+        const histE=(this.resHist&&this.resHist[r.anuncio_mlb])?this.resHist[r.anuncio_mlb]:[];
         html+='<div class="vli" style="align-items:flex-start;margin-bottom:10px">'
           +'<div class="vmain">'
           +'<div class="vp" style="font-size:13px"><span class="mono" style="color:var(--eteal);font-weight:700">'+esc(cod)+'</span> \u00B7 '+esc(tit)+'</div>'
           +'<div class="vm"><span class="mono">#'+esc(r.anuncio_mlb)+'</span>'+preco+'</div>'
           +(r.acao?'<div style="margin-top:6px"><span class="rpfar '+(r.cls||'n')+'">'+esc(r.acao)+'</span></div>':'')
           +(r.diagnostico?'<div style="margin-top:7px"><div style="font-size:10.5px;color:var(--eteal);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Leitura de mercado</div><div style="font-size:13px;color:var(--etxt);line-height:1.6">'+esc(r.diagnostico)+'</div></div>':'')
+          +(histE.length?'<div style="margin-top:8px"><button data-almesahist="'+esc(r.anuncio_mlb)+'" class="al-histlink">Histórico de estratégias ('+histE.length+')</button><div data-almesahistbox="'+esc(r.anuncio_mlb)+'" style="display:none;margin-top:6px;width:100%;max-width:640px"></div></div>':'')
           +'</div></div>';
       });
       html+='</div>';
@@ -4163,8 +4166,8 @@ const ecomAlvo={
       }
       const sugTxt = res ? 'Sugestão' : 'Sugestão';
       const sugBtn = '<button data-alsug="'+esc(an.anuncio_mlb||'')+'" data-anid="'+an.id+'" class="al-sug '+sugCls+'"'+(res?'':' title="Nenhuma análise importada"')+'>'+sugTxt+'</button>';
-      const hist=(an.anuncio_mlb && this.resHist[an.anuncio_mlb])?this.resHist[an.anuncio_mlb]:[];
-      const histLink = an.anuncio_mlb?'<button data-alhist="'+esc(an.anuncio_mlb)+'" class="al-histlink">Histórico ('+hist.length+')</button>':'';
+      const hist=(an.anuncio_mlb && this.altHist && this.altHist[an.anuncio_mlb])?this.altHist[an.anuncio_mlb]:[];
+      const histLink = an.anuncio_mlb?'<button data-alhist="'+esc(an.anuncio_mlb)+'" class="al-histlink" title="Alterações salvas neste anúncio (data + motivo)">Histórico ('+hist.length+')</button>':'';
       return '<div class="vli" style="align-items:flex-start">'
         +'<div style="font-weight:700;color:var(--emuted2);min-width:18px;text-align:right;font-size:12.5px">'+(i+1)+'</div>'
         +'<div class="vmain">'
@@ -4361,6 +4364,28 @@ const ecomAlvo={
     }catch(e){ if(msg){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; } }
   },
   toggleHist(mlb){ const box=document.querySelector('[data-alhistbox="'+mlb+'"]'); if(!box) return;
+    // Histórico do CONTROLE = alterações da Alexia (ecom_anuncio_alteracao): data + motivo + o que mudou.
+    // Pedido da Alexia (08/07): ela lembra do que FEZ, não do que foi sugerido. Estratégias ficam na Mesa.
+    if(box.style.display!=='none'){ box.style.display='none'; box.innerHTML=''; return; }
+    const hist=(this.altHist&&this.altHist[mlb])||[];
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const fmtDt=iso=>{ if(!iso) return '—'; try{ return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return String(iso).slice(0,16); } };
+    if(!hist.length){
+      box.innerHTML='<div class="al-sugbox n"><div class="al-sugmeta">Histórico de Alterações</div><div class="al-sugp faint">Nenhuma alteração registrada ainda para este anúncio.</div></div>';
+    } else {
+      const linhas=hist.map(h=>{
+        const dt=fmtDt(h.criado_em);
+        const tag=h.campo==='preco+tipo'?'preço+tipo':(h.campo==='tipo_anuncio'?'tipo':'preço');
+        const delta=(h.preco_anterior!=null&&h.preco_novo!=null)?' <span style="color:var(--emuted2)">· R$ '+(+h.preco_anterior).toFixed(2).replace('.',',')+' → R$ '+(+h.preco_novo).toFixed(2).replace('.',',')+'</span>':'';
+        const mot=h.motivo?esc(h.motivo):'<span style="color:var(--emuted2)">sem motivo registrado</span>';
+        return '<div class="al-histli"><span class="al-histdt">'+esc(dt)+'</span><span class="al-histtag b">'+esc(tag)+'</span><span class="al-histmeta" style="font-size:12px;color:var(--etxt)">'+mot+delta+'</span></div>';
+      }).join('');
+      box.innerHTML='<div class="al-sugbox n"><div class="al-sugmeta">Histórico de Alterações · '+hist.length+'</div>'+linhas+'</div>';
+    }
+    box.style.display='';
+  },
+  toggleHistEstrategia(mlb){ const box=document.querySelector('[data-almesahistbox="'+mlb+'"]'); if(!box) return;
+    // Histórico de ESTRATÉGIAS (ecom_resultado_anuncio) — vive na Mesa de veredito, abaixo de cada anúncio.
     if(box.style.display!=='none'){ box.style.display='none'; box.innerHTML=''; return; }
     const hist=this.resHist[mlb]||[];
     const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -5040,6 +5065,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
     const h=e.target.closest('[data-alhist]'); if(h){ ecomAlvo.toggleHist(h.dataset.alhist); return; }
     const sg=e.target.closest('[data-alsug]'); if(sg){ ecomAlvo.toggleSug(sg.dataset.anid, sg.dataset.alsug); return; }
   });
+  const mesa=ecomAlvo._g('al-mesa'); if(mesa) mesa.addEventListener('click',e=>{ const mh=e.target.closest('[data-almesahist]'); if(mh) ecomAlvo.toggleHistEstrategia(mh.dataset.almesahist); });
   const abz=ecomAlvo._g('al-anuncios-busca'); if(abz) abz.addEventListener('input',()=>{ ecomAlvo.anunciosFiltro=abz.value; ecomAlvo.renderAnuncios(); });
   const abzc=ecomAlvo._g('al-anuncios-busca-clear'); if(abzc) abzc.addEventListener('click',()=>{ const i=ecomAlvo._g('al-anuncios-busca'); if(i) i.value=''; ecomAlvo.anunciosFiltro=''; ecomAlvo.renderAnuncios(); if(i) i.focus(); });
   const arf=ecomAlvo._g('al-anuncios-refresh'); if(arf) arf.addEventListener('click',async()=>{ const prev=arf.textContent; arf.disabled=true; arf.textContent='atualizando\u2026'; try{ await ecomAlvo.load(); arf.textContent='\u2713 atualizado'; }catch(e){ arf.textContent='erro ao atualizar'; } setTimeout(()=>{ arf.disabled=false; arf.textContent=prev; },1400); });
