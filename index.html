@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-09-O | selecta-banco-preco | Análise Comercial: cabeçalho enxuto (contador de anúncios ativos à esquerda + 'Análise Comercial · última análise DD/MM/AAAA'; frescor do lote movido para tooltip). Sugestão limitada a 2 linhas (descrição + explicação, cada uma clampada a 1 linha com tooltip) — nunca 3. Linhas coladas (padding 1px). Subheaders enxutos. SEM alteração de colunas: preço continua SIM × ML (duas). Manual/piso/de-dup inalterados. | base: -N -->
+<!-- BUILD 2026-07-09-P | selecta-banco-preco | Ajuste visual: tabelas com max-width 1080px (fim do esticamento/colunas afastadas em tela larga); colunas numéricas mais justas, Sugestão absorve a folga; valor SIM em branco (=cor do ML). Sem mudança de dados/lógica. | base: -O -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -4591,8 +4591,8 @@ const ecomAlvo={
       +'<span style="font-size:12px;color:var(--emuted)">ranking por índice</span></div>';
     if(!rowsAtv.length){ html+='<div class="ph">nenhum anúncio ativo registrado</div>'; }
     else{
-      html+='<table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed">'
-        +'<colgroup><col style="width:2%"><col style="width:6%"><col style="width:25%"><col style="width:3.5%"><col style="width:4.5%"><col style="width:5.5%"><col style="width:6%"><col style="width:47.5%"></colgroup>'
+      html+='<table style="width:100%;max-width:1080px;border-collapse:collapse;font-size:12.5px;table-layout:fixed">'
+        +'<colgroup><col style="width:2.5%"><col style="width:7%"><col style="width:20%"><col style="width:4%"><col style="width:5.5%"><col style="width:7.5%"><col style="width:7.5%"><col style="width:46%"></colgroup>'
         +'<tr style="color:var(--emuted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap">'
         +'<td style="padding:2px 3px;text-align:right">#</td><td style="padding:2px 6px">Nº cod</td><td style="padding:2px 6px">Produto</td>'
         +'<td style="padding:2px 2px;text-align:center">Índice</td>'
@@ -4623,7 +4623,7 @@ const ecomAlvo={
           +'<td style="padding:1px 6px;color:var(--etxt);'+one('')+'" title="'+ea(nome)+'">'+(nome?ea(nome):'<span style="color:var(--emuted2)">—</span>')+'</td>'
           +'<td style="padding:1px 2px;text-align:center;font-weight:700;color:var(--etxt)">'+(r.ind!=null?Math.round(r.ind):'—')+'</td>'
           +'<td style="padding:1px 2px;text-align:right;font-weight:700;white-space:nowrap;color:'+mCor+'">'+(r.marg!=null?(Math.round(r.marg*10)/10)+'%':'—')+'</td>'
-          +'<td style="padding:1px 2px;text-align:right;white-space:nowrap;color:var(--emuted)">'+(r.precoSim!=null?fR(r.precoSim):'—')+'</td>'
+          +'<td style="padding:1px 2px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(r.precoSim!=null?fR(r.precoSim):'—')+'</td>'
           +'<td style="padding:1px 2px;text-align:right;white-space:nowrap">'+mlCell+'</td>'
           +'<td style="padding:1px 8px;line-height:1.28">'+sugCell+'</td>'
           +'</tr>';
@@ -4645,8 +4645,8 @@ const ecomAlvo={
       +'<span style="font-size:12px;color:var(--emuted)">'+novos.length+' SKU(s) · '+(novosFallback?'aguardando análise':'ranking por índice')+'</span></div>';
     if(!novos.length){ html+='<div class="ph">nenhum produto simulado aguardando anúncio</div>'; }
     else{
-      html+='<table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed">'
-        +'<colgroup><col style="width:2%"><col style="width:6%"><col style="width:26%"><col style="width:3.5%"><col style="width:7.5%"><col style="width:4.5%"><col style="width:5.5%"><col style="width:45%"></colgroup>'
+      html+='<table style="width:100%;max-width:1080px;border-collapse:collapse;font-size:12.5px;table-layout:fixed">'
+        +'<colgroup><col style="width:2.5%"><col style="width:7%"><col style="width:22%"><col style="width:4%"><col style="width:9%"><col style="width:5.5%"><col style="width:7.5%"><col style="width:42.5%"></colgroup>'
         +'<tr style="color:var(--emuted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap">'
         +'<td style="padding:2px 3px;text-align:right">#</td><td style="padding:2px 6px">Nº cod</td><td style="padding:2px 6px">Produto</td>'
         +'<td style="padding:2px 2px;text-align:center">Índice</td><td style="padding:2px 6px">Veredito</td>'
@@ -4671,7 +4671,7 @@ const ecomAlvo={
           +'<td style="padding:1px 2px;text-align:center;font-weight:700;color:var(--etxt)">'+(r.ind!=null?Math.round(r.ind):'—')+'</td>'
           +'<td style="padding:1px 6px;font-weight:600;font-size:11.5px;'+one('color:'+vCor(r.x&&r.x.veredito))+'" title="'+ea(r.x&&r.x.veredito||'')+'">'+ea(String(r.x&&r.x.veredito||'—'))+'</td>'
           +'<td style="padding:1px 2px;text-align:right;font-weight:700;white-space:nowrap;color:'+mCor+'">'+(ml!=null?(Math.round(ml*10)/10)+'%':'—')+'</td>'
-          +'<td style="padding:1px 2px;text-align:right;white-space:nowrap;color:var(--emuted)">'+(precoSim!=null?fR(precoSim):'—')+'</td>'
+          +'<td style="padding:1px 2px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(precoSim!=null?fR(precoSim):'—')+'</td>'
           +'<td style="padding:1px 8px;line-height:1.28">'+sugCell+'</td>'
           +'</tr>';
       });
