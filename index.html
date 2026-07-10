@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-09-M | selecta-banco-preco | ATIVOS com DOIS preços (Sim × ML=registro Alexia); publicado do lote vira verificação automática: divergência = célula âmbar + sugestão CORRIGIR REGISTRO gravada pelo app no Controle, com DE-DUP (idêntica à última do MLB não regrava — vale também para o JSON). Campo único Sugestão (funde Observação), tabelas sem cortes (wrap, vertical-align top). Alertas ZUMBI-2/faltantes movidos para o RODAPÉ. Candidatos a importação movido para a aba VENDAS (refresh próprio ecomAlvo.refreshCandidatos). Títulos de cards do e-commerce em verde; Cadastro de anúncio enxuto com botão verde. Manual embutido v1.8. INALTERADO: piso 12% no Controle, régua 12/10, ranking por índice, insumo/JSON únicos. | base: -L -->
+<!-- BUILD 2026-07-09-N | selecta-banco-preco | AJUSTE FINO: sub-aba renomeada para 'Controle de Anúncios'; colunas numéricas dos quadrantes compactadas (Produto+Sugestão ganham espaço — fim das linhas duplas); card do Comando GERAL enxuto em linha única (botões sm, hint curto, texto do comando segue no expansível). Confirmação: ATIVOS tem SÓ duas colunas de preço (Sim × ML) desde o -M — se aparecem três, o deploy é o -L. | base: -M -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1197,7 +1197,7 @@
       <div class="alsubbar" id="alsubbar">
         <button class="alsub-btn active" data-alsub="analise">📊 Análise Comercial</button>
         <!-- BUILD -L 09/07/2026: aba Estratégia de Anúncios DESATIVADA — fundida à Análise Comercial (Ato único). Painel e código dormentes; expurgo previsto no BUILD -M após 2–3 ciclos. -->
-        <button class="alsub-btn" data-alsub="controle">📈 Controle de venda por anúncio</button>
+        <button class="alsub-btn" data-alsub="controle">📈 Controle de Anúncios</button>
       </div>
 
       <div id="alsub-analise" class="alsub">
@@ -1238,16 +1238,16 @@
 
 
 
-      <div class="ecard" style="margin-top:18px;border-style:dashed">
-        <h3>📋 Manual/Comando GERAL <span class="faint" style="font-weight:400;font-size:12px">· Ato único (Análise + Estratégia fundidas) · v1.8</span></h3>
-        <p class="hint" style="font-size:12.5px;color:var(--emuted);margin:2px 0 14px;line-height:1.6"><b style="color:var(--etxt)">Fluxo único (v1.7):</b> exporto o <b>cenário</b> (já embute a seção Mercado do lote atual) → copio o <b>comando geral</b> → colo os dois no chat. O chat roda o Ato único e devolve <b>um JSON só</b> (análise + sugestões para a Alexia).</p>
-        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:6px">
-          <button class="vbtn" id="al-cmd-export" style="background:var(--eteal)">⬇ Exportar cenário (.md)</button>
-          <div class="efield"><label>Data desta versão do comando</label><input class="vinput mono" id="al-cmd-data" type="date" style="width:170px"></div>
-          <button class="vbtn" id="al-cmd-copy">📋 Copiar comando</button>
-          <span class="vmsg" id="al-cmd-msg" style="align-self:center"></span>
+      <div class="ecard" style="margin-top:14px;padding:10px 13px;border-style:dashed">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <h3 style="font-size:12.5px;margin:0">📋 Comando GERAL <span class="faint" style="font-weight:400;font-size:11px">v1.8 · Ato único</span></h3>
+          <button class="vbtn sm" id="al-cmd-export">📤 Exportar cenário (.md)</button>
+          <button class="vbtn sm" id="al-cmd-copy">📋 Copiar comando</button>
+          <input class="vinput mono" id="al-cmd-data" type="date" title="data desta versão do comando" style="width:140px;padding:5px 8px;font-size:12px">
+          <span class="vmsg" id="al-cmd-msg" style="margin:0"></span>
         </div>
-        <p class="hint" style="font-size:12.5px;color:var(--eamber);margin:6px 0 0">Anexe os <b>dois</b> no chat: o <b>.md do cenário</b> + o <b>comando geral</b>. Nada mais — dossiê e pacote foram APOSENTADOS; a seção Mercado já vem dentro do cenário.</p>
+        <p class="hint" style="font-size:11.5px;color:var(--emuted2);margin:6px 0 0">Anexar no chat: <b>.md do cenário</b> + <b>comando</b>. A seção Mercado já vem dentro do cenário.</p>
+
         <details style="margin-top:8px">
           <summary style="cursor:pointer;color:var(--emuted2);font-size:11.5px;user-select:none">ver o texto do comando</summary>
           <textarea id="al-cmd-text" readonly style="width:100%;min-height:300px;margin-top:8px;background:var(--epanel2);color:var(--etxt);border:1px solid var(--eborder);border-radius:10px;padding:14px;font:12.5px/1.55 ui-monospace,Menlo,Consolas,monospace;resize:vertical" spellcheck="false"></textarea>
@@ -4593,7 +4593,7 @@ const ecomAlvo={
     if(!rowsAtv.length){ html+='<div class="ph">nenhum anúncio ativo registrado</div>'; }
     else{
       html+='<table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed">'
-        +'<colgroup><col style="width:2.5%"><col style="width:6.5%"><col style="width:21%"><col style="width:4.5%"><col style="width:5.5%"><col style="width:7%"><col style="width:7.5%"><col style="width:45.5%"></colgroup>'
+        +'<colgroup><col style="width:2%"><col style="width:6%"><col style="width:25%"><col style="width:3.5%"><col style="width:4.5%"><col style="width:5.5%"><col style="width:6%"><col style="width:47.5%"></colgroup>'
         +'<tr style="color:var(--emuted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap">'
         +'<td style="padding:3px 3px;text-align:right">#</td><td style="padding:3px 6px">Nº cod</td><td style="padding:3px 6px">Produto</td>'
         +'<td style="padding:3px 2px;text-align:center">Índice</td>'
@@ -4647,7 +4647,7 @@ const ecomAlvo={
     if(!novos.length){ html+='<div class="ph">nenhum produto simulado aguardando anúncio</div>'; }
     else{
       html+='<table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed">'
-        +'<colgroup><col style="width:2.5%"><col style="width:6.5%"><col style="width:22%"><col style="width:4.5%"><col style="width:9%"><col style="width:5.5%"><col style="width:7%"><col style="width:43%"></colgroup>'
+        +'<colgroup><col style="width:2%"><col style="width:6%"><col style="width:26%"><col style="width:3.5%"><col style="width:7.5%"><col style="width:4.5%"><col style="width:5.5%"><col style="width:45%"></colgroup>'
         +'<tr style="color:var(--emuted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap">'
         +'<td style="padding:3px 3px;text-align:right">#</td><td style="padding:3px 6px">Nº cod</td><td style="padding:3px 6px">Produto</td>'
         +'<td style="padding:3px 2px;text-align:center">Índice</td><td style="padding:3px 6px">Veredito</td>'
