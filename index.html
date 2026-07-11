@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-09-P | selecta-banco-preco | Ajuste visual: tabelas com max-width 1080px (fim do esticamento/colunas afastadas em tela larga); colunas numéricas mais justas, Sugestão absorve a folga; valor SIM em branco (=cor do ML). Sem mudança de dados/lógica. | base: -O -->
+<!-- BUILD 2026-07-11-A | selecta-banco-preco | Aba Apple renomeada para "Vendas" (rótulo apenas — IDs, funções, tabelas mantidos). Sub-aba "Vendas" renomeada para "Lançamentos". Modal de produto: removidos campos URL da foto e Observação; card de margem subiu para o grid ao lado de Preço mínimo. Criação de categoria: última opção "+ Nova categoria..." no select do modal abre prompt e grava direto em categorias_apple. | base: -P -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -164,7 +164,7 @@
         <img src="selecta-solution-logo.png" alt="Selecta Solution" class="h-9 w-auto" />
         <nav class="flex gap-1">
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="catalogo">Catálogo</button>
-          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="apple">Apple</button>
+          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="apple">Vendas</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="simulador">Simulador PC</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="importacao">📦 Importação</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="ecommerce">🛒 E-commerce</button>
@@ -248,7 +248,7 @@
     <!-- Sub-navigation -->
     <nav class="flex gap-1 mb-5 border-b border-gray-700">
       <button class="apple-subtab-btn px-4 py-2 text-sm font-medium" data-subtab="catalogo">Catálogo</button>
-      <button class="apple-subtab-btn px-4 py-2 text-sm font-medium" data-subtab="vendas">Vendas</button>
+      <button class="apple-subtab-btn px-4 py-2 text-sm font-medium" data-subtab="vendas">Lançamentos</button>
       <button class="apple-subtab-btn px-4 py-2 text-sm font-medium" data-subtab="compras">Compras</button>
     </nav>
 
@@ -1636,19 +1636,14 @@
           <input id="ap-prod-pmin" type="number" step="0.01" min="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
         </div>
         <div>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Margem unitária</label>
+          <div id="ap-prod-margem" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-300">—</div>
+        </div>
+        <div>
           <label class="block text-xs font-medium text-gray-400 mb-1">Estoque mínimo (un)</label>
           <input id="ap-prod-emin" type="number" min="0" value="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
         </div>
       </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-400 mb-1">URL da foto (opcional)</label>
-        <input id="ap-prod-foto" type="url" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="https://...">
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-400 mb-1">Observação</label>
-        <textarea id="ap-prod-obs" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></textarea>
-      </div>
-      <div id="ap-prod-margem" class="text-sm text-gray-300 bg-gray-900 rounded-md p-3 border border-gray-700">Margem unitária: —</div>
       <div id="ap-prod-erro" class="hidden-section text-sm text-red-400 bg-red-900/30 border border-red-800 rounded-md p-3"></div>
     </div>
     <footer class="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-700">
@@ -3179,10 +3174,51 @@ async function loadAppleCategorias() {
   state.apple.categorias = data || [];
 
   // Popular dropdowns de categoria
-  const optsTodas = '<option value="">Todas categorias</option>' + state.apple.categorias.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
-  const optsObrig = state.apple.categorias.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
-  $('#apple-cat-categoria').innerHTML = optsTodas;
-  $('#ap-prod-categoria').innerHTML = optsObrig;
+  $('#apple-cat-categoria').innerHTML = renderCatOptionsFiltro();
+  $('#ap-prod-categoria').innerHTML = renderCatOptionsModal();
+}
+
+// Opções para o SELECT de filtro do Catálogo (não tem "+ Nova categoria")
+function renderCatOptionsFiltro() {
+  return '<option value="">Todas categorias</option>' +
+    state.apple.categorias.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+}
+
+// Opções para o SELECT do modal de produto (com "+ Nova categoria..." como última opção)
+function renderCatOptionsModal() {
+  return state.apple.categorias.map(c => `<option value="${c.id}">${c.nome}</option>`).join('') +
+    '<option value="__new__" style="color:#10b981;font-style:italic">+ Nova categoria...</option>';
+}
+
+// Handler quando o usuário escolhe "+ Nova categoria..." no select do modal
+async function handleCategoriaChange(e) {
+  if (e.target.value !== '__new__') return;
+  const nome = (prompt('Nome da nova categoria:') || '').trim();
+  if (!nome) {
+    // cancelou ou vazio — volta para a primeira categoria válida (ou "" se não houver nenhuma)
+    e.target.value = state.apple.categorias[0]?.id || '';
+    return;
+  }
+  // duplicidade case-insensitive
+  const jaExiste = state.apple.categorias.find(c => (c.nome || '').toLowerCase() === nome.toLowerCase());
+  if (jaExiste) {
+    alert('Já existe uma categoria com esse nome.');
+    e.target.value = jaExiste.id;
+    return;
+  }
+  const ordem = Math.max(0, ...state.apple.categorias.map(c => Number(c.ordem) || 0)) + 1;
+  const { data, error } = await sb.from('categorias_apple').insert({ nome, ordem }).select().single();
+  if (error) {
+    alert('Erro ao criar categoria: ' + error.message);
+    e.target.value = state.apple.categorias[0]?.id || '';
+    return;
+  }
+  state.apple.categorias.push(data);
+  state.apple.categorias.sort((a, b) => (Number(a.ordem) || 0) - (Number(b.ordem) || 0));
+  // Reconstrói os dois selects e seleciona a nova
+  $('#apple-cat-categoria').innerHTML = renderCatOptionsFiltro();
+  $('#ap-prod-categoria').innerHTML = renderCatOptionsModal();
+  $('#ap-prod-categoria').value = data.id;
 }
 
 function switchAppleSubtab(name) {
@@ -3258,7 +3294,7 @@ function renderAppleProdutos(items) {
     return `
     <tr class="product-row hover:bg-gray-700/50 cursor-pointer" data-id="${p.id}">
       <td class="px-3 py-2"><span class="bg-gray-700 text-xs px-1.5 py-0.5 rounded">${p.categoria_nome || '—'}</span></td>
-      <td class="px-3 py-2 font-medium">${p.modelo_sku}${p.observacao ? `<div class="text-xs text-gray-500 mt-0.5 truncate max-w-md">${p.observacao}</div>` : ''}</td>
+      <td class="px-3 py-2 font-medium">${p.modelo_sku}</td>
       <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(p.custo_medio)}</td>
       <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(p.preco_venda_alvo)}</td>
       <td class="px-3 py-2 text-right font-mono text-sm ${margemCor}">R$ ${fmtBRL(margem)} (${margemPct.toFixed(1)}%)</td>
@@ -3286,10 +3322,8 @@ function openAppleProdutoModal(id) {
     $('#ap-prod-pvenda').value = p.preco_venda_alvo || '';
     $('#ap-prod-pmin').value = p.preco_minimo_venda || '';
     $('#ap-prod-emin').value = p.estoque_minimo || 0;
-    $('#ap-prod-foto').value = p.foto_url || '';
-    $('#ap-prod-obs').value = p.observacao || '';
   } else {
-    ['ap-prod-modelo','ap-prod-pcompra','ap-prod-pvenda','ap-prod-pmin','ap-prod-foto','ap-prod-obs'].forEach(i => $('#' + i).value = '');
+    ['ap-prod-modelo','ap-prod-pcompra','ap-prod-pvenda','ap-prod-pmin'].forEach(i => $('#' + i).value = '');
     $('#ap-prod-emin').value = 0;
     if (state.apple.categorias[0]) $('#ap-prod-categoria').value = state.apple.categorias[0].id;
   }
@@ -3300,22 +3334,24 @@ function openAppleProdutoModal(id) {
 function updateMargemDisplay() {
   const c = Number($('#ap-prod-pcompra').value) || 0;
   const v = Number($('#ap-prod-pvenda').value) || 0;
+  const el = $('#ap-prod-margem');
+  if (!c && !v) { el.innerHTML = '<span class="text-gray-500">—</span>'; return; }
   const m = v - c;
   const pct = c > 0 ? (m / c) * 100 : 0;
-  $('#ap-prod-margem').innerHTML = `Margem unitária: <span class="${m >= 0 ? 'text-primary-500' : 'text-red-400'}">R$ ${fmtBRL(m)} (${pct.toFixed(1)}%)</span>`;
+  el.innerHTML = `<span class="${m >= 0 ? 'text-primary-500' : 'text-red-400'} font-mono">R$ ${fmtBRL(m)} (${pct.toFixed(1)}%)</span>`;
 }
 
 async function saveAppleProduto() {
   const id = $('#ap-prod-id').value;
+  const catValor = $('#ap-prod-categoria').value;
+  if (!catValor || catValor === '__new__') return showApErr('#ap-prod-erro', 'Selecione uma categoria válida.');
   const payload = {
-    categoria_id: $('#ap-prod-categoria').value || null,
+    categoria_id: catValor,
     modelo_sku: $('#ap-prod-modelo').value.trim(),
     preco_compra: parseFloat($('#ap-prod-pcompra').value) || 0,
     preco_venda_alvo: parseFloat($('#ap-prod-pvenda').value) || 0,
     preco_minimo_venda: $('#ap-prod-pmin').value ? parseFloat($('#ap-prod-pmin').value) : null,
     estoque_minimo: parseInt($('#ap-prod-emin').value) || 0,
-    foto_url: $('#ap-prod-foto').value.trim() || null,
-    observacao: $('#ap-prod-obs').value.trim() || null,
   };
   if (!payload.modelo_sku) return showApErr('#ap-prod-erro', 'Modelo/SKU é obrigatório.');
   if (!payload.preco_compra || !payload.preco_venda_alvo) return showApErr('#ap-prod-erro', 'Preço compra e preço venda alvo são obrigatórios.');
@@ -5420,6 +5456,7 @@ $('#apple-cat-categoria').addEventListener('change', loadAppleProdutos);
 $('#btn-novo-produto').addEventListener('click', () => openAppleProdutoModal(null));
 $('#ap-prod-pcompra').addEventListener('input', updateMargemDisplay);
 $('#ap-prod-pvenda').addEventListener('input', updateMargemDisplay);
+$('#ap-prod-categoria').addEventListener('change', handleCategoriaChange);
 $('#ap-prod-salvar').addEventListener('click', saveAppleProduto);
 
 // Apple — Vendas
