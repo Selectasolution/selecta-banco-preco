@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-11-A | selecta-banco-preco | Aba Apple renomeada para "Vendas" (rótulo apenas — IDs, funções, tabelas mantidos). Sub-aba "Vendas" renomeada para "Lançamentos". Modal de produto: removidos campos URL da foto e Observação; card de margem subiu para o grid ao lado de Preço mínimo. Criação de categoria: última opção "+ Nova categoria..." no select do modal abre prompt e grava direto em categorias_apple. | base: -P -->
+<!-- BUILD 2026-07-11-B | selecta-banco-preco | Vendas: cadastro passa a operar pelo SKU do Simulador. Campo SKU dispara lookup em ecom_produtos (ativo=true); autopreenche categoria (sigla), preço compra (custo), preço venda alvo (preço simulado), preço mínimo (break-even ML calculado via ecom.calc). SKU não encontrado bloqueia salvar. Categoria virou campo readonly — opção "+ Nova categoria..." do BUILD -A revertida (Igor decidiu operar só com SKUs do Simulador). Filtro do catálogo passa a listar siglas distintas do e-com por join no frontend. Aba Vendas reposicionada para depois de E-commerce. | base: -A -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -164,10 +164,10 @@
         <img src="selecta-solution-logo.png" alt="Selecta Solution" class="h-9 w-auto" />
         <nav class="flex gap-1">
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="catalogo">Catálogo</button>
-          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="apple">Vendas</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="simulador">Simulador PC</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="importacao">📦 Importação</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="ecommerce">🛒 E-commerce</button>
+          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="apple">Vendas</button>
         </nav>
       </div>
       <div class="flex items-center gap-3 text-sm">
@@ -1614,30 +1614,35 @@
     </header>
     <div class="px-6 py-4 space-y-3">
       <input type="hidden" id="ap-prod-id">
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1">SKU do Simulador *</label>
+        <input id="ap-prod-modelo" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm font-mono uppercase" placeholder="Ex: SSD-0001, MEM-0007">
+        <div id="ap-prod-sku-status" class="text-xs mt-1 text-gray-500">Digite um código do Simulador — os demais campos serão preenchidos automaticamente.</div>
+      </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Categoria *</label>
-          <select id="ap-prod-categoria" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></select>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Categoria</label>
+          <input id="ap-prod-categoria" type="text" readonly tabindex="-1" class="w-full bg-gray-900/50 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-300">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Modelo / SKU *</label>
-          <input id="ap-prod-modelo" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Ex: MacBook Air M2 8/256">
+          <label class="block text-xs font-medium text-gray-400 mb-1">Produto (Simulador)</label>
+          <input id="ap-prod-nome-ecom" type="text" readonly tabindex="-1" class="w-full bg-gray-900/50 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-300">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Preço compra (R$) *</label>
-          <input id="ap-prod-pcompra" type="number" step="0.01" min="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
+          <label class="block text-xs font-medium text-gray-400 mb-1">Preço compra (R$)</label>
+          <input id="ap-prod-pcompra" type="number" step="0.01" min="0" readonly tabindex="-1" class="w-full bg-gray-900/50 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-300">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Preço venda alvo (R$) *</label>
-          <input id="ap-prod-pvenda" type="number" step="0.01" min="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
+          <label class="block text-xs font-medium text-gray-400 mb-1">Preço venda alvo (R$)</label>
+          <input id="ap-prod-pvenda" type="number" step="0.01" min="0" readonly tabindex="-1" class="w-full bg-gray-900/50 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-300">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Preço mínimo venda (R$)</label>
-          <input id="ap-prod-pmin" type="number" step="0.01" min="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
+          <label class="block text-xs font-medium text-gray-400 mb-1">Preço mínimo (Break-even ML)</label>
+          <input id="ap-prod-pmin" type="number" step="0.01" min="0" readonly tabindex="-1" class="w-full bg-gray-900/50 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-300">
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-400 mb-1">Margem unitária</label>
-          <div id="ap-prod-margem" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-300">—</div>
+          <div id="ap-prod-margem" class="w-full bg-gray-900/50 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-300">—</div>
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-400 mb-1">Estoque mínimo (un)</label>
@@ -3170,55 +3175,55 @@ async function loadAppleConfig() {
 }
 
 async function loadAppleCategorias() {
+  // BUILD -B: categorias agora vêm do e-com (via join no frontend em loadAppleProdutos).
+  // Mantemos a query legada para não quebrar dependências, mas o filtro é populado depois.
   const { data } = await sb.from('categorias_apple').select('*').order('ordem');
   state.apple.categorias = data || [];
-
-  // Popular dropdowns de categoria
-  $('#apple-cat-categoria').innerHTML = renderCatOptionsFiltro();
-  $('#ap-prod-categoria').innerHTML = renderCatOptionsModal();
+  // Filtro do catálogo será populado por siglas do e-com em loadAppleProdutos.
+  $('#apple-cat-categoria').innerHTML = '<option value="">Todas categorias</option>';
 }
 
-// Opções para o SELECT de filtro do Catálogo (não tem "+ Nova categoria")
-function renderCatOptionsFiltro() {
-  return '<option value="">Todas categorias</option>' +
-    state.apple.categorias.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+// BUILD -B: garante que o objeto ecom tenha frete/comissões carregados
+// para o cálculo local de break-even. Só carrega uma vez por sessão.
+async function ensureEcomLoaded() {
+  if (typeof ecom === 'undefined') return false;
+  try {
+    if (!ecom.freteTbl || ecom.freteTbl.length === 0) await ecom.loadFreteTbl();
+    if (!ecom.comMap || Object.keys(ecom.comMap).length === 0) await ecom.loadComissoes();
+    return true;
+  } catch (e) {
+    console.warn('ensureEcomLoaded falhou:', e.message);
+    return false;
+  }
 }
 
-// Opções para o SELECT do modal de produto (com "+ Nova categoria..." como última opção)
-function renderCatOptionsModal() {
-  return state.apple.categorias.map(c => `<option value="${c.id}">${c.nome}</option>`).join('') +
-    '<option value="__new__" style="color:#10b981;font-style:italic">+ Nova categoria...</option>';
-}
-
-// Handler quando o usuário escolhe "+ Nova categoria..." no select do modal
-async function handleCategoriaChange(e) {
-  if (e.target.value !== '__new__') return;
-  const nome = (prompt('Nome da nova categoria:') || '').trim();
-  if (!nome) {
-    // cancelou ou vazio — volta para a primeira categoria válida (ou "" se não houver nenhuma)
-    e.target.value = state.apple.categorias[0]?.id || '';
-    return;
+// BUILD -B: dado um código SKU, busca o produto correspondente em ecom_produtos
+// e retorna o objeto com dados + break-even calculado. null se não encontrar.
+async function lookupEcomProduto(sku) {
+  if (!sku) return null;
+  const codigo = sku.trim().toUpperCase();
+  const { data, error } = await sb.from('ecom_produtos')
+    .select('codigo, produto, marca, modelo, categoria, tipo_anuncio, custo, preco, peso_g, frete_banda_efetiva, capacidade, interface')
+    .eq('codigo', codigo).eq('ativo', true).maybeSingle();
+  if (error || !data) return null;
+  // Calcula break-even usando o motor do simulador (mesma matemática, fonte única).
+  let breakeven = null;
+  try {
+    await ensureEcomLoaded();
+    const it = {
+      preco: Number(data.preco) || 0,
+      custo: Number(data.custo) || 0,
+      categoria: data.categoria,
+      tipo_anuncio: data.tipo_anuncio || 'classico',
+      peso_g: data.peso_g,
+      frete_banda_efetiva: data.frete_banda_efetiva,
+    };
+    const r = ecom.calc(it);
+    breakeven = Number(r.breakeven) || null;
+  } catch (e) {
+    console.warn('break-even não pôde ser calculado:', e.message);
   }
-  // duplicidade case-insensitive
-  const jaExiste = state.apple.categorias.find(c => (c.nome || '').toLowerCase() === nome.toLowerCase());
-  if (jaExiste) {
-    alert('Já existe uma categoria com esse nome.');
-    e.target.value = jaExiste.id;
-    return;
-  }
-  const ordem = Math.max(0, ...state.apple.categorias.map(c => Number(c.ordem) || 0)) + 1;
-  const { data, error } = await sb.from('categorias_apple').insert({ nome, ordem }).select().single();
-  if (error) {
-    alert('Erro ao criar categoria: ' + error.message);
-    e.target.value = state.apple.categorias[0]?.id || '';
-    return;
-  }
-  state.apple.categorias.push(data);
-  state.apple.categorias.sort((a, b) => (Number(a.ordem) || 0) - (Number(b.ordem) || 0));
-  // Reconstrói os dois selects e seleciona a nova
-  $('#apple-cat-categoria').innerHTML = renderCatOptionsFiltro();
-  $('#ap-prod-categoria').innerHTML = renderCatOptionsModal();
-  $('#ap-prod-categoria').value = data.id;
+  return { ...data, breakeven };
 }
 
 function switchAppleSubtab(name) {
@@ -3252,24 +3257,53 @@ async function computeSaldoEsperado() {
 // =====================================================================
 async function loadAppleProdutos() {
   const search = $('#apple-cat-search').value.trim().toLowerCase();
-  const catId = $('#apple-cat-categoria').value;
+  const catFiltro = $('#apple-cat-categoria').value; // agora é sigla do e-com (SSD, MEM, ...)
 
-  let q = sb.from('produtos_apple_completo').select('*').order('categoria_ordem').order('modelo_sku');
-  if (catId) q = q.eq('categoria_id', catId);
-
-  const { data, error } = await q;
+  const { data, error } = await sb.from('produtos_apple_completo').select('*').order('modelo_sku');
   if (error) {
     $('#apple-cat-tbody').innerHTML = `<tr><td colspan="7" class="px-3 py-6 text-center text-red-400">Erro: ${error.message}</td></tr>`;
     return;
   }
 
   let produtos = data || [];
+
+  // BUILD -B: join live com ecom_produtos por codigo = modelo_sku
+  if (produtos.length > 0) {
+    const codigos = produtos.map(p => p.modelo_sku).filter(Boolean);
+    if (codigos.length > 0) {
+      const { data: ecomRows } = await sb.from('ecom_produtos')
+        .select('codigo, categoria, produto, marca, modelo, custo, preco')
+        .in('codigo', codigos);
+      const ecomMap = new Map((ecomRows || []).map(r => [r.codigo, r]));
+      produtos = produtos.map(p => {
+        const e = ecomMap.get(p.modelo_sku);
+        return {
+          ...p,
+          ecom_categoria: e?.categoria || null,
+          ecom_produto: e?.produto || null,
+          ecom_marca: e?.marca || null,
+          ecom_modelo: e?.modelo || null,
+          ecom_custo: e?.custo != null ? Number(e.custo) : null,
+          ecom_preco: e?.preco != null ? Number(e.preco) : null,
+        };
+      });
+    }
+  }
+
+  // Popular filtro de categoria com siglas distintas encontradas
+  const siglas = [...new Set(produtos.map(p => p.ecom_categoria).filter(Boolean))].sort();
+  $('#apple-cat-categoria').innerHTML = '<option value="">Todas categorias</option>' +
+    siglas.map(s => `<option value="${s}" ${s === catFiltro ? 'selected' : ''}>${s}</option>`).join('');
+
+  // Filtros de UI (categoria por sigla + busca por SKU/nome)
+  if (catFiltro) produtos = produtos.filter(p => p.ecom_categoria === catFiltro);
   if (search) {
     produtos = produtos.filter(p =>
       (p.modelo_sku || '').toLowerCase().includes(search) ||
-      (p.observacao || '').toLowerCase().includes(search)
+      (p.ecom_produto || '').toLowerCase().includes(search)
     );
   }
+
   state.apple.produtos = produtos;
   renderAppleProdutos(produtos);
 }
@@ -3291,10 +3325,18 @@ function renderAppleProdutos(items) {
     if (estoqueZero) estoqueBadge = `<span class="text-red-400 font-mono text-sm">${estoque}</span>`;
     else if (estoqueBaixo) estoqueBadge = `<span class="text-yellow-500 font-mono text-sm">${estoque} ⚠</span>`;
 
+    // BUILD -B: categoria e nome vêm do e-com. SKU órfão (não achou no ecom_produtos) sinaliza.
+    const catBadge = p.ecom_categoria
+      ? `<span class="bg-gray-700 text-xs px-1.5 py-0.5 rounded font-mono">${p.ecom_categoria}</span>`
+      : `<span class="bg-yellow-900/40 text-yellow-500 text-xs px-1.5 py-0.5 rounded">órfão</span>`;
+    const nomeEcom = p.ecom_produto
+      ? `<div class="text-xs text-gray-500 mt-0.5 truncate max-w-md">${p.ecom_produto}</div>`
+      : '';
+
     return `
     <tr class="product-row hover:bg-gray-700/50 cursor-pointer" data-id="${p.id}">
-      <td class="px-3 py-2"><span class="bg-gray-700 text-xs px-1.5 py-0.5 rounded">${p.categoria_nome || '—'}</span></td>
-      <td class="px-3 py-2 font-medium">${p.modelo_sku}</td>
+      <td class="px-3 py-2">${catBadge}</td>
+      <td class="px-3 py-2 font-medium font-mono">${p.modelo_sku}${nomeEcom}</td>
       <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(p.custo_medio)}</td>
       <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(p.preco_venda_alvo)}</td>
       <td class="px-3 py-2 text-right font-mono text-sm ${margemCor}">R$ ${fmtBRL(margem)} (${margemPct.toFixed(1)}%)</td>
@@ -3313,22 +3355,100 @@ function openAppleProdutoModal(id) {
   $('#ap-prod-id').value = id || '';
   $('#modal-ap-produto-titulo').textContent = id ? 'Editar produto Apple' : 'Novo produto Apple';
 
+  // Reset visual: limpa todos os campos readonly e status
+  ['ap-prod-modelo','ap-prod-categoria','ap-prod-nome-ecom','ap-prod-pcompra','ap-prod-pvenda','ap-prod-pmin'].forEach(i => $('#' + i).value = '');
+  $('#ap-prod-emin').value = 0;
+  setSkuStatus('idle');
+  updateMargemDisplay();
+
   if (id) {
     const p = state.apple.produtos.find(x => x.id === id);
     if (!p) return;
-    $('#ap-prod-categoria').value = p.categoria_id || '';
+    // Edição: SKU vira readonly (identidade do produto não muda)
     $('#ap-prod-modelo').value = p.modelo_sku || '';
-    $('#ap-prod-pcompra').value = p.preco_compra || '';
-    $('#ap-prod-pvenda').value = p.preco_venda_alvo || '';
-    $('#ap-prod-pmin').value = p.preco_minimo_venda || '';
+    $('#ap-prod-modelo').readOnly = true;
+    $('#ap-prod-modelo').classList.add('bg-gray-900/50', 'text-gray-300');
     $('#ap-prod-emin').value = p.estoque_minimo || 0;
+    // Dispara lookup para preencher os campos do e-com com os dados atuais (live)
+    if (p.modelo_sku) triggerSkuLookup(p.modelo_sku);
   } else {
-    ['ap-prod-modelo','ap-prod-pcompra','ap-prod-pvenda','ap-prod-pmin'].forEach(i => $('#' + i).value = '');
-    $('#ap-prod-emin').value = 0;
-    if (state.apple.categorias[0]) $('#ap-prod-categoria').value = state.apple.categorias[0].id;
+    // Novo: SKU editável, foco nele
+    $('#ap-prod-modelo').readOnly = false;
+    $('#ap-prod-modelo').classList.remove('bg-gray-900/50', 'text-gray-300');
+    setTimeout(() => $('#ap-prod-modelo').focus(), 100);
   }
-  updateMargemDisplay();
   show('#modal-apple-produto');
+}
+
+function setSkuStatus(state, msg) {
+  const el = $('#ap-prod-sku-status');
+  const salvar = $('#ap-prod-salvar');
+  el.className = 'text-xs mt-1';
+  if (state === 'idle') {
+    el.classList.add('text-gray-500');
+    el.textContent = msg || 'Digite um código do Simulador — os demais campos serão preenchidos automaticamente.';
+    salvar.disabled = true;
+    salvar.classList.add('opacity-50', 'cursor-not-allowed');
+  } else if (state === 'loading') {
+    el.classList.add('text-gray-400');
+    el.textContent = msg || 'Buscando no Simulador...';
+    salvar.disabled = true;
+    salvar.classList.add('opacity-50', 'cursor-not-allowed');
+  } else if (state === 'ok') {
+    el.classList.add('text-primary-500');
+    el.textContent = msg || '✓ SKU encontrado no Simulador.';
+    salvar.disabled = false;
+    salvar.classList.remove('opacity-50', 'cursor-not-allowed');
+  } else if (state === 'notfound') {
+    el.classList.add('text-red-400');
+    el.textContent = msg || '✗ SKU não encontrado ou inativo no Simulador. Cadastre pelo Simulador primeiro.';
+    salvar.disabled = true;
+    salvar.classList.add('opacity-50', 'cursor-not-allowed');
+  }
+}
+
+// Debounce timer para lookup do SKU
+let apSkuLookupTimer;
+function scheduleSkuLookup() {
+  clearTimeout(apSkuLookupTimer);
+  const sku = $('#ap-prod-modelo').value.trim().toUpperCase();
+  if (!sku) { setSkuStatus('idle'); clearEcomFields(); return; }
+  setSkuStatus('loading');
+  apSkuLookupTimer = setTimeout(() => triggerSkuLookup(sku), 350);
+}
+
+async function triggerSkuLookup(sku) {
+  const codigo = (sku || '').trim().toUpperCase();
+  if (!codigo) { setSkuStatus('idle'); return; }
+  // Normaliza o campo visualmente
+  $('#ap-prod-modelo').value = codigo;
+  const found = await lookupEcomProduto(codigo);
+  if (!found) {
+    clearEcomFields();
+    setSkuStatus('notfound');
+    return;
+  }
+  // Guarda o objeto no dataset do input pra usar no save
+  $('#ap-prod-modelo').dataset.ecom = JSON.stringify({
+    codigo: found.codigo,
+    categoria: found.categoria,
+    custo: found.custo,
+    preco: found.preco,
+    breakeven: found.breakeven,
+  });
+  $('#ap-prod-categoria').value = found.categoria || '';
+  $('#ap-prod-nome-ecom').value = [found.marca, found.produto, found.modelo].filter(Boolean).join(' · ');
+  $('#ap-prod-pcompra').value = found.custo != null ? Number(found.custo).toFixed(2) : '';
+  $('#ap-prod-pvenda').value = found.preco != null ? Number(found.preco).toFixed(2) : '';
+  $('#ap-prod-pmin').value = found.breakeven != null ? Number(found.breakeven).toFixed(2) : '';
+  updateMargemDisplay();
+  setSkuStatus('ok', `✓ ${found.codigo} — ${found.categoria || 's/cat'} · Break-even ${found.breakeven != null ? 'R$ ' + fmtBRL(found.breakeven) : 'indisponível'}`);
+}
+
+function clearEcomFields() {
+  ['ap-prod-categoria','ap-prod-nome-ecom','ap-prod-pcompra','ap-prod-pvenda','ap-prod-pmin'].forEach(i => $('#' + i).value = '');
+  delete $('#ap-prod-modelo').dataset.ecom;
+  updateMargemDisplay();
 }
 
 function updateMargemDisplay() {
@@ -3342,19 +3462,30 @@ function updateMargemDisplay() {
 }
 
 async function saveAppleProduto() {
+  hide('#ap-prod-erro');
   const id = $('#ap-prod-id').value;
-  const catValor = $('#ap-prod-categoria').value;
-  if (!catValor || catValor === '__new__') return showApErr('#ap-prod-erro', 'Selecione uma categoria válida.');
+  const skuInput = $('#ap-prod-modelo');
+  const codigo = (skuInput.value || '').trim().toUpperCase();
+  if (!codigo) return showApErr('#ap-prod-erro', 'Informe o SKU do Simulador.');
+
+  // BUILD -B: revalida o SKU no banco na hora do save (fonte da verdade)
+  const found = await lookupEcomProduto(codigo);
+  if (!found) return showApErr('#ap-prod-erro', 'SKU não encontrado ou inativo no Simulador. Cadastre pelo Simulador primeiro.');
+
+  // Duplicidade: se for novo, garante que ninguém já cadastrou esse SKU
+  if (!id) {
+    const { data: existente } = await sb.from('produtos_apple').select('id').eq('modelo_sku', codigo).maybeSingle();
+    if (existente) return showApErr('#ap-prod-erro', 'Este SKU já está cadastrado na aba Vendas.');
+  }
+
   const payload = {
-    categoria_id: catValor,
-    modelo_sku: $('#ap-prod-modelo').value.trim(),
-    preco_compra: parseFloat($('#ap-prod-pcompra').value) || 0,
-    preco_venda_alvo: parseFloat($('#ap-prod-pvenda').value) || 0,
-    preco_minimo_venda: $('#ap-prod-pmin').value ? parseFloat($('#ap-prod-pmin').value) : null,
+    categoria_id: null, // BUILD -B: categoria vem do e-com via join, não mais de categorias_apple
+    modelo_sku: found.codigo,
+    preco_compra: Number(found.custo) || 0,
+    preco_venda_alvo: Number(found.preco) || 0,
+    preco_minimo_venda: found.breakeven != null ? Number(found.breakeven) : null,
     estoque_minimo: parseInt($('#ap-prod-emin').value) || 0,
   };
-  if (!payload.modelo_sku) return showApErr('#ap-prod-erro', 'Modelo/SKU é obrigatório.');
-  if (!payload.preco_compra || !payload.preco_venda_alvo) return showApErr('#ap-prod-erro', 'Preço compra e preço venda alvo são obrigatórios.');
 
   const btn = $('#ap-prod-salvar');
   btn.disabled = true; btn.textContent = 'Salvando...';
@@ -5454,9 +5585,7 @@ let appleCatTimer;
 $('#apple-cat-search').addEventListener('input', () => { clearTimeout(appleCatTimer); appleCatTimer = setTimeout(loadAppleProdutos, 300); });
 $('#apple-cat-categoria').addEventListener('change', loadAppleProdutos);
 $('#btn-novo-produto').addEventListener('click', () => openAppleProdutoModal(null));
-$('#ap-prod-pcompra').addEventListener('input', updateMargemDisplay);
-$('#ap-prod-pvenda').addEventListener('input', updateMargemDisplay);
-$('#ap-prod-categoria').addEventListener('change', handleCategoriaChange);
+$('#ap-prod-modelo').addEventListener('input', scheduleSkuLookup);
 $('#ap-prod-salvar').addEventListener('click', saveAppleProduto);
 
 // Apple — Vendas
