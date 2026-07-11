@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-11-G | selecta-banco-preco | Alinhamento à esquerda AGORA de verdade: tabela deixou de esticar até a borda da tela. `table w-full` → `table w-auto` + `whitespace-nowrap` em todas as células/cabeçalhos + wrapper de tabela virou inline-block. Resultado: colunas coladas à esquerda com largura natural do conteúdo, sem espaço morto no meio. Aplicado nas duas tabelas (Lançamentos e histórico do Financeiro). | base: -F -->
+<!-- BUILD 2026-07-11-H | selecta-banco-preco | Alinhamento corrigido copiando o padrão APROVADO do E-commerce (mea culpa dos BUILDs F/G que inventaram). Aba Vendas agora usa .tbl-wrap + table.emain com CSS espelhado do #tab-ecommerce (prefix #tab-apple): width auto, colunas de texto à esquerda (th.l/td.l), números com font-mono à direita mas colados por padding compacto (7px 9px), botões .rowbtn/.rowbtn.del no lugar dos Tailwind. Container voltou para max-w-screen-2xl mx-auto (padrão da casa). Aplicado nas duas tabelas. | base: -G -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -243,7 +243,7 @@
   <!-- =========================================================== -->
   <!-- TAB: VENDAS (ex-APPLE)                                        -->
   <!-- =========================================================== -->
-  <section id="tab-apple" class="hidden-section w-full px-6 py-6">
+  <section id="tab-apple" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
 
     <!-- Sub-navigation -->
     <nav class="flex gap-1 mb-5 border-b border-gray-700">
@@ -259,22 +259,20 @@
         <button id="btn-novo-produto" class="bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-md">+ Novo produto</button>
       </div>
 
-      <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden inline-block max-w-full">
-        <div class="overflow-x-auto">
-          <table class="w-auto text-sm">
-            <thead class="bg-gray-900 text-xs uppercase text-gray-400">
-              <tr>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Produto</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Preço custo (break-even)</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Preço venda</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Margem</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Estoque</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="apple-cat-tbody" class="divide-y divide-gray-700"></tbody>
-          </table>
-        </div>
+      <div class="tbl-wrap">
+        <table class="emain">
+          <thead>
+            <tr>
+              <th class="l">Produto</th>
+              <th>Preço custo<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">break-even</span></th>
+              <th>Preço venda</th>
+              <th>Margem</th>
+              <th>Estoque</th>
+              <th class="l">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="apple-cat-tbody"></tbody>
+        </table>
       </div>
     </div>
 
@@ -296,27 +294,25 @@
         <h3 class="text-sm font-semibold text-gray-300">Vendas do mês</h3>
         <span id="apple-fin-hist-count" class="text-xs text-gray-500"></span>
       </div>
-      <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden inline-block max-w-full">
-        <div class="overflow-x-auto">
-          <table class="w-auto text-sm">
-            <thead class="bg-gray-900 text-xs uppercase text-gray-400">
-              <tr>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Data</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Produto</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Qtd</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Preço unit.</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Total</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Break-even unit.</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Lucro</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Canal</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Pgto</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Cliente</th>
-                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="apple-fin-hist-tbody" class="divide-y divide-gray-700"></tbody>
-          </table>
-        </div>
+      <div class="tbl-wrap">
+        <table class="emain">
+          <thead>
+            <tr>
+              <th class="l">Data</th>
+              <th class="l">Produto</th>
+              <th>Qtd</th>
+              <th>Preço unit.</th>
+              <th>Total</th>
+              <th>Break-even unit.</th>
+              <th>Lucro</th>
+              <th class="l">Canal</th>
+              <th class="l">Pgto</th>
+              <th class="l">Cliente</th>
+              <th class="l">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="apple-fin-hist-tbody"></tbody>
+        </table>
       </div>
     </div>
 
@@ -703,6 +699,27 @@
   #tab-ecommerce .rowbtn.del:hover{border-color:var(--ered);color:var(--ered)}
   #tab-ecommerce .efooter{margin-top:14px;padding-top:13px;border-top:1px solid var(--eborder);font-size:12.5px;color:var(--emuted);line-height:1.6}
   #tab-ecommerce select.ainput{appearance:auto}
+
+  /* BUILD -H: aba Vendas herda o mesmo padrão visual do E-commerce (tabela compacta, alinhada à esquerda) */
+  #tab-apple .tbl-wrap{overflow-x:auto;margin-top:6px}
+  #tab-apple table.emain{width:auto;border-collapse:collapse;font-size:13px}
+  #tab-apple table.emain thead th{text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--emuted);font-weight:600;padding:0 9px 9px;border-bottom:1px solid var(--eborder);white-space:nowrap}
+  #tab-apple table.emain thead th.l{text-align:left}
+  #tab-apple table.emain tbody td{padding:7px 9px;border-bottom:1px solid #1c2740;text-align:right;font-family:var(--emono);white-space:nowrap;vertical-align:middle}
+  #tab-apple table.emain tbody td.l{text-align:left;font-family:inherit;font-size:13.5px}
+  #tab-apple table.emain tbody tr:hover{background:#0f1828}
+  #tab-apple .eprod{font-weight:600}
+  #tab-apple .emodel{color:var(--emuted2);font-size:12px;font-family:var(--emono)}
+  #tab-apple .acts{display:flex;gap:6px;justify-content:flex-end}
+  #tab-apple .rowbtn{background:none;border:1px solid var(--eborder);color:var(--emuted);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:inherit}
+  #tab-apple .rowbtn:hover{border-color:var(--eaccent);color:var(--etxt)}
+  #tab-apple .rowbtn.del:hover{border-color:var(--ered);color:var(--ered)}
+  #tab-apple .rowbtn.venda{border-color:var(--eemerald);color:var(--eemerald)}
+  #tab-apple .rowbtn.venda:hover{background:#0c2c22}
+  #tab-apple .rowbtn:disabled{opacity:.35;cursor:not-allowed}
+  #tab-apple .mneg{color:var(--ered)}
+  #tab-apple .mok{color:var(--eemerald)}
+  #tab-apple .smper{font-size:11px;color:var(--emuted)}
 </style>
 
   <section id="tab-ecommerce" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
@@ -3125,7 +3142,7 @@ async function loadAppleProdutos() {
 function renderAppleProdutos(items) {
   const tbody = $('#apple-cat-tbody');
   if (items.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="px-3 py-8 text-center text-gray-500">Nenhum produto cadastrado. Clique em "+ Novo produto" para começar.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="l" style="padding:24px 9px;color:var(--emuted2);text-align:center">Nenhum produto cadastrado. Clique em "+ Novo produto" para começar.</td></tr>`;
     return;
   }
   tbody.innerHTML = items.map(p => {
@@ -3133,34 +3150,32 @@ function renderAppleProdutos(items) {
     const be = Number(p.preco_minimo_venda) || 0;
     const margem = pvenda - be;
     const margemPct = pvenda > 0 ? (margem / pvenda) * 100 : 0;
-    const margemCor = margem >= 0 ? 'text-primary-500' : 'text-red-400';
+    const margemCls = margem >= 0 ? 'mok' : 'mneg';
     const estoque = Number(p.estoque_atual) || 0;
     const estoqueZero = estoque === 0;
-    const estoqueTxt = estoqueZero
-      ? `<span class="text-red-400 font-mono text-sm">${estoque}</span>`
-      : `<span class="font-mono text-sm">${estoque}</span>`;
+    const estoqueHtml = estoqueZero ? `<span class="mneg">0</span>` : `${estoque}`;
 
     const nome = p.ecom_produto ? `${p.ecom_marca || ''} ${p.ecom_produto} ${p.ecom_modelo || ''}`.trim() : '';
     const nomeHtml = nome
-      ? `<div class="text-sm text-gray-200">${nome}</div><div class="text-xs text-gray-500 font-mono">${p.modelo_sku}</div>`
-      : `<div class="text-sm font-mono text-gray-200">${p.modelo_sku}</div><div class="text-xs text-yellow-500">órfão no Simulador</div>`;
+      ? `<div class="eprod">${nome}</div><div class="emodel">${p.modelo_sku}</div>`
+      : `<div class="eprod" style="font-family:var(--emono)">${p.modelo_sku}</div><div class="emodel" style="color:var(--eamber)">órfão no Simulador</div>`;
 
     const btnVenda = estoqueZero
-      ? `<button disabled class="opacity-40 cursor-not-allowed bg-gray-700 text-white w-7 h-7 rounded font-bold text-sm" title="Sem estoque">+</button>`
-      : `<button class="btn-venda-inline bg-primary-600 hover:bg-primary-700 text-white w-7 h-7 rounded font-bold text-sm" data-id="${p.id}" title="Registrar venda">+</button>`;
+      ? `<button class="rowbtn venda" disabled title="Sem estoque">+ Venda</button>`
+      : `<button class="rowbtn venda btn-venda-inline" data-id="${p.id}" title="Registrar venda">+ Venda</button>`;
 
     return `
-    <tr class="product-row hover:bg-gray-700/30" data-id="${p.id}">
-      <td class="px-3 py-2 whitespace-nowrap">${nomeHtml}</td>
-      <td class="px-3 py-2 font-mono text-sm whitespace-nowrap">R$ ${fmtBRL(be)}</td>
-      <td class="px-3 py-2 font-mono text-sm whitespace-nowrap">R$ ${fmtBRL(pvenda)}</td>
-      <td class="px-3 py-2 font-mono text-sm whitespace-nowrap ${margemCor}">R$ ${fmtBRL(margem)} (${margemPct.toFixed(1)}%)</td>
-      <td class="px-3 py-2 whitespace-nowrap">${estoqueTxt}</td>
-      <td class="px-3 py-2 whitespace-nowrap">
-        <div class="flex gap-1.5 items-center">
+    <tr class="product-row" data-id="${p.id}">
+      <td class="l">${nomeHtml}</td>
+      <td>R$ ${fmtBRL(be)}</td>
+      <td>R$ ${fmtBRL(pvenda)}</td>
+      <td class="${margemCls}">R$ ${fmtBRL(margem)} <span class="smper">(${margemPct.toFixed(1)}%)</span></td>
+      <td>${estoqueHtml}</td>
+      <td class="l">
+        <div class="acts" style="justify-content:flex-start">
           ${btnVenda}
-          <button class="btn-editar-prod bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 h-7 rounded" data-id="${p.id}" title="Editar produto">Editar</button>
-          <button class="btn-excluir-prod bg-red-900/60 hover:bg-red-800 text-red-200 text-xs px-2 h-7 rounded" data-id="${p.id}" title="Excluir produto">Excluir</button>
+          <button class="rowbtn btn-editar-prod" data-id="${p.id}">Editar</button>
+          <button class="rowbtn del btn-excluir-prod" data-id="${p.id}">Excluir</button>
         </div>
       </td>
     </tr>`;
@@ -3666,23 +3681,23 @@ async function renderFinanceiro() {
   tbody.innerHTML = vendasArr.map(v => {
     const be = Number(v.custo_unitario_snapshot) || 0;
     const lucro = (Number(v.preco_unitario) - be) * Number(v.quantidade);
-    const lucroCor = lucro >= 0 ? 'text-primary-500' : 'text-red-400';
+    const lucroCls = lucro >= 0 ? 'mok' : 'mneg';
     return `
-    <tr class="hover:bg-gray-700/30" data-venda-id="${v.id}">
-      <td class="px-3 py-2 text-xs whitespace-nowrap">${fmtData(v.data)}</td>
-      <td class="px-3 py-2 font-mono text-xs whitespace-nowrap">${v.produtos_apple?.modelo_sku || '—'}</td>
-      <td class="px-3 py-2 text-sm whitespace-nowrap">${v.quantidade}</td>
-      <td class="px-3 py-2 font-mono text-sm whitespace-nowrap">R$ ${fmtBRL(v.preco_unitario)}</td>
-      <td class="px-3 py-2 font-mono text-sm font-medium whitespace-nowrap">R$ ${fmtBRL(v.total)}</td>
-      <td class="px-3 py-2 font-mono text-sm text-gray-400 whitespace-nowrap">R$ ${fmtBRL(be)}</td>
-      <td class="px-3 py-2 font-mono text-sm whitespace-nowrap ${lucroCor}">R$ ${fmtBRL(lucro)}</td>
-      <td class="px-3 py-2 text-xs whitespace-nowrap">${v.canal}</td>
-      <td class="px-3 py-2 text-xs whitespace-nowrap">${v.forma_pagamento}</td>
-      <td class="px-3 py-2 text-xs text-gray-400 whitespace-nowrap">${v.cliente || '—'}</td>
-      <td class="px-3 py-2 whitespace-nowrap">
-        <div class="flex gap-1.5 items-center">
-          <button class="btn-editar-venda bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 h-7 rounded" data-id="${v.id}" title="Editar venda">Editar</button>
-          <button class="btn-excluir-venda bg-red-900/60 hover:bg-red-800 text-red-200 text-xs px-2 h-7 rounded" data-id="${v.id}" title="Excluir venda">Excluir</button>
+    <tr data-venda-id="${v.id}">
+      <td class="l">${fmtData(v.data)}</td>
+      <td class="l" style="font-family:var(--emono);font-size:12px">${v.produtos_apple?.modelo_sku || '—'}</td>
+      <td>${v.quantidade}</td>
+      <td>R$ ${fmtBRL(v.preco_unitario)}</td>
+      <td>R$ ${fmtBRL(v.total)}</td>
+      <td style="color:var(--emuted2)">R$ ${fmtBRL(be)}</td>
+      <td class="${lucroCls}">R$ ${fmtBRL(lucro)}</td>
+      <td class="l">${v.canal}</td>
+      <td class="l">${v.forma_pagamento}</td>
+      <td class="l" style="color:var(--emuted2)">${v.cliente || '—'}</td>
+      <td class="l">
+        <div class="acts" style="justify-content:flex-start">
+          <button class="rowbtn btn-editar-venda" data-id="${v.id}">Editar</button>
+          <button class="rowbtn del btn-excluir-venda" data-id="${v.id}">Excluir</button>
         </div>
       </td>
     </tr>`;
