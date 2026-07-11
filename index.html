@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-11-B | selecta-banco-preco | Vendas: cadastro passa a operar pelo SKU do Simulador. Campo SKU dispara lookup em ecom_produtos (ativo=true); autopreenche categoria (sigla), preço compra (custo), preço venda alvo (preço simulado), preço mínimo (break-even ML calculado via ecom.calc). SKU não encontrado bloqueia salvar. Categoria virou campo readonly — opção "+ Nova categoria..." do BUILD -A revertida (Igor decidiu operar só com SKUs do Simulador). Filtro do catálogo passa a listar siglas distintas do e-com por join no frontend. Aba Vendas reposicionada para depois de E-commerce. | base: -A -->
+<!-- BUILD 2026-07-11-E | selecta-banco-preco | Aba Vendas reduzida a 2 sub-abas: Lançamentos e Financeiro. Sub-abas Catálogo, Vendas e Compras aposentadas na UI (tabelas do banco intactas). Lançamentos absorve cadastro + registro de venda inline (botão + em cada linha expande formulário embaixo). Modal de produto: "Estoque mínimo" virou "Quantidade comprada" — gera compra automática no ato do cadastro (custo=preço mínimo). Financeiro novo: 5 quadrantes (Capital investido, Vendas realizadas, Valor bruto, Previsão de lucro, Lucro líquido) com filtro de mês/ano, histórico de vendas do mês. custo_unitario_snapshot em vendas_apple foi reciclado semanticamente para guardar preço mínimo (break-even) no momento da venda — lucro histórico imutável. | base: -D -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -241,27 +241,21 @@
 
 
   <!-- =========================================================== -->
-  <!-- TAB: APPLE                                                    -->
+  <!-- TAB: VENDAS (ex-APPLE)                                        -->
   <!-- =========================================================== -->
   <section id="tab-apple" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
 
     <!-- Sub-navigation -->
     <nav class="flex gap-1 mb-5 border-b border-gray-700">
-      <button class="apple-subtab-btn px-4 py-2 text-sm font-medium" data-subtab="catalogo">Catálogo</button>
-      <button class="apple-subtab-btn px-4 py-2 text-sm font-medium" data-subtab="vendas">Lançamentos</button>
-      <button class="apple-subtab-btn px-4 py-2 text-sm font-medium" data-subtab="compras">Compras</button>
+      <button class="apple-subtab-btn px-4 py-2 text-sm font-medium" data-subtab="catalogo">Lançamentos</button>
+      <button class="apple-subtab-btn px-4 py-2 text-sm font-medium" data-subtab="financeiro">Financeiro</button>
     </nav>
 
-    <!-- ----- APPLE: CATÁLOGO ----- -->
+    <!-- ----- LANÇAMENTOS ----- -->
     <div id="apple-sub-catalogo">
       <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <div class="flex gap-2 flex-wrap">
-          <input id="apple-cat-search" type="search" placeholder="Buscar modelo/SKU..."
-                 class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm w-64">
-          <select id="apple-cat-categoria" class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-            <option value="">Todas categorias</option>
-          </select>
-        </div>
+        <input id="apple-cat-search" type="search" placeholder="Buscar SKU ou produto..."
+               class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm w-72">
         <button id="btn-novo-produto" class="bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-md">+ Novo produto</button>
       </div>
 
@@ -270,13 +264,12 @@
           <table class="w-full text-sm">
             <thead class="bg-gray-900 text-xs uppercase text-gray-400">
               <tr>
-                <th class="px-3 py-2.5 text-left font-medium">Categoria</th>
-                <th class="px-3 py-2.5 text-left font-medium">Modelo / SKU</th>
-                <th class="px-3 py-2.5 text-right font-medium">Custo médio</th>
-                <th class="px-3 py-2.5 text-right font-medium">Venda alvo</th>
+                <th class="px-3 py-2.5 text-left font-medium">Produto</th>
+                <th class="px-3 py-2.5 text-right font-medium">Preço custo (break-even)</th>
+                <th class="px-3 py-2.5 text-right font-medium">Preço venda</th>
                 <th class="px-3 py-2.5 text-right font-medium">Margem</th>
                 <th class="px-3 py-2.5 text-center font-medium">Estoque</th>
-                <th class="px-3 py-2.5 text-center font-medium">Status</th>
+                <th class="px-3 py-2.5 text-center font-medium">Venda</th>
               </tr>
             </thead>
             <tbody id="apple-cat-tbody" class="divide-y divide-gray-700"></tbody>
@@ -285,24 +278,24 @@
       </div>
     </div>
 
-    <!-- ----- APPLE: VENDAS ----- -->
-    <div id="apple-sub-vendas" class="hidden-section">
+    <!-- ----- FINANCEIRO ----- -->
+    <div id="apple-sub-financeiro" class="hidden-section">
       <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs text-gray-400 mb-1">De</label>
-            <input id="apple-vendas-de" type="date" class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-          </div>
-          <div>
-            <label class="block text-xs text-gray-400 mb-1">Até</label>
-            <input id="apple-vendas-ate" type="date" class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-          </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-gray-400">Mês:</label>
+          <input id="apple-fin-mes" type="month" class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
         </div>
-        <button id="btn-nova-venda" class="bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-md">+ Nova venda</button>
+        <div id="apple-fin-mes-label" class="text-xs text-gray-500"></div>
       </div>
 
-      <div id="apple-vendas-resumo" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
+      <!-- Quadrantes -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6" id="apple-fin-quadrantes"></div>
 
+      <!-- Histórico de vendas do mês -->
+      <div class="mb-2 flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-gray-300">Vendas do mês</h3>
+        <span id="apple-fin-hist-count" class="text-xs text-gray-500"></span>
+      </div>
       <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
@@ -313,47 +306,14 @@
                 <th class="px-3 py-2.5 text-center font-medium">Qtd</th>
                 <th class="px-3 py-2.5 text-right font-medium">Preço unit.</th>
                 <th class="px-3 py-2.5 text-right font-medium">Total</th>
+                <th class="px-3 py-2.5 text-right font-medium">Break-even unit.</th>
+                <th class="px-3 py-2.5 text-right font-medium">Lucro</th>
                 <th class="px-3 py-2.5 text-left font-medium">Canal</th>
                 <th class="px-3 py-2.5 text-left font-medium">Pgto</th>
                 <th class="px-3 py-2.5 text-left font-medium">Cliente</th>
-                <th class="px-3 py-2.5 text-center font-medium">Ações</th>
               </tr>
             </thead>
-            <tbody id="apple-vendas-tbody" class="divide-y divide-gray-700"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ----- APPLE: COMPRAS ----- -->
-    <div id="apple-sub-compras" class="hidden-section">
-      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <div>
-          <label class="block text-xs text-gray-400 mb-1">Filtrar por viagem</label>
-          <select id="apple-compras-viagem" class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-            <option value="">Todas viagens</option>
-          </select>
-        </div>
-        <button id="btn-nova-compra" class="bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-md">+ Nova compra</button>
-      </div>
-
-      <div id="apple-compras-resumo" class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4"></div>
-
-      <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-900 text-xs uppercase text-gray-400">
-              <tr>
-                <th class="px-3 py-2.5 text-left font-medium">Data</th>
-                <th class="px-3 py-2.5 text-center font-medium">Viagem</th>
-                <th class="px-3 py-2.5 text-left font-medium">Produto</th>
-                <th class="px-3 py-2.5 text-center font-medium">Qtd</th>
-                <th class="px-3 py-2.5 text-right font-medium">Custo unit.</th>
-                <th class="px-3 py-2.5 text-right font-medium">Total</th>
-                <th class="px-3 py-2.5 text-center font-medium">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="apple-compras-tbody" class="divide-y divide-gray-700"></tbody>
+            <tbody id="apple-fin-hist-tbody" class="divide-y divide-gray-700"></tbody>
           </table>
         </div>
       </div>
@@ -1609,7 +1569,7 @@
 <div id="modal-apple-produto" class="hidden-section fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto">
   <div class="bg-gray-800 rounded-lg border border-gray-700 max-w-2xl w-full my-8 shadow-2xl">
     <header class="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-      <h2 id="modal-ap-produto-titulo" class="text-lg font-semibold">Novo produto Apple</h2>
+      <h2 id="modal-ap-produto-titulo" class="text-lg font-semibold">Novo produto</h2>
       <button class="ap-modal-close text-gray-400 hover:text-white text-2xl leading-none" data-target="modal-apple-produto">×</button>
     </header>
     <div class="px-6 py-4 space-y-3">
@@ -1634,10 +1594,10 @@
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-400 mb-1">Preço venda alvo (R$)</label>
-          <input id="ap-prod-pvenda" type="number" step="0.01" min="0" readonly tabindex="-1" class="w-full bg-gray-900/50 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-300">
+          <input id="ap-prod-pvenda" type="number" step="0.01" min="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Preço mínimo (Break-even ML)</label>
+          <label class="block text-xs font-medium text-gray-400 mb-1">Preço mínimo</label>
           <input id="ap-prod-pmin" type="number" step="0.01" min="0" readonly tabindex="-1" class="w-full bg-gray-900/50 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-300">
         </div>
         <div>
@@ -1645,7 +1605,7 @@
           <div id="ap-prod-margem" class="w-full bg-gray-900/50 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-300">—</div>
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Estoque mínimo (un)</label>
+          <label class="block text-xs font-medium text-gray-400 mb-1" id="ap-prod-emin-label">Quantidade comprada (un) *</label>
           <input id="ap-prod-emin" type="number" min="0" value="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
         </div>
       </div>
@@ -1658,141 +1618,6 @@
   </div>
 </div>
 
-
-<!-- ============================================================ -->
-<!-- MODAL: NOVA VENDA APPLE                                        -->
-<!-- ============================================================ -->
-<div id="modal-apple-venda" class="hidden-section fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto">
-  <div class="bg-gray-800 rounded-lg border border-gray-700 max-w-2xl w-full my-8 shadow-2xl">
-    <header class="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-      <h2 class="text-lg font-semibold">Nova venda</h2>
-      <button class="ap-modal-close text-gray-400 hover:text-white text-2xl leading-none" data-target="modal-apple-venda">×</button>
-    </header>
-    <div class="px-6 py-4 space-y-3">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Data *</label>
-          <input id="ap-vend-data" type="date" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Produto *</label>
-          <select id="ap-vend-produto" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Quantidade *</label>
-          <input id="ap-vend-qtd" type="number" min="1" value="1" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Preço unit. (R$) *</label>
-          <input id="ap-vend-preco" type="number" step="0.01" min="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Canal *</label>
-          <select id="ap-vend-canal" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-            <option>Instagram</option><option>WhatsApp</option><option>OLX</option>
-            <option>Indicação</option><option>Presencial</option><option>Outro</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Forma pgto *</label>
-          <select id="ap-vend-pgto" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-            <option>PIX</option><option>Dinheiro</option><option>Cartão Débito</option>
-            <option>Cartão Crédito</option><option>Outro</option>
-          </select>
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-xs font-medium text-gray-400 mb-1">Cliente (opcional)</label>
-          <input id="ap-vend-cliente" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-      </div>
-
-      <div id="ap-vend-calc" class="bg-gray-900 rounded-md p-3 border border-gray-700 text-sm space-y-1 text-gray-300">
-        <div>Total: <span id="ap-vend-total" class="text-gray-100 font-medium">R$ 0,00</span></div>
-        <div>Margem unitária: <span id="ap-vend-margem">—</span></div>
-        <div>Provisão viagem: <span id="ap-vend-prov">—</span></div>
-        <div>Lucro: <span id="ap-vend-lucro" class="font-medium">—</span></div>
-      </div>
-
-      <div class="border-t border-gray-700 pt-3">
-        <label class="block text-xs font-medium text-yellow-500 mb-1">⚠ Saldo da conta após a venda (R$) *</label>
-        <input id="ap-vend-saldo" type="number" step="0.01" class="w-full bg-gray-900 border border-yellow-700/50 rounded-md px-3 py-2 text-sm">
-        <div class="text-xs text-gray-400 mt-1">Esperado pelo sistema: <span id="ap-vend-esperado" class="font-mono">R$ 0,00</span></div>
-        <div id="ap-vend-divergencia" class="hidden-section text-xs text-red-400 mt-1"></div>
-      </div>
-
-      <div>
-        <label class="block text-xs font-medium text-gray-400 mb-1">Observação</label>
-        <textarea id="ap-vend-obs" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></textarea>
-      </div>
-
-      <div id="ap-vend-erro" class="hidden-section text-sm text-red-400 bg-red-900/30 border border-red-800 rounded-md p-3"></div>
-    </div>
-    <footer class="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-700">
-      <button class="ap-modal-close px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-md" data-target="modal-apple-venda">Cancelar</button>
-      <button id="ap-vend-salvar" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 rounded-md font-medium">Registrar venda</button>
-    </footer>
-  </div>
-</div>
-
-
-<!-- ============================================================ -->
-<!-- MODAL: NOVA COMPRA APPLE                                       -->
-<!-- ============================================================ -->
-<div id="modal-apple-compra" class="hidden-section fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto">
-  <div class="bg-gray-800 rounded-lg border border-gray-700 max-w-2xl w-full my-8 shadow-2xl">
-    <header class="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-      <h2 class="text-lg font-semibold">Nova compra</h2>
-      <button class="ap-modal-close text-gray-400 hover:text-white text-2xl leading-none" data-target="modal-apple-compra">×</button>
-    </header>
-    <div class="px-6 py-4 space-y-3">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Data *</label>
-          <input id="ap-comp-data" type="date" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Viagem nº *</label>
-          <input id="ap-comp-viagem" type="number" min="1" value="1" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-xs font-medium text-gray-400 mb-1">Produto *</label>
-          <select id="ap-comp-produto" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Quantidade *</label>
-          <input id="ap-comp-qtd" type="number" min="1" value="1" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-400 mb-1">Custo unit. (R$) *</label>
-          <input id="ap-comp-custo" type="number" step="0.01" min="0" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm">
-        </div>
-      </div>
-
-      <div id="ap-comp-calc" class="bg-gray-900 rounded-md p-3 border border-gray-700 text-sm space-y-1 text-gray-300">
-        <div>Total: <span id="ap-comp-total" class="text-gray-100 font-medium">R$ 0,00</span></div>
-        <div>Novo custo médio do produto: <span id="ap-comp-novocusto">—</span></div>
-      </div>
-
-      <div class="border-t border-gray-700 pt-3">
-        <label class="block text-xs font-medium text-yellow-500 mb-1">⚠ Saldo da conta após a compra (R$) *</label>
-        <input id="ap-comp-saldo" type="number" step="0.01" class="w-full bg-gray-900 border border-yellow-700/50 rounded-md px-3 py-2 text-sm">
-        <div class="text-xs text-gray-400 mt-1">Esperado pelo sistema: <span id="ap-comp-esperado" class="font-mono">R$ 0,00</span></div>
-        <div id="ap-comp-divergencia" class="hidden-section text-xs text-red-400 mt-1"></div>
-      </div>
-
-      <div>
-        <label class="block text-xs font-medium text-gray-400 mb-1">Observação</label>
-        <textarea id="ap-comp-obs" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></textarea>
-      </div>
-
-      <div id="ap-comp-erro" class="hidden-section text-sm text-red-400 bg-red-900/30 border border-red-800 rounded-md p-3"></div>
-    </div>
-    <footer class="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-700">
-      <button class="ap-modal-close px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-md" data-target="modal-apple-compra">Cancelar</button>
-      <button id="ap-comp-salvar" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 rounded-md font-medium">Registrar compra</button>
-    </footer>
-  </div>
-</div>
 
 
 <!-- ============================================================ -->
@@ -3160,12 +2985,12 @@ function switchTab(tabName) {
 }
 
 // =====================================================================
-// APPLE: ENTRADA NA ABA
+// VENDAS: ENTRADA NA ABA
 // =====================================================================
 async function enterAppleTab() {
-  // Carrega config + categorias na primeira entrada
+  // BUILD -E: carrega ecom (frete + comissões) para break-even; config é opcional (legado).
   if (!state.apple.config) await loadAppleConfig();
-  if (state.apple.categorias.length === 0) await loadAppleCategorias();
+  await ensureEcomLoaded();
   switchAppleSubtab(state.apple.subtab);
 }
 
@@ -3174,14 +2999,8 @@ async function loadAppleConfig() {
   state.apple.config = data || { saldo_inicial: 0, percentual_provisao_viagem: 5, tolerancia_conciliacao: 5 };
 }
 
-async function loadAppleCategorias() {
-  // BUILD -B: categorias agora vêm do e-com (via join no frontend em loadAppleProdutos).
-  // Mantemos a query legada para não quebrar dependências, mas o filtro é populado depois.
-  const { data } = await sb.from('categorias_apple').select('*').order('ordem');
-  state.apple.categorias = data || [];
-  // Filtro do catálogo será populado por siglas do e-com em loadAppleProdutos.
-  $('#apple-cat-categoria').innerHTML = '<option value="">Todas categorias</option>';
-}
+// BUILD -E: loadAppleCategorias aposentada — categorias_apple saiu do fluxo em -B/-C
+// e o filtro por categoria saiu da UI em -E. Não é mais chamada.
 
 // BUILD -B: garante que o objeto ecom tenha frete/comissões carregados
 // para o cálculo local de break-even. Só carrega uma vez por sessão.
@@ -3227,47 +3046,33 @@ async function lookupEcomProduto(sku) {
 }
 
 function switchAppleSubtab(name) {
+  // BUILD -E: sub-abas reduzidas a Lançamentos (data-subtab="catalogo") e Financeiro.
   state.apple.subtab = name;
   $$('.apple-subtab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.subtab === name);
   });
-  hide('#apple-sub-catalogo'); hide('#apple-sub-vendas'); hide('#apple-sub-compras');
+  hide('#apple-sub-catalogo'); hide('#apple-sub-financeiro');
   show(`#apple-sub-${name}`);
 
   if (name === 'catalogo') loadAppleProdutos();
-  else if (name === 'vendas') loadAppleVendas();
-  else if (name === 'compras') loadAppleCompras();
+  else if (name === 'financeiro') loadFinanceiro();
 }
 
 // =====================================================================
-// APPLE: SALDO ESPERADO (computado)
-// =====================================================================
-async function computeSaldoEsperado() {
-  const { data: vendas } = await sb.from('vendas_apple').select('total');
-  const { data: compras } = await sb.from('compras_apple').select('total');
-  const totV = (vendas || []).reduce((s, v) => s + Number(v.total), 0);
-  const totC = (compras || []).reduce((s, c) => s + Number(c.total), 0);
-  const saldoInicial = Number(state.apple.config?.saldo_inicial || 0);
-  state.apple.saldoEsperado = saldoInicial + totV - totC;
-  return state.apple.saldoEsperado;
-}
-
-// =====================================================================
-// APPLE: CATÁLOGO
+// VENDAS: CATÁLOGO / LANÇAMENTOS
 // =====================================================================
 async function loadAppleProdutos() {
   const search = $('#apple-cat-search').value.trim().toLowerCase();
-  const catFiltro = $('#apple-cat-categoria').value; // agora é sigla do e-com (SSD, MEM, ...)
 
   const { data, error } = await sb.from('produtos_apple_completo').select('*').order('modelo_sku');
   if (error) {
-    $('#apple-cat-tbody').innerHTML = `<tr><td colspan="7" class="px-3 py-6 text-center text-red-400">Erro: ${error.message}</td></tr>`;
+    $('#apple-cat-tbody').innerHTML = `<tr><td colspan="6" class="px-3 py-6 text-center text-red-400">Erro: ${error.message}</td></tr>`;
     return;
   }
 
   let produtos = data || [];
 
-  // BUILD -B: join live com ecom_produtos por codigo = modelo_sku
+  // Join live com ecom_produtos por codigo = modelo_sku
   if (produtos.length > 0) {
     const codigos = produtos.map(p => p.modelo_sku).filter(Boolean);
     if (codigos.length > 0) {
@@ -3290,13 +3095,6 @@ async function loadAppleProdutos() {
     }
   }
 
-  // Popular filtro de categoria com siglas distintas encontradas
-  const siglas = [...new Set(produtos.map(p => p.ecom_categoria).filter(Boolean))].sort();
-  $('#apple-cat-categoria').innerHTML = '<option value="">Todas categorias</option>' +
-    siglas.map(s => `<option value="${s}" ${s === catFiltro ? 'selected' : ''}>${s}</option>`).join('');
-
-  // Filtros de UI (categoria por sigla + busca por SKU/nome)
-  if (catFiltro) produtos = produtos.filter(p => p.ecom_categoria === catFiltro);
   if (search) {
     produtos = produtos.filter(p =>
       (p.modelo_sku || '').toLowerCase().includes(search) ||
@@ -3311,40 +3109,46 @@ async function loadAppleProdutos() {
 function renderAppleProdutos(items) {
   const tbody = $('#apple-cat-tbody');
   if (items.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="px-3 py-8 text-center text-gray-500">Nenhum produto cadastrado. Clique em "+ Novo produto" para começar.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="px-3 py-8 text-center text-gray-500">Nenhum produto cadastrado. Clique em "+ Novo produto" para começar.</td></tr>`;
     return;
   }
   tbody.innerHTML = items.map(p => {
-    const margem = Number(p.preco_venda_alvo) - Number(p.custo_medio);
-    const margemPct = p.custo_medio > 0 ? (margem / Number(p.custo_medio)) * 100 : 0;
+    // BUILD -E: margem líquida = preço venda − preço mínimo (break-even), % sobre receita
+    const pvenda = Number(p.preco_venda_alvo) || 0;
+    const be = Number(p.preco_minimo_venda) || 0;
+    const margem = pvenda - be;
+    const margemPct = pvenda > 0 ? (margem / pvenda) * 100 : 0;
     const margemCor = margem >= 0 ? 'text-primary-500' : 'text-red-400';
-    const estoque = Number(p.estoque_atual);
-    const estoqueBaixo = estoque <= Number(p.estoque_minimo) && estoque > 0;
+    const estoque = Number(p.estoque_atual) || 0;
     const estoqueZero = estoque === 0;
-    let estoqueBadge = `<span class="font-mono text-sm">${estoque}</span>`;
-    if (estoqueZero) estoqueBadge = `<span class="text-red-400 font-mono text-sm">${estoque}</span>`;
-    else if (estoqueBaixo) estoqueBadge = `<span class="text-yellow-500 font-mono text-sm">${estoque} ⚠</span>`;
+    const estoqueTxt = estoqueZero
+      ? `<span class="text-red-400 font-mono text-sm">${estoque}</span>`
+      : `<span class="font-mono text-sm">${estoque}</span>`;
 
-    // BUILD -B: categoria e nome vêm do e-com. SKU órfão (não achou no ecom_produtos) sinaliza.
-    const catBadge = p.ecom_categoria
-      ? `<span class="bg-gray-700 text-xs px-1.5 py-0.5 rounded font-mono">${p.ecom_categoria}</span>`
-      : `<span class="bg-yellow-900/40 text-yellow-500 text-xs px-1.5 py-0.5 rounded">órfão</span>`;
-    const nomeEcom = p.ecom_produto
-      ? `<div class="text-xs text-gray-500 mt-0.5 truncate max-w-md">${p.ecom_produto}</div>`
-      : '';
+    const nome = p.ecom_produto ? `${p.ecom_marca || ''} ${p.ecom_produto} ${p.ecom_modelo || ''}`.trim() : '';
+    const nomeHtml = nome
+      ? `<div class="text-sm text-gray-200">${nome}</div><div class="text-xs text-gray-500 font-mono">${p.modelo_sku}</div>`
+      : `<div class="text-sm font-mono text-gray-200">${p.modelo_sku}</div><div class="text-xs text-yellow-500">órfão no Simulador</div>`;
+
+    const btnVenda = estoqueZero
+      ? `<button disabled class="opacity-40 cursor-not-allowed bg-gray-700 text-white w-8 h-8 rounded-md font-bold text-lg" title="Sem estoque">+</button>`
+      : `<button class="btn-venda-inline bg-primary-600 hover:bg-primary-700 text-white w-8 h-8 rounded-md font-bold text-lg" data-id="${p.id}" title="Registrar venda">+</button>`;
 
     return `
-    <tr class="product-row hover:bg-gray-700/50 cursor-pointer" data-id="${p.id}">
-      <td class="px-3 py-2">${catBadge}</td>
-      <td class="px-3 py-2 font-medium font-mono">${p.modelo_sku}${nomeEcom}</td>
-      <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(p.custo_medio)}</td>
-      <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(p.preco_venda_alvo)}</td>
+    <tr class="product-row hover:bg-gray-700/30" data-id="${p.id}">
+      <td class="px-3 py-2 cursor-pointer" onclick="openAppleProdutoModal('${p.id}')">${nomeHtml}</td>
+      <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(be)}</td>
+      <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(pvenda)}</td>
       <td class="px-3 py-2 text-right font-mono text-sm ${margemCor}">R$ ${fmtBRL(margem)} (${margemPct.toFixed(1)}%)</td>
-      <td class="px-3 py-2 text-center">${estoqueBadge}</td>
-      <td class="px-3 py-2 text-center">${p.ativo ? '<span class="text-xs text-primary-500">●</span>' : '<span class="text-xs text-gray-600">○</span>'}</td>
+      <td class="px-3 py-2 text-center">${estoqueTxt}</td>
+      <td class="px-3 py-2 text-center">${btnVenda}</td>
     </tr>`;
   }).join('');
-  $$('#apple-cat-tbody tr[data-id]').forEach(tr => tr.addEventListener('click', () => openAppleProdutoModal(tr.dataset.id)));
+
+  $$('#apple-cat-tbody .btn-venda-inline').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    toggleVendaInline(e.currentTarget.dataset.id);
+  }));
 }
 
 // =====================================================================
@@ -3353,28 +3157,35 @@ function renderAppleProdutos(items) {
 function openAppleProdutoModal(id) {
   hide('#ap-prod-erro');
   $('#ap-prod-id').value = id || '';
-  $('#modal-ap-produto-titulo').textContent = id ? 'Editar produto Apple' : 'Novo produto Apple';
+  $('#modal-ap-produto-titulo').textContent = id ? 'Editar produto' : 'Novo produto';
 
-  // Reset visual: limpa todos os campos readonly e status
+  // Reset visual
   ['ap-prod-modelo','ap-prod-categoria','ap-prod-nome-ecom','ap-prod-pcompra','ap-prod-pvenda','ap-prod-pmin'].forEach(i => $('#' + i).value = '');
   $('#ap-prod-emin').value = 0;
   setSkuStatus('idle');
   updateMargemDisplay();
 
   if (id) {
+    // BUILD -D: editar mostra APENAS o que está salvo em produtos_apple. Produto virou independente do Simulador.
     const p = state.apple.produtos.find(x => x.id === id);
     if (!p) return;
-    // Edição: SKU vira readonly (identidade do produto não muda)
     $('#ap-prod-modelo').value = p.modelo_sku || '';
     $('#ap-prod-modelo').readOnly = true;
     $('#ap-prod-modelo').classList.add('bg-gray-900/50', 'text-gray-300');
-    $('#ap-prod-emin').value = p.estoque_minimo || 0;
-    // Dispara lookup para preencher os campos do e-com com os dados atuais (live)
-    if (p.modelo_sku) triggerSkuLookup(p.modelo_sku);
+    $('#ap-prod-categoria').value = p.ecom_categoria || '';
+    $('#ap-prod-nome-ecom').value = [p.ecom_marca, p.ecom_produto, p.ecom_modelo].filter(Boolean).join(' · ');
+    $('#ap-prod-pcompra').value = p.preco_compra != null ? Number(p.preco_compra).toFixed(2) : '';
+    $('#ap-prod-pvenda').value = p.preco_venda_alvo != null ? Number(p.preco_venda_alvo).toFixed(2) : '';
+    $('#ap-prod-pmin').value = p.preco_minimo_venda != null ? Number(p.preco_minimo_venda).toFixed(2) : '';
+    // BUILD -E: Quantidade comprada só aparece no cadastro inicial. Ao editar, esconde.
+    $('#ap-prod-emin').parentElement.style.display = 'none';
+    updateMargemDisplay();
+    setSkuStatus('ok');
   } else {
-    // Novo: SKU editável, foco nele
+    // Novo: SKU editável, foco nele. Quantidade comprada visível.
     $('#ap-prod-modelo').readOnly = false;
     $('#ap-prod-modelo').classList.remove('bg-gray-900/50', 'text-gray-300');
+    $('#ap-prod-emin').parentElement.style.display = '';
     setTimeout(() => $('#ap-prod-modelo').focus(), 100);
   }
   show('#modal-apple-produto');
@@ -3383,24 +3194,24 @@ function openAppleProdutoModal(id) {
 function setSkuStatus(state, msg) {
   const el = $('#ap-prod-sku-status');
   const salvar = $('#ap-prod-salvar');
-  el.className = 'text-xs mt-1';
+  // BUILD -C: idle e ok ficam mudos — só sinalizamos loading e problema (notfound).
   if (state === 'idle') {
-    el.classList.add('text-gray-500');
-    el.textContent = msg || 'Digite um código do Simulador — os demais campos serão preenchidos automaticamente.';
+    el.className = 'hidden-section';
+    el.textContent = '';
     salvar.disabled = true;
     salvar.classList.add('opacity-50', 'cursor-not-allowed');
   } else if (state === 'loading') {
-    el.classList.add('text-gray-400');
+    el.className = 'text-xs mt-1 text-gray-400';
     el.textContent = msg || 'Buscando no Simulador...';
     salvar.disabled = true;
     salvar.classList.add('opacity-50', 'cursor-not-allowed');
   } else if (state === 'ok') {
-    el.classList.add('text-primary-500');
-    el.textContent = msg || '✓ SKU encontrado no Simulador.';
+    el.className = 'hidden-section';
+    el.textContent = '';
     salvar.disabled = false;
     salvar.classList.remove('opacity-50', 'cursor-not-allowed');
   } else if (state === 'notfound') {
-    el.classList.add('text-red-400');
+    el.className = 'text-xs mt-1 text-red-400';
     el.textContent = msg || '✗ SKU não encontrado ou inativo no Simulador. Cadastre pelo Simulador primeiro.';
     salvar.disabled = true;
     salvar.classList.add('opacity-50', 'cursor-not-allowed');
@@ -3442,7 +3253,7 @@ async function triggerSkuLookup(sku) {
   $('#ap-prod-pvenda').value = found.preco != null ? Number(found.preco).toFixed(2) : '';
   $('#ap-prod-pmin').value = found.breakeven != null ? Number(found.breakeven).toFixed(2) : '';
   updateMargemDisplay();
-  setSkuStatus('ok', `✓ ${found.codigo} — ${found.categoria || 's/cat'} · Break-even ${found.breakeven != null ? 'R$ ' + fmtBRL(found.breakeven) : 'indisponível'}`);
+  setSkuStatus('ok');
 }
 
 function clearEcomFields() {
@@ -3452,12 +3263,14 @@ function clearEcomFields() {
 }
 
 function updateMargemDisplay() {
-  const c = Number($('#ap-prod-pcompra').value) || 0;
+  // BUILD -C: régua Selecta — margem líquida = preço venda − preço mínimo (break-even = custo total na porta).
+  // % sobre a receita (preço venda), coerente com o Simulador (não é markup sobre custo).
   const v = Number($('#ap-prod-pvenda').value) || 0;
+  const be = Number($('#ap-prod-pmin').value) || 0;
   const el = $('#ap-prod-margem');
-  if (!c && !v) { el.innerHTML = '<span class="text-gray-500">—</span>'; return; }
-  const m = v - c;
-  const pct = c > 0 ? (m / c) * 100 : 0;
+  if (!v && !be) { el.innerHTML = '<span class="text-gray-500">—</span>'; return; }
+  const m = v - be;
+  const pct = v > 0 ? (m / v) * 100 : 0;
   el.innerHTML = `<span class="${m >= 0 ? 'text-primary-500' : 'text-red-400'} font-mono">R$ ${fmtBRL(m)} (${pct.toFixed(1)}%)</span>`;
 }
 
@@ -3468,37 +3281,67 @@ async function saveAppleProduto() {
   const codigo = (skuInput.value || '').trim().toUpperCase();
   if (!codigo) return showApErr('#ap-prod-erro', 'Informe o SKU do Simulador.');
 
-  // BUILD -B: revalida o SKU no banco na hora do save (fonte da verdade)
-  const found = await lookupEcomProduto(codigo);
-  if (!found) return showApErr('#ap-prod-erro', 'SKU não encontrado ou inativo no Simulador. Cadastre pelo Simulador primeiro.');
-
-  // Duplicidade: se for novo, garante que ninguém já cadastrou esse SKU
-  if (!id) {
-    const { data: existente } = await sb.from('produtos_apple').select('id').eq('modelo_sku', codigo).maybeSingle();
-    if (existente) return showApErr('#ap-prod-erro', 'Este SKU já está cadastrado na aba Vendas.');
-  }
-
-  const payload = {
-    categoria_id: null, // BUILD -B: categoria vem do e-com via join, não mais de categorias_apple
-    modelo_sku: found.codigo,
-    preco_compra: Number(found.custo) || 0,
-    preco_venda_alvo: Number(found.preco) || 0,
-    preco_minimo_venda: found.breakeven != null ? Number(found.breakeven) : null,
-    estoque_minimo: parseInt($('#ap-prod-emin').value) || 0,
-  };
-
   const btn = $('#ap-prod-salvar');
   btn.disabled = true; btn.textContent = 'Salvando...';
-  let res;
+
   if (id) {
-    payload.updated_at = new Date().toISOString();
-    res = await sb.from('produtos_apple').update(payload).eq('id', id);
-  } else {
-    res = await sb.from('produtos_apple').insert(payload);
+    // BUILD -D: EDIÇÃO. Produto é independente do Simulador — não revalida, não sobrescreve.
+    const payload = {
+      modelo_sku: codigo,
+      preco_compra: parseFloat($('#ap-prod-pcompra').value) || 0,
+      preco_venda_alvo: parseFloat($('#ap-prod-pvenda').value) || 0,
+      preco_minimo_venda: $('#ap-prod-pmin').value ? parseFloat($('#ap-prod-pmin').value) : null,
+      updated_at: new Date().toISOString(),
+    };
+    const res = await sb.from('produtos_apple').update(payload).eq('id', id);
+    btn.disabled = false; btn.textContent = 'Salvar';
+    if (res.error) return showApErr('#ap-prod-erro', res.error.message);
+    hide('#modal-apple-produto');
+    loadAppleProdutos();
+    return;
   }
+
+  // NOVO: revalida SKU no e-com, checa duplicidade, insere produto + compra inicial
+  const found = await lookupEcomProduto(codigo);
+  if (!found) { btn.disabled = false; btn.textContent = 'Salvar'; return showApErr('#ap-prod-erro', 'SKU não encontrado ou inativo no Simulador. Cadastre pelo Simulador primeiro.'); }
+  const { data: existente } = await sb.from('produtos_apple').select('id').eq('modelo_sku', codigo).maybeSingle();
+  if (existente) { btn.disabled = false; btn.textContent = 'Salvar'; return showApErr('#ap-prod-erro', 'Este SKU já está cadastrado na aba Vendas.'); }
+
+  const qtdComprada = parseInt($('#ap-prod-emin').value) || 0;
+  if (qtdComprada < 1) { btn.disabled = false; btn.textContent = 'Salvar'; return showApErr('#ap-prod-erro', 'Informe a quantidade comprada (mínimo 1).'); }
+
+  const precoMin = found.breakeven != null ? Number(found.breakeven) : null;
+  if (precoMin == null || precoMin <= 0) { btn.disabled = false; btn.textContent = 'Salvar'; return showApErr('#ap-prod-erro', 'Break-even não disponível para este SKU. Verifique custo/peso/categoria no Simulador.'); }
+
+  const payload = {
+    categoria_id: null,
+    modelo_sku: found.codigo,
+    preco_compra: Number(found.custo) || 0,
+    preco_venda_alvo: parseFloat($('#ap-prod-pvenda').value) || Number(found.preco) || 0,
+    preco_minimo_venda: precoMin,
+    estoque_minimo: qtdComprada, // BUILD -E: campo reciclado — guarda a qtd da compra inicial (referência)
+  };
+
+  const resProd = await sb.from('produtos_apple').insert(payload).select().single();
+  if (resProd.error) { btn.disabled = false; btn.textContent = 'Salvar'; return showApErr('#ap-prod-erro', resProd.error.message); }
+
+  // BUILD -E: compra automática — capital investido = preço mínimo × quantidade
+  const compraPayload = {
+    data: new Date().toISOString().slice(0, 10),
+    viagem_numero: 1,
+    produto_id: resProd.data.id,
+    quantidade: qtdComprada,
+    custo_unitario: precoMin,
+    saldo_conta_apos: 0, // legado do controle Apple (viagens) — sem uso na doutrina nova
+  };
+  const resCompra = await sb.from('compras_apple').insert(compraPayload);
   btn.disabled = false; btn.textContent = 'Salvar';
 
-  if (res.error) return showApErr('#ap-prod-erro', res.error.message);
+  if (resCompra.error) {
+    // Produto foi criado mas compra falhou — sinaliza sem cancelar o produto (Igor decide)
+    return showApErr('#ap-prod-erro', `Produto criado, mas a compra inicial falhou: ${resCompra.error.message}. Estoque ficará zero até corrigir.`);
+  }
+
   hide('#modal-apple-produto');
   loadAppleProdutos();
 }
@@ -3510,340 +3353,229 @@ function showApErr(sel, msg) {
 }
 
 // =====================================================================
-// APPLE: VENDAS
+// VENDA INLINE (BUILD -E)
 // =====================================================================
-async function loadAppleVendas() {
-  const de = $('#apple-vendas-de').value;
-  const ate = $('#apple-vendas-ate').value;
-  let q = sb.from('vendas_apple').select(`*, produtos_apple ( modelo_sku, categoria_id )`).order('data', { ascending: false }).order('created_at', { ascending: false });
-  if (de) q = q.gte('data', de);
-  if (ate) q = q.lte('data', ate);
-  const { data, error } = await q;
-  if (error) {
-    $('#apple-vendas-tbody').innerHTML = `<tr><td colspan="9" class="px-3 py-6 text-center text-red-400">Erro: ${error.message}</td></tr>`;
-    return;
-  }
-  renderAppleVendas(data || []);
-  renderVendasResumo(data || []);
+function toggleVendaInline(produtoId) {
+  const jaAberta = document.querySelector(`tr.venda-inline[data-produto-id="${produtoId}"]`);
+  // Fecha qualquer outra inline aberta primeiro
+  $$('.venda-inline').forEach(r => r.remove());
+  if (jaAberta) return; // se clicou de novo no + do mesmo produto, era pra fechar
+
+  const p = state.apple.produtos.find(x => x.id === produtoId);
+  if (!p) return;
+  const linhaProduto = document.querySelector(`tr.product-row[data-id="${produtoId}"]`);
+  if (!linhaProduto) return;
+
+  const precoDefault = Number(p.preco_venda_alvo || 0).toFixed(2);
+  const hoje = new Date().toISOString().slice(0, 10);
+  const estoque = Number(p.estoque_atual) || 0;
+
+  const tr = document.createElement('tr');
+  tr.className = 'venda-inline';
+  tr.dataset.produtoId = produtoId;
+  tr.innerHTML = `
+    <td colspan="6" class="p-0">
+      <div class="bg-gray-900/70 border-l-4 border-primary-600 px-4 py-4">
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Data</label>
+            <input class="vi-data w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" type="date" value="${hoje}">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Qtd (máx ${estoque})</label>
+            <input class="vi-qtd w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" type="number" min="1" max="${estoque}" value="1">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Preço unit. (R$)</label>
+            <input class="vi-preco w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" type="number" step="0.01" min="0" value="${precoDefault}">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Canal</label>
+            <select class="vi-canal w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+              <option>Instagram</option><option>WhatsApp</option><option>OLX</option>
+              <option>Indicação</option><option>Presencial</option><option>Outro</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Forma pgto</label>
+            <select class="vi-pgto w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+              <option>PIX</option><option>Dinheiro</option><option>Cartão Débito</option>
+              <option>Cartão Crédito</option><option>Outro</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Cliente (opcional)</label>
+            <input class="vi-cliente w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" type="text">
+          </div>
+        </div>
+        <div class="flex items-center justify-between mt-3">
+          <div class="text-xs text-gray-400">
+            Break-even unit.: <span class="font-mono text-gray-300">R$ ${fmtBRL(p.preco_minimo_venda)}</span>
+            · Total venda: <span class="vi-total font-mono text-gray-100">R$ ${fmtBRL(Number(precoDefault))}</span>
+            · Lucro: <span class="vi-lucro font-mono">—</span>
+          </div>
+          <div class="flex gap-2">
+            <button class="vi-cancel px-3 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 rounded-md">Cancelar</button>
+            <button class="vi-save px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-700 rounded-md font-medium">Registrar venda</button>
+          </div>
+        </div>
+        <div class="vi-erro hidden-section text-sm text-red-400 bg-red-900/30 border border-red-800 rounded-md p-2 mt-2"></div>
+      </div>
+    </td>`;
+  linhaProduto.after(tr);
+
+  // Recalcula total e lucro ao mudar qtd ou preço
+  const recalc = () => {
+    const q = Number(tr.querySelector('.vi-qtd').value) || 0;
+    const pr = Number(tr.querySelector('.vi-preco').value) || 0;
+    const be = Number(p.preco_minimo_venda) || 0;
+    const total = q * pr;
+    const lucro = q * (pr - be);
+    tr.querySelector('.vi-total').textContent = 'R$ ' + fmtBRL(total);
+    const lucEl = tr.querySelector('.vi-lucro');
+    lucEl.textContent = 'R$ ' + fmtBRL(lucro);
+    lucEl.className = 'vi-lucro font-mono ' + (lucro >= 0 ? 'text-primary-500' : 'text-red-400');
+  };
+  tr.querySelector('.vi-qtd').addEventListener('input', recalc);
+  tr.querySelector('.vi-preco').addEventListener('input', recalc);
+  recalc();
+
+  tr.querySelector('.vi-cancel').addEventListener('click', () => tr.remove());
+  tr.querySelector('.vi-save').addEventListener('click', () => saveVendaInline(produtoId, tr));
 }
 
-function renderAppleVendas(vendas) {
-  const tbody = $('#apple-vendas-tbody');
-  if (vendas.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="px-3 py-8 text-center text-gray-500">Nenhuma venda no período. Clique em "+ Nova venda" para registrar.</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = vendas.map(v => `
-    <tr class="hover:bg-gray-700/30">
-      <td class="px-3 py-2 text-xs">${fmtData(v.data)}</td>
-      <td class="px-3 py-2 font-medium">${v.produtos_apple?.modelo_sku || '—'}</td>
-      <td class="px-3 py-2 text-center">${v.quantidade}</td>
-      <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(v.preco_unitario)}</td>
-      <td class="px-3 py-2 text-right font-mono text-sm font-medium">R$ ${fmtBRL(v.total)}</td>
-      <td class="px-3 py-2 text-xs">${v.canal}</td>
-      <td class="px-3 py-2 text-xs">${v.forma_pagamento}</td>
-      <td class="px-3 py-2 text-xs text-gray-400">${v.cliente || '—'}</td>
-      <td class="px-3 py-2 text-center">
-        <button class="del-venda text-red-400 hover:text-red-300 text-xs" data-id="${v.id}">Excluir</button>
-      </td>
-    </tr>`).join('');
-  $$('#apple-vendas-tbody .del-venda').forEach(b => b.addEventListener('click', e => deleteVenda(e.target.dataset.id)));
-}
+async function saveVendaInline(produtoId, tr) {
+  const erroEl = tr.querySelector('.vi-erro');
+  erroEl.classList.add('hidden-section'); erroEl.textContent = '';
+  const p = state.apple.produtos.find(x => x.id === produtoId);
+  if (!p) return;
 
-function renderVendasResumo(vendas) {
-  const totalReceita = vendas.reduce((s, v) => s + Number(v.total), 0);
-  const totalLucro = vendas.reduce((s, v) => {
-    const custo = v.custo_unitario_snapshot ? Number(v.custo_unitario_snapshot) * v.quantidade : 0;
-    return s + (Number(v.total) - custo);
-  }, 0);
-  const qtdUnidades = vendas.reduce((s, v) => s + v.quantidade, 0);
-  const qtdVendas = vendas.length;
+  const data = tr.querySelector('.vi-data').value;
+  const qtd = parseInt(tr.querySelector('.vi-qtd').value);
+  const preco = parseFloat(tr.querySelector('.vi-preco').value);
+  const canal = tr.querySelector('.vi-canal').value;
+  const pgto = tr.querySelector('.vi-pgto').value;
+  const cliente = tr.querySelector('.vi-cliente').value.trim() || null;
 
-  $('#apple-vendas-resumo').innerHTML = `
-    ${cardResumo('Vendas', qtdVendas)}
-    ${cardResumo('Unidades', qtdUnidades)}
-    ${cardResumo('Receita', 'R$ ' + fmtBRL(totalReceita))}
-    ${cardResumo('Lucro bruto', 'R$ ' + fmtBRL(totalLucro), totalLucro >= 0 ? 'text-primary-500' : 'text-red-400')}
-  `;
-}
-
-function cardResumo(label, valor, cor = 'text-gray-100') {
-  return `<div class="bg-gray-800 border border-gray-700 rounded-md p-3">
-    <div class="text-xs text-gray-400 mb-1">${label}</div>
-    <div class="text-lg font-semibold ${cor}">${valor}</div>
-  </div>`;
-}
-
-async function deleteVenda(id) {
-  if (!confirm('Excluir esta venda? O estoque do produto será restaurado.')) return;
-  const { error } = await sb.from('vendas_apple').delete().eq('id', id);
-  if (error) return alert('Erro: ' + error.message);
-  loadAppleVendas();
-}
-
-// Modal Nova Venda
-async function openAppleVendaModal() {
-  hide('#ap-vend-erro');
-  await loadAppleProdutos(); // garante state.apple.produtos atualizado
-
-  const produtosComEstoque = state.apple.produtos.filter(p => p.ativo && Number(p.estoque_atual) > 0);
-  if (produtosComEstoque.length === 0) {
-    alert('Não há produtos com estoque para vender. Cadastre uma compra primeiro.');
-    return;
-  }
-
-  $('#ap-vend-produto').innerHTML = produtosComEstoque.map(p =>
-    `<option value="${p.id}" data-custo="${p.custo_medio}">${p.modelo_sku} (estoque: ${p.estoque_atual} · custo R$ ${fmtBRL(p.custo_medio)})</option>`
-  ).join('');
-
-  $('#ap-vend-data').value = new Date().toISOString().slice(0, 10);
-  $('#ap-vend-qtd').value = 1;
-  $('#ap-vend-preco').value = '';
-  $('#ap-vend-cliente').value = '';
-  $('#ap-vend-obs').value = '';
-  $('#ap-vend-saldo').value = '';
-
-  // sugere preço de venda alvo
-  onVendaProdutoChange();
-
-  await computeSaldoEsperado();
-  updateVendaCalc();
-  show('#modal-apple-venda');
-}
-
-function onVendaProdutoChange() {
-  const opt = $('#ap-vend-produto').selectedOptions[0];
-  if (!opt) return;
-  const prod = state.apple.produtos.find(p => p.id === opt.value);
-  if (prod && !$('#ap-vend-preco').value) {
-    $('#ap-vend-preco').value = Number(prod.preco_venda_alvo).toFixed(2);
-  }
-  updateVendaCalc();
-}
-
-function updateVendaCalc() {
-  const qtd = parseInt($('#ap-vend-qtd').value) || 0;
-  const preco = parseFloat($('#ap-vend-preco').value) || 0;
-  const total = qtd * preco;
-  $('#ap-vend-total').textContent = 'R$ ' + fmtBRL(total);
-
-  const opt = $('#ap-vend-produto').selectedOptions[0];
-  const custo = opt ? Number(opt.dataset.custo) : 0;
-  const margem = preco - custo;
-  const provPct = Number(state.apple.config?.percentual_provisao_viagem || 5) / 100;
-  const provisao = custo * provPct * qtd;
-  const lucro = (margem * qtd) - provisao;
-
-  $('#ap-vend-margem').innerHTML = `<span class="${margem >= 0 ? 'text-primary-500' : 'text-red-400'}">R$ ${fmtBRL(margem)} unit.</span>`;
-  $('#ap-vend-prov').textContent = 'R$ ' + fmtBRL(provisao);
-  $('#ap-vend-lucro').innerHTML = `<span class="${lucro >= 0 ? 'text-primary-500' : 'text-red-400'}">R$ ${fmtBRL(lucro)}</span>`;
-
-  // Esperado após
-  const saldoEsperadoApos = state.apple.saldoEsperado + total;
-  $('#ap-vend-esperado').textContent = 'R$ ' + fmtBRL(saldoEsperadoApos);
-  checkVendaDivergencia(saldoEsperadoApos);
-}
-
-function checkVendaDivergencia(esperado) {
-  const informado = parseFloat($('#ap-vend-saldo').value);
-  if (isNaN(informado)) { hide('#ap-vend-divergencia'); return; }
-  const tol = Number(state.apple.config?.tolerancia_conciliacao || 5);
-  const diff = informado - esperado;
-  if (Math.abs(diff) > tol) {
-    $('#ap-vend-divergencia').textContent = `⚠ Divergência de R$ ${fmtBRL(diff)} (tolerância: R$ ${fmtBRL(tol)})`;
-    show('#ap-vend-divergencia');
-  } else hide('#ap-vend-divergencia');
-}
-
-async function saveAppleVenda() {
-  hide('#ap-vend-erro');
-  const opt = $('#ap-vend-produto').selectedOptions[0];
-  if (!opt) return showApErr('#ap-vend-erro', 'Selecione um produto.');
-  const qtd = parseInt($('#ap-vend-qtd').value);
-  const preco = parseFloat($('#ap-vend-preco').value);
-  const saldo = parseFloat($('#ap-vend-saldo').value);
-  if (!qtd || qtd < 1) return showApErr('#ap-vend-erro', 'Quantidade inválida.');
-  if (!preco || preco < 0) return showApErr('#ap-vend-erro', 'Preço unitário inválido.');
-  if (isNaN(saldo)) return showApErr('#ap-vend-erro', 'Informe o saldo da conta após a venda.');
-
-  const prod = state.apple.produtos.find(p => p.id === opt.value);
-  if (Number(prod.estoque_atual) < qtd) return showApErr('#ap-vend-erro', `Estoque insuficiente. Disponível: ${prod.estoque_atual}`);
+  if (!data) return showViErr(erroEl, 'Informe a data.');
+  if (!qtd || qtd < 1) return showViErr(erroEl, 'Quantidade inválida.');
+  if (qtd > Number(p.estoque_atual)) return showViErr(erroEl, `Estoque insuficiente. Disponível: ${p.estoque_atual}`);
+  if (!preco || preco < 0) return showViErr(erroEl, 'Preço unitário inválido.');
 
   const payload = {
-    data: $('#ap-vend-data').value,
-    produto_id: opt.value,
+    data,
+    produto_id: produtoId,
     quantidade: qtd,
     preco_unitario: preco,
-    canal: $('#ap-vend-canal').value,
-    forma_pagamento: $('#ap-vend-pgto').value,
-    cliente: $('#ap-vend-cliente').value.trim() || null,
-    saldo_conta_apos: saldo,
-    observacao: $('#ap-vend-obs').value.trim() || null,
-    custo_unitario_snapshot: Number(opt.dataset.custo),
+    canal,
+    forma_pagamento: pgto,
+    cliente,
+    // BUILD -E: custo_unitario_snapshot passa a guardar o BREAK-EVEN (preço mínimo) no momento da venda
+    custo_unitario_snapshot: Number(p.preco_minimo_venda) || 0,
+    saldo_conta_apos: 0, // legado do controle Apple — sem uso na doutrina nova
   };
 
-  const btn = $('#ap-vend-salvar');
+  const btn = tr.querySelector('.vi-save');
   btn.disabled = true; btn.textContent = 'Registrando...';
   const { error } = await sb.from('vendas_apple').insert(payload);
   btn.disabled = false; btn.textContent = 'Registrar venda';
 
-  if (error) return showApErr('#ap-vend-erro', error.message);
-  hide('#modal-apple-venda');
-  loadAppleVendas();
+  if (error) return showViErr(erroEl, error.message);
+  tr.remove();
+  loadAppleProdutos(); // atualiza estoque
+}
+
+function showViErr(el, msg) {
+  el.textContent = msg;
+  el.classList.remove('hidden-section');
 }
 
 // =====================================================================
-// APPLE: COMPRAS
+// FINANCEIRO (BUILD -E)
 // =====================================================================
-async function loadAppleCompras() {
-  const viagem = $('#apple-compras-viagem').value;
-  let q = sb.from('compras_apple').select(`*, produtos_apple ( modelo_sku )`).order('data', { ascending: false }).order('created_at', { ascending: false });
-  if (viagem) q = q.eq('viagem_numero', parseInt(viagem));
-  const { data, error } = await q;
-  if (error) {
-    $('#apple-compras-tbody').innerHTML = `<tr><td colspan="7" class="px-3 py-6 text-center text-red-400">Erro: ${error.message}</td></tr>`;
-    return;
-  }
-
-  // popular filtro de viagens
-  const { data: viagensRaw } = await sb.from('compras_apple').select('viagem_numero');
-  const viagens = [...new Set((viagensRaw || []).map(v => v.viagem_numero))].sort((a, b) => b - a);
-  $('#apple-compras-viagem').innerHTML = '<option value="">Todas viagens</option>' + viagens.map(v => `<option value="${v}" ${String(v) === viagem ? 'selected' : ''}>Viagem ${v}</option>`).join('');
-
-  renderAppleCompras(data || []);
-  renderComprasResumo(data || []);
+async function loadFinanceiro() {
+  // Default: mês/ano atual
+  const now = new Date();
+  const mesInput = $('#apple-fin-mes');
+  if (!mesInput.value) mesInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  await renderFinanceiro();
 }
 
-function renderAppleCompras(compras) {
-  const tbody = $('#apple-compras-tbody');
-  if (compras.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="px-3 py-8 text-center text-gray-500">Nenhuma compra registrada. Clique em "+ Nova compra" para começar.</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = compras.map(c => `
-    <tr class="hover:bg-gray-700/30">
-      <td class="px-3 py-2 text-xs">${fmtData(c.data)}</td>
-      <td class="px-3 py-2 text-center"><span class="bg-gray-700 text-xs px-1.5 py-0.5 rounded">V${c.viagem_numero}</span></td>
-      <td class="px-3 py-2 font-medium">${c.produtos_apple?.modelo_sku || '—'}</td>
-      <td class="px-3 py-2 text-center">${c.quantidade}</td>
-      <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(c.custo_unitario)}</td>
-      <td class="px-3 py-2 text-right font-mono text-sm font-medium">R$ ${fmtBRL(c.total)}</td>
-      <td class="px-3 py-2 text-center">
-        <button class="del-compra text-red-400 hover:text-red-300 text-xs" data-id="${c.id}">Excluir</button>
-      </td>
-    </tr>`).join('');
-  $$('#apple-compras-tbody .del-compra').forEach(b => b.addEventListener('click', e => deleteCompra(e.target.dataset.id)));
-}
+async function renderFinanceiro() {
+  const mesStr = $('#apple-fin-mes').value; // 'YYYY-MM'
+  const [ano, mes] = mesStr.split('-').map(Number);
+  const primeiroDia = `${ano}-${String(mes).padStart(2, '0')}-01`;
+  const ultimoDia = new Date(ano, mes, 0).toISOString().slice(0, 10); // dia 0 do próximo mês = último dia do mês atual
 
-function renderComprasResumo(compras) {
-  const total = compras.reduce((s, c) => s + Number(c.total), 0);
-  const qtd = compras.reduce((s, c) => s + c.quantidade, 0);
-  $('#apple-compras-resumo').innerHTML = `
-    ${cardResumo('Compras', compras.length)}
-    ${cardResumo('Unidades', qtd)}
-    ${cardResumo('Investido', 'R$ ' + fmtBRL(total))}
+  // Label
+  const nomesMes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  $('#apple-fin-mes-label').textContent = `${nomesMes[mes - 1]} / ${ano} — ciclo reinicia no dia 1 do mês seguinte`;
+
+  // Quadrantes 1 e 4: estoque atual (independente do mês)
+  const { data: produtos } = await sb.from('produtos_apple_completo').select('*');
+  const capitalInvestido = (produtos || []).reduce((s, p) => s + (Number(p.preco_minimo_venda) || 0) * (Number(p.estoque_atual) || 0), 0);
+  const previsaoLucro = (produtos || []).reduce((s, p) => {
+    const margem = (Number(p.preco_venda_alvo) || 0) - (Number(p.preco_minimo_venda) || 0);
+    return s + margem * (Number(p.estoque_atual) || 0);
+  }, 0);
+
+  // Quadrantes 2, 3, 5: vendas do mês
+  const { data: vendas } = await sb.from('vendas_apple')
+    .select('id, data, quantidade, preco_unitario, total, custo_unitario_snapshot, canal, forma_pagamento, cliente, produto_id, produtos_apple(modelo_sku)')
+    .gte('data', primeiroDia).lte('data', ultimoDia)
+    .order('data', { ascending: false }).order('created_at', { ascending: false });
+
+  const vendasArr = vendas || [];
+  const numVendas = vendasArr.length;
+  const valorBruto = vendasArr.reduce((s, v) => s + (Number(v.total) || 0), 0);
+  const lucroLiquido = vendasArr.reduce((s, v) => {
+    const be = Number(v.custo_unitario_snapshot) || 0;
+    return s + (Number(v.preco_unitario) - be) * Number(v.quantidade);
+  }, 0);
+
+  // Render quadrantes
+  $('#apple-fin-quadrantes').innerHTML = `
+    ${cardFin('Capital investido', 'R$ ' + fmtBRL(capitalInvestido), 'break-even × estoque atual')}
+    ${cardFin('Vendas realizadas', numVendas, 'no mês')}
+    ${cardFin('Valor bruto de vendas', 'R$ ' + fmtBRL(valorBruto), 'no mês')}
+    ${cardFin('Previsão de lucro', 'R$ ' + fmtBRL(previsaoLucro), 'se vender todo o estoque ao preço alvo', previsaoLucro >= 0 ? 'text-primary-500' : 'text-red-400')}
+    ${cardFin('Lucro líquido', 'R$ ' + fmtBRL(lucroLiquido), 'no mês (vs break-even)', lucroLiquido >= 0 ? 'text-primary-500' : 'text-red-400')}
   `;
-}
 
-async function deleteCompra(id) {
-  if (!confirm('Excluir esta compra? O estoque e o custo médio serão recalculados.')) return;
-  const { error } = await sb.from('compras_apple').delete().eq('id', id);
-  if (error) return alert('Erro: ' + error.message);
-  loadAppleCompras();
-}
-
-// Modal Nova Compra
-async function openAppleCompraModal() {
-  hide('#ap-comp-erro');
-  if (state.apple.produtos.length === 0) await loadAppleProdutos();
-
-  const produtosAtivos = state.apple.produtos.filter(p => p.ativo);
-  if (produtosAtivos.length === 0) {
-    alert('Cadastre um produto antes de registrar compras.');
+  // Histórico
+  $('#apple-fin-hist-count').textContent = numVendas === 0 ? '' : `${numVendas} lançamento${numVendas > 1 ? 's' : ''}`;
+  const tbody = $('#apple-fin-hist-tbody');
+  if (numVendas === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" class="px-3 py-8 text-center text-gray-500">Nenhuma venda no mês selecionado.</td></tr>`;
     return;
   }
-
-  $('#ap-comp-produto').innerHTML = produtosAtivos.map(p =>
-    `<option value="${p.id}" data-estoque="${p.estoque_atual}" data-custo="${p.custo_medio}">${p.modelo_sku} (estoque atual: ${p.estoque_atual})</option>`
-  ).join('');
-
-  $('#ap-comp-data').value = new Date().toISOString().slice(0, 10);
-  $('#ap-comp-qtd').value = 1;
-  $('#ap-comp-custo').value = '';
-  $('#ap-comp-obs').value = '';
-  $('#ap-comp-saldo').value = '';
-
-  // sugere última viagem +1 (ou 1)
-  const { data: maxV } = await sb.from('compras_apple').select('viagem_numero').order('viagem_numero', { ascending: false }).limit(1);
-  $('#ap-comp-viagem').value = maxV && maxV[0] ? maxV[0].viagem_numero : 1;
-
-  await computeSaldoEsperado();
-  updateCompraCalc();
-  show('#modal-apple-compra');
+  tbody.innerHTML = vendasArr.map(v => {
+    const be = Number(v.custo_unitario_snapshot) || 0;
+    const lucro = (Number(v.preco_unitario) - be) * Number(v.quantidade);
+    const lucroCor = lucro >= 0 ? 'text-primary-500' : 'text-red-400';
+    return `
+    <tr class="hover:bg-gray-700/30">
+      <td class="px-3 py-2 text-xs">${fmtData(v.data)}</td>
+      <td class="px-3 py-2 font-mono text-xs">${v.produtos_apple?.modelo_sku || '—'}</td>
+      <td class="px-3 py-2 text-center">${v.quantidade}</td>
+      <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(v.preco_unitario)}</td>
+      <td class="px-3 py-2 text-right font-mono text-sm font-medium">R$ ${fmtBRL(v.total)}</td>
+      <td class="px-3 py-2 text-right font-mono text-sm text-gray-400">R$ ${fmtBRL(be)}</td>
+      <td class="px-3 py-2 text-right font-mono text-sm ${lucroCor}">R$ ${fmtBRL(lucro)}</td>
+      <td class="px-3 py-2 text-xs">${v.canal}</td>
+      <td class="px-3 py-2 text-xs">${v.forma_pagamento}</td>
+      <td class="px-3 py-2 text-xs text-gray-400">${v.cliente || '—'}</td>
+    </tr>`;
+  }).join('');
 }
 
-function updateCompraCalc() {
-  const qtd = parseInt($('#ap-comp-qtd').value) || 0;
-  const custo = parseFloat($('#ap-comp-custo').value) || 0;
-  const total = qtd * custo;
-  $('#ap-comp-total').textContent = 'R$ ' + fmtBRL(total);
-
-  // Novo custo médio = (estoque_atual * custo_medio_atual + qtd * custo_novo) / (estoque_atual + qtd)
-  const opt = $('#ap-comp-produto').selectedOptions[0];
-  if (opt && qtd > 0 && custo > 0) {
-    const estAtual = Number(opt.dataset.estoque);
-    const custoAtual = Number(opt.dataset.custo);
-    const novoCusto = (estAtual * custoAtual + qtd * custo) / (estAtual + qtd);
-    $('#ap-comp-novocusto').textContent = 'R$ ' + fmtBRL(novoCusto);
-  } else $('#ap-comp-novocusto').textContent = '—';
-
-  const saldoEsperadoApos = state.apple.saldoEsperado - total;
-  $('#ap-comp-esperado').textContent = 'R$ ' + fmtBRL(saldoEsperadoApos);
-  checkCompraDivergencia(saldoEsperadoApos);
-}
-
-function checkCompraDivergencia(esperado) {
-  const informado = parseFloat($('#ap-comp-saldo').value);
-  if (isNaN(informado)) { hide('#ap-comp-divergencia'); return; }
-  const tol = Number(state.apple.config?.tolerancia_conciliacao || 5);
-  const diff = informado - esperado;
-  if (Math.abs(diff) > tol) {
-    $('#ap-comp-divergencia').textContent = `⚠ Divergência de R$ ${fmtBRL(diff)} (tolerância: R$ ${fmtBRL(tol)})`;
-    show('#ap-comp-divergencia');
-  } else hide('#ap-comp-divergencia');
-}
-
-async function saveAppleCompra() {
-  hide('#ap-comp-erro');
-  const opt = $('#ap-comp-produto').selectedOptions[0];
-  if (!opt) return showApErr('#ap-comp-erro', 'Selecione um produto.');
-  const qtd = parseInt($('#ap-comp-qtd').value);
-  const custo = parseFloat($('#ap-comp-custo').value);
-  const viagem = parseInt($('#ap-comp-viagem').value);
-  const saldo = parseFloat($('#ap-comp-saldo').value);
-  if (!qtd || qtd < 1) return showApErr('#ap-comp-erro', 'Quantidade inválida.');
-  if (!custo || custo < 0) return showApErr('#ap-comp-erro', 'Custo unitário inválido.');
-  if (!viagem || viagem < 1) return showApErr('#ap-comp-erro', 'Número da viagem inválido.');
-  if (isNaN(saldo)) return showApErr('#ap-comp-erro', 'Informe o saldo da conta após a compra.');
-
-  const payload = {
-    data: $('#ap-comp-data').value,
-    viagem_numero: viagem,
-    produto_id: opt.value,
-    quantidade: qtd,
-    custo_unitario: custo,
-    saldo_conta_apos: saldo,
-    observacao: $('#ap-comp-obs').value.trim() || null,
-  };
-
-  const btn = $('#ap-comp-salvar');
-  btn.disabled = true; btn.textContent = 'Registrando...';
-  const { error } = await sb.from('compras_apple').insert(payload);
-  btn.disabled = false; btn.textContent = 'Registrar compra';
-
-  if (error) return showApErr('#ap-comp-erro', error.message);
-  hide('#modal-apple-compra');
-  loadAppleCompras();
+function cardFin(label, valor, hint, cor) {
+  cor = cor || 'text-gray-100';
+  return `<div class="bg-gray-800 border border-gray-700 rounded-md p-3">
+    <div class="text-xs text-gray-400 mb-1">${label}</div>
+    <div class="text-lg font-semibold ${cor} font-mono">${valor}</div>
+    <div class="text-xs text-gray-500 mt-1">${hint}</div>
+  </div>`;
 }
 
 // =====================================================================
@@ -5571,48 +5303,32 @@ document.addEventListener('keydown', e => {
     if (!$('#modal-item').classList.contains('hidden-section')) { closeItemModal(); return; }
     if (!$('#modal-product').classList.contains('hidden-section')) closeModal();
     if (!$('#modal-apple-produto').classList.contains('hidden-section')) hide('#modal-apple-produto');
-    if (!$('#modal-apple-venda').classList.contains('hidden-section')) hide('#modal-apple-venda');
-    if (!$('#modal-apple-compra').classList.contains('hidden-section')) hide('#modal-apple-compra');
     if (!$('#modal-cart').classList.contains('hidden-section')) hide('#modal-cart');
+    // BUILD -E: também fecha venda inline expandida com ESC
+    $$('.venda-inline').forEach(r => r.remove());
   }
 });
 
-// Apple — sub-tabs
+// Vendas — sub-tabs
 $$('.apple-subtab-btn').forEach(btn => btn.addEventListener('click', () => switchAppleSubtab(btn.dataset.subtab)));
 
-// Apple — Catálogo
+// Vendas — Lançamentos (busca + botão novo + modal produto)
 let appleCatTimer;
 $('#apple-cat-search').addEventListener('input', () => { clearTimeout(appleCatTimer); appleCatTimer = setTimeout(loadAppleProdutos, 300); });
-$('#apple-cat-categoria').addEventListener('change', loadAppleProdutos);
 $('#btn-novo-produto').addEventListener('click', () => openAppleProdutoModal(null));
 $('#ap-prod-modelo').addEventListener('input', scheduleSkuLookup);
+$('#ap-prod-pvenda').addEventListener('input', updateMargemDisplay);
 $('#ap-prod-salvar').addEventListener('click', saveAppleProduto);
 
-// Apple — Vendas
-$('#apple-vendas-de').addEventListener('change', loadAppleVendas);
-$('#apple-vendas-ate').addEventListener('change', loadAppleVendas);
-$('#btn-nova-venda').addEventListener('click', openAppleVendaModal);
-$('#ap-vend-produto').addEventListener('change', onVendaProdutoChange);
-$('#ap-vend-qtd').addEventListener('input', updateVendaCalc);
-$('#ap-vend-preco').addEventListener('input', updateVendaCalc);
-$('#ap-vend-saldo').addEventListener('input', updateVendaCalc);
-$('#ap-vend-salvar').addEventListener('click', saveAppleVenda);
+// Vendas — Financeiro
+$('#apple-fin-mes').addEventListener('change', renderFinanceiro);
 
-// Apple — Compras
-$('#apple-compras-viagem').addEventListener('change', loadAppleCompras);
-$('#btn-nova-compra').addEventListener('click', openAppleCompraModal);
-$('#ap-comp-produto').addEventListener('change', updateCompraCalc);
-$('#ap-comp-qtd').addEventListener('input', updateCompraCalc);
-$('#ap-comp-custo').addEventListener('input', updateCompraCalc);
-$('#ap-comp-saldo').addEventListener('input', updateCompraCalc);
-$('#ap-comp-salvar').addEventListener('click', saveAppleCompra);
-
-// Apple — fechar modais
+// Vendas — fechar modal produto
 $$('.ap-modal-close').forEach(btn => btn.addEventListener('click', () => hide('#' + btn.dataset.target)));
-['modal-apple-produto', 'modal-apple-venda', 'modal-apple-compra'].forEach(mid => {
-  const m = $('#' + mid);
+{
+  const m = $('#modal-apple-produto');
   m.addEventListener('click', e => { if (e.target === m) hide(m); });
-});
+}
 
 // Carrinho de orçamento
 $('#cart-floating').addEventListener('click', openCartModal);
