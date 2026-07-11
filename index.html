@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-11-I | selecta-banco-preco | ANÁLISE COMERCIAL (portado do -Q de 09/07, sobre a linha -H): (1) cabeçalho reconstruído com AS MESMAS classes do Controle de Anúncios — al-header/al-htitle/al-hsub/al-hcount: título 'Análise Comercial' em pílula + campo SEPARADO 'atualização · <frescor do lote>' + chip 'N anúncios ativos' à direita, idêntico ao Controle. (2) COLUNAS À ESQUERDA DE VERDADE: removido o max-width:1080px (era ele que abria o buraco à direita); table-layout:auto, colunas hugam o conteúdo e a Sugestão (col width:100%) absorve toda a folga. (3) Sugestão em UMA linha até o fim (descrição · explicação; reticências no excesso, texto completo no tooltip) — nunca duplica/triplica. SIM em branco (=cor do ML). Nada mais tocado: aba Vendas/Apple, piso 12% no Controle, de-dup, ZUMBI-2 e rodapé preservados do -H. | base: -H (Alinhamento corrigido copiando o padrão APROVADO do E-commerce (mea culpa dos BUILDs F/G que inventaram). Aba Vendas agora usa .tbl-wrap + table.emain com CSS espelhado do #tab-ecommerce (prefix #tab-apple): width auto, colunas de texto à esquerda (th.l/td.l), números com font-mono à direita mas colados por padding compacto (7px 9px), botões .rowbtn/.rowbtn.del no lugar dos Tailwind. Container voltou para max-w-screen-2xl mx-auto (padrão da casa). Aplicado nas duas tabelas. | base: -G) -->
+<!-- BUILD 2026-07-11-J | selecta-banco-preco | FIX: Sugestão estourava a borda direita do card (nowrap em table-layout:auto expande a célula em vez de cortar). Corrigido com max-width:0 + overflow:hidden na td da Sugestão (2 tabelas) — agora o texto corre até o fim da linha e corta com reticências DENTRO do card; texto completo segue no tooltip. Nada mais alterado. | base: -I -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -4778,7 +4778,7 @@ const ecomAlvo={
           +'<td style="padding:1px 8px;text-align:right;font-weight:700;white-space:nowrap;color:'+mCor+'">'+(r.marg!=null?(Math.round(r.marg*10)/10)+'%':'—')+'</td>'
           +'<td style="padding:1px 8px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(r.precoSim!=null?fR(r.precoSim):'—')+'</td>'
           +'<td style="padding:1px 12px 1px 8px;text-align:right;white-space:nowrap">'+mlCell+'</td>'
-          +'<td style="padding:1px 8px">'+sugCell+'</td>'
+          +'<td style="padding:1px 8px;max-width:0;overflow:hidden">'+sugCell+'</td>'
           +'</tr>';
       });
       html+='</table>';
@@ -4825,7 +4825,7 @@ const ecomAlvo={
           +'<td style="padding:1px 8px 1px 6px;font-weight:600;font-size:11.5px;white-space:nowrap;color:'+vCor(r.x&&r.x.veredito)+'" title="'+ea(r.x&&r.x.veredito||'')+'">'+ea(String(r.x&&r.x.veredito||'—'))+'</td>'
           +'<td style="padding:1px 8px;text-align:right;font-weight:700;white-space:nowrap;color:'+mCor+'">'+(ml!=null?(Math.round(ml*10)/10)+'%':'—')+'</td>'
           +'<td style="padding:1px 12px 1px 8px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(precoSim!=null?fR(precoSim):'—')+'</td>'
-          +'<td style="padding:1px 8px">'+sugCell+'</td>'
+          +'<td style="padding:1px 8px;max-width:0;overflow:hidden">'+sugCell+'</td>'
           +'</tr>';
       });
       html+='</table>';
