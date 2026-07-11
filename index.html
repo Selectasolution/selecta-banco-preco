@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-11-F | selecta-banco-preco | Ajustes pós-teste: (1) label "Julho/2026 — ciclo reinicia..." removido; (2) aba Vendas usa toda a largura da tela (era max-w-screen-2xl mx-auto); (3) todas as colunas de dados alinhadas à esquerda (era right/center); (4) Lançamentos ganha coluna Ações com 3 botões: + venda, Editar, Excluir; (5) modal de edição de produto ganha seção "Adicionar ao estoque" (cria nova compra_apple com custo = preço mínimo); (6) Financeiro ganha coluna Ações por venda (Editar inline / Excluir com restauração automática de estoque). Excluir produto bloqueado se há vendas registradas — preserva histórico. | base: -E -->
+<!-- BUILD 2026-07-11-G | selecta-banco-preco | Alinhamento à esquerda AGORA de verdade: tabela deixou de esticar até a borda da tela. `table w-full` → `table w-auto` + `whitespace-nowrap` em todas as células/cabeçalhos + wrapper de tabela virou inline-block. Resultado: colunas coladas à esquerda com largura natural do conteúdo, sem espaço morto no meio. Aplicado nas duas tabelas (Lançamentos e histórico do Financeiro). | base: -F -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -259,17 +259,17 @@
         <button id="btn-novo-produto" class="bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-md">+ Novo produto</button>
       </div>
 
-      <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+      <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden inline-block max-w-full">
         <div class="overflow-x-auto">
-          <table class="w-full text-sm">
+          <table class="w-auto text-sm">
             <thead class="bg-gray-900 text-xs uppercase text-gray-400">
               <tr>
-                <th class="px-3 py-2.5 text-left font-medium">Produto</th>
-                <th class="px-3 py-2.5 text-left font-medium">Preço custo (break-even)</th>
-                <th class="px-3 py-2.5 text-left font-medium">Preço venda</th>
-                <th class="px-3 py-2.5 text-left font-medium">Margem</th>
-                <th class="px-3 py-2.5 text-left font-medium">Estoque</th>
-                <th class="px-3 py-2.5 text-left font-medium">Ações</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Produto</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Preço custo (break-even)</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Preço venda</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Margem</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Estoque</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Ações</th>
               </tr>
             </thead>
             <tbody id="apple-cat-tbody" class="divide-y divide-gray-700"></tbody>
@@ -296,22 +296,22 @@
         <h3 class="text-sm font-semibold text-gray-300">Vendas do mês</h3>
         <span id="apple-fin-hist-count" class="text-xs text-gray-500"></span>
       </div>
-      <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+      <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden inline-block max-w-full">
         <div class="overflow-x-auto">
-          <table class="w-full text-sm">
+          <table class="w-auto text-sm">
             <thead class="bg-gray-900 text-xs uppercase text-gray-400">
               <tr>
-                <th class="px-3 py-2.5 text-left font-medium">Data</th>
-                <th class="px-3 py-2.5 text-left font-medium">Produto</th>
-                <th class="px-3 py-2.5 text-left font-medium">Qtd</th>
-                <th class="px-3 py-2.5 text-left font-medium">Preço unit.</th>
-                <th class="px-3 py-2.5 text-left font-medium">Total</th>
-                <th class="px-3 py-2.5 text-left font-medium">Break-even unit.</th>
-                <th class="px-3 py-2.5 text-left font-medium">Lucro</th>
-                <th class="px-3 py-2.5 text-left font-medium">Canal</th>
-                <th class="px-3 py-2.5 text-left font-medium">Pgto</th>
-                <th class="px-3 py-2.5 text-left font-medium">Cliente</th>
-                <th class="px-3 py-2.5 text-left font-medium">Ações</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Data</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Produto</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Qtd</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Preço unit.</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Total</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Break-even unit.</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Lucro</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Canal</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Pgto</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Cliente</th>
+                <th class="px-3 py-2.5 text-left font-medium whitespace-nowrap">Ações</th>
               </tr>
             </thead>
             <tbody id="apple-fin-hist-tbody" class="divide-y divide-gray-700"></tbody>
@@ -3151,12 +3151,12 @@ function renderAppleProdutos(items) {
 
     return `
     <tr class="product-row hover:bg-gray-700/30" data-id="${p.id}">
-      <td class="px-3 py-2">${nomeHtml}</td>
-      <td class="px-3 py-2 font-mono text-sm">R$ ${fmtBRL(be)}</td>
-      <td class="px-3 py-2 font-mono text-sm">R$ ${fmtBRL(pvenda)}</td>
-      <td class="px-3 py-2 font-mono text-sm ${margemCor}">R$ ${fmtBRL(margem)} (${margemPct.toFixed(1)}%)</td>
-      <td class="px-3 py-2">${estoqueTxt}</td>
-      <td class="px-3 py-2">
+      <td class="px-3 py-2 whitespace-nowrap">${nomeHtml}</td>
+      <td class="px-3 py-2 font-mono text-sm whitespace-nowrap">R$ ${fmtBRL(be)}</td>
+      <td class="px-3 py-2 font-mono text-sm whitespace-nowrap">R$ ${fmtBRL(pvenda)}</td>
+      <td class="px-3 py-2 font-mono text-sm whitespace-nowrap ${margemCor}">R$ ${fmtBRL(margem)} (${margemPct.toFixed(1)}%)</td>
+      <td class="px-3 py-2 whitespace-nowrap">${estoqueTxt}</td>
+      <td class="px-3 py-2 whitespace-nowrap">
         <div class="flex gap-1.5 items-center">
           ${btnVenda}
           <button class="btn-editar-prod bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 h-7 rounded" data-id="${p.id}" title="Editar produto">Editar</button>
@@ -3669,17 +3669,17 @@ async function renderFinanceiro() {
     const lucroCor = lucro >= 0 ? 'text-primary-500' : 'text-red-400';
     return `
     <tr class="hover:bg-gray-700/30" data-venda-id="${v.id}">
-      <td class="px-3 py-2 text-xs">${fmtData(v.data)}</td>
-      <td class="px-3 py-2 font-mono text-xs">${v.produtos_apple?.modelo_sku || '—'}</td>
-      <td class="px-3 py-2 text-sm">${v.quantidade}</td>
-      <td class="px-3 py-2 font-mono text-sm">R$ ${fmtBRL(v.preco_unitario)}</td>
-      <td class="px-3 py-2 font-mono text-sm font-medium">R$ ${fmtBRL(v.total)}</td>
-      <td class="px-3 py-2 font-mono text-sm text-gray-400">R$ ${fmtBRL(be)}</td>
-      <td class="px-3 py-2 font-mono text-sm ${lucroCor}">R$ ${fmtBRL(lucro)}</td>
-      <td class="px-3 py-2 text-xs">${v.canal}</td>
-      <td class="px-3 py-2 text-xs">${v.forma_pagamento}</td>
-      <td class="px-3 py-2 text-xs text-gray-400">${v.cliente || '—'}</td>
-      <td class="px-3 py-2">
+      <td class="px-3 py-2 text-xs whitespace-nowrap">${fmtData(v.data)}</td>
+      <td class="px-3 py-2 font-mono text-xs whitespace-nowrap">${v.produtos_apple?.modelo_sku || '—'}</td>
+      <td class="px-3 py-2 text-sm whitespace-nowrap">${v.quantidade}</td>
+      <td class="px-3 py-2 font-mono text-sm whitespace-nowrap">R$ ${fmtBRL(v.preco_unitario)}</td>
+      <td class="px-3 py-2 font-mono text-sm font-medium whitespace-nowrap">R$ ${fmtBRL(v.total)}</td>
+      <td class="px-3 py-2 font-mono text-sm text-gray-400 whitespace-nowrap">R$ ${fmtBRL(be)}</td>
+      <td class="px-3 py-2 font-mono text-sm whitespace-nowrap ${lucroCor}">R$ ${fmtBRL(lucro)}</td>
+      <td class="px-3 py-2 text-xs whitespace-nowrap">${v.canal}</td>
+      <td class="px-3 py-2 text-xs whitespace-nowrap">${v.forma_pagamento}</td>
+      <td class="px-3 py-2 text-xs text-gray-400 whitespace-nowrap">${v.cliente || '—'}</td>
+      <td class="px-3 py-2 whitespace-nowrap">
         <div class="flex gap-1.5 items-center">
           <button class="btn-editar-venda bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 h-7 rounded" data-id="${v.id}" title="Editar venda">Editar</button>
           <button class="btn-excluir-venda bg-red-900/60 hover:bg-red-800 text-red-200 text-xs px-2 h-7 rounded" data-id="${v.id}" title="Excluir venda">Excluir</button>
