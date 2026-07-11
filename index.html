@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-11-H | selecta-banco-preco | Alinhamento corrigido copiando o padrão APROVADO do E-commerce (mea culpa dos BUILDs F/G que inventaram). Aba Vendas agora usa .tbl-wrap + table.emain com CSS espelhado do #tab-ecommerce (prefix #tab-apple): width auto, colunas de texto à esquerda (th.l/td.l), números com font-mono à direita mas colados por padding compacto (7px 9px), botões .rowbtn/.rowbtn.del no lugar dos Tailwind. Container voltou para max-w-screen-2xl mx-auto (padrão da casa). Aplicado nas duas tabelas. | base: -G -->
+<!-- BUILD 2026-07-11-I | selecta-banco-preco | ANÁLISE COMERCIAL (portado do -Q de 09/07, sobre a linha -H): (1) cabeçalho reconstruído com AS MESMAS classes do Controle de Anúncios — al-header/al-htitle/al-hsub/al-hcount: título 'Análise Comercial' em pílula + campo SEPARADO 'atualização · <frescor do lote>' + chip 'N anúncios ativos' à direita, idêntico ao Controle. (2) COLUNAS À ESQUERDA DE VERDADE: removido o max-width:1080px (era ele que abria o buraco à direita); table-layout:auto, colunas hugam o conteúdo e a Sugestão (col width:100%) absorve toda a folga. (3) Sugestão em UMA linha até o fim (descrição · explicação; reticências no excesso, texto completo no tooltip) — nunca duplica/triplica. SIM em branco (=cor do ML). Nada mais tocado: aba Vendas/Apple, piso 12% no Controle, de-dup, ZUMBI-2 e rodapé preservados do -H. | base: -H (Alinhamento corrigido copiando o padrão APROVADO do E-commerce (mea culpa dos BUILDs F/G que inventaram). Aba Vendas agora usa .tbl-wrap + table.emain com CSS espelhado do #tab-ecommerce (prefix #tab-apple): width auto, colunas de texto à esquerda (th.l/td.l), números com font-mono à direita mas colados por padding compacto (7px 9px), botões .rowbtn/.rowbtn.del no lugar dos Tailwind. Container voltou para max-w-screen-2xl mx-auto (padrão da casa). Aplicado nas duas tabelas. | base: -G) -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -4694,16 +4694,16 @@ const ecomAlvo={
   },
   _tend(t){ return t==='SUBINDO'?'↑ subindo':t==='CAINDO'?'↓ caindo':t==='ESTAVEL'?'→ estável':''; },
   renderAnalise(){
-    // BUILD -O (09/07/2026) · cabeçalho enxuto (contador de ativos + "Análise Comercial · última análise");
-    // Sugestão em NO MÁXIMO 2 linhas (descrição + explicação, cada uma clampada a 1 linha com tooltip);
-    // linhas coladas (padding mínimo). Preços: SIM (Simulador) e ML (registro Alexia, verificado contra o publicado).
+    // BUILD -Q (09/07/2026) · cabeçalho com AS MESMAS classes do Controle (al-header/al-htitle/al-hsub/al-hcount):
+    //   título "Análise Comercial" (pílula) + campo separado de atualização (frescor do lote) + chip contador à direita, igual Controle.
+    // Colunas encostadas à esquerda (table-layout auto; Sugestão absorve toda a folga e vai até o fim da linha, 1 linha só).
     const head=this._g('al-an-head'), body=this._g('al-an-body');
     if(!head||!body) return;
     const norm=v=>String(v==null?'':v).trim().toUpperCase();
     const ea=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const fR=v=>(v==null||isNaN(v))?null:('R$'+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}));
-    const fmtD=x=>{ const q=String(x||'').slice(0,10).split('-'); return (q.length===3&&q[0])?(q[2]+'/'+q[1]+'/'+q[0]):(x||'—'); };
-    const one=extra=>'display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;'+(extra||'');
+    const one='display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    const prodCell='padding:1px 10px 1px 6px;color:var(--etxt);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
     const ativoN={}; Object.keys(this.catAtivo||{}).forEach(k=>{ const n=norm(k); if(n) ativoN[n]=this.catAtivo[k]; });
     const nameByCod={}; Object.keys(this.catNome||{}).forEach(k=>{ const n=norm(k); if(n) nameByCod[n]=this.catNome[k]; });
     const catPrecoN={}; Object.keys(this.catPreco||{}).forEach(k=>{ const n=norm(k); if(n) catPrecoN[n]=this.catPreco[k]; });
@@ -4716,11 +4716,15 @@ const ecomAlvo={
     const snap=this.snapAtual||{};
     const temLote=(this.loteAtualMlbs instanceof Set);
     const d=(this.analise&&this.analise[0])||null;
-    // ---- Cabeçalho enxuto: contador de ativos (esq.) + título + data da última análise ----
-    let h='<div style="display:flex;align-items:center;gap:11px;margin-bottom:12px;padding:7px 12px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:9px" title="Quadro do lote: '+ea(this.snapQuando||'snapshot indisponível')+' · preços verificados contra o último lote (04h50/14h50 BRT)">'
-      +'<span style="font-size:16px;font-weight:800;color:var(--eemerald);font-variant-numeric:tabular-nums;line-height:1">'+ativosReg.length+'</span>'
-      +'<span style="font-size:9.5px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.04em;line-height:1.05">anúncios<br>ativos</span>'
-      +'<h3 style="margin:0 0 0 4px;font-size:14px;color:var(--eemerald)">Análise Comercial <span style="font-weight:400;font-size:12px;color:var(--emuted)">· '+(d?('última análise '+fmtD(d.data_analise)):'sem análise importada')+'</span></h3></div>';
+    const nA=ativosReg.length;
+    // ---- Cabeçalho: MESMAS classes do Controle. Campos separados: título · atualização · contador ----
+    let h='<div class="al-header">'
+      +'<div class="al-header-l">'
+        +'<h3 class="al-htitle">Análise Comercial</h3>'
+        +'<span class="al-hsub">atualização · '+ea(this.snapQuando||'—')+'</span>'
+      +'</div>'
+      +'<span class="al-hcount">'+nA+' anúncio'+(nA===1?'':'s')+' ativo'+(nA===1?'':'s')+'</span>'
+      +'</div>';
     if(!temLote) h+='<div style="margin-bottom:10px;padding:8px 12px;border:1px solid var(--ered);border-radius:9px;color:var(--ered);font-size:12.5px"><b>Snapshot ilegível</b> — verificação de preços e ZUMBI-2 automática CEGAS nesta rodada. Checar cron/permissão antes de decidir.</div>';
     head.innerHTML=h;
     const clsCor={o:'var(--eemerald)',a:'var(--eamber)',c:'var(--ered)'};
@@ -4740,14 +4744,14 @@ const ecomAlvo={
       +'<span style="font-size:12px;color:var(--emuted)">ranking por índice</span></div>';
     if(!rowsAtv.length){ html+='<div class="ph">nenhum anúncio ativo registrado</div>'; }
     else{
-      html+='<table style="width:100%;max-width:1080px;border-collapse:collapse;font-size:12.5px;table-layout:fixed">'
-        +'<colgroup><col style="width:2.5%"><col style="width:7%"><col style="width:20%"><col style="width:4%"><col style="width:5.5%"><col style="width:7.5%"><col style="width:7.5%"><col style="width:46%"></colgroup>'
+      html+='<table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:auto">'
+        +'<colgroup><col><col><col><col><col><col><col><col style="width:100%"></colgroup>'
         +'<tr style="color:var(--emuted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap">'
-        +'<td style="padding:2px 3px;text-align:right">#</td><td style="padding:2px 6px">Nº cod</td><td style="padding:2px 6px">Produto</td>'
-        +'<td style="padding:2px 2px;text-align:center">Índice</td>'
-        +'<td style="padding:2px 2px;text-align:right" title="Margem canônica no preço publicado (fallback: registrado). ≥12 verde · 10–12 âmbar · <10 vermelho">Margem</td>'
-        +'<td style="padding:2px 2px;text-align:right" title="Preço projetado no Simulador">Sim</td>'
-        +'<td style="padding:2px 2px;text-align:right" title="Preço do anúncio = registro da Alexia. Âmbar = diverge do publicado no lote atual">ML</td>'
+        +'<td style="padding:2px 6px 2px 3px;text-align:right">#</td><td style="padding:2px 8px 2px 6px">Nº cod</td><td style="padding:2px 10px 2px 6px">Produto</td>'
+        +'<td style="padding:2px 8px;text-align:right">Índice</td>'
+        +'<td style="padding:2px 8px;text-align:right" title="Margem canônica no preço publicado (fallback: registrado). ≥12 verde · 10–12 âmbar · <10 vermelho">Margem</td>'
+        +'<td style="padding:2px 8px;text-align:right" title="Preço projetado no Simulador">Sim</td>'
+        +'<td style="padding:2px 12px 2px 8px;text-align:right" title="Preço do anúncio = registro da Alexia. Âmbar = diverge do publicado no lote atual">ML</td>'
         +'<td style="padding:2px 8px">Sugestão</td></tr>';
       let n1=0;
       rowsAtv.forEach(r=>{ n1++;
@@ -4758,23 +4762,23 @@ const ecomAlvo={
         if(r.precoMl==null) mlCell='<span style="color:var(--emuted2)" title="sem preço registrado">—</span>';
         else if(r.diverge) mlCell='<span style="color:var(--eamber);font-weight:700" title="registro '+fR(r.precoMl)+' ≠ publicado '+(r.precoPub!=null?fR(r.precoPub):'?')+' — sugestão CORRIGIR REGISTRO no Controle">'+fR(r.precoMl)+' ⚠</span>';
         else mlCell='<span style="color:var(--etxt);font-weight:600"'+(r.noLote?'':' title="fora do lote atual — ver rodapé"')+'>'+fR(r.precoMl)+'</span>';
-        // Sugestão: 2 linhas no máximo — descrição (ação) + explicação (motivo)
+        // Sugestão numa linha só: descrição · explicação (vai até o fim; reticências no excesso; completo no tooltip)
         let l1='', l2='', c1='var(--emuted2)';
         if(r.diverge){ c1='var(--eamber)'; l1='Corrigir registro no Controle'; l2='publicado '+fR(r.precoPub)+' ≠ registrado '+fR(r.precoMl)+' — alinhar o registro ao ML'; }
-        else if(r.sug && String(r.sug.acao||'')!=='CORRIGIR REGISTRO'){ c1=clsCor[r.sug.cls]||'var(--emuted)'; l1=r.sug.acao||r.sug.veredito||r.sug.texto||'—'; l2=r.sug.diagnostico||(r.x&&r.x.observacao)||''; }
+        else if(r.sug && String(r.sug.acao||'')!=='CORRIGIR REGISTRO'){ c1=clsCor[r.sug.cls]||'var(--emuted)'; l1=r.sug.acao||r.sug.veredito||r.sug.texto||''; l2=r.sug.diagnostico||(r.x&&r.x.observacao)||''; }
         else if(r.x&&r.x.observacao){ c1='var(--emuted)'; l1=r.x.observacao; l2=(r.x.gatilho?'revisa se: '+r.x.gatilho:'')+(r.x.risco?(r.x.gatilho?' · ':'')+r.x.risco:''); }
-        const sugCell=(l1?('<span style="'+one('font-weight:600;color:'+c1)+'" title="'+ea(l1)+'">'+ea(l1)+'</span>'):'')
-          +(l2?('<span style="'+one('color:var(--emuted);font-size:11.5px')+'" title="'+ea(l2)+'">'+ea(l2)+'</span>'):'')
-          || '<span style="color:var(--emuted2)">—</span>';
+        const full=[l1,l2].filter(Boolean).join(' · ');
+        const sugInner=(l1?'<b style="color:'+c1+';font-weight:600">'+ea(l1)+'</b>':'')+((l1&&l2)?'<span style="color:var(--emuted2)"> · </span>':'')+(l2?'<span style="color:var(--emuted)">'+ea(l2)+'</span>':'');
+        const sugCell=full?('<span style="'+one+'" title="'+ea(full)+'">'+sugInner+'</span>'):'<span style="color:var(--emuted2)">—</span>';
         html+='<tr style="border-top:1px solid var(--eborder);vertical-align:middle'+(abaixoPiso?';box-shadow:inset 3px 0 0 var(--ered)':'')+'">'
-          +'<td style="padding:1px 3px;text-align:right;color:var(--emuted2);font-variant-numeric:tabular-nums">'+n1+'</td>'
-          +'<td style="padding:1px 6px;font-family:var(--emono);white-space:nowrap"><b style="color:var(--eemerald)" title="MLB'+ea(r.mlbN)+'">'+ea(r.a.produto_codigo||'—')+'</b></td>'
-          +'<td style="padding:1px 6px;color:var(--etxt);'+one('')+'" title="'+ea(nome)+'">'+(nome?ea(nome):'<span style="color:var(--emuted2)">—</span>')+'</td>'
-          +'<td style="padding:1px 2px;text-align:center;font-weight:700;color:var(--etxt)">'+(r.ind!=null?Math.round(r.ind):'—')+'</td>'
-          +'<td style="padding:1px 2px;text-align:right;font-weight:700;white-space:nowrap;color:'+mCor+'">'+(r.marg!=null?(Math.round(r.marg*10)/10)+'%':'—')+'</td>'
-          +'<td style="padding:1px 2px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(r.precoSim!=null?fR(r.precoSim):'—')+'</td>'
-          +'<td style="padding:1px 2px;text-align:right;white-space:nowrap">'+mlCell+'</td>'
-          +'<td style="padding:1px 8px;line-height:1.28">'+sugCell+'</td>'
+          +'<td style="padding:1px 6px 1px 3px;text-align:right;color:var(--emuted2);font-variant-numeric:tabular-nums">'+n1+'</td>'
+          +'<td style="padding:1px 8px 1px 6px;font-family:var(--emono);white-space:nowrap"><b style="color:var(--eemerald)" title="MLB'+ea(r.mlbN)+'">'+ea(r.a.produto_codigo||'—')+'</b></td>'
+          +'<td style="'+prodCell+'" title="'+ea(nome)+'">'+(nome?ea(nome):'<span style="color:var(--emuted2)">—</span>')+'</td>'
+          +'<td style="padding:1px 8px;text-align:right;font-weight:700;color:var(--etxt);white-space:nowrap">'+(r.ind!=null?Math.round(r.ind):'—')+'</td>'
+          +'<td style="padding:1px 8px;text-align:right;font-weight:700;white-space:nowrap;color:'+mCor+'">'+(r.marg!=null?(Math.round(r.marg*10)/10)+'%':'—')+'</td>'
+          +'<td style="padding:1px 8px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(r.precoSim!=null?fR(r.precoSim):'—')+'</td>'
+          +'<td style="padding:1px 12px 1px 8px;text-align:right;white-space:nowrap">'+mlCell+'</td>'
+          +'<td style="padding:1px 8px">'+sugCell+'</td>'
           +'</tr>';
       });
       html+='</table>';
@@ -4794,13 +4798,13 @@ const ecomAlvo={
       +'<span style="font-size:12px;color:var(--emuted)">'+novos.length+' SKU(s) · '+(novosFallback?'aguardando análise':'ranking por índice')+'</span></div>';
     if(!novos.length){ html+='<div class="ph">nenhum produto simulado aguardando anúncio</div>'; }
     else{
-      html+='<table style="width:100%;max-width:1080px;border-collapse:collapse;font-size:12.5px;table-layout:fixed">'
-        +'<colgroup><col style="width:2.5%"><col style="width:7%"><col style="width:22%"><col style="width:4%"><col style="width:9%"><col style="width:5.5%"><col style="width:7.5%"><col style="width:42.5%"></colgroup>'
+      html+='<table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:auto">'
+        +'<colgroup><col><col><col><col><col><col><col style="width:100%"></colgroup>'
         +'<tr style="color:var(--emuted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap">'
-        +'<td style="padding:2px 3px;text-align:right">#</td><td style="padding:2px 6px">Nº cod</td><td style="padding:2px 6px">Produto</td>'
-        +'<td style="padding:2px 2px;text-align:center">Índice</td><td style="padding:2px 6px">Veredito</td>'
-        +'<td style="padding:2px 2px;text-align:right" title="Margem real do Simulador">Margem</td>'
-        +'<td style="padding:2px 2px;text-align:right" title="Preço projetado no Simulador">Sim</td>'
+        +'<td style="padding:2px 6px 2px 3px;text-align:right">#</td><td style="padding:2px 8px 2px 6px">Nº cod</td><td style="padding:2px 10px 2px 6px">Produto</td>'
+        +'<td style="padding:2px 8px;text-align:right">Índice</td><td style="padding:2px 8px 2px 6px">Veredito</td>'
+        +'<td style="padding:2px 8px;text-align:right" title="Margem real do Simulador">Margem</td>'
+        +'<td style="padding:2px 12px 2px 8px;text-align:right" title="Preço projetado no Simulador">Sim</td>'
         +'<td style="padding:2px 8px">Sugestão</td></tr>';
       let n2=0;
       novos.forEach(r=>{ n2++;
@@ -4810,18 +4814,18 @@ const ecomAlvo={
         const mCor=(ml==null)?'var(--emuted2)':(ml>=12?'var(--eemerald)':(ml>=10?'var(--eamber)':'var(--ered)'));
         let l1=(r.x&&r.x.preco_sugerido!=null)?('sugerir '+fR(+r.x.preco_sugerido)):'', l2=(r.x&&r.x.observacao)||'';
         if(!l1 && r.x&&r.x.veredito) l1=r.x.veredito;
-        const sugCell=(l1?('<span style="'+one('font-weight:600;color:var(--etxt)')+'" title="'+ea(l1)+'">'+ea(l1)+'</span>'):'')
-          +(l2?('<span style="'+one('color:var(--emuted);font-size:11.5px')+'" title="'+ea(l2)+'">'+ea(l2)+'</span>'):'')
-          || '<span style="color:var(--emuted2)">'+(novosFallback?'aguardando análise':'—')+'</span>';
+        const full=[l1,l2].filter(Boolean).join(' · ');
+        const sugInner=(l1?'<b style="color:var(--etxt);font-weight:600">'+ea(l1)+'</b>':'')+((l1&&l2)?'<span style="color:var(--emuted2)"> · </span>':'')+(l2?'<span style="color:var(--emuted)">'+ea(l2)+'</span>':'');
+        const sugCell=full?('<span style="'+one+'" title="'+ea(full)+'">'+sugInner+'</span>'):'<span style="color:var(--emuted2)">'+(novosFallback?'aguardando análise':'—')+'</span>';
         html+='<tr style="border-top:1px solid var(--eborder);vertical-align:middle">'
-          +'<td style="padding:1px 3px;text-align:right;color:var(--emuted2);font-variant-numeric:tabular-nums">'+n2+'</td>'
-          +'<td style="padding:1px 6px;font-family:var(--emono);white-space:nowrap"><b style="color:var(--etxt)">'+ea(r.cod)+'</b></td>'
-          +'<td style="padding:1px 6px;color:var(--etxt);'+one('')+'" title="'+ea(nome)+'">'+(nome?ea(nome):'<span style="color:var(--emuted2)">—</span>')+'</td>'
-          +'<td style="padding:1px 2px;text-align:center;font-weight:700;color:var(--etxt)">'+(r.ind!=null?Math.round(r.ind):'—')+'</td>'
-          +'<td style="padding:1px 6px;font-weight:600;font-size:11.5px;'+one('color:'+vCor(r.x&&r.x.veredito))+'" title="'+ea(r.x&&r.x.veredito||'')+'">'+ea(String(r.x&&r.x.veredito||'—'))+'</td>'
-          +'<td style="padding:1px 2px;text-align:right;font-weight:700;white-space:nowrap;color:'+mCor+'">'+(ml!=null?(Math.round(ml*10)/10)+'%':'—')+'</td>'
-          +'<td style="padding:1px 2px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(precoSim!=null?fR(precoSim):'—')+'</td>'
-          +'<td style="padding:1px 8px;line-height:1.28">'+sugCell+'</td>'
+          +'<td style="padding:1px 6px 1px 3px;text-align:right;color:var(--emuted2);font-variant-numeric:tabular-nums">'+n2+'</td>'
+          +'<td style="padding:1px 8px 1px 6px;font-family:var(--emono);white-space:nowrap"><b style="color:var(--etxt)">'+ea(r.cod)+'</b></td>'
+          +'<td style="'+prodCell+'" title="'+ea(nome)+'">'+(nome?ea(nome):'<span style="color:var(--emuted2)">—</span>')+'</td>'
+          +'<td style="padding:1px 8px;text-align:right;font-weight:700;color:var(--etxt);white-space:nowrap">'+(r.ind!=null?Math.round(r.ind):'—')+'</td>'
+          +'<td style="padding:1px 8px 1px 6px;font-weight:600;font-size:11.5px;white-space:nowrap;color:'+vCor(r.x&&r.x.veredito)+'" title="'+ea(r.x&&r.x.veredito||'')+'">'+ea(String(r.x&&r.x.veredito||'—'))+'</td>'
+          +'<td style="padding:1px 8px;text-align:right;font-weight:700;white-space:nowrap;color:'+mCor+'">'+(ml!=null?(Math.round(ml*10)/10)+'%':'—')+'</td>'
+          +'<td style="padding:1px 12px 1px 8px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(precoSim!=null?fR(precoSim):'—')+'</td>'
+          +'<td style="padding:1px 8px">'+sugCell+'</td>'
           +'</tr>';
       });
       html+='</table>';
