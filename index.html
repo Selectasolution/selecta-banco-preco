@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-11-J | selecta-banco-preco | FIX: Sugestão estourava a borda direita do card (nowrap em table-layout:auto expande a célula em vez de cortar). Corrigido com max-width:0 + overflow:hidden na td da Sugestão (2 tabelas) — agora o texto corre até o fim da linha e corta com reticências DENTRO do card; texto completo segue no tooltip. Nada mais alterado. | base: -I -->
+<!-- BUILD 2026-07-11-M | selecta-banco-preco | CORREÇÃO DEFINITIVA das colunas: table-layout:fixed com largura EM PIXEL por coluna (nº 30 · cod 82 · produto 290 · índice 50 · veredito 130 · margem 64 · sim 86 · ml 100) e SUGESTÃO = todo o resto da linha. Mata de vez o colapso da Sugestão (max-width:0 removido) e o buraco entre MARGEM e SIM do layout auto. Produto e Sugestão seguem em até 2 linhas. | base: -L -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -4702,8 +4702,8 @@ const ecomAlvo={
     const norm=v=>String(v==null?'':v).trim().toUpperCase();
     const ea=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const fR=v=>(v==null||isNaN(v))?null:('R$'+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}));
-    const one='display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
-    const prodCell='padding:1px 10px 1px 6px;color:var(--etxt);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+    const one='display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3;overflow-wrap:break-word;';
+    const prodCell='padding:1px 10px 1px 6px;color:var(--etxt);overflow:hidden;';
     const ativoN={}; Object.keys(this.catAtivo||{}).forEach(k=>{ const n=norm(k); if(n) ativoN[n]=this.catAtivo[k]; });
     const nameByCod={}; Object.keys(this.catNome||{}).forEach(k=>{ const n=norm(k); if(n) nameByCod[n]=this.catNome[k]; });
     const catPrecoN={}; Object.keys(this.catPreco||{}).forEach(k=>{ const n=norm(k); if(n) catPrecoN[n]=this.catPreco[k]; });
@@ -4744,8 +4744,8 @@ const ecomAlvo={
       +'<span style="font-size:12px;color:var(--emuted)">ranking por índice</span></div>';
     if(!rowsAtv.length){ html+='<div class="ph">nenhum anúncio ativo registrado</div>'; }
     else{
-      html+='<table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:auto">'
-        +'<colgroup><col><col><col><col><col><col><col><col style="width:100%"></colgroup>'
+      html+='<table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed">'
+        +'<colgroup><col style="width:30px"><col style="width:82px"><col style="width:290px"><col style="width:50px"><col style="width:64px"><col style="width:86px"><col style="width:100px"><col></colgroup>'
         +'<tr style="color:var(--emuted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap">'
         +'<td style="padding:2px 6px 2px 3px;text-align:right">#</td><td style="padding:2px 8px 2px 6px">Nº cod</td><td style="padding:2px 10px 2px 6px">Produto</td>'
         +'<td style="padding:2px 8px;text-align:right">Índice</td>'
@@ -4773,12 +4773,12 @@ const ecomAlvo={
         html+='<tr style="border-top:1px solid var(--eborder);vertical-align:middle'+(abaixoPiso?';box-shadow:inset 3px 0 0 var(--ered)':'')+'">'
           +'<td style="padding:1px 6px 1px 3px;text-align:right;color:var(--emuted2);font-variant-numeric:tabular-nums">'+n1+'</td>'
           +'<td style="padding:1px 8px 1px 6px;font-family:var(--emono);white-space:nowrap"><b style="color:var(--eemerald)" title="MLB'+ea(r.mlbN)+'">'+ea(r.a.produto_codigo||'—')+'</b></td>'
-          +'<td style="'+prodCell+'" title="'+ea(nome)+'">'+(nome?ea(nome):'<span style="color:var(--emuted2)">—</span>')+'</td>'
+          +'<td style="'+prodCell+'" title="'+ea(nome)+'">'+(nome?('<span style="'+one+'">'+ea(nome)+'</span>'):'<span style="color:var(--emuted2)">—</span>')+'</td>'
           +'<td style="padding:1px 8px;text-align:right;font-weight:700;color:var(--etxt);white-space:nowrap">'+(r.ind!=null?Math.round(r.ind):'—')+'</td>'
           +'<td style="padding:1px 8px;text-align:right;font-weight:700;white-space:nowrap;color:'+mCor+'">'+(r.marg!=null?(Math.round(r.marg*10)/10)+'%':'—')+'</td>'
           +'<td style="padding:1px 8px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(r.precoSim!=null?fR(r.precoSim):'—')+'</td>'
           +'<td style="padding:1px 12px 1px 8px;text-align:right;white-space:nowrap">'+mlCell+'</td>'
-          +'<td style="padding:1px 8px;max-width:0;overflow:hidden">'+sugCell+'</td>'
+          +'<td style="padding:1px 8px;overflow:hidden">'+sugCell+'</td>'
           +'</tr>';
       });
       html+='</table>';
@@ -4798,8 +4798,8 @@ const ecomAlvo={
       +'<span style="font-size:12px;color:var(--emuted)">'+novos.length+' SKU(s) · '+(novosFallback?'aguardando análise':'ranking por índice')+'</span></div>';
     if(!novos.length){ html+='<div class="ph">nenhum produto simulado aguardando anúncio</div>'; }
     else{
-      html+='<table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:auto">'
-        +'<colgroup><col><col><col><col><col><col><col style="width:100%"></colgroup>'
+      html+='<table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed">'
+        +'<colgroup><col style="width:30px"><col style="width:82px"><col style="width:290px"><col style="width:50px"><col style="width:130px"><col style="width:64px"><col style="width:86px"><col></colgroup>'
         +'<tr style="color:var(--emuted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap">'
         +'<td style="padding:2px 6px 2px 3px;text-align:right">#</td><td style="padding:2px 8px 2px 6px">Nº cod</td><td style="padding:2px 10px 2px 6px">Produto</td>'
         +'<td style="padding:2px 8px;text-align:right">Índice</td><td style="padding:2px 8px 2px 6px">Veredito</td>'
@@ -4820,12 +4820,12 @@ const ecomAlvo={
         html+='<tr style="border-top:1px solid var(--eborder);vertical-align:middle">'
           +'<td style="padding:1px 6px 1px 3px;text-align:right;color:var(--emuted2);font-variant-numeric:tabular-nums">'+n2+'</td>'
           +'<td style="padding:1px 8px 1px 6px;font-family:var(--emono);white-space:nowrap"><b style="color:var(--etxt)">'+ea(r.cod)+'</b></td>'
-          +'<td style="'+prodCell+'" title="'+ea(nome)+'">'+(nome?ea(nome):'<span style="color:var(--emuted2)">—</span>')+'</td>'
+          +'<td style="'+prodCell+'" title="'+ea(nome)+'">'+(nome?('<span style="'+one+'">'+ea(nome)+'</span>'):'<span style="color:var(--emuted2)">—</span>')+'</td>'
           +'<td style="padding:1px 8px;text-align:right;font-weight:700;color:var(--etxt);white-space:nowrap">'+(r.ind!=null?Math.round(r.ind):'—')+'</td>'
           +'<td style="padding:1px 8px 1px 6px;font-weight:600;font-size:11.5px;white-space:nowrap;color:'+vCor(r.x&&r.x.veredito)+'" title="'+ea(r.x&&r.x.veredito||'')+'">'+ea(String(r.x&&r.x.veredito||'—'))+'</td>'
           +'<td style="padding:1px 8px;text-align:right;font-weight:700;white-space:nowrap;color:'+mCor+'">'+(ml!=null?(Math.round(ml*10)/10)+'%':'—')+'</td>'
           +'<td style="padding:1px 12px 1px 8px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(precoSim!=null?fR(precoSim):'—')+'</td>'
-          +'<td style="padding:1px 8px;max-width:0;overflow:hidden">'+sugCell+'</td>'
+          +'<td style="padding:1px 8px;overflow:hidden">'+sugCell+'</td>'
           +'</tr>';
       });
       html+='</table>';
