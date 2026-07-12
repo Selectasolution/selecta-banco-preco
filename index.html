@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-11-M | selecta-banco-preco | CORREÇÃO DEFINITIVA das colunas: table-layout:fixed com largura EM PIXEL por coluna (nº 30 · cod 82 · produto 290 · índice 50 · veredito 130 · margem 64 · sim 86 · ml 100) e SUGESTÃO = todo o resto da linha. Mata de vez o colapso da Sugestão (max-width:0 removido) e o buraco entre MARGEM e SIM do layout auto. Produto e Sugestão seguem em até 2 linhas. | base: -L -->
+<!-- BUILD 2026-07-12-A | selecta-banco-preco | Aba Vendas: redesenho v5 aprovado em preview. Causa-raiz F/G/H corrigida (variáveis --e* agora no escopo #tab-apple + alinhamento à esquerda com mesma origem campo/valor). Novidades: coluna Nº (1..N) nas duas tabelas, nome+SKU do produto em Vendas do mês (mapa em memória, zero query extra), cabeçalho com faixa, cards abraçando conteúdo com título+contador, badges Margem/Lucro, pill Estoque (vermelha em zero), toolbar no tema, valores sem prefixo R$. Colspans ajustados: catálogo 6→7 (vazio/erro/venda inline), financeiro 10→12 (vazio) e 11→12 (edição inline). Zero mudança de schema/fluxo. | base: -M -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -253,26 +253,29 @@
 
     <!-- ----- LANÇAMENTOS ----- -->
     <div id="apple-sub-catalogo">
-      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <input id="apple-cat-search" type="search" placeholder="Buscar SKU ou produto..."
-               class="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm w-72">
-        <button id="btn-novo-produto" class="bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-md">+ Novo produto</button>
+      <div class="toolbar">
+        <input id="apple-cat-search" type="search" placeholder="Buscar SKU ou produto...">
+        <button id="btn-novo-produto" class="btn-primario">+ Novo produto</button>
       </div>
 
-      <div class="tbl-wrap">
-        <table class="emain">
-          <thead>
-            <tr>
-              <th class="l">Produto</th>
-              <th>Preço custo<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">break-even</span></th>
-              <th>Preço venda</th>
-              <th>Margem</th>
-              <th>Estoque</th>
-              <th class="l">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="apple-cat-tbody"></tbody>
-        </table>
+      <div class="ecard">
+        <div class="ecard-head"><h3>Produtos cadastrados</h3><span class="count" id="apple-cat-count"></span></div>
+        <div class="tbl-wrap">
+          <table class="emain">
+            <thead>
+              <tr>
+                <th class="num">Nº</th>
+                <th>Produto</th>
+                <th>Preço custo<span class="sub">break-even ML</span></th>
+                <th>Preço venda</th>
+                <th>Margem</th>
+                <th>Estoque</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="apple-cat-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -290,29 +293,29 @@
       <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6" id="apple-fin-quadrantes"></div>
 
       <!-- Histórico de vendas do mês -->
-      <div class="mb-2 flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-gray-300">Vendas do mês</h3>
-        <span id="apple-fin-hist-count" class="text-xs text-gray-500"></span>
-      </div>
-      <div class="tbl-wrap">
-        <table class="emain">
-          <thead>
-            <tr>
-              <th class="l">Data</th>
-              <th class="l">Produto</th>
-              <th>Qtd</th>
-              <th>Preço unit.</th>
-              <th>Total</th>
-              <th>Break-even unit.</th>
-              <th>Lucro</th>
-              <th class="l">Canal</th>
-              <th class="l">Pgto</th>
-              <th class="l">Cliente</th>
-              <th class="l">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="apple-fin-hist-tbody"></tbody>
-        </table>
+      <div class="ecard">
+        <div class="ecard-head"><h3>Vendas do mês</h3><span class="count" id="apple-fin-hist-count"></span></div>
+        <div class="tbl-wrap">
+          <table class="emain">
+            <thead>
+              <tr>
+                <th class="num">Nº</th>
+                <th>Data</th>
+                <th>Produto</th>
+                <th>Qtd</th>
+                <th>Preço unit.</th>
+                <th>Total</th>
+                <th>Break-even<span class="sub">unitário</span></th>
+                <th>Lucro</th>
+                <th>Canal</th>
+                <th>Pgto</th>
+                <th>Cliente</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="apple-fin-hist-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -700,21 +703,49 @@
   #tab-ecommerce .efooter{margin-top:14px;padding-top:13px;border-top:1px solid var(--eborder);font-size:12.5px;color:var(--emuted);line-height:1.6}
   #tab-ecommerce select.ainput{appearance:auto}
 
-  /* BUILD -H: aba Vendas herda o mesmo padrão visual do E-commerce (tabela compacta, alinhada à esquerda) */
-  #tab-apple .tbl-wrap{overflow-x:auto;margin-top:6px}
-  #tab-apple table.emain{width:auto;border-collapse:collapse;font-size:13px}
-  #tab-apple table.emain thead th{text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--emuted);font-weight:600;padding:0 9px 9px;border-bottom:1px solid var(--eborder);white-space:nowrap}
-  #tab-apple table.emain thead th.l{text-align:left}
-  #tab-apple table.emain tbody td{padding:7px 9px;border-bottom:1px solid #1c2740;text-align:right;font-family:var(--emono);white-space:nowrap;vertical-align:middle}
-  #tab-apple table.emain tbody td.l{text-align:left;font-family:inherit;font-size:13.5px}
-  #tab-apple table.emain tbody tr:hover{background:#0f1828}
+  /* BUILD 2026-07-12-A: aba Vendas — redesenho v5 aprovado em preview.
+     Causa-raiz dos builds F/G/H: (1) variáveis --e* declaradas apenas em #tab-ecommerce não resolviam
+     dentro de #tab-apple; (2) alinhamento à direita sob cabeçalhos largos. Agora: variáveis no escopo,
+     cabeçalho com faixa de fundo, campo e valor com a MESMA origem esquerda (padding-left 12px),
+     card abraça o conteúdo, coluna Nº, badges semânticos, valores sem prefixo R$. */
+  #tab-apple{--epanel:#131c2e;--epanel2:#0f1726;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#34d399;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  #tab-apple .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  #tab-apple .toolbar input[type=search]{background:var(--epanel2);border:1px solid var(--eborder);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--etxt);width:300px;outline:none}
+  #tab-apple .toolbar input[type=search]:focus{border-color:var(--eaccent)}
+  #tab-apple .toolbar input[type=search]::placeholder{color:var(--emuted2)}
+  #tab-apple .btn-primario{background:var(--eemerald);color:#06281d;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer}
+  #tab-apple .btn-primario:hover{background:var(--eaccent)}
+  #tab-apple .ecard{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:14px 16px 10px;margin-bottom:14px;width:max-content;max-width:100%}
+  #tab-apple .ecard-head{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:12px}
+  #tab-apple .ecard-head h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin:0;font-weight:600}
+  #tab-apple .count{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:999px;padding:2px 10px;font-size:11px;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  #tab-apple .count:empty{display:none}
+  #tab-apple .tbl-wrap{overflow-x:auto}
+  #tab-apple table.emain{width:auto;border-collapse:separate;border-spacing:0;font-size:13px}
+  #tab-apple table.emain thead th{background:var(--epanel2);text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted);font-weight:600;padding:8px 26px 8px 12px;vertical-align:middle;line-height:1.3;white-space:nowrap}
+  #tab-apple table.emain thead th:first-child{border-radius:8px 0 0 8px}
+  #tab-apple table.emain thead th:last-child{border-radius:0 8px 8px 0;padding-right:12px}
+  #tab-apple table.emain thead th .sub{display:block;font-weight:400;text-transform:none;letter-spacing:0;color:var(--emuted2)}
+  #tab-apple table.emain tbody td{text-align:left;padding:10px 26px 10px 12px;border-bottom:1px solid #1c2740;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;vertical-align:middle}
+  #tab-apple table.emain tbody td:last-child{padding-right:12px}
+  #tab-apple table.emain tbody tr:last-child td{border-bottom:none}
+  #tab-apple table.emain tbody tr:hover td{background:#0f1828}
+  #tab-apple table.emain tbody td.l{font-family:inherit;font-size:13.5px}
+  #tab-apple table.emain .num{color:var(--emuted2);font-size:11.5px;width:26px;min-width:26px}
   #tab-apple .eprod{font-weight:600}
-  #tab-apple .emodel{color:var(--emuted2);font-size:12px;font-family:var(--emono)}
-  #tab-apple .acts{display:flex;gap:6px;justify-content:flex-end}
-  #tab-apple .rowbtn{background:none;border:1px solid var(--eborder);color:var(--emuted);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:inherit}
+  #tab-apple .emodel{color:var(--emuted2);font-size:12px;font-family:var(--emono);margin-top:1px}
+  #tab-apple .vbadge{display:inline-flex;align-items:baseline;gap:6px;border-radius:6px;padding:3px 9px;font-size:12.5px;font-weight:600;font-family:var(--emono);font-variant-numeric:tabular-nums}
+  #tab-apple .vbadge .pc{font-size:10.5px;font-weight:400;opacity:.75}
+  #tab-apple .vbadge.ok{background:rgba(16,185,129,.13);color:#5fe0a8}
+  #tab-apple .vbadge.err{background:rgba(239,68,68,.13);color:#fca5a5}
+  #tab-apple .stk{display:inline-block;min-width:26px;text-align:center;border:1px solid var(--eborder);border-radius:6px;padding:2px 8px;font-size:12px;color:var(--etxt)}
+  #tab-apple .stk.zero{border-color:rgba(239,68,68,.45);color:#fca5a5}
+  #tab-apple .muted2{color:var(--emuted2)}
+  #tab-apple .acts{display:flex;gap:6px}
+  #tab-apple .rowbtn{cursor:pointer;background:none;border:1px solid var(--eborder);color:var(--emuted);border-radius:6px;padding:3px 10px;font-size:11px;font-family:inherit}
   #tab-apple .rowbtn:hover{border-color:var(--eaccent);color:var(--etxt)}
   #tab-apple .rowbtn.del:hover{border-color:var(--ered);color:var(--ered)}
-  #tab-apple .rowbtn.venda{border-color:var(--eemerald);color:var(--eemerald)}
+  #tab-apple .rowbtn.venda{border-color:rgba(16,185,129,.5);color:var(--eemerald)}
   #tab-apple .rowbtn.venda:hover{background:#0c2c22}
   #tab-apple .rowbtn:disabled{opacity:.35;cursor:not-allowed}
   #tab-apple .mneg{color:var(--ered)}
@@ -3099,7 +3130,7 @@ async function loadAppleProdutos() {
 
   const { data, error } = await sb.from('produtos_apple_completo').select('*').order('modelo_sku');
   if (error) {
-    $('#apple-cat-tbody').innerHTML = `<tr><td colspan="6" class="px-3 py-6 text-center text-red-400">Erro: ${error.message}</td></tr>`;
+    $('#apple-cat-tbody').innerHTML = `<tr><td colspan="7" class="px-3 py-6 text-center text-red-400">Erro: ${error.message}</td></tr>`;
     return;
   }
 
@@ -3142,18 +3173,18 @@ async function loadAppleProdutos() {
 function renderAppleProdutos(items) {
   const tbody = $('#apple-cat-tbody');
   if (items.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="l" style="padding:24px 9px;color:var(--emuted2);text-align:center">Nenhum produto cadastrado. Clique em "+ Novo produto" para começar.</td></tr>`;
+    $('#apple-cat-count').textContent = '';
+    tbody.innerHTML = `<tr><td colspan="7" class="l" style="padding:24px 12px;color:var(--emuted2);text-align:center">Nenhum produto cadastrado. Clique em "+ Novo produto" para começar.</td></tr>`;
     return;
   }
-  tbody.innerHTML = items.map(p => {
+  $('#apple-cat-count').textContent = `${items.length} produto${items.length > 1 ? 's' : ''}`;
+  tbody.innerHTML = items.map((p, idx) => {
     const pvenda = Number(p.preco_venda_alvo) || 0;
     const be = Number(p.preco_minimo_venda) || 0;
     const margem = pvenda - be;
     const margemPct = pvenda > 0 ? (margem / pvenda) * 100 : 0;
-    const margemCls = margem >= 0 ? 'mok' : 'mneg';
     const estoque = Number(p.estoque_atual) || 0;
     const estoqueZero = estoque === 0;
-    const estoqueHtml = estoqueZero ? `<span class="mneg">0</span>` : `${estoque}`;
 
     const nome = p.ecom_produto ? `${p.ecom_marca || ''} ${p.ecom_produto} ${p.ecom_modelo || ''}`.trim() : '';
     const nomeHtml = nome
@@ -3166,11 +3197,12 @@ function renderAppleProdutos(items) {
 
     return `
     <tr class="product-row" data-id="${p.id}">
+      <td class="num">${idx + 1}</td>
       <td class="l">${nomeHtml}</td>
-      <td>R$ ${fmtBRL(be)}</td>
-      <td>R$ ${fmtBRL(pvenda)}</td>
-      <td class="${margemCls}">R$ ${fmtBRL(margem)} <span class="smper">(${margemPct.toFixed(1)}%)</span></td>
-      <td>${estoqueHtml}</td>
+      <td>${fmtBRL(be)}</td>
+      <td>${fmtBRL(pvenda)}</td>
+      <td><span class="vbadge ${margem >= 0 ? 'ok' : 'err'}">${fmtBRL(margem)} <span class="pc">${margemPct.toFixed(1).replace('.', ',')}%</span></span></td>
+      <td><span class="stk${estoqueZero ? ' zero' : ''}">${estoque}</span></td>
       <td class="l">
         <div class="acts" style="justify-content:flex-start">
           ${btnVenda}
@@ -3502,7 +3534,7 @@ function toggleVendaInline(produtoId) {
   tr.className = 'venda-inline';
   tr.dataset.produtoId = produtoId;
   tr.innerHTML = `
-    <td colspan="6" class="p-0">
+    <td colspan="7" class="p-0">
       <div class="bg-gray-900/70 border-l-4 border-primary-600 px-4 py-4">
         <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
           <div>
@@ -3675,22 +3707,29 @@ async function renderFinanceiro() {
   $('#apple-fin-hist-count').textContent = numVendas === 0 ? '' : `${numVendas} lançamento${numVendas > 1 ? 's' : ''}`;
   const tbody = $('#apple-fin-hist-tbody');
   if (numVendas === 0) {
-    tbody.innerHTML = `<tr><td colspan="10" class="px-3 py-8 text-center text-gray-500">Nenhuma venda no mês selecionado.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="px-3 py-8 text-center text-gray-500">Nenhuma venda no mês selecionado.</td></tr>`;
     return;
   }
-  tbody.innerHTML = vendasArr.map(v => {
+  const prodMapFin = new Map((produtos || []).map(p => [p.id, p]));
+  tbody.innerHTML = vendasArr.map((v, idx) => {
     const be = Number(v.custo_unitario_snapshot) || 0;
     const lucro = (Number(v.preco_unitario) - be) * Number(v.quantidade);
-    const lucroCls = lucro >= 0 ? 'mok' : 'mneg';
+    const pInfo = prodMapFin.get(v.produto_id);
+    const nomeV = pInfo && pInfo.ecom_produto ? `${pInfo.ecom_marca || ''} ${pInfo.ecom_produto} ${pInfo.ecom_modelo || ''}`.trim() : '';
+    const skuV = v.produtos_apple?.modelo_sku || '—';
+    const prodCell = nomeV
+      ? `<div class="eprod" style="font-size:12.5px">${nomeV}</div><div class="emodel">${skuV}</div>`
+      : `<div class="eprod" style="font-family:var(--emono);font-size:12px">${skuV}</div>`;
     return `
     <tr data-venda-id="${v.id}">
+      <td class="num">${idx + 1}</td>
       <td class="l">${fmtData(v.data)}</td>
-      <td class="l" style="font-family:var(--emono);font-size:12px">${v.produtos_apple?.modelo_sku || '—'}</td>
+      <td class="l">${prodCell}</td>
       <td>${v.quantidade}</td>
-      <td>R$ ${fmtBRL(v.preco_unitario)}</td>
-      <td>R$ ${fmtBRL(v.total)}</td>
-      <td style="color:var(--emuted2)">R$ ${fmtBRL(be)}</td>
-      <td class="${lucroCls}">R$ ${fmtBRL(lucro)}</td>
+      <td>${fmtBRL(v.preco_unitario)}</td>
+      <td>${fmtBRL(v.total)}</td>
+      <td class="muted2">${fmtBRL(be)}</td>
+      <td><span class="vbadge ${lucro >= 0 ? 'ok' : 'err'}">${fmtBRL(lucro)}</span></td>
       <td class="l">${v.canal}</td>
       <td class="l">${v.forma_pagamento}</td>
       <td class="l" style="color:var(--emuted2)">${v.cliente || '—'}</td>
@@ -3742,7 +3781,7 @@ async function openEditarVendaInline(id) {
   tr.className = 'venda-edit-inline';
   tr.dataset.vendaId = id;
   tr.innerHTML = `
-    <td colspan="11" class="p-0">
+    <td colspan="12" class="p-0">
       <div class="bg-gray-900/70 border-l-4 border-yellow-500 px-4 py-4">
         <div class="text-xs text-gray-400 mb-2">Editando venda ${v.produtos_apple?.modelo_sku || ''} · id ${id.slice(0, 8)}...</div>
         <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
