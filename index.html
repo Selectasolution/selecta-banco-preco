@@ -1,4 +1,5 @@
-<!-- BUILD 2026-07-13-B | selecta-banco-preco | RADAR v0.3 — VARREDURA POR TERMO (decisão Igor 13/07 — filtro de preço 90–800 definido; categoria não tem resolução para decidir anúncio): (1) Card do Radar ganha campo "Termo de busca" + botão 🔎 Varrer termo (gate de token reaproveitado, mín. 3 chars). (2) Edge ml-radar v0.2.0 aceita body {termo}: top 20 da busca real autenticada, enriquecido via multiget, gravado tipo='termo' fonte='busca' (deploy da Edge PRIMEIRO, Pages depois). (3) Cards de termo no 🏆 com badge "termo"; log mostra o termo; Mais Procurados ignora termo (não tem trends). (4) KPI da mediana ganha selo Estágio 0: DENTRO/FORA 90–800 — só em varredura de termo. Marcador visível: "radar v0.3 · 13/07/2026". | base: 2026-07-13-A -->
+<!-- BUILD 2026-07-13-C | selecta-banco-preco | RADAR UI v0.4 — REORGANIZAÇÃO (spec Igor 13/07 — tela confusa com todos os alvos de uma vez; Consultar e Mais Vendidos redundantes): (1) Duas abas de cabeçalho: 🔎 Pesquisa (card de disparo + Mais Vendidos/Mais Procurados) e 🎯 Itens alvo pesquisa (promovida de sub-aba). (2) Seletor "Exibir alvo" nas visões Vendidos/Procurados — mostra UM alvo por vez (categoria ou termo), card já abre expandido. (3) Botão Consultar REMOVIDO (função absorvida pelo seletor). (4) Vocabulário: varrer→pesquisar em toda a UI (Nova pesquisa, Pesquisar termo, Log de pesquisas, Pesquisa #N, capturado em). (5) Frase de subtítulo da aba REMOVIDA (aprovação via mockup 13/07). Sem mudança de Edge, SQL ou dados. | base: 2026-07-13-B -->
+<!-- BUILD 2026-07-13-B | selecta-banco-preco | RADAR v0.3 — VARREDURA POR TERMO (decisão Igor 13/07 — filtro de preço 90–800 definido; categoria não tem resolução para decidir anúncio): (1) Card do Radar ganha campo "Termo de busca" + botão 🔎 Varrer termo (gate de token reaproveitado, mín. 3 chars). (2) Edge ml-radar v0.2.0 aceita body {termo}: top 20 da busca real autenticada, enriquecido via multiget, gravado tipo='termo' fonte='busca' (deploy da Edge PRIMEIRO, Pages depois). (3) Cards de termo no 🏆 com badge "termo"; log mostra o termo; Mais Procurados ignora termo (não tem trends). (4) KPI da mediana ganha selo Estágio 0: DENTRO/FORA 90–800 — só em varredura de termo. Marcador visível: "radar v0.4 · 13/07/2026". | base: 2026-07-13-A -->
 <!-- BUILD 2026-07-13-A | selecta-banco-preco | PAUSAR/REATIVAR NO CONTROLE (decisão Igor 13/07 — origem: falsos ZUMBI-2 de 12–13/07 causados por Remover apagar o vínculo anúncio×produto): (1) Colunas pausado/pausado_em em ecom_anuncios (SQL aplicado 13/07). (2) Controle: botão Pausar (vira Reativar quando pausado), linha sem cor + badge PAUSADO ao fim da fila, contador separa ativos × pausados, ação logada em ecom_anuncio_alteracao — rito: ML PRIMEIRO, registro depois. (3) Análise Comercial: pausados saem do quadrante ATIVOS, da sugestão automática de divergência e do ZUMBI-2 automático; ganham seção própria ao fim com cruzamento novo: pausado × ativo no lote = ⚠ pausa não executada no ML · fora do lote = fecho ✓. (4) Fix: célula Veredito (quadrante Novos) com overflow oculto — texto não invade mais a coluna Margem. | base: 2026-07-12-B -->
 <!-- BUILD 2026-07-12-B | selecta-banco-preco | RÉGUA 10% + COLCHÃO 6% (decisão Igor 12/07 — fim do dropship Foz, saída NE/Teresina, capital caro): (1) Piso operacional 12%→10% em TODO o app: veredito do Simulador (≥10% Priorizar/verde · >0 e <10% Analisar/amarelo · ≤0 Excluir/vermelho — prejuízo nunca amarelo, guarda mantida), cores da tabela e do formulário, bloqueio LIBERADO/NEGADO do Controle da Alexia (pct>=10) e mensagem de gravação bloqueada, cores/abaixoPiso da Análise Comercial e da Estratégia. (2) Colchão default 3%→6%: input do Simulador, fallback do calc espelhado, preview de venda (0.06) e rótulos (rótulo de registro salvo virou genérico — vendas antigas foram gravadas a 3%). (3) Comando embutido v1.9 com a régua nova e supersessão declarada. PENDÊNCIA SQL (NÃO aplicada aqui): ecom_fn_margem_alvo (passa_piso) e colchao_valor server-side podem manter 12%/3% — diagnóstico a rodar no SQL Editor antes do patch. | base: -A (477017b) -->
 <!DOCTYPE html>
@@ -1329,8 +1330,12 @@
          Sem filtros eliminatórios (decisão 05/07/2026). Dado oficial ML.
          ===================================================================== -->
     <div id="ecom-sub-radar" class="ecom-subpanel" style="display:none">
-      <p class="esub">Pesquisa de mercado com dado oficial do ML — o que mais vende (highlights), o que o comprador busca (trends) e o top 20 da busca por termo (dossiê). Toda métrica estimada carrega asterisco; nada aqui é simulado. <span style="color:var(--emuted2);font-family:var(--emono);font-size:11px">radar v0.3 · 13/07/2026</span></p>
+      <div class="alsubbar" id="rdtabbar" style="margin-bottom:10px">
+        <button class="alsub-btn active" data-rdtab="pesquisa">🔎 Pesquisa</button>
+        <button class="alsub-btn" data-rdtab="alvo">🎯 Itens alvo pesquisa</button>
+      </div>
 
+      <div id="rdtab-pesquisa">
       <div class="ecard" style="border-color:var(--eamber)">
         <div style="display:flex;justify-content:flex-end;margin-bottom:6px"><span id="rd-token-selo" style="font-size:11.5px;color:var(--emuted2);font-family:var(--emono)">🔑 token…</span></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
@@ -1346,27 +1351,26 @@
             <label style="display:block;font-size:11px;color:var(--emuted);margin-bottom:4px">Nome (referência sua)</label>
             <input id="rd-cat-nome" placeholder="ex: Memórias RAM" style="width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:8px 10px;font-size:13px">
           </div>
-          <button id="rd-consultar" class="chip" style="border-color:var(--eteal);color:var(--eteal);padding:9px 16px;font-weight:600">🔎 Consultar</button>
-          <button id="rd-varrer" class="chip" style="border-color:var(--eamber);color:var(--eamber);padding:9px 16px;font-weight:600">📡 Nova varredura</button>
+          <button id="rd-varrer" class="chip" style="border-color:var(--eamber);color:var(--eamber);padding:9px 16px;font-weight:600">📡 Pesquisar categoria</button>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-top:10px;padding-top:10px;border-top:1px dashed var(--eborder)">
           <div style="flex:1;min-width:260px">
             <label style="display:block;font-size:11px;color:var(--emuted);margin-bottom:4px">Termo de busca (top 20 da busca real do ML — dossiê por produto)</label>
             <input id="rd-termo" placeholder="ex: suporte monitor" style="width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:8px 10px;font-size:13px">
           </div>
-          <button id="rd-varrer-termo" class="chip" style="border-color:var(--eteal);color:var(--eteal);padding:9px 16px;font-weight:600">🔎 Varrer termo</button>
+          <button id="rd-varrer-termo" class="chip" style="border-color:var(--eteal);color:var(--eteal);padding:9px 16px;font-weight:600">🔎 Pesquisar termo</button>
         </div>
         <div id="rd-msg" style="font-size:12.5px;margin-top:8px;color:var(--emuted)"></div>
         <details style="margin-top:10px">
-          <summary style="font-size:12px;color:var(--emuted);cursor:pointer">Log de varreduras</summary>
+          <summary style="font-size:12px;color:var(--emuted);cursor:pointer">Log de pesquisas</summary>
           <div id="rd-pesquisas" style="margin-top:8px"><div class="ph">carregando…</div></div>
         </details>
       </div>
 
-      <div class="alsubbar" id="rdviewbar" style="margin-top:2px">
+      <div class="alsubbar" id="rdviewbar" style="margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <button class="alsub-btn active" data-rdview="vend">🏆 Mais Vendidos</button>
         <button class="alsub-btn" data-rdview="proc">🔎 Mais Procurados</button>
-        <button class="alsub-btn" data-rdview="pesq">🎯 Itens alvo pesquisa</button>
+        <select id="rd-filtro" title="Exibir apenas o alvo selecionado" style="margin-left:auto;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:7px 10px;font-size:12.5px;max-width:340px"><option>carregando…</option></select>
       </div>
 
       <div id="rdview-vend">
@@ -1375,6 +1379,7 @@
       <div id="rdview-proc" style="display:none">
         <div id="rd-proc-cards"><div class="ph">carregando…</div></div>
       </div>
+      </div><!-- /rdtab-pesquisa -->
 
       <!-- =====================================================================
            ITENS ALVO PESQUISA v1.0 (07/07/2026) — inteligência EXTERNA de mercado
@@ -5077,38 +5082,51 @@ const ecomRadar={
       lbox.innerHTML = pesq.length
         ? '<table class="rd-tbl"><thead><tr><th>#</th><th>Alvo</th><th>Executada</th><th>Status</th></tr></thead><tbody>'+
           pesq.map(x=>'<tr><td class="mono">'+x.id+'</td><td>'+(x.tipo==='termo'?'🔎 '+this.esc(x.termo||'—')+' <span style="color:var(--eteal);font-family:var(--emono);font-size:11px">termo</span>':this.esc(x.categoria_nome||'—')+' <span style="color:var(--emuted2);font-family:var(--emono);font-size:11px">'+this.esc(x.categoria_id||'')+'</span>')+'</td><td class="mono">'+this.dtBR(x.executado_em)+'</td><td>'+this.badge(x.status)+(x.observacao?' <span title="'+this.esc(x.observacao)+'" style="cursor:help">ℹ️</span>':'')+'</td></tr>').join('')+'</tbody></table>'
-        : '<div class="ph">nenhuma varredura ainda</div>';
-      if(!pesq.length){ vbox.innerHTML='<div class="ph">nenhuma varredura ainda — dispare a primeira acima</div>'; pbox.innerHTML='<div class="ph">nenhuma varredura ainda</div>'; return; }
+        : '<div class="ph">nenhuma pesquisa ainda</div>';
+      if(!pesq.length){ vbox.innerHTML='<div class="ph">nenhuma pesquisa ainda — dispare a primeira acima</div>'; pbox.innerHTML='<div class="ph">nenhuma pesquisa ainda</div>'; return; }
       // última varredura por categoria OU por termo = retrato vigente
       const vistos={}; const grupos=[];
       pesq.forEach(x=>{ const k=(x.tipo==='termo')?('t:'+(x.termo||('#'+x.id))):(x.categoria_id||('#'+x.id)); if(!vistos[k]){ vistos[k]=true; grupos.push(x); } });
       this.grupos=grupos;
+      // Seletor "Exibir alvo" — UM alvo por vez (spec Igor 13/07)
+      const chave=g=>(g.tipo==='termo')?('t:'+(g.termo||('#'+g.id))):(g.categoria_id||('#'+g.id));
+      const fsel=this._g('rd-filtro');
+      if(fsel){
+        const chaves=grupos.map(chave);
+        if(!this._filtro||chaves.indexOf(this._filtro)<0) this._filtro=chaves[0]||null;
+        fsel.innerHTML=grupos.map(g=>'<option value="'+this.esc(chave(g))+'"'+(chave(g)===this._filtro?' selected':'')+'>'+(g.tipo==='termo'?'🔎 '+this.esc(g.termo||'')+' (termo)':this.esc(g.categoria_nome||g.categoria_id||'')+' · '+this.esc(g.categoria_id||''))+'</option>').join('');
+        if(!fsel._init){ fsel._init=true; fsel.addEventListener('change',()=>{ this._filtro=fsel.value; this.load(); }); }
+      }
+      const vis=grupos.filter(g=>chave(g)===this._filtro);
       const ids=grupos.map(x=>x.id);
       const it=await sb.from('ecom_radar_item').select('pesquisa_id,fonte,posicao,titulo,preco,vendidos_faixa,marca,keyword').in('pesquisa_id',ids).order('posicao');
       if(it.error) throw it.error;
       const porP={}; (it.data||[]).forEach(r=>{ (porP[r.pesquisa_id]=porP[r.pesquisa_id]||[]).push(r); });
 
       // 🏆 Mais Vendidos — cartões-acordeão
-      vbox.innerHTML = grupos.map(g=>{
+      vbox.innerHTML = vis.map(g=>{
         const hi=(porP[g.id]||[]).filter(r=>r.fonte==='highlights'||r.fonte==='busca');
         const top3=hi.slice(0,3).map(r=>'<div class="rd-top3"><span class="n">'+(r.posicao??'')+'º</span> '+this.esc(r.titulo||'—')+' <span class="p">'+this.brl(r.preco)+'</span>'+(r.vendidos_faixa?' <span class="v">'+this.esc(r.vendidos_faixa)+'+ vend.</span>':'')+'</div>').join('');
         return '<div class="ecard rd-acc" data-rdpid="'+g.id+'">'+
           '<div class="rd-acc-head" data-rdacc="'+g.id+'">'+
-            '<div><div class="rd-acc-tit">'+(g.tipo==='termo'?'🔎 '+this.esc(g.termo||('Varredura #'+g.id))+' <span class="rd-acc-id" style="color:var(--eteal)">termo</span>':this.esc(g.categoria_nome||g.categoria_id||('Varredura #'+g.id))+' <span class="rd-acc-id">'+this.esc(g.categoria_id||'')+'</span>')+'</div>'+
-            '<div class="rd-acc-sub">'+hi.length+' itens no ranking · varrido em '+this.dtBR(g.executado_em)+' · '+this.badge(g.status)+'</div></div>'+
+            '<div><div class="rd-acc-tit">'+(g.tipo==='termo'?'🔎 '+this.esc(g.termo||('Pesquisa #'+g.id))+' <span class="rd-acc-id" style="color:var(--eteal)">termo</span>':this.esc(g.categoria_nome||g.categoria_id||('Pesquisa #'+g.id))+' <span class="rd-acc-id">'+this.esc(g.categoria_id||'')+'</span>')+'</div>'+
+            '<div class="rd-acc-sub">'+hi.length+' itens no ranking · capturado em '+this.dtBR(g.executado_em)+' · '+this.badge(g.status)+'</div></div>'+
             '<span class="rd-acc-chev">▾</span></div>'+
-          (top3?'<div class="rd-acc-top3">'+top3+'</div>':'<div class="ph" style="padding:10px">'+(g.tipo==='termo'?'sem resultados de busca nesta varredura':'sem highlights nesta varredura — provável categoria alta na árvore; varra uma folha')+'</div>')+
+          (top3?'<div class="rd-acc-top3">'+top3+'</div>':'<div class="ph" style="padding:10px">'+(g.tipo==='termo'?'sem resultados de busca nesta pesquisa':'sem highlights nesta pesquisa — provável categoria alta na árvore; pesquise uma folha')+'</div>')+
           '<div class="rd-acc-body" id="rd-body-'+g.id+'" style="display:none"><div class="ph">…</div></div>'+
         '</div>'; }).join('');
+      if(!vis.length){ vbox.innerHTML='<div class="ph">selecione um alvo no seletor acima</div>'; }
+      else{ const b0=this._g('rd-body-'+vis[0].id); if(b0&&b0.style.display==='none') this.expandir(vis[0].id); }
 
       // 🔎 Mais Procurados — chips por categoria (link para a busca real do ML)
-      pbox.innerHTML = grupos.filter(g=>g.tipo!=='termo').map(g=>{
+      pbox.innerHTML = vis.filter(g=>g.tipo!=='termo').map(g=>{
         const tr=(porP[g.id]||[]).filter(r=>r.fonte==='trends');
         return '<div class="ecard">'+
           '<div class="rd-acc-tit" style="margin-bottom:2px">'+this.esc(g.categoria_nome||g.categoria_id||'')+' <span class="rd-acc-id">'+this.esc(g.categoria_id||'')+'</span></div>'+
-          '<div class="rd-acc-sub" style="margin-bottom:10px">'+tr.length+' termos · atualização semanal do ML · varrido em '+this.dtBR(g.executado_em)+' · clique abre a busca real no ML</div>'+
-          (tr.length?tr.map(r=>'<a class="rd-kw" target="_blank" rel="noopener" href="https://lista.mercadolivre.com.br/'+encodeURIComponent((r.keyword||'').replace(/ /g,'-'))+'"><span class="n">'+(r.posicao??'')+'</span>'+this.esc(r.keyword||'')+'</a>').join(''):'<div class="ph">sem termos nesta varredura</div>')+
+          '<div class="rd-acc-sub" style="margin-bottom:10px">'+tr.length+' termos · atualização semanal do ML · capturado em '+this.dtBR(g.executado_em)+' · clique abre a busca real no ML</div>'+
+          (tr.length?tr.map(r=>'<a class="rd-kw" target="_blank" rel="noopener" href="https://lista.mercadolivre.com.br/'+encodeURIComponent((r.keyword||'').replace(/ /g,'-'))+'"><span class="n">'+(r.posicao??'')+'</span>'+this.esc(r.keyword||'')+'</a>').join(''):'<div class="ph">sem termos nesta pesquisa</div>')+
         '</div>'; }).join('');
+      if(!pbox.innerHTML) pbox.innerHTML='<div class="ph">'+(vis.length&&vis[0].tipo==='termo'?'pesquisa por termo não tem trends — selecione uma categoria no seletor':'selecione um alvo no seletor acima')+'</div>';
     }catch(e){ vbox.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar: '+this.esc(e.message)+'</div>'; }
   },
 
@@ -5162,25 +5180,6 @@ const ecomRadar={
     }catch(e){ body.innerHTML='<div class="ph" style="color:var(--ered)">erro ao detalhar: '+this.esc(e.message)+'</div>'; }
   },
 
-  // Consultar = abrir a última varredura da categoria selecionada (zero API do ML)
-  async consultar(){
-    const {id}=this.catAtual(); const msg=this._g('rd-msg');
-    if(!/^MLB\d+$/.test(id)){ msg.style.color='var(--ered)'; msg.textContent='Selecione (ou digite) um ID de categoria válido.'; return; }
-    if(!this.grupos){ await this.load(); }
-    const g=(this.grupos||[]).find(x=>x.categoria_id===id);
-    if(!g){ msg.style.color='var(--eamber)'; msg.textContent='Nenhuma varredura de '+id+' ainda — use 📡 Nova varredura para a primeira.'; return; }
-    msg.style.color='var(--emuted)'; msg.textContent='🔎 Última varredura de '+id+': #'+g.id+' em '+this.dtBR(g.executado_em)+' ('+g.status+').';
-    // garante a visão Mais Vendidos visível
-    const bar=document.getElementById('rdviewbar');
-    if(bar){ bar.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x.dataset.rdview==='vend'));
-      document.getElementById('rdview-vend').style.display='';
-      document.getElementById('rdview-proc').style.display='none'; }
-    const body=this._g('rd-body-'+g.id);
-    if(body && body.style.display==='none') await this.expandir(g.id);
-    const card=document.querySelector('.rd-acc[data-rdpid="'+g.id+'"]');
-    if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
-  },
-
   async varrerTermo(){
     const termo=((this._g('rd-termo')||{}).value||'').trim().toLowerCase();
     const msg=this._g('rd-msg'), btn=this._g('rd-varrer-termo');
@@ -5193,14 +5192,14 @@ const ecomRadar={
       msg.textContent='⛔ Token ML expirado — solicite entre 04h50–10h50 e 14h50–20h50 (BRT) ou aguarde a renovação automática (~minuto :45) e tente de novo.';
       return;
     }
-    msg.textContent='🔎 Varrendo termo "'+termo+'"… (top 20 da busca real via API oficial)';
+    msg.textContent='🔎 Pesquisando termo "'+termo+'"… (top 20 da busca real via API oficial)';
     try{
       const r=await sb.functions.invoke('ml-radar',{ body:{ termo } });
       if(r.error) throw new Error(r.error.message||'falha na Edge Function');
       const d=r.data||{};
       if(d.erro) throw new Error(d.erro+(d.detalhe?' — '+d.detalhe:''));
       msg.style.color='var(--eemerald)';
-      msg.textContent='✓ Varredura #'+d.pesquisa_id+' (termo): '+d.capturados+' registros ('+d.status+')'+((d.avisos&&d.avisos.length)?' — avisos: '+d.avisos.join(' | '):'');
+      msg.textContent='✓ Pesquisa #'+d.pesquisa_id+' (termo): '+d.capturados+' registros ('+d.status+')'+((d.avisos&&d.avisos.length)?' — avisos: '+d.avisos.join(' | '):'');
       this.cacheHi={}; await this.load();
     }catch(e){ msg.style.color='var(--ered)'; msg.textContent='✗ '+this.esc(e.message); }
     finally{ btn.disabled=false; }
@@ -5220,14 +5219,14 @@ const ecomRadar={
       msg.textContent='⛔ Token ML expirado — solicite entre 04h50–10h50 e 14h50–20h50 (BRT) ou aguarde a renovação automática (~minuto :45) e tente de novo.';
       return;
     }
-    msg.textContent='📡 Varrendo '+id+'… (highlights + trends via API oficial)';
+    msg.textContent='📡 Pesquisando '+id+'… (highlights + trends via API oficial)';
     try{
       const r=await sb.functions.invoke('ml-radar',{ body:{ categoria_id:id, categoria_nome:nome||null } });
       if(r.error) throw new Error(r.error.message||'falha na Edge Function');
       const d=r.data||{};
       if(d.erro) throw new Error(d.erro+(d.detalhe?' — '+d.detalhe:''));
       msg.style.color='var(--eemerald)';
-      msg.textContent='✓ Varredura #'+d.pesquisa_id+': '+d.capturados+' registros ('+d.status+')'+((d.avisos&&d.avisos.length)?' — avisos: '+d.avisos.join(' | '):'');
+      msg.textContent='✓ Pesquisa #'+d.pesquisa_id+': '+d.capturados+' registros ('+d.status+')'+((d.avisos&&d.avisos.length)?' — avisos: '+d.avisos.join(' | '):'');
       this.cacheHi={}; await this.load();
     }catch(e){ msg.style.color='var(--ered)'; msg.textContent='✗ '+this.esc(e.message); }
     finally{ btn.disabled=false; }
@@ -5461,12 +5460,16 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
 }));
 (function(){ const v=document.getElementById('rd-varrer'); if(v) v.addEventListener('click',()=>ecomRadar.varrer());
   const vt=document.getElementById('rd-varrer-termo'); if(vt) vt.addEventListener('click',()=>ecomRadar.varrerTermo());
-  const cq=document.getElementById('rd-consultar'); if(cq) cq.addEventListener('click',()=>ecomRadar.consultar());
   const vc=document.getElementById('rd-vend-cards'); if(vc) vc.addEventListener('click',e=>{ const hAcc=e.target.closest('[data-rdacc]'); if(hAcc) ecomRadar.expandir(Number(hAcc.dataset.rdacc)); });
   const bar=document.getElementById('rdviewbar'); if(bar) bar.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
     bar.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x===b));
-    ['vend','proc','pesq'].forEach(v=>{ const el=document.getElementById('rdview-'+v); if(el) el.style.display=(b.dataset.rdview===v)?'':'none'; });
-    if(b.dataset.rdview==='pesq' && !ecomPesq.loaded) ecomPesq.load(); });
+    ['vend','proc'].forEach(v=>{ const el=document.getElementById('rdview-'+v); if(el) el.style.display=(b.dataset.rdview===v)?'':'none'; }); });
+  const tbar=document.getElementById('rdtabbar'); if(tbar) tbar.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
+    tbar.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x===b));
+    const alvo=b.dataset.rdtab==='alvo';
+    const tp=document.getElementById('rdtab-pesquisa'); if(tp) tp.style.display=alvo?'none':'';
+    const pv=document.getElementById('rdview-pesq'); if(pv) pv.style.display=alvo?'':'none';
+    if(alvo && !ecomPesq.loaded) ecomPesq.load(); });
   // ITENS ALVO PESQUISA v1.0 — wiring
   const pqAdd=document.getElementById('pq-add'); if(pqAdd) pqAdd.addEventListener('click',()=>ecomPesq.cadastrar());
   const pqExp=document.getElementById('pq-export'); if(pqExp) pqExp.addEventListener('click',()=>ecomPesq.exportar());
