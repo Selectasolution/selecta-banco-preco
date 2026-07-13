@@ -1,3 +1,4 @@
+<!-- BUILD 2026-07-13-A | selecta-banco-preco | PAUSAR/REATIVAR NO CONTROLE (decisão Igor 13/07 — origem: falsos ZUMBI-2 de 12–13/07 causados por Remover apagar o vínculo anúncio×produto): (1) Colunas pausado/pausado_em em ecom_anuncios (SQL aplicado 13/07). (2) Controle: botão Pausar (vira Reativar quando pausado), linha sem cor + badge PAUSADO ao fim da fila, contador separa ativos × pausados, ação logada em ecom_anuncio_alteracao — rito: ML PRIMEIRO, registro depois. (3) Análise Comercial: pausados saem do quadrante ATIVOS, da sugestão automática de divergência e do ZUMBI-2 automático; ganham seção própria ao fim com cruzamento novo: pausado × ativo no lote = ⚠ pausa não executada no ML · fora do lote = fecho ✓. (4) Fix: célula Veredito (quadrante Novos) com overflow oculto — texto não invade mais a coluna Margem. | base: 2026-07-12-B -->
 <!-- BUILD 2026-07-12-B | selecta-banco-preco | RÉGUA 10% + COLCHÃO 6% (decisão Igor 12/07 — fim do dropship Foz, saída NE/Teresina, capital caro): (1) Piso operacional 12%→10% em TODO o app: veredito do Simulador (≥10% Priorizar/verde · >0 e <10% Analisar/amarelo · ≤0 Excluir/vermelho — prejuízo nunca amarelo, guarda mantida), cores da tabela e do formulário, bloqueio LIBERADO/NEGADO do Controle da Alexia (pct>=10) e mensagem de gravação bloqueada, cores/abaixoPiso da Análise Comercial e da Estratégia. (2) Colchão default 3%→6%: input do Simulador, fallback do calc espelhado, preview de venda (0.06) e rótulos (rótulo de registro salvo virou genérico — vendas antigas foram gravadas a 3%). (3) Comando embutido v1.9 com a régua nova e supersessão declarada. PENDÊNCIA SQL (NÃO aplicada aqui): ecom_fn_margem_alvo (passa_piso) e colchao_valor server-side podem manter 12%/3% — diagnóstico a rodar no SQL Editor antes do patch. | base: -A (477017b) -->
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -4234,7 +4235,7 @@ const ecomAlvo={
       if(!(this.loteAtualMlbs instanceof Set)) return; // snapshot ilegível: verificação cega, não inventa
       const hoje=new Date().toISOString().slice(0,10);
       const novas=[];
-      (this.anuncios||[]).forEach(a=>{ if(a.ativo===false||!a.anuncio_mlb) return;
+      (this.anuncios||[]).forEach(a=>{ if(a.ativo===false||a.pausado||!a.anuncio_mlb) return;
         const k=this._normMlb(a.anuncio_mlb); const sn=this.snapAtual?this.snapAtual[k]:null;
         if(!sn||sn.preco==null||a.preco==null) return;
         const pub=+sn.preco, reg=+a.preco; if(isNaN(pub)||isNaN(reg)||Math.abs(pub-reg)<0.005) return;
@@ -4389,7 +4390,7 @@ const ecomAlvo={
       const pub=new Date(String(an.data_publicacao||'').slice(0,10)+'T00:00:00');
       const vendas=this.vendas.filter(v=>v.produto_codigo===an.produto_codigo && v.data_solicitacao && new Date(v.data_solicitacao)>=pub).length;
       return {an,dias,vendas}; });
-    lista.sort((a,b)=> (b.vendas-a.vendas) || ((b.dias==null?-1:b.dias)-(a.dias==null?-1:a.dias)) );
+    lista.sort((a,b)=> ((a.an.pausado?1:0)-(b.an.pausado?1:0)) || (b.vendas-a.vendas) || ((b.dias==null?-1:b.dias)-(a.dias==null?-1:a.dias)) );
     const _flt=(this.anunciosFiltro||'').trim().toLowerCase();
     const listaF=_flt?lista.filter(r=>String(r.an.produto_codigo||'').toLowerCase().includes(_flt)):lista;
     const _bmsg=this._g('al-anuncios-busca-msg');
@@ -4414,7 +4415,7 @@ const ecomAlvo={
       //  ação Alexia > análise → azul (info: já foi executada ação depois da última estratégia)
       //  análise > ação (ou sem ação) → cor do cls
       let sugCls;
-      if(!res){ sugCls='gray'; }
+      if(an.pausado||!res){ sugCls='gray'; }
       else {
         const tAlt = an.anuncio_mlb ? this.ultAlteracao[an.anuncio_mlb] : null;
         const tAna = res.criadoEm || res.data || null;
@@ -4425,13 +4426,13 @@ const ecomAlvo={
       const sugBtn = '<button data-alsug="'+esc(an.anuncio_mlb||'')+'" data-anid="'+an.id+'" class="al-sug '+sugCls+'"'+(res?'':' title="Nenhuma análise importada"')+'>'+sugTxt+'</button>';
       const hist=(an.anuncio_mlb && this.altHist && this.altHist[an.anuncio_mlb])?this.altHist[an.anuncio_mlb]:[];
       const histLink = an.anuncio_mlb?'<button data-alhist="'+esc(an.anuncio_mlb)+'" class="al-histlink" title="Alterações salvas neste anúncio (data + motivo)">Histórico ('+hist.length+')</button>':'';
-      return '<div class="vli" style="align-items:flex-start">'
+      return '<div class="vli" style="align-items:flex-start'+(an.pausado?';opacity:.55;filter:grayscale(1)':'')+'">'
         +'<div style="font-weight:700;color:var(--emuted2);min-width:18px;text-align:right;font-size:12.5px">'+(i+1)+'</div>'
         +'<div class="vmain">'
         +'<div class="al-line">'
           +'<span class="al-code">'+esc(an.produto_codigo)+'</span>'
           +'<span class="al-title">'+esc(an.titulo)+'</span>'
-          +'<span class="al-info '+infoClass+'">'+diasTxt+' · '+vendas+' venda(s)</span>'
+          +(an.pausado?('<span class="al-info" style="color:var(--emuted);border:1px solid var(--eborder);border-radius:6px;padding:0 6px;font-weight:700;letter-spacing:.05em" title="Fora da análise até reativar">PAUSADO'+(an.pausado_em?(' · '+new Date(an.pausado_em).toLocaleDateString('pt-BR')):'')+'</span>'):('<span class="al-info '+infoClass+'">'+diasTxt+' · '+vendas+' venda(s)</span>'))
         +'</div>'
         +'<div class="al-actions">'
           +sugBtn
@@ -4441,11 +4442,12 @@ const ecomAlvo={
         +'</div>'
         +'<div data-aleditbox="'+an.id+'" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--eborder)"></div>'
         +'</div>'
-        +'<div style="display:flex;flex-direction:column;gap:5px"><button class="vbtn sm" data-aledit="'+an.id+'">editar</button><button class="vbtn sm" data-aldel="'+an.id+'" style="background:var(--epanel3);color:var(--emuted)">remover</button></div>'
+        +'<div style="display:flex;flex-direction:column;gap:5px"><button class="vbtn sm" data-aledit="'+an.id+'">editar</button>'+(an.pausado?('<button class="vbtn sm" data-alpause="'+an.id+'" data-alpausev="0" style="background:rgba(52,211,153,.14);color:var(--eemerald)">Reativar</button>'):('<button class="vbtn sm" data-alpause="'+an.id+'" data-alpausev="1" style="background:var(--epanel3);color:var(--eamber)">Pausar</button>'))+'<button class="vbtn sm" data-aldel="'+an.id+'" style="background:var(--epanel3);color:var(--emuted)">remover</button></div>'
         +'</div>';
     }).join('');
     const cnt=this._g('al-anuncios-count');
-    if(cnt) cnt.textContent = (_flt ? listaF.length+' de '+lista.length : lista.length+' anúncio'+(lista.length===1?'':'s')+' ativo'+(lista.length===1?'':'s'));
+    const nPaus=lista.filter(r=>r.an.pausado).length, nAtvC=lista.length-nPaus;
+    if(cnt) cnt.textContent = (_flt ? listaF.length+' de '+lista.length : nAtvC+' anúncio'+(nAtvC===1?'':'s')+' ativo'+(nAtvC===1?'':'s')+(nPaus?(' · '+nPaus+' pausado'+(nPaus===1?'':'s')):''));
   },
   toggleSug(anid, mlb){
     const box=document.querySelector('[data-alsugbox="'+anid+'"]'); if(!box) return;
@@ -4714,6 +4716,17 @@ const ecomAlvo={
       ['al-cod','al-mlb','al-tit','al-preco','al-pub'].forEach(i=>this._g(i).value=''); this._g('al-tipo').value='classico'; msg.className='vmsg ok'; msg.textContent='✓ Anúncio cadastrado'; setTimeout(()=>msg.textContent='',2500); this.load();
     }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
   },
+  // BUILD 2026-07-13-A · Pausar preserva o VÍNCULO anúncio×produto (Remover apagava o registro e criou os
+  // falsos ZUMBI-2 de 12–13/07). Rito: Alexia pausa/reativa NO ML PRIMEIRO, registra aqui DEPOIS. Ação logada.
+  async pausar(id,estado){ const an=this.anuncios.find(x=>String(x.id)===String(id)); if(!an) return;
+    const txt=estado?'Pausar este anúncio no sistema?\n\nOrdem: pause PRIMEIRO no painel ML, registre aqui DEPOIS.\nO vínculo com o produto é preservado (não é remoção).':'Reativar este anúncio?\n\nOrdem: reative PRIMEIRO no painel ML, registre aqui DEPOIS.';
+    if(!confirm(txt)) return;
+    try{ const r=await sb.from('ecom_anuncios').update({pausado:estado,pausado_em:estado?new Date().toISOString():null}).eq('id',id); if(r.error) throw r.error;
+      if(an.anuncio_mlb){ const rl=await sb.from('ecom_anuncio_alteracao').insert({ anuncio_sku:an.produto_codigo||null, mlb:this._normMlb(an.anuncio_mlb), campo:'pausado', preco_anterior:null, preco_novo:null, motivo:estado?'Anúncio PAUSADO (executado no ML antes do registro)':'Anúncio REATIVADO (executado no ML antes do registro)' });
+        if(rl.error) console.warn('log pausa:',rl.error.message); }
+      this.load();
+    }catch(e){ alert('Erro: '+e.message); }
+  },
   async remover(id){ if(!confirm('Remover este anúncio? (não afeta as vendas)')) return; try{ const r=await sb.from('ecom_anuncios').delete().eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } },
   analise:[], analiseLote:null,
   async loadAnalise(){
@@ -4749,7 +4762,9 @@ const ecomAlvo={
     const simByCod={}; if(typeof ecom!=='undefined'&&ecom.itens) ecom.itens.forEach(pd=>{ const c=norm(pd.codigo); if(c) simByCod[c]=pd; });
     const margemNoPreco=(cod,preco)=>{ const pd=simByCod[cod]; if(!pd||preco==null||isNaN(+preco)||+preco<=0||typeof ecom==='undefined'||!ecom.calc) return null;
       try{ return ecom.calc(Object.assign({},pd,{preco:+preco})).margemPct*100; }catch(_e){ return null; } };
-    const ativosReg=(this.anuncios||[]).filter(a=>a.ativo!==false && a.anuncio_mlb && ativoN[norm(a.produto_codigo)]!==false);
+    const ativosReg=(this.anuncios||[]).filter(a=>a.ativo!==false && !a.pausado && a.anuncio_mlb && ativoN[norm(a.produto_codigo)]!==false);
+    const pausReg=(this.anuncios||[]).filter(a=>a.ativo!==false && a.pausado && a.anuncio_mlb);
+    const pausMlbs=new Set(pausReg.map(a=>this._normMlb(a.anuncio_mlb)).filter(Boolean));
     const regMlbs=new Set(ativosReg.map(a=>this._normMlb(a.anuncio_mlb)).filter(Boolean));
     const snap=this.snapAtual||{};
     const temLote=(this.loteAtualMlbs instanceof Set);
@@ -4860,7 +4875,7 @@ const ecomAlvo={
           +'<td style="padding:1px 8px 1px 6px;font-family:var(--emono);white-space:nowrap"><b style="color:var(--etxt)">'+ea(r.cod)+'</b></td>'
           +'<td style="'+prodCell+'" title="'+ea(nome)+'">'+(nome?('<span style="'+one+'">'+ea(nome)+'</span>'):'<span style="color:var(--emuted2)">—</span>')+'</td>'
           +'<td style="padding:1px 8px;text-align:right;font-weight:700;color:var(--etxt);white-space:nowrap">'+(r.ind!=null?Math.round(r.ind):'—')+'</td>'
-          +'<td style="padding:1px 8px 1px 6px;font-weight:600;font-size:11.5px;white-space:nowrap;color:'+vCor(r.x&&r.x.veredito)+'" title="'+ea(r.x&&r.x.veredito||'')+'">'+ea(String(r.x&&r.x.veredito||'—'))+'</td>'
+          +'<td style="padding:1px 8px 1px 6px;font-weight:600;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:'+vCor(r.x&&r.x.veredito)+'" title="'+ea(r.x&&r.x.veredito||'')+'">'+ea(String(r.x&&r.x.veredito||'—'))+'</td>'
           +'<td style="padding:1px 8px;text-align:right;font-weight:700;white-space:nowrap;color:'+mCor+'">'+(ml!=null?(Math.round(ml*10)/10)+'%':'—')+'</td>'
           +'<td style="padding:1px 12px 1px 8px;text-align:right;white-space:nowrap;color:var(--etxt)">'+(precoSim!=null?fR(precoSim):'—')+'</td>'
           +'<td style="padding:1px 8px;overflow:hidden">'+sugCell+'</td>'
@@ -4869,8 +4884,22 @@ const ecomAlvo={
       html+='</table>';
     }
     html+='</div>';
+    // ---- Quadrante 3 · PAUSADOS (BUILD 2026-07-13-A) · fim da fila, sem cor, fora da análise ----
+    if(pausReg.length){
+      html+='<div style="margin-bottom:14px;opacity:.8">'
+        +'<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px;border-left:3px solid var(--eborder);padding-left:8px">'
+        +'<span style="font-size:13.5px;font-weight:700;color:var(--emuted)">Pausados</span>'
+        +'<span style="font-size:12px;color:var(--emuted2)">'+pausReg.length+' anúncio(s) fora da análise — Reativar no Controle devolve à mesa com o histórico</span></div>'
+        +'<div style="font-family:var(--emono);font-size:11.5px;color:var(--emuted);line-height:1.8">'
+        +pausReg.map(a=>{ const k=this._normMlb(a.anuncio_mlb); const sn=snap[k]||null;
+          const aindaAtivo=temLote&&sn&&String(sn.status_ml)==='active';
+          const desde=a.pausado_em?(' · desde '+new Date(a.pausado_em).toLocaleDateString('pt-BR')):'';
+          const fecho=aindaAtivo?' <b style="color:var(--eamber)">⚠ ainda ATIVO no lote — pausa não executada no ML</b>':(temLote?' <span style="color:var(--emuted2)">✓ fora do lote</span>':'');
+          return ea(a.produto_codigo||'—')+' · MLB'+ea(k)+desde+fecho; }).join('<br>')
+        +'</div></div>';
+    }
     // ---- RODAPÉ · integridade (ZUMBI-2 e faltantes) ----
-    const faltamBanco=[]; Object.keys(snap).forEach(k=>{ const sn=snap[k]; if(String(sn.status_ml)==='active' && !regMlbs.has(k)) faltamBanco.push(sn); });
+    const faltamBanco=[]; Object.keys(snap).forEach(k=>{ const sn=snap[k]; if(String(sn.status_ml)==='active' && !regMlbs.has(k) && !pausMlbs.has(k)) faltamBanco.push(sn); });
     faltamBanco.sort((a,b)=>((+b.visitas||0)-(+a.visitas||0)));
     const faltamMl=temLote?ativosReg.filter(a=>!this.loteAtualMlbs.has(this._normMlb(a.anuncio_mlb))):[];
     if(faltamBanco.length||faltamMl.length){
@@ -5407,6 +5436,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const an=ecomAlvo._g('al-anuncios'); if(an) an.addEventListener('click',e=>{
     const d=e.target.closest('[data-aldel]'); if(d){ ecomAlvo.remover(d.dataset.aldel); return; }
     const ed=e.target.closest('[data-aledit]'); if(ed){ ecomAlvo.editAnuncio(ed.dataset.aledit); return; }
+    const pz=e.target.closest('[data-alpause]'); if(pz){ ecomAlvo.pausar(pz.dataset.alpause, pz.dataset.alpausev==='1'); return; }
     const sv=e.target.closest('[data-alsave]'); if(sv){ ecomAlvo.salvarEdicao(sv.dataset.alsave); return; }
     const cc=e.target.closest('[data-alcancel]'); if(cc){ const id=cc.dataset.alcancel; const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(box){ box.style.display='none'; box.innerHTML=''; box.classList.remove('editing'); } return; }
     const h=e.target.closest('[data-alhist]'); if(h){ ecomAlvo.toggleHist(h.dataset.alhist); return; }
