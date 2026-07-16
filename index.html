@@ -1,3 +1,4 @@
+<!-- BUILD 2026-07-16-A | selecta-banco-preco | FINANCEIRO = TERMOMETRO DO MES + FORM INLINE · HISTORICO FUNDIDO EM RELATORIOS (decisao Igor 16/07, de Foz): (1) Aba Financeiro: clicar no pedido abre o quadro de lancamento LOGO ABAIXO do item (acordeao; clicar de novo fecha) — o card da direita deixa de ser "Selecione um pedido" e vira TERMOMETRO FINANCEIRO do mes corrente: razao acumulada (receita → taxas ML → deposito MP → custo fornecedor → colchao → imposto → LUCRO REAL do mes), margem ponderada, capital preso e projecao da proxima semana (quadrantes 1 e 2 dos Relatorios, recortados para competencia do mes). Alimenta-se do banco a cada abertura da aba e a cada margem fechada. Pendentes declaradas (custos parciais, nunca zero falso). (2) Sub-aba Historico REMOVIDA da navegacao — vive dentro de Relatorios (seletor Painel | Historico), modulo ecomHistorico intacto. (3) AVISO DE ESCOPO: o Termometro NAO inclui custo de coleta (R$150/evento) — fora do schema; ecom_coleta_log e debate separado. | base: 2026-07-15-D -->
 <!-- BUILD 2026-07-15-D | selecta-banco-preco | CATEGORIA REPETIDOR DE SINAL (sigla RDE — padrão JA EXISTENTE no catalogo do Banco de Preco, confirmado por Igor). Select do Simulador. Comissao provisoria em SQL proprio (origem=estimativa, 14/19 teto). Destrava TL-WA850RE/Deco barrados em 08 e 10/07. | base: -C (categoria DVR) -->
 <!-- BUILD 2026-07-13-D | selecta-banco-preco | CATEGORIA TABLET (TAB) — nova sigla no select do Simulador. Categoria ML certificada: MLB99889 (Tablets, domain Tablets) via domain_discovery. COMISSÃO AINDA NÃO CERTIFICADA: entra em ecom_categoria_comissao com origem=estimado e TETO da faixa pública (14% clássico / 19% premium) — margem subestimada de propósito, nunca inflada. Substituir pelo valor real assim que o painel ML confirmar. | base: -C (Radar UI v0.4) -->
 <!-- BUILD 2026-07-13-B | selecta-banco-preco | RADAR v0.3 — VARREDURA POR TERMO (decisão Igor 13/07 — filtro de preço 90–800 definido; categoria não tem resolução para decidir anúncio): (1) Card do Radar ganha campo "Termo de busca" + botão 🔎 Varrer termo (gate de token reaproveitado, mín. 3 chars). (2) Edge ml-radar v0.2.0 aceita body {termo}: top 20 da busca real autenticada, enriquecido via multiget, gravado tipo='termo' fonte='busca' (deploy da Edge PRIMEIRO, Pages depois). (3) Cards de termo no 🏆 com badge "termo"; log mostra o termo; Mais Procurados ignora termo (não tem trends). (4) KPI da mediana ganha selo Estágio 0: DENTRO/FORA 90–800 — só em varredura de termo. Marcador visível: "radar v0.4 · 13/07/2026". | base: 2026-07-13-A -->
@@ -956,6 +957,9 @@
     #tab-ecommerce .al-reg .rt{font-size:11.5px;color:var(--emuted);margin-top:3px}
     #tab-ecommerce .al-reg .bar{height:5px;background:var(--epanel3);border-radius:3px;margin-top:6px;overflow:hidden}
     #tab-ecommerce .al-reg .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--eemerald),var(--eteal))}
+    /* BUILD 2026-07-16-A · Financeiro: lançamento inline abaixo do pedido */
+    #tab-ecommerce #fn-list #fn-form{background:var(--epanel2);border:1px solid var(--eteal);border-radius:12px;padding:14px;margin:10px 0 14px}
+    #tab-ecommerce #fn-list .vli.fn-open{background:rgba(45,212,191,.06);border-radius:8px;padding-left:8px;padding-right:8px}
     </style>
 
     <div class="ecom-subnav">
@@ -963,7 +967,6 @@
       <button class="ecom-subtab" data-sub="vendas">Vendas</button>
       <button class="ecom-subtab" data-sub="financeiro">Financeiro</button>
       <button class="ecom-subtab" data-sub="reputacao">Reputação</button>
-      <button class="ecom-subtab" data-sub="historico">Histórico</button>
       <button class="ecom-subtab" data-sub="relatorios">Relatórios</button>
       <button class="ecom-subtab alvo" data-sub="alvo">🎯 Alvo</button>
       <button class="ecom-subtab radar" data-sub="radar">📡 Radar de Nicho</button>
@@ -1116,30 +1119,33 @@
     </div>
 
     <div id="ecom-sub-financeiro" class="ecom-subpanel" style="display:none">
-      <p class="esub">Cada venda lançada chega aqui. Lance as taxas reais do ML e o custo do fornecedor — o lucro fica vazio (não zero) até completar. São <b>dois bolsos</b>: o que o Mercado Pago deposita e o que sai pro fornecedor.</p>
+      <p class="esub">Cada venda lançada chega aqui. <b>Clique no pedido</b> — o quadro de lançamento abre logo abaixo dele (taxas reais do ML e custo do fornecedor; o lucro fica vazio, não zero, até completar). À direita, o <b>Termômetro financeiro</b> acumula receita, custos e lucro real do mês, direto do banco, a cada movimento das vendas.</p>
       <div class="vgrid">
         <div class="ecard">
           <h3>Pedidos a fechar</h3>
           <div id="fn-list"><div class="ph">carregando…</div></div>
         </div>
-        <div class="ecard">
-          <h3 id="fn-titulo">Selecione um pedido</h3>
-          <div id="fn-form" style="display:none">
-            <div class="vrow3">
-              <div class="efield"><label>Tarifa de venda total (Comissão ML) · R$</label><input class="vinput mono" id="fn-com" type="number" step="0.01" placeholder="extrato"></div>
-              <div class="efield"><label>Tarifa fixa (R$)</label><input class="vinput mono" id="fn-tar" type="number" step="0.01" value="0"></div>
-              <div class="efield"><label>Frete seu (R$)</label><input class="vinput mono" id="fn-fre" type="number" step="0.01" value="0"></div>
-            </div>
-            <div class="vrow">
-              <div class="efield"><label>Ônus do frete</label><select class="vinput mono" id="fn-onus"><option value="vendedor">vendedor (você pagou)</option><option value="comprador">comprador</option></select></div>
-              <div class="efield"><label>Custo do fornecedor un. (R$)</label><input class="vinput mono" id="fn-cus" type="number" step="0.01" placeholder="nota do fornecedor"></div>
-            </div>
-            <div id="fn-ledger" style="margin:6px 0 12px"></div>
-            <div id="fn-status" style="margin-bottom:12px"></div>
-            <button class="vbtn" id="fn-save">Fechar margem e gerar relatório</button>
-            <div class="vmsg" id="fn-msg"></div>
+        <div class="ecard" style="border-color:var(--eteal)">
+          <h3>Termômetro financeiro · <span id="fn-termo-mes" style="color:var(--eteal);text-transform:none;letter-spacing:0"></span></h3>
+          <div id="fn-termometro"><div class="ph">carregando…</div></div>
+        </div>
+      </div>
+      <div id="fn-form-park" style="display:none">
+        <div id="fn-form" style="display:none">
+          <h3 id="fn-titulo" style="margin-top:0"></h3>
+          <div class="vrow3">
+            <div class="efield"><label>Tarifa de venda total (Comissão ML) · R$</label><input class="vinput mono" id="fn-com" type="number" step="0.01" placeholder="extrato"></div>
+            <div class="efield"><label>Tarifa fixa (R$)</label><input class="vinput mono" id="fn-tar" type="number" step="0.01" value="0"></div>
+            <div class="efield"><label>Frete seu (R$)</label><input class="vinput mono" id="fn-fre" type="number" step="0.01" value="0"></div>
           </div>
-          <div class="ph" id="fn-vazio">clique num pedido à esquerda para lançar os valores</div>
+          <div class="vrow">
+            <div class="efield"><label>Ônus do frete</label><select class="vinput mono" id="fn-onus"><option value="vendedor">vendedor (você pagou)</option><option value="comprador">comprador</option></select></div>
+            <div class="efield"><label>Custo do fornecedor un. (R$)</label><input class="vinput mono" id="fn-cus" type="number" step="0.01" placeholder="nota do fornecedor"></div>
+          </div>
+          <div id="fn-ledger" style="margin:6px 0 12px"></div>
+          <div id="fn-status" style="margin-bottom:12px"></div>
+          <button class="vbtn" id="fn-save">Fechar margem e gerar relatório</button>
+          <div class="vmsg" id="fn-msg"></div>
         </div>
       </div>
     </div>
@@ -1148,7 +1154,36 @@
       <div id="rp-idx" class="rp-idxrow"></div>
       <div id="rp-table"><div class="ph">carregando…</div></div>
     </div>
-    <div id="ecom-sub-historico" class="ecom-subpanel" style="display:none">
+    <div id="ecom-sub-relatorios" class="ecom-subpanel" style="display:none">
+      <div class="alsubbar" id="rlsubbar" style="margin:0 0 14px">
+        <button class="alsub-btn active" data-rlsub="painel">📊 Painel</button>
+        <button class="alsub-btn" data-rlsub="historico">🗂 Histórico</button>
+      </div>
+      <div id="rlsub-painel">
+      <p class="esub">Painel de capital, dinâmico — recalcula sempre do banco. Competência pela <b>data do pedido</b>: a venda conta no mês em que foi vendida, mesmo que o Mercado Pago libere o dinheiro depois.</p>
+      <div id="rl-forecast" class="rl-forecast"></div>
+      <h3 style="font-size:12.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Visão geral</h3>
+      <div id="rl-kpis"><div class="ph">carregando…</div></div>
+      <div class="ecard" style="margin-top:18px">
+        <h3>Consulta gerencial</h3>
+        <div class="vrow3">
+          <div class="efield"><label>De (data pedido)</label><input class="vinput mono" id="rl-de" type="date"></div>
+          <div class="efield"><label>Até</label><input class="vinput mono" id="rl-ate" type="date"></div>
+          <div class="efield"><label>Status</label><select class="vinput mono" id="rl-status"><option value="">todos</option><option value="a_enviar">a enviar</option><option value="enviado">enviado</option><option value="entregue">entregue</option></select></div>
+        </div>
+        <div class="vrow">
+          <div class="efield"><label>Produto ou código</label><input class="vinput mono" id="rl-prod" placeholder="ex.: Havit ou SSD-0001"></div>
+          <div class="efield"><label>UF</label><input class="vinput mono" id="rl-uf" maxlength="2" placeholder="SP"></div>
+        </div>
+        <button class="vbtn" id="rl-consultar">Consultar</button>
+        <div id="rl-query-result" style="margin-top:14px"></div>
+      </div>
+      <div class="ecard" style="margin-top:18px">
+        <h3>Por mês (competência)</h3>
+        <div id="rl-mensal"></div>
+      </div>
+      </div><!-- /rlsub-painel -->
+      <div id="rlsub-historico" style="display:none">
       <p class="esub">Entra aqui só após a entrega efetiva. Registro fechado de cada venda — editável se você errou um preenchimento, e toda edição fica marcada. Cada linha exporta o relatório do pedido em PDF.</p>
       <div id="hs-list"><div class="ph">carregando…</div></div>
       <div id="hs-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:20px">
@@ -1180,30 +1215,7 @@
           </div>
         </div>
       </div>
-    </div>
-    <div id="ecom-sub-relatorios" class="ecom-subpanel" style="display:none">
-      <p class="esub">Painel de capital, dinâmico — recalcula sempre do banco. Competência pela <b>data do pedido</b>: a venda conta no mês em que foi vendida, mesmo que o Mercado Pago libere o dinheiro depois.</p>
-      <div id="rl-forecast" class="rl-forecast"></div>
-      <h3 style="font-size:12.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Visão geral</h3>
-      <div id="rl-kpis"><div class="ph">carregando…</div></div>
-      <div class="ecard" style="margin-top:18px">
-        <h3>Consulta gerencial</h3>
-        <div class="vrow3">
-          <div class="efield"><label>De (data pedido)</label><input class="vinput mono" id="rl-de" type="date"></div>
-          <div class="efield"><label>Até</label><input class="vinput mono" id="rl-ate" type="date"></div>
-          <div class="efield"><label>Status</label><select class="vinput mono" id="rl-status"><option value="">todos</option><option value="a_enviar">a enviar</option><option value="enviado">enviado</option><option value="entregue">entregue</option></select></div>
-        </div>
-        <div class="vrow">
-          <div class="efield"><label>Produto ou código</label><input class="vinput mono" id="rl-prod" placeholder="ex.: Havit ou SSD-0001"></div>
-          <div class="efield"><label>UF</label><input class="vinput mono" id="rl-uf" maxlength="2" placeholder="SP"></div>
-        </div>
-        <button class="vbtn" id="rl-consultar">Consultar</button>
-        <div id="rl-query-result" style="margin-top:14px"></div>
-      </div>
-      <div class="ecard" style="margin-top:18px">
-        <h3>Por mês (competência)</h3>
-        <div id="rl-mensal"></div>
-      </div>
+      </div><!-- /rlsub-historico -->
     </div>
     <div id="ecom-sub-alvo" class="ecom-subpanel" style="display:none">
 
@@ -3974,27 +3986,41 @@ const ecomVendas={
   async postar(id){ try{ const r=await sb.from('ecom_vendas').update({status:'enviado',data_embarque:new Date().toISOString(),atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } },
   async entregar(id){ if(!confirm('Marcar entrega efetiva? A venda sai da fila ativa.')) return; try{ const r=await sb.from('ecom_vendas').update({status:'entregue',data_entrega:new Date().toISOString(),atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } }
 };
-// ===== E-COMMERCE · Financeiro (fecha a margem real) =====
+// ===== E-COMMERCE · Financeiro (fecha a margem real + Termômetro do mês · BUILD 2026-07-16-A) =====
 const ecomFinanceiro={
   cur:null,
   _g:id=>document.getElementById(id),
   fmt:v=>(v==null||isNaN(v))?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
+  fmt0:v=>(v==null||isNaN(v))?'—':Math.round(v).toLocaleString('pt-BR'),
   num(id){ const v=parseFloat(this._g(id).value); return isNaN(v)?null:v; },
-  async load(){ const box=this._g('fn-list');
+  mesNome(){ const nm=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']; const d=new Date(); return nm[d.getMonth()]+'/'+d.getFullYear(); },
+  // devolve o formulário ao estacionamento (fora da lista) — obrigatório ANTES de qualquer innerHTML em fn-list
+  parkForm(){ const park=this._g('fn-form-park'), f=this._g('fn-form');
+    if(park&&f&&f.parentNode!==park) park.appendChild(f);
+    if(f) f.style.display='none';
+    document.querySelectorAll('#fn-list .vli.fn-open').forEach(el=>el.classList.remove('fn-open'));
+  },
+  async load(){ this.cur=null; await this.loadList(); this.termometro(); },
+  async loadList(){ const box=this._g('fn-list');
     try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,preco_venda,quantidade,comissao_valor,custo_unitario').in('status',['a_enviar','enviado']).order('data_solicitacao',{ascending:false});
       if(r.error) throw r.error; this.renderList(r.data||[]);
-    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
+    }catch(e){ this.parkForm(); box.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
   },
-  renderList(itens){ const box=this._g('fn-list');
+  renderList(itens){ this.parkForm(); const box=this._g('fn-list');
     if(!itens.length){ box.innerHTML='<div class="ph">sem pedidos a fechar</div>'; return; }
     box.innerHTML=itens.map(v=>{ const ok=v.comissao_valor!=null&&v.custo_unitario!=null;
-      return '<div class="vli" style="cursor:pointer" data-fid="'+v.id+'"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · R$ '+this.fmt(v.preco_venda)+'</div></div><span class="vpill '+(ok?'ok':'warn')+'">'+(ok?'completo':'pendente')+'</span></div>';
+      return '<div data-fwrap="'+v.id+'"><div class="vli" style="cursor:pointer" data-fid="'+v.id+'"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · R$ '+this.fmt(v.preco_venda)+'</div></div><span class="vpill '+(ok?'ok':'warn')+'">'+(ok?'completo':'pendente')+'</span></div></div>';
     }).join('');
   },
   async selecionar(id){
+    const f=this._g('fn-form');
+    // clicar no MESMO pedido com o quadro aberto = fechar (acordeão)
+    if(this.cur && String(this.cur.id)===String(id) && f && f.style.display!=='none'){ this.parkForm(); this.cur=null; return; }
     try{ const r=await sb.from('ecom_vendas').select('*').eq('id',id).single(); if(r.error) throw r.error; this.cur=r.data;
+      this.parkForm();
+      const wrap=document.querySelector('#fn-list [data-fwrap="'+id+'"]');
+      if(wrap&&f){ wrap.appendChild(f); f.style.display='block'; const li=wrap.querySelector('.vli'); if(li) li.classList.add('fn-open'); }
       this._g('fn-titulo').textContent='#'+r.data.ml_pedido_id+' · '+r.data.produto;
-      this._g('fn-vazio').style.display='none'; this._g('fn-form').style.display='block';
       this._g('fn-com').value=r.data.comissao_valor!=null?r.data.comissao_valor:'';
       this._g('fn-tar').value=r.data.tarifa_fixa_valor!=null?r.data.tarifa_fixa_valor:'0';
       this._g('fn-fre').value=r.data.frete_valor!=null?r.data.frete_valor:'0';
@@ -4033,10 +4059,63 @@ const ecomFinanceiro={
     if(com==null||cus==null){ msg.className='vmsg err'; msg.textContent='Lance comissão e custo para fechar.'; return; }
     const onus=this._g('fn-onus').value;
     const dados={ comissao_valor:com, tarifa_fixa_valor:this.num('fn-tar')||0, frete_valor:(onus==='vendedor'?(this.num('fn-fre')||0):0), frete_onus:onus, custo_unitario:cus, fees_conferidas:true, atualizado_em:new Date().toISOString() };
-    try{ const r=await sb.from('ecom_vendas').update(dados).eq('id',this.cur.id); if(r.error) throw r.error;
-      msg.className='vmsg ok'; msg.textContent='✓ Margem fechada · pedido completo (vai ao Histórico após a entrega)';
-      this.load();
+    try{ const id=this.cur.id; const r=await sb.from('ecom_vendas').update(dados).eq('id',id); if(r.error) throw r.error;
+      await this.loadList(); this.termometro();               // termômetro se move junto com a venda
+      await this.selecionar(id);                              // reabre o pedido no lugar, já como "completo"
+      const m=this._g('fn-msg'); m.className='vmsg ok'; m.textContent='✓ Margem fechada · pedido completo (vai ao Histórico após a entrega)';
     }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
+  },
+  // ===== TERMÔMETRO FINANCEIRO · mês corrente (competência = data do pedido, mesma régua dos Relatórios) =====
+  async termometro(){
+    const box=this._g('fn-termometro'); if(!box) return;
+    const lbl=this._g('fn-termo-mes'); if(lbl) lbl.textContent=this.mesNome();
+    try{
+      const r=await sb.from('ecom_vendas').select('id,status,data_solicitacao,quantidade,preco_venda,receita_bruta,comissao_valor,tarifa_fixa_valor,frete_valor,valor_recebido_ml,custo_total,colchao_valor,imposto_valor,resultado_liquido');
+      if(r.error) throw r.error;
+      const all=(r.data||[]).filter(v=>v.status!=='cancelado');
+      const now=new Date(); const mkey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+      const mesV=all.filter(v=>v.data_solicitacao && v.data_solicitacao.slice(0,7)===mkey);
+      let rec=0,recF=0,tax=0,cus=0,col=0,imp=0,luc=0,n=0,nF=0;
+      mesV.forEach(v=>{ n++; const rb=v.receita_bruta!=null?+v.receita_bruta:((+v.preco_venda||0)*(+v.quantidade||1)); rec+=rb;
+        if(v.resultado_liquido!=null){ nF++; recF+=rb;
+          tax+=(+v.comissao_valor||0)+(+v.tarifa_fixa_valor||0)+(+v.frete_valor||0);
+          cus+=+v.custo_total||0; col+=+v.colchao_valor||0;
+          imp+=(v.imposto_valor!=null?+v.imposto_valor:Math.round(rb*4)/100);
+          luc+=+v.resultado_liquido; } });
+      let preso=0; all.forEach(v=>{ if(v.valor_recebido_ml!=null && v.status!=='entregue') preso+=+v.valor_recebido_ml; });
+      const mp=recF-tax, margem=recF>0?(luc/recF*100):null, F=this.fmt, F0=this.fmt0;
+      const line=(k,v2,bg,kc)=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:'+(bg||'var(--epanel)')+'"><span style="font-size:12.5px'+(kc?';color:'+kc:'')+'">'+k+'</span><span style="font-family:var(--emono);font-size:12.5px;white-space:nowrap">'+v2+'</span></div>';
+      const tot='<div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:#1a2740"><span style="font-weight:700">Lucro real do mês</span><span style="font-family:var(--emono);font-size:19px;font-weight:700;color:'+(nF===0?'var(--emuted2)':(luc>=0?'var(--eemerald)':'var(--ered)'))+'">'+(nF===0?'—':'R$ '+F(luc))+'</span></div>';
+      const pend=n-nF;
+      const aviso=pend>0?'<div style="font-size:11px;color:var(--eamber);margin-top:8px">⚠ '+pend+' venda(s) do mês sem margem fechada — custos e lucro acumulados ainda parciais.</div>':'';
+      // projeção próxima semana (mesma matemática dos Relatórios: janela de 8 semanas, todas as vendas)
+      const ms=7*24*3600*1000; const recent=all.filter(v=>v.data_solicitacao && (now-new Date(v.data_solicitacao))<=8*ms);
+      const wk={}; recent.forEach(v=>{ wk[Math.floor((now-new Date(v.data_solicitacao))/ms)]=true; });
+      const nSem=Object.keys(wk).length, sem=nSem>0?nSem:1;
+      let fatS=0,lucS=0,volS=0,saiS=0,entraS=0;
+      recent.forEach(v=>{ const rb=v.receita_bruta!=null?+v.receita_bruta:((+v.preco_venda||0)*(+v.quantidade||1)); fatS+=rb; volS++;
+        if(v.resultado_liquido!=null) lucS+=+v.resultado_liquido; if(v.custo_total!=null) saiS+=+v.custo_total; if(v.valor_recebido_ml!=null) entraS+=+v.valor_recebido_ml; });
+      const conf=nSem>=5?{t:'razoável',c:'var(--eemerald)'}:nSem>=2?{t:'fraca',c:'var(--eamber)'}:{t:'muito fraca',c:'var(--ered)'};
+      box.innerHTML=
+        '<div style="border:1px solid var(--eborder);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;gap:1px;background:var(--eborder)">'
+        +line('Receita bruta do mês · '+n+' venda(s)','R$ '+F(rec))
+        +line('Fechadas no Financeiro',nF+' de '+n+(recF>0?' · R$ '+F(recF):''),'var(--epanel2)')
+        +line('(–) Taxas do ML',nF?('– R$ '+F(tax)):'—','#241c08','var(--eamber)')
+        +line('= Depósito Mercado Pago',nF?('R$ '+F(mp)):'—','#08231f','var(--eteal)')
+        +line('(–) Custo dos fornecedores',nF?('– R$ '+F(cus)):'—','#241c08','var(--eamber)')
+        +line('(–) Colchão operacional',nF?('– R$ '+F(col)):'—','#241c08','var(--eamber)')
+        +line('(–) Imposto · 4% da receita',nF?('– R$ '+F(imp)):'—','#241c08','var(--eamber)')
+        +tot
+        +line('Margem ponderada (fechadas)',margem==null?'—':F(margem)+' %')
+        +line('Capital em giro preso (MP)','R$ '+F(preso))
+        +'</div>'+aviso
+        +'<div class="rl-fc-head" style="margin:16px 0 10px"><div style="font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--emuted)">Próxima semana · projeção</div><span style="font-size:10.5px;font-weight:600;color:'+conf.c+';background:var(--epanel2);border:1px solid var(--eborder);border-radius:999px;padding:3px 10px">estimativa '+conf.t+' · '+nSem+' sem. de dados</span></div>'
+        +'<div class="rl-fc-grid">'
+        +'<div class="rl-fc"><div class="l">Faturamento &amp; lucro</div><div class="b">R$ '+F0(fatS/sem)+' <span style="color:var(--emuted);font-size:13px">/ R$ '+F0(lucS/sem)+'</span></div></div>'
+        +'<div class="rl-fc"><div class="l">Volume</div><div class="b">~'+Math.round(volS/sem)+' vendas</div></div>'
+        +'<div class="rl-fc"><div class="l">Fluxo de caixa</div><div class="b" style="color:var(--eteal)">+'+F0(entraS/sem)+' <span style="color:var(--emuted);font-size:13px">/ –'+F0(saiS/sem)+'</span></div></div>'
+        +'</div>';
+    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro no termômetro: '+e.message+'</div>'; }
   }
 };
 // ===== E-COMMERCE · Reputação (lê a view do vigia) =====
@@ -5464,7 +5543,6 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value){ dt.value=ecomVendas.nowLocal(); } ecomVendas.calcPostarAte(); ecomVendas.loaded=true; ecomVendas.load(); try{ ecomAlvo.refreshCandidatos(); }catch(_e){} }
   if(sub==='financeiro'){ ecomFinanceiro.load(); }
   if(sub==='reputacao'){ ecomReputacao.load(); }
-  if(sub==='historico'){ ecomHistorico.load(); }
   if(sub==='relatorios'){ ecomRelatorios.load(); }
   if(sub==='alvo'){ ecomAlvo.load(); }
   if(sub==='radar'){ ecomRadar.load(); }
@@ -5516,6 +5594,13 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const cc=ecomHistorico._g('hs-cancel'); if(cc) cc.addEventListener('click',()=>ecomHistorico.closeEdit());
   const sv=ecomHistorico._g('hs-savebtn'); if(sv) sv.addEventListener('click',()=>ecomHistorico.saveEdit());
   const md=ecomHistorico._g('hs-modal'); if(md) md.addEventListener('click',e=>{ if(e.target===md) ecomHistorico.closeEdit(); });
+  // BUILD 2026-07-16-A · Historico vive dentro de Relatorios (seletor Painel | Historico)
+  const rb=document.getElementById('rlsubbar'); if(rb) rb.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
+    rb.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x===b));
+    const h=(b.dataset.rlsub==='historico');
+    const pp=document.getElementById('rlsub-painel'), ph=document.getElementById('rlsub-historico');
+    if(pp) pp.style.display=h?'none':''; if(ph) ph.style.display=h?'':'none';
+    if(h) ecomHistorico.load(); });
 })();
 (function(){
   const list=ecomFinanceiro._g('fn-list');
