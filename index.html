@@ -1,3 +1,4 @@
+<!-- BUILD 2026-07-16-B | selecta-banco-preco | VENDAS ABSORVE A REPUTACAO · SEMAFORO DE ENVIO (decisao Igor 16/07, de Foz — "o painel do ML e que efetivamente vale; o sistema so avisa prazo de envio"): (1) Aba Reputacao REMOVIDA da navegacao; painel e modulo ecomReputacao retirados do app. A view ecom_vw_vigia_reputacao NAO foi tocada no banco (fica dormente — drop e decisao separada, com varredura de dependencias antes). (2) Lista "Lancadas — ativas" vira o controle de envio: venda a_enviar ganha SEMAFORO pela data "Postar ate" (prazo_postagem) — VERDE no prazo · AMARELO limite (postar hoje) · VERMELHO atrasada (+Xd); sem prazo cadastrado = pilula neutra "sem prazo". Postado/entregue = cronometro parado (pilula neutra). (3) Botao "postado" agora abre CONFIRMACAO INLINE com data/hora da postagem (prefill agora, editavel) — confirma = status enviado + data_embarque na data informada; cancelar fecha. (4) QUADRO RESUMO no cabecalho da aba Vendas: 3 cartoes — No prazo / Limite hoje / Atrasadas — contando apenas a_enviar; aviso quando ha venda sem prazo cadastrado. Reclamacao, cancelamento e pos-entrega: controle direto no painel ML (tempo real). | base: 2026-07-16-A -->
 <!-- BUILD 2026-07-16-A | selecta-banco-preco | FINANCEIRO = TERMOMETRO DO MES + FORM INLINE · HISTORICO FUNDIDO EM RELATORIOS (decisao Igor 16/07, de Foz): (1) Aba Financeiro: clicar no pedido abre o quadro de lancamento LOGO ABAIXO do item (acordeao; clicar de novo fecha) — o card da direita deixa de ser "Selecione um pedido" e vira TERMOMETRO FINANCEIRO do mes corrente: razao acumulada (receita → taxas ML → deposito MP → custo fornecedor → colchao → imposto → LUCRO REAL do mes), margem ponderada, capital preso e projecao da proxima semana (quadrantes 1 e 2 dos Relatorios, recortados para competencia do mes). Alimenta-se do banco a cada abertura da aba e a cada margem fechada. Pendentes declaradas (custos parciais, nunca zero falso). (2) Sub-aba Historico REMOVIDA da navegacao — vive dentro de Relatorios (seletor Painel | Historico), modulo ecomHistorico intacto. (3) AVISO DE ESCOPO: o Termometro NAO inclui custo de coleta (R$150/evento) — fora do schema; ecom_coleta_log e debate separado. | base: 2026-07-15-D -->
 <!-- BUILD 2026-07-15-D | selecta-banco-preco | CATEGORIA REPETIDOR DE SINAL (sigla RDE — padrão JA EXISTENTE no catalogo do Banco de Preco, confirmado por Igor). Select do Simulador. Comissao provisoria em SQL proprio (origem=estimativa, 14/19 teto). Destrava TL-WA850RE/Deco barrados em 08 e 10/07. | base: -C (categoria DVR) -->
 <!-- BUILD 2026-07-13-D | selecta-banco-preco | CATEGORIA TABLET (TAB) — nova sigla no select do Simulador. Categoria ML certificada: MLB99889 (Tablets, domain Tablets) via domain_discovery. COMISSÃO AINDA NÃO CERTIFICADA: entra em ecom_categoria_comissao com origem=estimado e TETO da faixa pública (14% clássico / 19% premium) — margem subestimada de propósito, nunca inflada. Substituir pelo valor real assim que o painel ML confirmar. | base: -C (Radar UI v0.4) -->
@@ -825,6 +826,10 @@
     #tab-ecommerce .vpill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600}
     #tab-ecommerce .vpill.warn{background:#241c08;color:#facc6b;border:1px solid #473714}
     #tab-ecommerce .vpill.ok{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
+    /* BUILD 2026-07-16-B · semáforo de envio na lista de Vendas */
+    #tab-ecommerce .vpill.err{background:#2a0d0d;color:#f28b8b;border:1px solid #5c1a1a}
+    #tab-ecommerce .vpill.mut{background:var(--epanel2);color:var(--emuted);border:1px solid var(--eborder)}
+    #tab-ecommerce .vd-postbox{background:var(--epanel2);border:1px solid var(--eteal);border-radius:10px;padding:10px 12px;margin:8px 0 10px;display:flex;gap:10px;align-items:end;flex-wrap:wrap}
     #tab-ecommerce .vmsg{font-size:12px;margin-top:8px;min-height:16px}
     #tab-ecommerce .vmsg.ok{color:var(--eemerald)} #tab-ecommerce .vmsg.err{color:var(--ered)}
     /* modo edição — sinal visual (aprovado 08/07/2026): caixa verde clarinho só ao editar */
@@ -966,7 +971,6 @@
       <button class="ecom-subtab active" data-sub="simulador">Simulador</button>
       <button class="ecom-subtab" data-sub="vendas">Vendas</button>
       <button class="ecom-subtab" data-sub="financeiro">Financeiro</button>
-      <button class="ecom-subtab" data-sub="reputacao">Reputação</button>
       <button class="ecom-subtab" data-sub="relatorios">Relatórios</button>
       <button class="ecom-subtab alvo" data-sub="alvo">🎯 Alvo</button>
       <button class="ecom-subtab radar" data-sub="radar">📡 Radar de Nicho</button>
@@ -1082,7 +1086,8 @@
 
     <!-- ===== SUBPASTA: VENDAS ===== -->
     <div id="ecom-sub-vendas" class="ecom-subpanel" style="display:none">
-      <p class="esub">Lance o pedido na hora em que cai no ML. Ao salvar, os campos limpam e o pedido nasce no Financeiro. A lista mostra só vendas ativas — ao marcar a entrega efetiva, a venda sai daqui.</p>
+      <p class="esub">Lance o pedido na hora em que cai no ML. Ao salvar, os campos limpam e o pedido nasce no Financeiro. A lista mostra só vendas ativas — o <b>semáforo de envio</b> vigia o "Postar até" de cada uma (o painel do ML é a fonte oficial; aqui é o aviso). Clicar em <b>postado</b> pede a data da postagem e para o cronômetro; a entrega efetiva tira a venda daqui.</p>
+      <div id="vd-resumo" class="rp-idxrow" style="grid-template-columns:repeat(3,1fr)"></div>
       <div class="vgrid">
         <div class="ecard vform">
           <h3>Lançar venda</h3>
@@ -1148,11 +1153,6 @@
           <div class="vmsg" id="fn-msg"></div>
         </div>
       </div>
-    </div>
-    <div id="ecom-sub-reputacao" class="ecom-subpanel" style="display:none">
-      <p class="esub">Os três relógios de cada venda — postagem, entrega e janela de reclamação — em dias úteis, ordenado por gravidade. Entregas limpas saem; só permanece o que tem risco aberto.</p>
-      <div id="rp-idx" class="rp-idxrow"></div>
-      <div id="rp-table"><div class="ph">carregando…</div></div>
     </div>
     <div id="ecom-sub-relatorios" class="ecom-subpanel" style="display:none">
       <div class="alsubbar" id="rlsubbar" style="margin:0 0 14px">
@@ -3969,21 +3969,53 @@ const ecomVendas={
       this.load();
     }catch(e){ msg.className='vmsg err'; msg.textContent=(e.code==='23505'||/duplicate|unique/i.test(e.message||''))?'Essa venda (pedido + produto) já foi lançada.':'Erro: '+e.message; }
   },
+  // ===== SEMÁFORO DE ENVIO (BUILD 2026-07-16-B) — compara HOJE com a data local de "Postar até" =====
+  _dkey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); },
+  semaforo(v){
+    if(v.status!=='a_enviar') return {bucket:null, pill:'<span class="vpill mut">'+(v.status==='enviado'?'enviado · cronômetro parado':v.status)+'</span>'};
+    if(!v.prazo_postagem) return {bucket:'sem', pill:'<span class="vpill mut">sem prazo</span>'};
+    const hoje=this._dkey(new Date()), limite=this._dkey(new Date(v.prazo_postagem));
+    if(hoje<limite){ const dl=new Date(v.prazo_postagem); return {bucket:'ok', pill:'<span class="vpill ok">no prazo · até '+String(dl.getDate()).padStart(2,'0')+'/'+String(dl.getMonth()+1).padStart(2,'0')+'</span>'}; }
+    if(hoje===limite) return {bucket:'lim', pill:'<span class="vpill warn">LIMITE · postar hoje</span>'};
+    const dias=Math.round((new Date(hoje+'T12:00:00')-new Date(limite+'T12:00:00'))/86400000);
+    return {bucket:'atr', pill:'<span class="vpill err">ATRASADA · +'+dias+'d</span>'};
+  },
+  resumo(itens){ const box=this._g('vd-resumo'); if(!box) return;
+    let ok=0,lim=0,atr=0,sem=0;
+    itens.forEach(v=>{ const b=this.semaforo(v).bucket; if(b==='ok')ok++; else if(b==='lim')lim++; else if(b==='atr')atr++; else if(b==='sem')sem++; });
+    const card=(l,n,cor)=>'<div class="rp-idx'+(n>0&&cor==='bad'?' bad':(n>0&&cor==='good'?' good':''))+'"><div class="l">'+l+'</div><div class="v" style="font-family:var(--emono);font-size:22px;font-weight:700;margin-top:4px;color:'+(n>0?(cor==='good'?'var(--eemerald)':cor==='warn'?'var(--eamber)':'var(--ered)'):'var(--emuted2)')+'">'+n+'</div></div>';
+    box.innerHTML=card('🟢 No prazo',ok,'good')+card('🟡 Limite hoje',lim,'warn')+card('🔴 Atrasadas',atr,'bad')
+      +(sem>0?'<div style="grid-column:1/-1;font-size:11px;color:var(--eamber)">⚠ '+sem+' venda(s) a enviar sem "Postar até" cadastrado — fora do semáforo.</div>':'');
+  },
   async load(){ const box=this._g('vd-list');
-    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,preco_venda,quantidade,status,data_solicitacao').in('status',['a_enviar','enviado']).order('data_solicitacao',{ascending:false});
-      if(r.error) throw r.error; this.render(r.data||[]);
-    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar: '+e.message+'</div>'; }
+    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,preco_venda,quantidade,status,data_solicitacao,prazo_postagem').in('status',['a_enviar','enviado']).order('data_solicitacao',{ascending:false});
+      if(r.error) throw r.error; const itens=r.data||[]; this.render(itens); this.resumo(itens);
+    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar: '+e.message+'</div>'; const rs=this._g('vd-resumo'); if(rs) rs.innerHTML=''; }
   },
   render(itens){ const box=this._g('vd-list');
     if(!itens.length){ box.innerHTML='<div class="ph">nenhuma venda ativa</div>'; return; }
     box.innerHTML=itens.map(v=>{
       const dt=new Date(v.data_solicitacao).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-      const pill=v.status==='enviado'?'<span class="vpill ok">enviado</span>':'<span class="vpill warn">a enviar</span>';
+      const pill=this.semaforo(v).pill;
       const btnPost=v.status==='a_enviar'?'<button class="vbtn sm" data-act="postar" data-id="'+v.id+'">postado</button>':'';
-      return '<div class="vli"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · '+(v.produto_codigo||'')+' · '+dt+' · R$ '+this.fmt(v.preco_venda)+'</div></div>'+pill+'<div style="display:flex;gap:6px">'+btnPost+'<button class="vbtn sm" data-act="entregar" data-id="'+v.id+'">entregue</button></div></div>';
+      return '<div data-vwrap="'+v.id+'"><div class="vli"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · '+(v.produto_codigo||'')+' · '+dt+' · R$ '+this.fmt(v.preco_venda)+'</div></div>'+pill+'<div style="display:flex;gap:6px">'+btnPost+'<button class="vbtn sm" data-act="entregar" data-id="'+v.id+'">entregue</button></div></div></div>';
     }).join('');
   },
-  async postar(id){ try{ const r=await sb.from('ecom_vendas').update({status:'enviado',data_embarque:new Date().toISOString(),atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } },
+  // "postado" abre confirmação inline: data/hora da postagem (prefill agora) — confirmar PARA o cronômetro
+  openPostar(id){
+    document.querySelectorAll('#vd-list .vd-postbox').forEach(el=>el.remove());
+    const wrap=document.querySelector('#vd-list [data-vwrap="'+id+'"]'); if(!wrap) return;
+    const bx=document.createElement('div'); bx.className='vd-postbox';
+    bx.innerHTML='<div class="efield" style="margin:0"><label>Data/hora da postagem</label><input class="vinput mono" type="datetime-local" data-vpostdt value="'+this.nowLocal()+'"></div>'
+      +'<button class="vbtn sm" data-act="postar-conf" data-id="'+id+'">Confirmar postagem</button>'
+      +'<button class="vbtn sm" data-act="postar-cancel" style="background:var(--epanel3);color:var(--emuted)">Cancelar</button>';
+    wrap.appendChild(bx);
+  },
+  async postarConf(id){
+    const wrap=document.querySelector('#vd-list [data-vwrap="'+id+'"]'); const inp=wrap?wrap.querySelector('[data-vpostdt]'):null;
+    const val=inp&&inp.value?new Date(inp.value).toISOString():new Date().toISOString();
+    try{ const r=await sb.from('ecom_vendas').update({status:'enviado',data_embarque:val,atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); }
+  },
   async entregar(id){ if(!confirm('Marcar entrega efetiva? A venda sai da fila ativa.')) return; try{ const r=await sb.from('ecom_vendas').update({status:'entregue',data_entrega:new Date().toISOString(),atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; this.load(); }catch(e){ alert('Erro: '+e.message); } }
 };
 // ===== E-COMMERCE · Financeiro (fecha a margem real + Termômetro do mês · BUILD 2026-07-16-A) =====
@@ -4118,41 +4150,9 @@ const ecomFinanceiro={
     }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro no termômetro: '+e.message+'</div>'; }
   }
 };
-// ===== E-COMMERCE · Reputação (lê a view do vigia) =====
-const ecomReputacao={
-  _g:id=>document.getElementById(id),
-  far(txt){ if(!txt) return '<span class="rpfar n">—</span>'; const c=txt.indexOf('🔴')===0?'c':txt.indexOf('🟡')===0?'a':txt.indexOf('🟢')===0?'o':'n'; return '<span class="rpfar '+c+'">'+txt+'</span>'; },
-  rowClass(s){ return (s&&s.indexOf('🔴')===0)?'crit':(s&&s.indexOf('🟡')===0)?'warn':''; },
-  async load(){
-    const tbox=this._g('rp-table'), ibox=this._g('rp-idx');
-    try{ const r=await sb.from('ecom_vw_vigia_reputacao').select('id,ml_pedido_id,produto,status,data_embarque,atraso_postagem_du,alerta_postagem,prazo_entrega,data_entrega,alerta_entrega,tem_reclamacao,alerta_pos_entrega,saude_geral');
-      if(r.error) throw r.error;
-      const all=r.data||[];
-      this.indices(all,ibox);
-      const vis=all.filter(v=>(v.status==='a_enviar'||v.status==='enviado')||(v.saude_geral&&v.saude_geral.indexOf('🟢')!==0));
-      this.renderTable(vis,tbox);
-    }catch(e){ ibox.innerHTML=''; tbox.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar a vigia: '+e.message+'</div>'; }
-  },
-  indices(all,box){
-    const postadas=all.filter(v=>v.data_embarque!=null).length;
-    const atrasadas=all.filter(v=>v.atraso_postagem_du>0).length;
-    const entregues=all.filter(v=>v.data_entrega!=null).length;
-    const entrPrazo=all.filter(v=>v.alerta_entrega&&v.alerta_entrega.indexOf('no prazo')>=0).length;
-    const recl=all.filter(v=>v.tem_reclamacao).length;
-    const canc=all.filter(v=>v.alerta_pos_entrega&&v.alerta_pos_entrega.indexOf('culpa sua')>=0).length;
-    const pct=(n,d)=>d>0?(n/d*100).toFixed(1)+'%':'—';
-    box.innerHTML=
-       '<div class="rp-idx '+(atrasadas>0?'bad':'good')+'"><div class="l">Atraso de postagem</div><div class="v">'+pct(atrasadas,postadas)+'</div></div>'
-      +'<div class="rp-idx '+(entregues>0&&entrPrazo===entregues?'good':'')+'"><div class="l">Entregas no prazo</div><div class="v">'+pct(entrPrazo,entregues)+'</div></div>'
-      +'<div class="rp-idx"><div class="l">Reclamações abertas</div><div class="v">'+recl+'</div></div>'
-      +'<div class="rp-idx"><div class="l">Cancelamentos (culpa sua)</div><div class="v">'+canc+'</div></div>';
-  },
-  renderTable(vis,box){
-    if(!vis.length){ box.innerHTML='<div class="ph">tudo limpo — nenhuma venda em risco ou em curso</div>'; return; }
-    const rows=vis.map(v=>'<tr class="'+this.rowClass(v.saude_geral)+'"><td><div style="font-weight:500">'+v.produto+'</div><div style="font-family:var(--emono);font-size:11px;color:var(--emuted)">#'+v.ml_pedido_id+' · '+v.status+'</div></td><td>'+this.far(v.saude_geral)+'</td><td>'+this.far(v.alerta_postagem)+'</td><td>'+this.far(v.alerta_entrega)+'</td><td>'+this.far(v.alerta_pos_entrega)+'</td></tr>').join('');
-    box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab"><thead><tr><th>Pedido / produto</th><th>Saúde</th><th>Postagem</th><th>Entrega</th><th>Pós-entrega</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
-  }
-};
+// BUILD 2026-07-16-B: modulo ecomReputacao REMOVIDO — controle absorvido pelo semáforo da aba Vendas.
+// A view ecom_vw_vigia_reputacao NÃO foi tocada no banco (dormente); eventual DROP é decisão separada,
+// com varredura prévia de dependências (pg_proc/pg_views), conforme regra permanente.
 // ===== E-COMMERCE · Histórico (arquivo consolidado + PDF + edição) =====
 const ecomHistorico={
   cur:null,
@@ -5542,7 +5542,6 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subpanel').forEach(p=>{ p.style.display=(p.id==='ecom-sub-'+sub)?'':'none'; });
   if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value){ dt.value=ecomVendas.nowLocal(); } ecomVendas.calcPostarAte(); ecomVendas.loaded=true; ecomVendas.load(); try{ ecomAlvo.refreshCandidatos(); }catch(_e){} }
   if(sub==='financeiro'){ ecomFinanceiro.load(); }
-  if(sub==='reputacao'){ ecomReputacao.load(); }
   if(sub==='relatorios'){ ecomRelatorios.load(); }
   if(sub==='alvo'){ ecomAlvo.load(); }
   if(sub==='radar'){ ecomRadar.load(); }
@@ -5614,7 +5613,11 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const add=ecomVendas._g('vd-add'); if(add) add.addEventListener('click',()=>ecomVendas.lancar());
   const uf=ecomVendas._g('vd-uf'); if(uf) uf.addEventListener('input',()=>{ uf.value=uf.value.toUpperCase(); });
   const list=ecomVendas._g('vd-list');
-  if(list) list.addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return; const id=b.dataset.id; if(b.dataset.act==='postar') ecomVendas.postar(id); else if(b.dataset.act==='entregar') ecomVendas.entregar(id); });
+  if(list) list.addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return; const id=b.dataset.id;
+    if(b.dataset.act==='postar') ecomVendas.openPostar(id);
+    else if(b.dataset.act==='postar-conf') ecomVendas.postarConf(id);
+    else if(b.dataset.act==='postar-cancel') document.querySelectorAll('#vd-list .vd-postbox').forEach(el=>el.remove());
+    else if(b.dataset.act==='entregar') ecomVendas.entregar(id); });
 })();
 
 // E-commerce: eventos centralizados em ecom.wire() (v8).
