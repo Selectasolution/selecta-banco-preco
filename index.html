@@ -1,3 +1,4 @@
+<!-- BUILD 2026-07-26-A | selecta-banco-preco | EXPLORADOR DE CATEGORIAS no Radar (spec Igor 26/07 — descoberta de IDs deixa de ser manual; recorte "tecnologia para casa" exige folhas de várias raízes): (1) Bloco recolhível "🌳 Explorar árvore de categorias" no card de Pesquisa — navega a árvore oficial do ML direto do navegador (endpoint público /sites/MLB/categories + /categories/{id}, sem token, custo zero de API autenticada). (2) Clique na categoria desce a árvore com trilha (breadcrumb) e nº de itens por filha; folha destacada. (3) Botão "📡 pesquisar" em cada nó dispara a varredura na hora (preenche ID+nome e chama varrer()). (4) Risco declarado: CORS do endpoint público — se o ML bloquear fetch cross-origin, o bloco mostra o erro e o fallback é rotear pela Edge (branch futuro). Sem mudança de Edge, SQL ou dados. | base: 2026-07-16-D -->
 <!-- BUILD 2026-07-16-D | selecta-banco-preco | VENDAS ENXUTA (pedido Igor 16/07): (1) paragrafo introdutorio da aba Vendas REMOVIDO (texto explicativo do fluxo — Igor ja domina o fluxo, tela mais limpa). (2) Quadro-resumo do semaforo (No prazo / Limite / Atrasadas) COMPACTADO: cartoes viram chips de linha unica (rotulo + numero lado a lado), padding e fontes menores, largura maxima 560px, respiro reduzido. Logica intocada — mesmas contagens, mesmo aviso de venda sem prazo. | base: 2026-07-16-C -->
 <!-- BUILD 2026-07-16-C | selecta-banco-preco | POSTAGEM = EVENTO DE SAIDA (decisao Igor 16/07): confirmar "postado" tira a venda das DUAS filas ativas — "Lancadas — ativas" (Vendas) e "Pedidos a fechar" (Financeiro) — e ela passa a viver no HISTORICO (dentro de Relatorios), com Editar (todos os campos, correcao marcada) e PDF. Mudancas: (1) Vendas lista SO a_enviar; botao "entregue" REMOVIDO da fila ativa (entrega nao se marca antes de postar). (2) Financeiro lista SO a_enviar — margem nao fechada antes da postagem se fecha depois pelo Editar do Historico; pendencia fica VISIVEL (tag ambar "margem pendente" na linha). (3) Historico agora recebe status enviado+entregue, ordenado pela POSTAGEM; colunas Postada e Entregue; botao rapido "✓ entregue" (opcional, 1 clique) nas enviadas — mantem honesto o Capital em giro preso (que conta valor recebido de venda nao entregue) sem obrigar alimentacao. (4) Editar do Historico: data de entrega preenchida => status entregue; limpa => volta a enviado (coerencia automatica). Doutrina ATUALIZADA: Historico deixa de ser "arquivo pos-entrega" e vira "arquivo pos-postagem, pendencias declaradas". | base: 2026-07-16-B -->
 <!-- BUILD 2026-07-16-B | selecta-banco-preco | VENDAS ABSORVE A REPUTACAO · SEMAFORO DE ENVIO (decisao Igor 16/07, de Foz — "o painel do ML e que efetivamente vale; o sistema so avisa prazo de envio"): (1) Aba Reputacao REMOVIDA da navegacao; painel e modulo ecomReputacao retirados do app. A view ecom_vw_vigia_reputacao NAO foi tocada no banco (fica dormente — drop e decisao separada, com varredura de dependencias antes). (2) Lista "Lancadas — ativas" vira o controle de envio: venda a_enviar ganha SEMAFORO pela data "Postar ate" (prazo_postagem) — VERDE no prazo · AMARELO limite (postar hoje) · VERMELHO atrasada (+Xd); sem prazo cadastrado = pilula neutra "sem prazo". Postado/entregue = cronometro parado (pilula neutra). (3) Botao "postado" agora abre CONFIRMACAO INLINE com data/hora da postagem (prefill agora, editavel) — confirma = status enviado + data_embarque na data informada; cancelar fecha. (4) QUADRO RESUMO no cabecalho da aba Vendas: 3 cartoes — No prazo / Limite hoje / Atrasadas — contando apenas a_enviar; aviso quando ha venda sem prazo cadastrado. Reclamacao, cancelamento e pos-entrega: controle direto no painel ML (tempo real). | base: 2026-07-16-A -->
@@ -1367,6 +1368,11 @@
           </div>
           <button id="rd-varrer" class="chip" style="border-color:var(--eamber);color:var(--eamber);padding:9px 16px;font-weight:600">📡 Pesquisar categoria</button>
         </div>
+        <details id="rd-arvore" style="margin-top:8px">
+          <summary style="font-size:12px;color:var(--eteal);cursor:pointer">🌳 Explorar árvore de categorias do ML (achar o ID certo sem sair daqui)</summary>
+          <div id="rd-arvore-trilha" style="font-size:11.5px;color:var(--emuted);margin:8px 0 6px;font-family:var(--emono)"></div>
+          <div id="rd-arvore-box" style="display:flex;gap:6px;flex-wrap:wrap;max-height:260px;overflow:auto;padding:2px"><span class="ph" style="font-size:12px;color:var(--emuted2)">abrindo a árvore…</span></div>
+        </details>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-top:10px;padding-top:10px;border-top:1px dashed var(--eborder)">
           <div style="flex:1;min-width:260px">
             <label style="display:block;font-size:11px;color:var(--emuted);margin-bottom:4px">Termo de busca (top 20 da busca real do ML — dossiê por produto)</label>
@@ -5136,6 +5142,53 @@ const ecomRadar={
       this._g('rd-custom-nome').style.display=outra?'':'none'; });
   },
   // Resolve {id,nome} do seletor ou dos campos livres
+  // ===== Explorador da árvore de categorias (endpoint público, sem token) =====
+  _arvIniciado:false, _arvTrilha:[],
+  arvInit(){
+    const det=this._g('rd-arvore'); if(!det||det._init) return; det._init=true;
+    det.addEventListener('toggle',()=>{ if(det.open && !this._arvIniciado){ this._arvIniciado=true; this.arvCarregar(null); } });
+  },
+  async arvCarregar(catId){
+    const box=this._g('rd-arvore-box'), trilha=this._g('rd-arvore-trilha');
+    box.innerHTML='<span class="ph" style="font-size:12px;color:var(--emuted2)">carregando…</span>';
+    try{
+      const url = catId ? 'https://api.mercadolibre.com/categories/'+catId
+                        : 'https://api.mercadolibre.com/sites/MLB/categories';
+      const r = await fetch(url);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d = await r.json();
+      let filhas, trilhaArr;
+      if(catId){ filhas = d.children_categories||[]; trilhaArr = d.path_from_root||[]; }
+      else{ filhas = d; trilhaArr = []; }
+      this._arvTrilha = trilhaArr;
+      trilha.innerHTML = '<span style="cursor:pointer;color:var(--eteal)" onclick="ecomRadar.arvCarregar(null)">raiz</span>'
+        + trilhaArr.map(t=>' › <span style="cursor:pointer;color:var(--eteal)" onclick="ecomRadar.arvCarregar(\''+t.id+'\')">'+this.esc(t.name)+'</span>').join('')
+        + (catId&&!filhas.length?' <span style="color:var(--eemerald);font-weight:700">· FOLHA — ideal para pesquisar</span>':'');
+      if(!filhas.length && catId){
+        box.innerHTML='<span class="ph" style="font-size:12px">sem subcategorias — use o 📡 na trilha acima ou pesquise direto: </span>'
+          +'<button class="chip" style="border-color:var(--eamber);color:var(--eamber);padding:5px 12px;font-size:12px" onclick="ecomRadar.arvPesquisar(\''+catId+'\',\''+this.esc((trilhaArr[trilhaArr.length-1]||{}).name||catId).replace(/'/g,'')+'\')">📡 pesquisar esta categoria</button>';
+        return;
+      }
+      box.innerHTML = filhas.map(f=>{
+        const tot = f.total_items_in_this_category!=null ? ' <span style="color:var(--emuted2);font-size:10px">'+Number(f.total_items_in_this_category).toLocaleString('pt-BR')+'</span>' : '';
+        const nome = this.esc(f.name).replace(/'/g,'');
+        return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:8px;padding:4px 8px;font-size:12px">'
+          +'<span style="cursor:pointer" title="abrir subcategorias" onclick="ecomRadar.arvCarregar(\''+f.id+'\')">'+this.esc(f.name)+tot+'</span>'
+          +'<span style="cursor:pointer;color:var(--eamber)" title="pesquisar esta categoria agora" onclick="ecomRadar.arvPesquisar(\''+f.id+'\',\''+nome+'\')">📡</span>'
+          +'</span>';
+      }).join('');
+    }catch(e){
+      box.innerHTML='<span class="ph" style="font-size:12px;color:var(--ered)">falha ao abrir a árvore ('+this.esc(e.message)+') — provável bloqueio CORS do ML; me avise no chat que roteamos pela Edge</span>';
+    }
+  },
+  arvPesquisar(id,nome){
+    const sel=this._g('rd-cat-sel'); if(sel) sel.value='__outra';
+    const ci=this._g('rd-custom-id'), cn=this._g('rd-custom-nome');
+    if(ci) ci.style.display=''; if(cn) cn.style.display='';
+    this._g('rd-cat-id').value=id; this._g('rd-cat-nome').value=nome||'';
+    this.varrer();
+  },
+
   catAtual(){
     const sel=this._g('rd-cat-sel');
     if(sel && sel.value && sel.value!=='__outra'){
@@ -5176,6 +5229,7 @@ const ecomRadar={
     this.initSel(); this.selo();
     const vbox=this._g('rd-vend-cards'), pbox=this._g('rd-proc-cards'), lbox=this._g('rd-pesquisas');
     try{
+      this.arvInit();
       const p=await sb.from('ecom_radar_pesquisa').select('id,tipo,termo,categoria_id,categoria_nome,status,executado_em,observacao').order('id',{ascending:false}).limit(120);
       if(p.error) throw p.error;
       const pesq=p.data||[];
