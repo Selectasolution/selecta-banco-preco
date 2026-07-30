@@ -1,3 +1,4 @@
+<!-- BUILD 2026-07-30-A | selecta-banco-preco | PROMOCAO NO CONTROLE (decisao Igor 30/07, piloto v6 aprovado): (1) Colunas novas preco_promocao/tipo_promocao em ecom_anuncios (SQL separado — aplicar ANTES deste index). (2) Form Editar Anuncio compacto: linha Preco·Tipo·Margem e linha Produto em promocao·Tipo·Margem, margem inline na altura do input (% + lucro em R$); bloco grande MARGEM LIQUIDA removido. (3) REGRA DE VIGENCIA: promocao preenchida = linha da promocao governa selo LIBERADO/NEGADO, gate do piso 10% e log; promocao apagada = volta automaticamente o preco cheio. (4) Comissao/frete/custo NF saem da vista: popover "detalhes do calculo" no rodape, valores alinhados em grade, CUSTO NF em destaque maior (pedido p/ Alexia). (5) Log ecom_anuncio_alteracao ganha campo 'promocao' (entrada, alteracao e saida de promocao registradas com motivo). (6) Sync CONTROLE->SIMULADOR inalterado: continua no preco cheio; promocao NAO sincroniza ecom_produtos.preco (decisao pendente, sinalizada ao Igor). | base: 2026-07-26-A -->
 <!-- BUILD 2026-07-26-A | selecta-banco-preco | EXPLORADOR DE CATEGORIAS no Radar (spec Igor 26/07 — descoberta de IDs deixa de ser manual; recorte "tecnologia para casa" exige folhas de várias raízes): (1) Bloco recolhível "🌳 Explorar árvore de categorias" no card de Pesquisa — navega a árvore oficial do ML direto do navegador (endpoint público /sites/MLB/categories + /categories/{id}, sem token, custo zero de API autenticada). (2) Clique na categoria desce a árvore com trilha (breadcrumb) e nº de itens por filha; folha destacada. (3) Botão "📡 pesquisar" em cada nó dispara a varredura na hora (preenche ID+nome e chama varrer()). (4) Risco declarado: CORS do endpoint público — se o ML bloquear fetch cross-origin, o bloco mostra o erro e o fallback é rotear pela Edge (branch futuro). Sem mudança de Edge, SQL ou dados. | base: 2026-07-16-D -->
 <!-- BUILD 2026-07-16-D | selecta-banco-preco | VENDAS ENXUTA (pedido Igor 16/07): (1) paragrafo introdutorio da aba Vendas REMOVIDO (texto explicativo do fluxo — Igor ja domina o fluxo, tela mais limpa). (2) Quadro-resumo do semaforo (No prazo / Limite / Atrasadas) COMPACTADO: cartoes viram chips de linha unica (rotulo + numero lado a lado), padding e fontes menores, largura maxima 560px, respiro reduzido. Logica intocada — mesmas contagens, mesmo aviso de venda sem prazo. | base: 2026-07-16-C -->
 <!-- BUILD 2026-07-16-C | selecta-banco-preco | POSTAGEM = EVENTO DE SAIDA (decisao Igor 16/07): confirmar "postado" tira a venda das DUAS filas ativas — "Lancadas — ativas" (Vendas) e "Pedidos a fechar" (Financeiro) — e ela passa a viver no HISTORICO (dentro de Relatorios), com Editar (todos os campos, correcao marcada) e PDF. Mudancas: (1) Vendas lista SO a_enviar; botao "entregue" REMOVIDO da fila ativa (entrega nao se marca antes de postar). (2) Financeiro lista SO a_enviar — margem nao fechada antes da postagem se fecha depois pelo Editar do Historico; pendencia fica VISIVEL (tag ambar "margem pendente" na linha). (3) Historico agora recebe status enviado+entregue, ordenado pela POSTAGEM; colunas Postada e Entregue; botao rapido "✓ entregue" (opcional, 1 clique) nas enviadas — mantem honesto o Capital em giro preso (que conta valor recebido de venda nao entregue) sem obrigar alimentacao. (4) Editar do Historico: data de entrega preenchida => status entregue; limpa => volta a enviado (coerencia automatica). Doutrina ATUALIZADA: Historico deixa de ser "arquivo pos-entrega" e vira "arquivo pos-postagem, pendencias declaradas". | base: 2026-07-16-B -->
@@ -868,6 +869,29 @@
     #tab-ecommerce .msim-main .msim-selo.v{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
     #tab-ecommerce .msim-main .msim-selo.r{background:rgba(239,68,68,.12);color:var(--ered);border:1px solid rgba(239,68,68,.4)}
     #tab-ecommerce .msim-main .msim-selo.warn{background:rgba(245,158,11,.12);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
+    /* BUILD 30/07-A: margem inline compacta + popover detalhes */
+    #tab-ecommerce .alm-row{display:grid;grid-template-columns:1.1fr .8fr 1.4fr;gap:12px}
+    #tab-ecommerce .mginline{display:flex;align-items:center;gap:9px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:8px;padding:8px 11px;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+    #tab-ecommerce .mginline.vigente{border-color:rgba(52,211,153,.5)}
+    #tab-ecommerce .mginline .mgi-pct{font-size:16px;font-weight:700}
+    #tab-ecommerce .mginline.v .mgi-pct{color:var(--eemerald)} #tab-ecommerce .mginline.a .mgi-pct{color:var(--eamber)} #tab-ecommerce .mginline.r .mgi-pct{color:var(--ered)} #tab-ecommerce .mginline.mute .mgi-pct{color:var(--emuted2)}
+    #tab-ecommerce .mginline .mgi-luc{font-size:12.5px;color:var(--emuted)}
+    #tab-ecommerce .mginline .mgi-luc b{color:var(--etxt)}
+    #tab-ecommerce .mginline .mgi-selo{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;margin-left:auto}
+    #tab-ecommerce .mginline .mgi-selo.v{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
+    #tab-ecommerce .mginline .mgi-selo.r{background:rgba(239,68,68,.12);color:var(--ered);border:1px solid rgba(239,68,68,.4)}
+    #tab-ecommerce .mginline .mgi-selo.warn{background:rgba(245,158,11,.12);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
+    #tab-ecommerce details.msim-det{position:relative;display:inline-block;margin-left:auto}
+    #tab-ecommerce details.msim-det summary{font-size:11.5px;color:var(--emuted2);cursor:pointer;user-select:none;list-style:none}
+    #tab-ecommerce details.msim-det summary::-webkit-details-marker{display:none}
+    #tab-ecommerce details.msim-det[open] summary{color:var(--emuted)}
+    #tab-ecommerce details.msim-det .msim-meta2{position:absolute;right:0;bottom:calc(100% + 6px);z-index:6;min-width:290px;font-size:12px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;padding:10px 14px;background:var(--epanel3);border:1px solid var(--eborder);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    #tab-ecommerce .meta-grid{display:grid;grid-template-columns:auto 1fr;column-gap:16px;row-gap:4px;align-items:baseline}
+    #tab-ecommerce .meta-grid .k{color:var(--emuted);font-size:11.5px;white-space:nowrap}
+    #tab-ecommerce .meta-grid .vv{text-align:right;color:var(--etxt)}
+    #tab-ecommerce .meta-grid .vig{grid-column:1/-1;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--eaccent);font-weight:700;padding-bottom:2px;border-bottom:1px solid var(--eborder);margin-bottom:3px}
+    #tab-ecommerce .meta-grid .nf-k{color:#9fe6c6;font-size:12.5px;font-weight:700}
+    #tab-ecommerce .meta-grid .nf-v{text-align:right;color:var(--eaccent);font-size:16px;font-weight:800;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:6px;padding:2px 8px}
     #tab-ecommerce .msim-reason{color:var(--eamber);font-size:12px;padding:0 4px 6px;display:block}
     #tab-ecommerce .msim-meta{font-size:12.5px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;margin-top:3px;line-height:1.45;padding-top:5px;border-top:1px solid var(--eborder)}
     #tab-ecommerce .msim-meta:empty{display:none;border-top:0;padding-top:0;margin-top:0}
@@ -4600,28 +4624,31 @@ const ecomAlvo={
       else if(ecom.loadComissoes && (!ecom.comMap||!Object.keys(ecom.comMap).length)){ await ecom.loadComissoes(); }
     } }catch(e){ console.warn('ecom lazy load:',e.message); }
     const v=s=>String(s==null?'':s).replace(/"/g,'&quot;');
-    // Layout aprovado 02/07/2026:
-    // L1: Código · MLB · Data pub    L2: Título    L3: Preço · Tipo    L4: Motivo (livre)   L5: Simulador
+    // Layout BUILD 30/07-A (piloto v6 aprovado):
+    // L1: Código · MLB · Data pub   L2: Título   L3: Preço · Tipo · Margem   L4: Promoção · Tipo · Margem   L5: Motivo
+    // Margem inline na altura do input; vigência: promoção preenchida governa selo/gate, apagada volta o preço cheio.
     box.innerHTML=
       '<span class="al-editflag">\u270F Editando an\u00FAncio</span>'
       +'<div class="vrow3"><div class="efield"><label>Código *</label><input class="vinput mono" data-ef="cod" value="'+v(an.produto_codigo)+'"></div>'
       +'<div class="efield"><label>MLB *</label><input class="vinput mono" data-ef="mlb" value="'+v(an.anuncio_mlb)+'" placeholder="4811359527"></div>'
       +'<div class="efield"><label>Data publicação *</label><input class="vinput mono" data-ef="pub" type="date" value="'+v(String(an.data_publicacao||'').slice(0,10))+'"></div></div>'
       +'<div class="efield"><label>Título *</label><input class="vinput" data-ef="tit" value="'+v(an.titulo)+'"></div>'
-      +'<div class="vrow"><div class="efield"><label>Preço</label><input class="vinput mono" data-ef="preco" type="number" step="0.01" value="'+v(an.preco)+'"></div>'
-      +'<div class="efield"><label>Tipo *</label><select class="vinput" data-ef="tipo"><option value="classico"'+(an.tipo_anuncio!=='premium'?' selected':'')+'>Clássico</option><option value="premium"'+(an.tipo_anuncio==='premium'?' selected':'')+'>Premium</option></select></div></div>'
+      +'<div class="alm-row"><div class="efield"><label>Preço</label><input class="vinput mono" data-ef="preco" type="number" step="0.01" value="'+v(an.preco)+'"></div>'
+      +'<div class="efield"><label>Tipo *</label><select class="vinput" data-ef="tipo"><option value="classico"'+(an.tipo_anuncio!=='premium'?' selected':'')+'>Clássico</option><option value="premium"'+(an.tipo_anuncio==='premium'?' selected':'')+'>Premium</option></select></div>'
+      +'<div class="efield"><label>Margem Líquida</label><div class="mginline mute" data-mgc><span class="mgi-pct">—</span><span class="mgi-luc">lucro <b>R$ —</b></span><span class="mgi-selo" hidden></span></div></div></div>'
+      +'<div class="alm-row"><div class="efield"><label>Produto em promoção</label><input class="vinput mono" data-ef="promo" type="number" step="0.01" value="'+v(an.preco_promocao==null?'':an.preco_promocao)+'" placeholder="vazio = sem promoção"></div>'
+      +'<div class="efield"><label>Tipo *</label><select class="vinput" data-ef="tipop"><option value="classico"'+(an.tipo_promocao!=='premium'?' selected':'')+'>Clássico</option><option value="premium"'+(an.tipo_promocao==='premium'?' selected':'')+'>Premium</option></select></div>'
+      +'<div class="efield"><label>Margem Líquida</label><div class="mginline mute" data-mgp><span class="mgi-pct">—</span><span class="mgi-luc">lucro <b>R$ —</b></span><span class="mgi-selo" hidden></span></div></div></div>'
       +'<div class="efield"><label>Motivo da alteração *</label><input class="vinput" data-ef="motivo" placeholder="descreva por que está alterando (obrigatório para gravar)"></div>'
-      +'<div class="msim" data-alsim="'+id+'">'
-      +'<div class="msim-h"><span>Margem líquida · tempo real</span><span data-msim-rep></span></div>'
-      +'<div class="msim-zonas" data-msim-zonas></div>'
-      +'<div class="msim-piso" data-msim-piso></div>'
-      +'<div class="msim-meta" data-msim-meta></div>'
-      +'</div>'
-      +'<div style="display:flex;gap:8px;align-items:center"><button class="vbtn sm" data-alsave="'+id+'">Salvar</button><button class="vbtn sm" data-alcancel="'+id+'" style="background:var(--epanel3);color:var(--emuted)">Cancelar</button><span class="vmsg" data-alemsg="'+id+'"></span></div>';
+      +'<div data-alsim="'+id+'" style="display:none"></div>'
+      +'<div style="display:flex;gap:8px;align-items:center"><button class="vbtn sm" data-alsave="'+id+'">Salvar</button><button class="vbtn sm" data-alcancel="'+id+'" style="background:var(--epanel3);color:var(--emuted)">Cancelar</button><span class="vmsg" data-alemsg="'+id+'"></span>'
+      +'<details class="msim-det"><summary>\u25B8 detalhes do cálculo</summary><div class="msim-meta2" data-msim-meta2><div class="meta-grid">—</div></div></details>'
+      +'<span data-msim-rep style="margin-left:10px"></span></div>';
     box.style.display='';
     box.classList.add('editing');
-    box.querySelectorAll('[data-ef="cod"],[data-ef="preco"],[data-ef="tipo"]').forEach(el=>el.addEventListener('input',()=>this.renderSim(id)));
+    box.querySelectorAll('[data-ef="cod"],[data-ef="preco"],[data-ef="promo"]').forEach(el=>el.addEventListener('input',()=>this.renderSim(id)));
     box.querySelector('[data-ef="tipo"]').addEventListener('change',()=>this.renderSim(id));
+    box.querySelector('[data-ef="tipop"]').addEventListener('change',()=>this.renderSim(id));
     this.renderSim(id);
   },
   _simAvalGate(id){
@@ -4660,51 +4687,97 @@ const ecomAlvo={
   renderSim(id){
     const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
     const wrap=box.querySelector('[data-alsim="'+id+'"]'); if(!wrap) return;
-    const elZ=wrap.querySelector('[data-msim-zonas]'), elP=wrap.querySelector('[data-msim-piso]'), elM=wrap.querySelector('[data-msim-meta]');
-    const elRep=wrap.querySelector('[data-msim-rep]');
+    const elMeta=box.querySelector('[data-msim-meta2]');
+    const elRep=box.querySelector('[data-msim-rep]');
     const btnSave=box.querySelector('[data-alsave="'+id+'"]');
-    // Rótulo de reputação dinâmico (segue chip da aba Simulador)
+    const msg=box.querySelector('[data-alemsg="'+id+'"]');
     const rep=(typeof ecom!=='undefined' && ecom.reputacao)?ecom.reputacao:'verde';
     const repLabel=(typeof ecom!=='undefined' && ecom.repLabel)?ecom.repLabel(rep):rep;
     if(elRep) elRep.innerHTML='<span class="rep-pill '+rep+'">Reputação '+repLabel+'</span>';
+    const get=f=>{ const el=box.querySelector('[data-ef="'+f+'"]'); return el?el.value:''; };
+    const paint=(sel,r,vigente)=>{
+      const cell=box.querySelector(sel); if(!cell) return;
+      const pctEl=cell.querySelector('.mgi-pct'), lucEl=cell.querySelector('.mgi-luc'), seloEl=cell.querySelector('.mgi-selo');
+      cell.classList.remove('v','a','r','mute','vigente');
+      if(!r){ cell.classList.add('mute'); pctEl.textContent='—'; lucEl.innerHTML='lucro <b>R$ —</b>'; seloEl.hidden=true; return; }
+      if(!r.ok){ cell.classList.add('mute'); pctEl.textContent='—'; lucEl.innerHTML='<span style="color:var(--eamber)">'+r.reason+'</span>'; if(vigente){ seloEl.hidden=false; seloEl.className='mgi-selo warn'; seloEl.textContent='\u26A0'; } else seloEl.hidden=true; return; }
+      const pct=r.margemPct*100;
+      cell.classList.add(pct>=10?'v':(pct>0?'a':'r'));
+      if(vigente) cell.classList.add('vigente');
+      pctEl.textContent=pct.toFixed(1)+'%';
+      lucEl.innerHTML='lucro <b>R$ '+this._fmtBR(r.margem)+'</b>';
+      if(vigente){ seloEl.hidden=false; const lib=pct>=10; seloEl.className='mgi-selo '+(lib?'v':'r'); seloEl.textContent=lib?'\u2714 LIBERADO':'\u2716 NEGADO'; }
+      else seloEl.hidden=true;
+    };
+    const block=(reason)=>{
+      paint('[data-mgc]',null,false); paint('[data-mgp]',null,false);
+      if(elMeta) elMeta.innerHTML='<div class="meta-grid"><span class="k">'+reason+'</span></div>';
+      if(msg){ msg.className='vmsg err'; msg.textContent=reason; }
+      if(btnSave) btnSave.setAttribute('disabled','');
+      wrap._simState={ok:false};
+    };
     const gate=this._simAvalGate(id);
-    // elZ é o container do bloco principal (percentual grande + selo)
-    if(!gate){ if(elZ) elZ.innerHTML=''; if(elP) elP.innerHTML=''; if(elM) elM.textContent=''; if(btnSave) btnSave.setAttribute('disabled',''); return; }
-    if(gate.status==='warn'){
-      if(elZ) elZ.innerHTML='<div class="msim-main warn"><span class="msim-pct">—</span><span class="msim-selo warn">⚠ DADO INCOMPLETO</span></div>';
-      if(elP) elP.innerHTML='<span class="msim-reason">'+gate.reason+' — piso não verificável, gravação bloqueada</span>';
-      if(elM) elM.textContent='';
+    if(!gate||gate.status==='warn'){ block(gate?gate.reason+' — piso não verificável, gravação bloqueada':'dado incompleto'); return; }
+    if(msg && msg.classList.contains('err')){ msg.className='vmsg'; msg.textContent=''; }
+    // Promoção: parse + validações
+    const promoRaw=get('promo').trim();
+    const promoVal=promoRaw===''?null:parseFloat(promoRaw);
+    const tipoP=get('tipop');
+    let promoErr=null;
+    if(promoRaw!=='' && (isNaN(promoVal)||promoVal<=0)) promoErr='promoção inválida';
+    else if(promoVal!=null && promoVal>=gate.preco) promoErr='promoção deve ser menor que o preço';
+    const rC=this._simMargem(gate.prod, gate.preco, gate.tipo, rep);
+    let rP=null;
+    if(promoErr) rP={ok:false,reason:promoErr};
+    else if(promoVal!=null) rP=this._simMargem(gate.prod, promoVal, tipoP, rep);
+    // VIGÊNCIA (regra Igor 30/07): promoção preenchida governa; apagada, volta o preço cheio.
+    const promoAtiva=(promoVal!=null||promoErr!=null);
+    paint('[data-mgc]',rC,!promoAtiva);
+    paint('[data-mgp]',rP,promoAtiva);
+    const efet=promoAtiva?rP:rC;
+    const tipoEfet=promoAtiva?tipoP:gate.tipo;
+    // Popover detalhes: Custo NF em destaque, grade alinhada
+    if(elMeta){
+      if(efet&&efet.ok){
+        const comPct=efet.comPct*100;
+        const catRow=(typeof ecom!=='undefined' && ecom.comMap)?ecom.comMap[gate.prod.categoria]:null;
+        const comOrigem=(catRow&&catRow.origem==='reconciliacao')?'real':(catRow&&(catRow.origem==='manual'||catRow.origem==='api_ml')?'aferida':'est.');
+        const colchaoPct=(typeof ecom!=='undefined'&&ecom._n)?ecom._n('ecom-colchao'):6;
+        const impPct=(typeof ecom!=='undefined'&&ecom._n)?ecom._n('ecom-imp'):4;
+        elMeta.innerHTML='<div class="meta-grid">'
+          +'<span class="vig">vigente: '+(promoAtiva?'promoção':'preço cheio')+'</span>'
+          +'<span class="nf-k">Custo NF</span><span class="nf-v">R$ '+this._fmtBR(gate.prod.custo)+'</span>'
+          +'<span class="k">comissão ('+comOrigem+')</span><span class="vv">'+comPct.toFixed(2)+'%</span>'
+          +'<span class="k">imposto</span><span class="vv">'+impPct+'%</span>'
+          +'<span class="k">frete</span><span class="vv">R$ '+this._fmtBR(efet.frete)+'</span>'
+          +'<span class="k">colchão '+colchaoPct+'% s/ custo</span><span class="vv">R$ '+this._fmtBR(gate.prod.custo*colchaoPct/100)+'</span>'
+          +'</div>';
+      } else {
+        elMeta.innerHTML='<div class="meta-grid"><span class="k">'+((efet&&efet.reason)||'—')+'</span></div>';
+      }
+    }
+    // Gate de gravação sobre a linha vigente
+    if(!efet||!efet.ok){
+      if(msg){ msg.className='vmsg err'; msg.textContent=(efet&&efet.reason)?efet.reason:'dado incompleto'; }
       if(btnSave) btnSave.setAttribute('disabled','');
+      wrap._simState={ok:false, promoAtiva, promoVal:promoErr?undefined:promoVal, tipoP};
       return;
     }
-    const rAtual=this._simMargem(gate.prod, gate.preco, gate.tipo, rep);
-    if(!rAtual.ok){
-      if(elZ) elZ.innerHTML='<div class="msim-main warn"><span class="msim-pct">—</span><span class="msim-selo warn">⚠ DADO INCOMPLETO</span></div>';
-      if(elP) elP.innerHTML='<span class="msim-reason">'+rAtual.reason+'</span>';
-      if(elM) elM.textContent='';
-      if(btnSave) btnSave.setAttribute('disabled','');
-      return;
-    }
-    const pct=rAtual.margemPct*100;
-    const liberado=pct>=10;
-    const cls=liberado?'v':'r';
-    const selo=liberado?'✔ LIBERADO':'✖ NEGADO';
-    // Bloco principal: percentual grande + selo lado a lado
-    if(elZ) elZ.innerHTML='<div class="msim-main '+cls+'"><span class="msim-pct">'+pct.toFixed(1)+'%</span><span class="msim-selo '+cls+'">'+selo+'</span></div>';
-    if(elP) elP.innerHTML='';
-    // Raio-X abaixo — de onde vem o número
-    const comPct=rAtual.comPct*100;
-    const catRow=(typeof ecom!=='undefined' && ecom.comMap)?ecom.comMap[gate.prod.categoria]:null;
-    const comOrigem=(catRow&&catRow.origem==='reconciliacao')?'real':(catRow&&(catRow.origem==='manual'||catRow.origem==='api_ml')?'aferida':'est.');
-    if(elM) elM.innerHTML='comissão <b>'+comPct.toFixed(2)+'%</b> ('+comOrigem+') · frete <b>R$ '+this._fmtBR(rAtual.frete)+'</b> · custo NF <b>R$ '+this._fmtBR(gate.prod.custo)+'</b>';
+    const pctEf=efet.margemPct*100;
+    const liberado=pctEf>=10;
+    if(msg&&msg.classList.contains('err')&&!liberado){ /* mantém */ }
+    if(msg){ if(liberado){ msg.className='vmsg'; msg.textContent=''; } else { msg.className='vmsg err'; msg.textContent='NEGADO — margem vigente ('+(promoAtiva?'promoção':'preço cheio')+') abaixo do piso de 10%.'; } }
     if(btnSave){ if(liberado) btnSave.removeAttribute('disabled'); else btnSave.setAttribute('disabled',''); }
-    wrap._simState={ok:liberado, piorPct:pct, comPct};
+    wrap._simState={ok:liberado, piorPct:pctEf, comPct:efet.comPct*100, promoAtiva:promoVal!=null, promoVal, tipoP};
   },
   _fmtBR(n){ const v=Number(n); if(isNaN(v)) return '—'; return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); },
   async salvarEdicao(id){ const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
     const get=f=>{ const el=box.querySelector('[data-ef="'+f+'"]'); return el?el.value:''; };
     const msg=box.querySelector('[data-alemsg="'+id+'"]'); if(msg) msg.className='vmsg';
     const cod=get('cod').trim().toUpperCase(), mlb=this._normMlb(get('mlb')), tit=get('tit').trim(), preco=parseFloat(get('preco')), pub=get('pub'), tipo=get('tipo');
+    const promoRaw=(get('promo')||'').trim(); const promoNovo=promoRaw===''?null:parseFloat(promoRaw); const tipoPromo=get('tipop')||'classico';
+    if(promoRaw!=='' && (isNaN(promoNovo)||promoNovo<=0)){ if(msg){ msg.className='vmsg err'; msg.textContent='Valor de promoção inválido.'; } return; }
+    if(promoNovo!=null && !isNaN(preco) && promoNovo>=preco){ if(msg){ msg.className='vmsg err'; msg.textContent='Promoção deve ser menor que o preço.'; } return; }
     const motivo=get('motivo').trim();
     if(!cod||!mlb||!tit||!pub){ if(msg){ msg.className='vmsg err'; msg.textContent='Código, MLB, título e data são obrigatórios.'; } return; }
     if(!/^(MLB)?\d{6,}$/.test(mlb)){ if(msg){ msg.className='vmsg err'; msg.textContent='MLB inválido.'; } return; }
@@ -4718,7 +4791,9 @@ const ecomAlvo={
       const anAtual=this.anuncios.find(x=>String(x.id)===String(id));
       const precoAnterior=anAtual?anAtual.preco:null;
       const precoNovo=isNaN(preco)?null:preco;
-      const r=await sb.from('ecom_anuncios').update({produto_codigo:cod,anuncio_mlb:mlb,titulo:tit,preco:precoNovo,data_publicacao:pub,tipo_anuncio:tipo}).eq('id',id); if(r.error) throw r.error;
+      const promoAnterior=anAtual&&anAtual.preco_promocao!=null?anAtual.preco_promocao:null;
+      const tipoPromoAnterior=(anAtual&&anAtual.tipo_promocao)||'classico';
+      const r=await sb.from('ecom_anuncios').update({produto_codigo:cod,anuncio_mlb:mlb,titulo:tit,preco:precoNovo,data_publicacao:pub,tipo_anuncio:tipo,preco_promocao:promoNovo,tipo_promocao:promoNovo!=null?tipoPromo:null}).eq('id',id); if(r.error) throw r.error;
       // Log em ecom_anuncio_alteracao (imutável) — só quando houver de fato mudança de preço ou tipo
       const houvePreco=(Number(precoAnterior)||0)!==(Number(precoNovo)||0);
       // SYNC CONTROLE→SIMULADOR (BUILD 2026-07-15-A · decisão Igor 15/07): preço registrado pela Alexia
@@ -4732,9 +4807,13 @@ const ecomAlvo={
         try{ if(typeof ecom!=='undefined' && ecom.itens){ const pit=ecom.itens.find(x=>x&&x.codigo===cod); if(pit){ pit.preco=precoNovo; if(typeof ecom.render==='function') ecom.render(); } } }catch(_){/* sync visual é best-effort; o banco é a verdade */}
       }
       const houveTipo=(anAtual&&anAtual.tipo_anuncio||'classico')!==tipo;
-      if(houvePreco||houveTipo){
-        const logRow={ anuncio_sku:cod, mlb:mlb, campo:(houvePreco&&houveTipo)?'preco+tipo':(houvePreco?'preco':'tipo_anuncio'),
-          preco_anterior:houvePreco?precoAnterior:null, preco_novo:houvePreco?precoNovo:null,
+      // Promoção: entrada (null->valor), alteração (valor->valor), saída (valor->null) e troca de tipo da promoção
+      const houvePromo=((Number(promoAnterior)||0)!==(Number(promoNovo)||0)) || (promoNovo!=null && tipoPromoAnterior!==tipoPromo);
+      if(houvePreco||houveTipo||houvePromo){
+        const partes=[]; if(houvePreco) partes.push('preco'); if(houveTipo) partes.push('tipo_anuncio'); if(houvePromo) partes.push('promocao');
+        const logRow={ anuncio_sku:cod, mlb:mlb, campo:partes.join('+'),
+          preco_anterior:houvePreco?precoAnterior:(houvePromo?promoAnterior:null),
+          preco_novo:houvePreco?precoNovo:(houvePromo?promoNovo:null),
           margem_pior_zona_pct:st.piorPct!=null?Number(st.piorPct.toFixed(2)):null, motivo:motivo };
         const rl=await sb.from('ecom_anuncio_alteracao').insert(logRow);
         if(rl.error){ if(msg){ msg.className='vmsg err'; msg.textContent='Anúncio salvo, mas log falhou: '+rl.error.message; } this.load(); return; }
@@ -4754,7 +4833,7 @@ const ecomAlvo={
     } else {
       const linhas=hist.map(h=>{
         const dt=fmtDt(h.criado_em);
-        const tag=h.campo==='preco+tipo'?'preço+tipo':(h.campo==='tipo_anuncio'?'tipo':'preço');
+        const tag=String(h.campo||'preco').split('+').map(c=>c==='tipo_anuncio'||c==='tipo'?'tipo':(c==='promocao'?'promoção':'preço')).join('+');
         const delta=(h.preco_anterior!=null&&h.preco_novo!=null)?' <span style="color:var(--emuted2)">· R$ '+(+h.preco_anterior).toFixed(2).replace('.',',')+' → R$ '+(+h.preco_novo).toFixed(2).replace('.',',')+'</span>':'';
         const mot=h.motivo?esc(h.motivo):'<span style="color:var(--emuted2)">sem motivo registrado</span>';
         return '<div class="al-histli"><span class="al-histdt">'+esc(dt)+'</span><span class="al-histtag b">'+esc(tag)+'</span><span class="al-histmeta" style="font-size:12px;color:var(--etxt)">'+mot+delta+'</span></div>';
