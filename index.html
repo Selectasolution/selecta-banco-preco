@@ -1,4 +1,4 @@
-<!-- BUILD 2026-07-30-C | selecta-banco-preco | ANALISE COMERCIAL INDIVIDUAL (decisao Igor 30/07 — fim do comando geral em lote): (1) Card de analise em lote (quadrantes ATIVOS/NOVOS via ecom_analise_alvo + Importar para a Alvo) SUBSTITUIDO por "Anuncios ativos — matematica ML": 1 linha POR ANUNCIO (2 anuncios do mesmo produto = 2 linhas, estrategia classico+premium respeitada), cenarios cheio E promocao com "Voce recebe" (preco − comissao real − frete, espelho do painel ML) e margem ML (recebe − imposto − custo NF, SEM colchao — colchao segue so no gate da Alexia). Vigencia: promocao preenchida governa o selo. (2) BANNER DE INTEGRIDADE automatico contra o ULTIMO LOTE do snapshot (capturas 04h50/14h50 seguem ativas): ZUMBI-2 (ativo no lote sem cadastro/produto inativo) + divergencia publicado × registro (nem cheio nem promo) — matematica do proprio app, sem ritual. (3) IMPORT INDIVIDUAL por linha: JSON de UM anuncio, MLB do JSON validado contra o MLB da linha, dedup v1.8 preservada, grava em ecom_resultado_anuncio (condicoes_gap vai em dados) — sugestao nasce no Controle da Alexia como sempre. (4) Comando GERAL v1.9 APOSENTADO: card reduzido ao botao Copiar comando com o texto v2.0 (analise individual: 4 eixos + gap de condicoes do ganhador + piso 10% + bandas de frete + JSON objetivo); export de cenario e data removidos do card (exportarCenario segue vivo na Consulta Produto). Funcoes do fluxo antigo (loadAnalise/renderAnalise/importarAnalise) ficam DORMENTES no codigo, sem chamadas — expurgo em BUILD futuro; ecom_analise_alvo para de receber gravacao; historico intacto. copiarComando ganha guarda p/ ausencia do campo data. | base: 2026-07-30-B -->
+<!-- BUILD 2026-07-30-C | selecta-banco-preco | ANALISE COMERCIAL INDIVIDUAL (decisao Igor 30/07 — fim do comando geral em lote): (1) Card de analise em lote (quadrantes ATIVOS/NOVOS via ecom_analise_alvo + Importar para a Alvo) SUBSTITUIDO por "Anuncios ativos — matematica ML": 1 linha POR ANUNCIO (2 anuncios do mesmo produto = 2 linhas, estrategia classico+premium respeitada), cenarios cheio E promocao com "Voce recebe" (preco − comissao real − frete, espelho do painel ML) e margem ML (recebe − imposto − custo NF, SEM colchao — colchao segue so no gate da Alexia). Vigencia: promocao preenchida governa o selo. (2) BANNER DE INTEGRIDADE automatico contra o ULTIMO LOTE do snapshot (capturas 04h50/14h50 seguem ativas): ZUMBI-2 (ativo no lote sem cadastro/produto inativo) + divergencia publicado × registro (nem cheio nem promo) — matematica do proprio app, sem ritual. (3) IMPORT INDIVIDUAL por linha: JSON de UM anuncio, MLB do JSON validado contra o MLB da linha, dedup v1.8 preservada, grava em ecom_resultado_anuncio (condicoes_gap vai em dados) — sugestao nasce no Controle da Alexia como sempre. (4) Comando GERAL v1.9 APOSENTADO: card reduzido ao botao Copiar comando com o texto v2.0 (analise individual: 4 eixos + gap de condicoes do ganhador + piso 10% + bandas de frete + JSON objetivo); export de cenario e data removidos do card (exportarCenario segue vivo na Consulta Produto). Funcoes do fluxo antigo (loadAnalise/renderAnalise/importarAnalise) ficam DORMENTES no codigo, sem chamadas — expurgo em BUILD futuro; ecom_analise_alvo para de receber gravacao; historico intacto. copiarComando ganha guarda p/ ausencia do campo data. REV.1 (30/07, pre-deploy, a pedido do Igor): apresentacao dos Anuncios ativos volta ao FORMATO DE TABELA anterior do quadrante (mesmo cabecalho/colunas compactas, sugestao em 1 linha) com colunas novas MLB e PRECO PRATICADO (promocao vigente, senao cheio; cheio no tooltip); import individual via botao JSON por linha que abre faixa colapsavel. | base: 2026-07-30-B -->
 <!-- BUILD 2026-07-30-B | selecta-banco-preco | REORGANIZACAO CADASTRO (decisao Igor 30/07, piloto reorg v1 aprovado): (1) Sub-aba "Simulador" RENOMEADA para "Consulta Produto" (uso comum Igor+Alexia) — mantem frete oficial, filtros e tabela de consulta; data-sub interno inalterado (simulador) p/ nao quebrar JS. (2) Cards "Parametros comerciais" e "Cadastrar/simular produto" MOVIDOS da Consulta Produto para a ANALISE COMERCIAL (Alvo), acima do quadrante Cadastro de anuncio — so o Igor cadastra produto e anuncio; Controle da Alexia segue so gestao (nunca teve cadastro). IDs de elementos preservados: bindings do modulo ecom intactos. (3) NOVO botao "+ Gravar e gerar anuncio": grava o produto (mesma rotina/validacoes do + Adicionar) e PRE-PREENCHE o Cadastro de anuncio (codigo, titulo, preco, tipo, data hoje) — TUDO editavel; MLB manual (rito: anuncio nasce no ML). Flag zera em erro/validacao/edicao. (4) Quadro do Comando GERAL INTOCADO — substituicao na proxima rodada, por decisao. | base: 2026-07-30-A -->
 <!-- BUILD 2026-07-30-A | selecta-banco-preco | PROMOCAO NO CONTROLE (decisao Igor 30/07, piloto v6 aprovado): (1) Colunas novas preco_promocao/tipo_promocao em ecom_anuncios (SQL separado — aplicar ANTES deste index). (2) Form Editar Anuncio compacto: linha Preco·Tipo·Margem e linha Produto em promocao·Tipo·Margem, margem inline na altura do input (% + lucro em R$); bloco grande MARGEM LIQUIDA removido. (3) REGRA DE VIGENCIA: promocao preenchida = linha da promocao governa selo LIBERADO/NEGADO, gate do piso 10% e log; promocao apagada = volta automaticamente o preco cheio. (4) Comissao/frete/custo NF saem da vista: popover "detalhes do calculo" no rodape, valores alinhados em grade, CUSTO NF em destaque maior (pedido p/ Alexia). (5) Log ecom_anuncio_alteracao ganha campo 'promocao' (entrada, alteracao e saida de promocao registradas com motivo). (6) Sync CONTROLE->SIMULADOR inalterado: continua no preco cheio; promocao NAO sincroniza ecom_produtos.preco (decisao pendente, sinalizada ao Igor). | base: 2026-07-26-A -->
 <!-- BUILD 2026-07-26-A | selecta-banco-preco | EXPLORADOR DE CATEGORIAS no Radar (spec Igor 26/07 — descoberta de IDs deixa de ser manual; recorte "tecnologia para casa" exige folhas de várias raízes): (1) Bloco recolhível "🌳 Explorar árvore de categorias" no card de Pesquisa — navega a árvore oficial do ML direto do navegador (endpoint público /sites/MLB/categories + /categories/{id}, sem token, custo zero de API autenticada). (2) Clique na categoria desce a árvore com trilha (breadcrumb) e nº de itens por filha; folha destacada. (3) Botão "📡 pesquisar" em cada nó dispara a varredura na hora (preenche ID+nome e chama varrer()). (4) Risco declarado: CORS do endpoint público — se o ML bloquear fetch cross-origin, o bloco mostra o erro e o fallback é rotear pela Edge (branch futuro). Sem mudança de Edge, SQL ou dados. | base: 2026-07-16-D -->
@@ -4994,15 +4994,6 @@ const ecomAlvo={
     const P=+preco;
     return {ok:true, recebe:P-P*r.comPct-r.frete, margem, pct:P>0?margem/P*100:0, frete:r.frete, comPct:r.comPct};
   },
-  _atvCen(rotulo,preco,r,vigente){
-    const fR=v=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-    if(preco==null) return '<div class="atv-cen off"><span class="k">'+rotulo+'</span><span class="k">—</span></div>';
-    if(!r||!r.ok) return '<div class="atv-cen off"><span class="k">'+rotulo+'</span><span style="color:var(--eamber);font-size:11px">'+((r&&r.reason)||'sem cálculo')+'</span></div>';
-    const cls=r.pct>=10?'v':(r.pct>0?'a':'r');
-    return '<div class="atv-cen'+(vigente?' vig':'')+'"><span class="k">'+rotulo+(vigente?' · vigente':'')+'</span>'
-      +'<span class="p">R$ '+fR(preco)+'</span><span class="k">recebe</span><span class="p">R$ '+fR(r.recebe)+'</span>'
-      +'<span class="k">margem</span><span class="m '+cls+'">'+r.pct.toFixed(1)+'% · R$ '+fR(r.margem)+'</span></div>';
-  },
   async renderAtivos(){
     const list=this._g('al-atv-list'), integ=this._g('al-atv-integridade'), cnt=this._g('al-atv-count');
     if(!list) return;
@@ -5014,34 +5005,77 @@ const ecomAlvo={
     let anns=this.anuncios;
     if(!anns||!anns.length){ try{ const r=await sb.from('ecom_anuncios').select('*'); if(!r.error) anns=r.data||[]; }catch(_e){} }
     anns=(anns||[]).filter(a=>a.ativo!==false);
-    const ea=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const ord=anns.slice().sort((a,b)=>((a.pausado?1:0)-(b.pausado?1:0))||String(a.produto_codigo||'').localeCompare(String(b.produto_codigo||'')));
-    const rows=ord.map(an=>{
+    const ea=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const fR=v=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const clsCor={o:'var(--eemerald)',a:'var(--eamber)',c:'var(--ered)'};
+    const ativos=anns.filter(a=>!a.pausado).sort((a,b)=>String(a.produto_codigo||'').localeCompare(String(b.produto_codigo||'')));
+    const paus=anns.filter(a=>a.pausado).sort((a,b)=>String(a.produto_codigo||'').localeCompare(String(b.produto_codigo||'')));
+    const linha=(an,dim)=>{
       const cod=String(an.produto_codigo||'').trim().toUpperCase();
       const prod=prodMap[cod]||null;
-      const mlb=String(an.anuncio_mlb||'');
+      const mlb=String(an.anuncio_mlb||''); const mlbN=this._normMlb(mlb);
       const temPromo=an.preco_promocao!=null;
-      const rC=prod?this._mlMirror(prod,an.preco,an.tipo_anuncio||'classico'):null;
-      const rP=(prod&&temPromo)?this._mlMirror(prod,an.preco_promocao,an.tipo_promocao||'classico'):null;
-      const tipoTxt=(an.tipo_anuncio==='premium'?'Premium':'Clássico')+(temPromo?(' / promo '+((an.tipo_promocao==='premium')?'Premium':'Clássico')):'');
-      const badge=an.pausado?'<span class="atv-badge p">PAUSADO</span>':'';
-      const semProd=!prod?'<span class="atv-badge z">produto inativo/órfão no catálogo</span>':'';
-      const sug=(this.resultados&&this.resultados[mlb])?this.resultados[mlb]:null;
-      const sugTxt=sug?('<div class="atv-sug">última sugestão · '+ea(sug.data||'')+' · <b>'+ea(sug.veredito||sug.acao||'—')+'</b></div>'):'';
-      return '<details class="atv-row" data-atv="'+ea(mlb)+'">'
-        +'<summary><span class="mono c">'+ea(cod||'—')+'</span><span class="mono">#'+ea(mlb)+'</span>'
-        +'<span class="t">'+ea(an.titulo||'')+'</span><span class="tp">'+tipoTxt+'</span>'+badge+semProd+'</summary>'
-        +'<div class="atv-body">'
-        +this._atvCen('cheio',an.preco,rC,!temPromo)
-        +this._atvCen('promoção',temPromo?an.preco_promocao:null,rP,temPromo)
-        +sugTxt
-        +'<div class="atv-imp"><textarea id="atv-ta-'+ea(mlb)+'" placeholder=\'JSON individual deste anúncio (comando v2.0): {"mlb":"'+ea(mlb)+'","veredito":"...","cls":"o|a|c","diagnostico":"...","acao":"...","preco_sugerido":null,"condicoes_gap":[],"visitas":0,"status_ml":"active"}\' spellcheck="false"></textarea>'
-        +'<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><button class="vbtn sm" data-atvimp="'+ea(mlb)+'">Importar análise deste anúncio</button><span class="vmsg" id="atv-msg-'+ea(mlb)+'"></span></div></div>'
-        +'</div></details>';
-    });
-    list.innerHTML=rows.join('')||'<div class="ph">Nenhum anúncio cadastrado.</div>';
-    if(cnt) cnt.textContent=ord.length+' anúncio(s) · '+ord.filter(a=>a.pausado).length+' pausado(s)';
-    if(!list._b){ list._b=true; list.addEventListener('click',e=>{ const b=e.target.closest('[data-atvimp]'); if(b) this.importarIndividual(b.getAttribute('data-atvimp')); }); }
+      const praticado=temPromo?+an.preco_promocao:(an.preco!=null?+an.preco:null);
+      const tipoPrat=temPromo?(an.tipo_promocao==='premium'?'premium':'classico'):(an.tipo_anuncio==='premium'?'premium':'classico');
+      const r=(prod&&praticado!=null)?this._mlMirror(prod,praticado,tipoPrat):null;
+      const marg=(r&&r.ok)?r.pct:null;
+      const mCor=(marg==null)?'var(--emuted2)':(marg>=10?'var(--eemerald)':(marg>0?'var(--eamber)':'var(--ered)'));
+      const precoCell=(praticado==null)
+        ? '<span style="color:var(--emuted2)">—</span>'
+        : '<span style="color:var(--etxt);font-weight:600"'+(temPromo?(' title="promoção vigente · cheio R$ '+fR(an.preco)+' ('+((an.tipo_anuncio==='premium')?'Premium':'Clássico')+')"'):'')+'>'+fR(praticado)
+          +(temPromo?' <span style="color:var(--eteal);font-size:9px;font-weight:700;letter-spacing:.03em">PROMO</span>':'')+'</span>';
+      const margCell=(marg==null)
+        ? '<span style="color:var(--emuted2)" title="'+ea((r&&r.reason)||(prod?'sem preço':'produto inativo/órfão no catálogo'))+'">—</span>'
+        : '<span style="color:'+mCor+';font-weight:700">'+marg.toFixed(1)+'%</span>';
+      const sug=(this.resultados&&this.resultados[mlbN])?this.resultados[mlbN]:null;
+      let l1='',l2='',c1='var(--emuted2)';
+      if(sug){ c1=clsCor[sug.cls]||'var(--emuted)'; l1=sug.acao||sug.veredito||sug.texto||''; l2=sug.diagnostico||''; }
+      else if(!prod){ c1='var(--ered)'; l1='produto inativo/órfão no catálogo'; l2='verificar cadastro'; }
+      const sugFull=ea((l1?l1:'')+(l2?' · '+l2:''));
+      const sugCell=l1
+        ? '<span style="color:'+c1+';font-weight:600">'+ea(l1)+'</span>'+(l2?'<span style="color:var(--emuted2)"> · '+ea(l2)+'</span>':'')
+        : '<span style="color:var(--emuted2)">—</span>';
+      const tipoTag=(an.tipo_anuncio==='premium'?'P':'C')+(temPromo?('/'+((an.tipo_promocao==='premium')?'P':'C')):'');
+      return '<tr'+(dim?' style="opacity:.55"':'')+'>'
+        +'<td style="padding:4px 8px 4px 6px;font-family:var(--emono);color:var(--eteal);font-weight:700;white-space:nowrap">'+ea(cod||'—')+'</td>'
+        +'<td style="padding:4px 8px;font-family:var(--emono);color:var(--emuted);white-space:nowrap">'+ea(mlb)+'</td>'
+        +'<td style="padding:4px 10px 4px 6px;color:var(--etxt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+ea(an.titulo||'')+'">'+ea(an.titulo||'')+(dim?' <span style="font-size:9px;color:var(--emuted2);font-weight:700">PAUSADO</span>':'')+'</td>'
+        +'<td style="padding:4px 8px;text-align:center;font-family:var(--emono);color:var(--emuted2);font-size:11px" title="tipo cheio'+(temPromo?'/promo':'')+'">'+tipoTag+'</td>'
+        +'<td style="padding:4px 8px;text-align:right;font-family:var(--emono);font-variant-numeric:tabular-nums">'+precoCell+'</td>'
+        +'<td style="padding:4px 8px;text-align:right;font-family:var(--emono);font-variant-numeric:tabular-nums">'+margCell+'</td>'
+        +'<td style="padding:4px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+sugFull+'">'+sugCell+'</td>'
+        +'<td style="padding:4px 6px;text-align:center"><button class="vbtn sm" data-atvtg="'+ea(mlbN)+'" style="padding:2px 8px;font-size:10.5px">JSON</button></td>'
+        +'</tr>'
+        +'<tr data-atvrow="'+ea(mlbN)+'" style="display:none"><td colspan="8" style="padding:6px 8px 10px;background:var(--epanel3);border-radius:8px">'
+        +'<textarea id="atv-ta-'+ea(mlbN)+'" spellcheck="false" style="width:100%;min-height:80px;background:var(--epanel2);color:var(--etxt);border:1px solid var(--eborder);border-radius:8px;padding:10px;font:11.5px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical" placeholder=\'JSON individual deste anúncio (comando v2.0) — o mlb do JSON deve ser '+ea(mlbN)+'\'></textarea>'
+        +'<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><button class="vbtn sm" data-atvimp="'+ea(mlbN)+'">Importar análise deste anúncio</button><span class="vmsg" id="atv-msg-'+ea(mlbN)+'"></span></div>'
+        +'</td></tr>';
+    };
+    const thead='<tr style="color:var(--emuted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap">'
+      +'<td style="padding:2px 8px 2px 6px">Nº cod</td><td style="padding:2px 8px">MLB</td><td style="padding:2px 10px 2px 6px">Produto</td>'
+      +'<td style="padding:2px 8px;text-align:center" title="C=Clássico · P=Premium · cheio/promo">Tipo</td>'
+      +'<td style="padding:2px 8px;text-align:right" title="Preço em vigor no ML: promoção quando ativa, senão o cheio (cheio no tooltip)">Praticado</td>'
+      +'<td style="padding:2px 8px;text-align:right" title="Margem espelho ML no preço praticado (sem colchão). ≥10 verde · 0–10 âmbar · ≤0 vermelho">Margem</td>'
+      +'<td style="padding:2px 8px">Sugestão</td><td style="padding:2px 6px;text-align:center">Análise</td></tr>';
+    const tabela=rows=>'<table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed">'
+      +'<colgroup><col style="width:82px"><col style="width:98px"><col style="width:280px"><col style="width:44px"><col style="width:104px"><col style="width:64px"><col><col style="width:64px"></colgroup>'
+      +thead+rows.join('')+'</table>';
+    let html='<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px;border-left:3px solid var(--eemerald);padding-left:8px">'
+      +'<span style="font-size:13.5px;font-weight:700;color:var(--eemerald)">Ativos no ML</span>'
+      +'<span style="font-size:12px;color:var(--emuted)">preço praticado · margem espelho ML</span></div>';
+    html+=ativos.length?tabela(ativos.map(a=>linha(a,false))):'<div class="ph">nenhum anúncio ativo registrado</div>';
+    if(paus.length){
+      html+='<div style="display:flex;align-items:baseline;gap:8px;margin:16px 0 5px;border-left:3px solid var(--eborder);padding-left:8px">'
+        +'<span style="font-size:13.5px;font-weight:700;color:var(--emuted)">Pausados</span></div>'
+        +tabela(paus.map(a=>linha(a,true)));
+    }
+    list.innerHTML=html;
+    if(cnt) cnt.textContent=ativos.length+' ativo(s) · '+paus.length+' pausado(s)';
+    if(!list._b){ list._b=true; list.addEventListener('click',e=>{
+      const t=e.target.closest('[data-atvtg]');
+      if(t){ const row=list.querySelector('[data-atvrow="'+t.getAttribute('data-atvtg')+'"]'); if(row) row.style.display=(row.style.display==='none'?'':'none'); return; }
+      const b=e.target.closest('[data-atvimp]'); if(b) this.importarIndividual(b.getAttribute('data-atvimp'));
+    }); }
     this.renderIntegridade(anns,prodMap,integ);
   },
   async renderIntegridade(anns,prodMap,el){
