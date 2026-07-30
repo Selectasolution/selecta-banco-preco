@@ -1,3 +1,4 @@
+<!-- BUILD 2026-07-30-B | selecta-banco-preco | REORGANIZACAO CADASTRO (decisao Igor 30/07, piloto reorg v1 aprovado): (1) Sub-aba "Simulador" RENOMEADA para "Consulta Produto" (uso comum Igor+Alexia) — mantem frete oficial, filtros e tabela de consulta; data-sub interno inalterado (simulador) p/ nao quebrar JS. (2) Cards "Parametros comerciais" e "Cadastrar/simular produto" MOVIDOS da Consulta Produto para a ANALISE COMERCIAL (Alvo), acima do quadrante Cadastro de anuncio — so o Igor cadastra produto e anuncio; Controle da Alexia segue so gestao (nunca teve cadastro). IDs de elementos preservados: bindings do modulo ecom intactos. (3) NOVO botao "+ Gravar e gerar anuncio": grava o produto (mesma rotina/validacoes do + Adicionar) e PRE-PREENCHE o Cadastro de anuncio (codigo, titulo, preco, tipo, data hoje) — TUDO editavel; MLB manual (rito: anuncio nasce no ML). Flag zera em erro/validacao/edicao. (4) Quadro do Comando GERAL INTOCADO — substituicao na proxima rodada, por decisao. | base: 2026-07-30-A -->
 <!-- BUILD 2026-07-30-A | selecta-banco-preco | PROMOCAO NO CONTROLE (decisao Igor 30/07, piloto v6 aprovado): (1) Colunas novas preco_promocao/tipo_promocao em ecom_anuncios (SQL separado — aplicar ANTES deste index). (2) Form Editar Anuncio compacto: linha Preco·Tipo·Margem e linha Produto em promocao·Tipo·Margem, margem inline na altura do input (% + lucro em R$); bloco grande MARGEM LIQUIDA removido. (3) REGRA DE VIGENCIA: promocao preenchida = linha da promocao governa selo LIBERADO/NEGADO, gate do piso 10% e log; promocao apagada = volta automaticamente o preco cheio. (4) Comissao/frete/custo NF saem da vista: popover "detalhes do calculo" no rodape, valores alinhados em grade, CUSTO NF em destaque maior (pedido p/ Alexia). (5) Log ecom_anuncio_alteracao ganha campo 'promocao' (entrada, alteracao e saida de promocao registradas com motivo). (6) Sync CONTROLE->SIMULADOR inalterado: continua no preco cheio; promocao NAO sincroniza ecom_produtos.preco (decisao pendente, sinalizada ao Igor). | base: 2026-07-26-A -->
 <!-- BUILD 2026-07-26-A | selecta-banco-preco | EXPLORADOR DE CATEGORIAS no Radar (spec Igor 26/07 — descoberta de IDs deixa de ser manual; recorte "tecnologia para casa" exige folhas de várias raízes): (1) Bloco recolhível "🌳 Explorar árvore de categorias" no card de Pesquisa — navega a árvore oficial do ML direto do navegador (endpoint público /sites/MLB/categories + /categories/{id}, sem token, custo zero de API autenticada). (2) Clique na categoria desce a árvore com trilha (breadcrumb) e nº de itens por filha; folha destacada. (3) Botão "📡 pesquisar" em cada nó dispara a varredura na hora (preenche ID+nome e chama varrer()). (4) Risco declarado: CORS do endpoint público — se o ML bloquear fetch cross-origin, o bloco mostra o erro e o fallback é rotear pela Edge (branch futuro). Sem mudança de Edge, SQL ou dados. | base: 2026-07-16-D -->
 <!-- BUILD 2026-07-16-D | selecta-banco-preco | VENDAS ENXUTA (pedido Igor 16/07): (1) paragrafo introdutorio da aba Vendas REMOVIDO (texto explicativo do fluxo — Igor ja domina o fluxo, tela mais limpa). (2) Quadro-resumo do semaforo (No prazo / Limite / Atrasadas) COMPACTADO: cartoes viram chips de linha unica (rotulo + numero lado a lado), padding e fontes menores, largura maxima 560px, respiro reduzido. Logica intocada — mesmas contagens, mesmo aviso de venda sem prazo. | base: 2026-07-16-C -->
@@ -995,7 +996,7 @@
     </style>
 
     <div class="ecom-subnav">
-      <button class="ecom-subtab active" data-sub="simulador">Simulador</button>
+      <button class="ecom-subtab active" data-sub="simulador">🔎 Consulta Produto</button>
       <button class="ecom-subtab" data-sub="vendas">Vendas</button>
       <button class="ecom-subtab" data-sub="financeiro">Financeiro</button>
       <button class="ecom-subtab" data-sub="relatorios">Relatórios</button>
@@ -1038,48 +1039,7 @@
       </div>
     </div>
 
-    <!-- PARÂMETROS -->
-    <div class="ecard">
-      <h3>Parâmetros comerciais</h3>
-      <div class="param-grid">
-        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Clássico (fallback)</label><div class="field-row"><input class="num" id="ecom-com-classico" type="number" step="0.5" value="13"><span class="unit">%</span></div></div>
-        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Premium (fallback)</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Imposto (regime)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" step="0.5" value="4"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Outros custos</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Colchão</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="6"><span class="unit">%</span></div></div>
-      </div>
-      <p class="note">Simples Anexo I 1ª faixa = 4% · Outros = antecip./parcel. · Colchão = % sobre a compra (custos operacionais).</p>
-      <div style="margin-top:14px">
-        <p class="note" style="color:var(--emuted);font-size:12.5px;line-height:1.6">
-          <b>Custo fixo &lt;R$79 aposentado (02/07/2026).</b> Frete agora vem 100% da tabela oficial ML (peso × faixa de preço × reputação), inclusive abaixo de R$79. A antiga regra fixa (R$6,25/6,50/6,75) não existe mais no modelo oficial.
-        </p>
-      </div>
-    </div>
-
-    <!-- CADASTRO -->
-    <div class="ecard">
-      <h3 id="ecom-form-title">Cadastrar / simular produto</h3>
-      <div class="addform">
-        <input type="hidden" id="ecom-f-produto">
-        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="PLR">Placa de rede</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option><option value="RBL">Robô de Limpeza</option><option value="ALX">Alexa</option><option value="PWB">Power Bank</option><option value="CXS">Caixa de Som</option><option value="CAM">Câmera Digital</option><option value="CPS">Controle PS5</option><option value="FLM">Filamento Imp. 3D</option><option value="GBL">Câmera Estabilizadora</option><option value="MPD">Mouse Pad</option><option value="PDR">Pen Drive</option><option value="SPM">Suporte Monitor</option><option value="TAB">Tablet</option><option value="PTE">Porteiro Eletrônico</option><option value="DVR">CCTV / DVR</option><option value="RDE">Repetidor de Sinal</option></select></div>
-        <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px"></div>
-        <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px"></div>
-        <div class="efield" id="ecom-f-capacidade-wrap" style="display:none"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px"></div>
-        <div class="efield" id="ecom-f-interface-wrap" style="display:none"><label>Interface</label><select class="ainput" id="ecom-f-interface" style="width:110px"><option value="">—</option><option value="SATA III">SATA III</option><option value="NVMe">NVMe</option></select></div>
-        <div class="efield pesofield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px"><span id="ecom-f-faixa-msg" class="ffaixa"></span><select id="ecom-f-peso" style="display:none"></select><span id="ecom-f-peso-warn" style="display:none"></span></div>
-        <div class="efield"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
-        <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
-        <div class="efield"><label>Mínimo mercado</label><input class="ainput mono" id="ecom-f-menor" type="number" style="width:90px"></div>
-        <div class="efield"><label>Média mercado</label><input class="ainput mono" id="ecom-f-media" type="number" style="width:90px"></div>
-        <div class="efield"><label>Break-even <span style="color:var(--emuted2);font-weight:400">(ref.)</span></label><input class="ainput mono" id="ecom-f-breakeven" type="text" style="width:90px" readonly tabindex="-1"></div>
-        <div class="efield"><label>Meu preço <span class="req">*</span></label><input class="ainput mono" id="ecom-f-preco" type="number" style="width:90px"></div>
-        <div class="efield simfield"><label>Margem R$ <span class="hsim">sim.</span></label><input class="ainput mono robe" id="ecom-f-mgrs" type="text" style="width:84px" readonly tabindex="-1"></div>
-        <div class="efield simfield"><label>Margem % <span class="hsim">sim.</span></label><input class="ainput mono robe mgsimf" id="ecom-f-mgpct" type="text" style="width:72px" readonly tabindex="-1"></div>
-        <button class="addbtn" id="ecom-add">+ Adicionar</button>
-        <button class="cancelbtn hidden-section" id="ecom-cancel">Cancelar</button>
-      </div>
-      <div class="formmsg" id="ecom-formmsg"></div>
-    </div>
+    <!-- BUILD 30/07-B: Parametros comerciais + Cadastrar/simular produto MOVIDOS para a Analise Comercial (Alvo). -->
 
     <!-- CONSULTA -->
     <div class="ecard">
@@ -1252,6 +1212,51 @@
       </div>
 
       <div id="alsub-analise" class="alsub">
+      <!-- BUILD 30/07-B: cards vindos da ex-aba Simulador (ids preservados) -->
+    <!-- PARÂMETROS -->
+    <div class="ecard">
+      <h3>Parâmetros comerciais</h3>
+      <div class="param-grid">
+        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Clássico (fallback)</label><div class="field-row"><input class="num" id="ecom-com-classico" type="number" step="0.5" value="13"><span class="unit">%</span></div></div>
+        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Premium (fallback)</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Imposto (regime)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" step="0.5" value="4"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Outros custos</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Colchão</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="6"><span class="unit">%</span></div></div>
+      </div>
+      <p class="note">Simples Anexo I 1ª faixa = 4% · Outros = antecip./parcel. · Colchão = % sobre a compra (custos operacionais).</p>
+      <div style="margin-top:14px">
+        <p class="note" style="color:var(--emuted);font-size:12.5px;line-height:1.6">
+          <b>Custo fixo &lt;R$79 aposentado (02/07/2026).</b> Frete agora vem 100% da tabela oficial ML (peso × faixa de preço × reputação), inclusive abaixo de R$79. A antiga regra fixa (R$6,25/6,50/6,75) não existe mais no modelo oficial.
+        </p>
+      </div>
+    </div>
+
+    <!-- CADASTRO -->
+    <div class="ecard">
+      <h3 id="ecom-form-title">Cadastrar / simular produto</h3>
+      <div class="addform">
+        <input type="hidden" id="ecom-f-produto">
+        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="PLR">Placa de rede</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option><option value="RBL">Robô de Limpeza</option><option value="ALX">Alexa</option><option value="PWB">Power Bank</option><option value="CXS">Caixa de Som</option><option value="CAM">Câmera Digital</option><option value="CPS">Controle PS5</option><option value="FLM">Filamento Imp. 3D</option><option value="GBL">Câmera Estabilizadora</option><option value="MPD">Mouse Pad</option><option value="PDR">Pen Drive</option><option value="SPM">Suporte Monitor</option><option value="TAB">Tablet</option><option value="PTE">Porteiro Eletrônico</option><option value="DVR">CCTV / DVR</option><option value="RDE">Repetidor de Sinal</option></select></div>
+        <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px"></div>
+        <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px"></div>
+        <div class="efield" id="ecom-f-capacidade-wrap" style="display:none"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px"></div>
+        <div class="efield" id="ecom-f-interface-wrap" style="display:none"><label>Interface</label><select class="ainput" id="ecom-f-interface" style="width:110px"><option value="">—</option><option value="SATA III">SATA III</option><option value="NVMe">NVMe</option></select></div>
+        <div class="efield pesofield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px"><span id="ecom-f-faixa-msg" class="ffaixa"></span><select id="ecom-f-peso" style="display:none"></select><span id="ecom-f-peso-warn" style="display:none"></span></div>
+        <div class="efield"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
+        <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
+        <div class="efield"><label>Mínimo mercado</label><input class="ainput mono" id="ecom-f-menor" type="number" style="width:90px"></div>
+        <div class="efield"><label>Média mercado</label><input class="ainput mono" id="ecom-f-media" type="number" style="width:90px"></div>
+        <div class="efield"><label>Break-even <span style="color:var(--emuted2);font-weight:400">(ref.)</span></label><input class="ainput mono" id="ecom-f-breakeven" type="text" style="width:90px" readonly tabindex="-1"></div>
+        <div class="efield"><label>Meu preço <span class="req">*</span></label><input class="ainput mono" id="ecom-f-preco" type="number" style="width:90px"></div>
+        <div class="efield simfield"><label>Margem R$ <span class="hsim">sim.</span></label><input class="ainput mono robe" id="ecom-f-mgrs" type="text" style="width:84px" readonly tabindex="-1"></div>
+        <div class="efield simfield"><label>Margem % <span class="hsim">sim.</span></label><input class="ainput mono robe mgsimf" id="ecom-f-mgpct" type="text" style="width:72px" readonly tabindex="-1"></div>
+        <button class="addbtn" id="ecom-add">+ Adicionar</button>
+        <button class="addbtn" id="ecom-add-gerar" title="Grava o produto e pré-preenche o Cadastro de anúncio abaixo" style="background:none;border:1px solid var(--eaccent);color:var(--eaccent)">+ Gravar e gerar anúncio</button>
+        <button class="cancelbtn hidden-section" id="ecom-cancel">Cancelar</button>
+      </div>
+      <div class="formmsg" id="ecom-formmsg"></div>
+    </div>
+
       <div class="ecard" style="margin-bottom:12px;padding:12px 14px;border-color:var(--eteal);border-width:1px">
         <h3 style="color:var(--eemerald)">Cadastro de anúncio</h3>
         <div class="vrow3" style="margin-bottom:2px">
@@ -2845,6 +2850,7 @@ const ecom = {
     g('ecom-flt-ver').addEventListener('change',e=>{ this.fVer=e.target.value; this.render(); });
     g('ecom-flt-clear').addEventListener('click',()=>{ this.fProd=''; this.fVer=''; g('ecom-flt-prod').value=''; g('ecom-flt-ver').value=''; this.render(); });
     g('ecom-add').addEventListener('click',()=>this.save());
+    { const bg=g('ecom-add-gerar'); if(bg) bg.addEventListener('click',()=>{ this.gerarAposSalvar=true; this.save(); }); }
     g('ecom-cancel').addEventListener('click',()=>this.cancelEdit());
     ['ecom-f-preco','ecom-f-custo','ecom-f-peso','ecom-f-tipo'].forEach(id=>{ const el=g(id); if(el) el.addEventListener('input',()=>this.updateFormBreakeven()); });
     { const pe=g('ecom-f-pesog'); if(pe) pe.addEventListener('input',()=>{ this.applyPesoG(); this.updateFormBreakeven(); }); }
@@ -2975,19 +2981,32 @@ const ecom = {
     const catSel=this._g('ecom-f-categoria'); const categoria=catSel.value||null;
     const produto=categoria?(((catSel.options[catSel.selectedIndex]||{}).text)||'').trim():''; this._g('ecom-f-produto').value=produto;
     const preco=num('ecom-f-preco'), custo=num('ecom-f-custo');
-    if(!categoria||preco==null||custo==null){ const fm=this._g('ecom-formmsg'); fm.textContent='Categoria, Meu preço e Custo são obrigatórios.'; fm.style.color='var(--eamber)'; return; }
+    if(!categoria||preco==null||custo==null){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='Categoria, Meu preço e Custo são obrigatórios.'; fm.style.color='var(--eamber)'; return; }
     this._g('ecom-formmsg').textContent='';
     const pesog=(()=>{ const v=parseInt(this._g('ecom-f-pesog').value,10); return isNaN(v)?null:v; })();
     const dados={ produto, categoria, marca:this._g('ecom-f-marca').value.trim()||null, modelo:this._g('ecom-f-modelo').value.trim()||null,
       capacidade:this._g('ecom-f-capacidade').value.trim()||null, interface:this._g('ecom-f-interface').value||null,
       preco, custo, media:num('ecom-f-media'), menor:num('ecom-f-menor'), peso_g:pesog, peso_faixa:(pesog!=null?this.faixaFromPeso(pesog):this._g('ecom-f-peso').value), tipo_anuncio:this._g('ecom-f-tipo').value };
-    if(this.editId){ const idx=this.itens.findIndex(x=>String(x.id)===String(this.editId)); const prev=idx>=0?Object.assign({},this.itens[idx]):null;
+    if(this.editId){ this.gerarAposSalvar=false; const idx=this.itens.findIndex(x=>String(x.id)===String(this.editId)); const prev=idx>=0?Object.assign({},this.itens[idx]):null;
       if(idx>=0) this.itens[idx]=Object.assign({},this.itens[idx],dados);
       try{ const r=await sb.from('ecom_produtos').update(Object.assign({},dados,{atualizado_em:new Date().toISOString()})).eq('id',this.editId).select().single(); if(r.error) throw r.error; if(idx>=0&&r.data) this.itens[idx]=r.data; this.cancelEdit(); this.render(); }
       catch(e){ if(idx>=0&&prev) this.itens[idx]=prev; const fm=this._g('ecom-formmsg'); fm.textContent='Erro ao salvar: '+e.message; fm.style.color='var(--ered)'; this.render(); } }
     else { const codigo=await this.nextCodigo(categoria);
-      try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{codigo,ativo:true})).select().single(); if(r.error) throw r.error; this.itens.push(r.data); this.clearForm(); this.render(); const fm=this._g('ecom-formmsg'); fm.textContent='✓ Salvo no banco: '+r.data.codigo+' — campos limpos para o próximo.'; fm.style.color='var(--eemerald)'; }
-      catch(e){ const fm=this._g('ecom-formmsg'); fm.textContent='Erro ao cadastrar: '+e.message; fm.style.color='var(--ered)'; } } },
+      try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{codigo,ativo:true})).select().single(); if(r.error) throw r.error; this.itens.push(r.data); this.clearForm(); this.render(); const fm=this._g('ecom-formmsg'); fm.textContent='✓ Salvo no banco: '+r.data.codigo+' — campos limpos para o próximo.'; fm.style.color='var(--eemerald)';
+        if(this.gerarAposSalvar){ this.gerarAposSalvar=false; this.prefillAnuncio(r.data); } }
+      catch(e){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='Erro ao cadastrar: '+e.message; fm.style.color='var(--ered)'; } } },
+
+  // BUILD 30/07-B: pré-preenche o Cadastro de anúncio a partir do produto recém-gravado. TUDO editável; MLB manual.
+  prefillAnuncio(p){ try{
+      const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v==null?'':v; };
+      set('al-cod', p.codigo);
+      set('al-tit', [p.produto,p.marca,p.modelo,p.capacidade].filter(Boolean).join(' '));
+      set('al-preco', p.preco!=null?p.preco:'');
+      const tp=document.getElementById('al-tipo'); if(tp) tp.value=(p.tipo_anuncio==='premium')?'premium':'classico';
+      set('al-pub', new Date().toISOString().slice(0,10));
+      const am=document.getElementById('al-amsg'); if(am){ am.className='vmsg'; am.style.color='var(--eteal)'; am.textContent='Pré-preenchido de '+p.codigo+' — confira/edite, cole o MLB (anúncio nasce no ML primeiro) e cadastre.'; }
+      const codEl=document.getElementById('al-cod'); if(codEl&&codEl.scrollIntoView) codEl.scrollIntoView({behavior:'smooth',block:'center'});
+    }catch(e){ console.warn('prefillAnuncio:',e.message); } },
 
   async nextCodigo(sigla){ const re=new RegExp('^'+sigla+'-(\\d+)$'); let max=0;
     // Máximo GLOBAL no banco (ativos + desativados): soft-delete mantém o código
