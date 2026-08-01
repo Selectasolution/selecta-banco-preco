@@ -1,3 +1,4 @@
+<!-- BUILD 2026-07-31-B | selecta-banco-preco | (Igor 31/07) DOIS ITENS + AUDITORIA: (1) REINTEGRACAO DO TEMPO REAL: o BUILD 31-A (canal Supabase Realtime selecta-live em ecom_anuncios/ecom_produtos) foi entregue em 31/07 mas NUNCA publicado — detectado pela trava de md5 quando a base recebida voltou como 30-D; SQL da publication ja aplicado (Success 31/07). Este build recoloca o canal: interacao da Alexia reflete em ~1s (Anuncios ativos, Controle, Consulta Produto) e vice-versa; indicador "ao vivo · sincronizado HH:MM:SS"; falha degrada p/ refresh manual. (2) ORDENACAO: Anuncios ativos com MAIS RECENTE INCLUIDO NO TOPO (id desc), ativos e pausados. (3) AUDITORIA MARGENS (sem mudanca de codigo): confirmado que TODAS as superficies da Alexia ja usam margem REAL com colchao — Controle/gate (custo*1.06 no _simMargem), Consulta Produto (ecom.calc) e break-even; unica margem sem colchao e o espelho ML da listagem do Igor, por decisao. Rotulos mantidos como estao, por decisao. | base: 2026-07-30-D -->
 <!-- BUILD 2026-07-30-D | selecta-banco-preco | AJUSTES FINOS (Igor 30/07): (1) BUG: alterar Parametros Comerciais (comissao/imposto/outros/colchao) agora recalcula tambem a simulacao do formulario de cadastro (margem R$, margem %, break-even) alem da tabela — visualizacao ao vivo; NADA e persistido com valores alternativos (decisao explicita: parametros seguem globais e volateis, sem colchao por produto). (2) Anuncios ativos (Analise Comercial): ordenacao muda de alfabetica por codigo para ORDEM DE INCLUSAO (id sequencial do banco, primeiro incluido no topo); pausados idem, na secao propria. | base: 2026-07-30-C REV.1 -->
 <!-- BUILD 2026-07-30-C | selecta-banco-preco | ANALISE COMERCIAL INDIVIDUAL (decisao Igor 30/07 — fim do comando geral em lote): (1) Card de analise em lote (quadrantes ATIVOS/NOVOS via ecom_analise_alvo + Importar para a Alvo) SUBSTITUIDO por "Anuncios ativos — matematica ML": 1 linha POR ANUNCIO (2 anuncios do mesmo produto = 2 linhas, estrategia classico+premium respeitada), cenarios cheio E promocao com "Voce recebe" (preco − comissao real − frete, espelho do painel ML) e margem ML (recebe − imposto − custo NF, SEM colchao — colchao segue so no gate da Alexia). Vigencia: promocao preenchida governa o selo. (2) BANNER DE INTEGRIDADE automatico contra o ULTIMO LOTE do snapshot (capturas 04h50/14h50 seguem ativas): ZUMBI-2 (ativo no lote sem cadastro/produto inativo) + divergencia publicado × registro (nem cheio nem promo) — matematica do proprio app, sem ritual. (3) IMPORT INDIVIDUAL por linha: JSON de UM anuncio, MLB do JSON validado contra o MLB da linha, dedup v1.8 preservada, grava em ecom_resultado_anuncio (condicoes_gap vai em dados) — sugestao nasce no Controle da Alexia como sempre. (4) Comando GERAL v1.9 APOSENTADO: card reduzido ao botao Copiar comando com o texto v2.0 (analise individual: 4 eixos + gap de condicoes do ganhador + piso 10% + bandas de frete + JSON objetivo); export de cenario e data removidos do card (exportarCenario segue vivo na Consulta Produto). Funcoes do fluxo antigo (loadAnalise/renderAnalise/importarAnalise) ficam DORMENTES no codigo, sem chamadas — expurgo em BUILD futuro; ecom_analise_alvo para de receber gravacao; historico intacto. copiarComando ganha guarda p/ ausencia do campo data. REV.1 (30/07, pre-deploy, a pedido do Igor): apresentacao dos Anuncios ativos volta ao FORMATO DE TABELA anterior do quadrante (mesmo cabecalho/colunas compactas, sugestao em 1 linha) com colunas novas MLB e PRECO PRATICADO (promocao vigente, senao cheio; cheio no tooltip); import individual via botao JSON por linha que abre faixa colapsavel. | base: 2026-07-30-B -->
 <!-- BUILD 2026-07-30-B | selecta-banco-preco | REORGANIZACAO CADASTRO (decisao Igor 30/07, piloto reorg v1 aprovado): (1) Sub-aba "Simulador" RENOMEADA para "Consulta Produto" (uso comum Igor+Alexia) — mantem frete oficial, filtros e tabela de consulta; data-sub interno inalterado (simulador) p/ nao quebrar JS. (2) Cards "Parametros comerciais" e "Cadastrar/simular produto" MOVIDOS da Consulta Produto para a ANALISE COMERCIAL (Alvo), acima do quadrante Cadastro de anuncio — so o Igor cadastra produto e anuncio; Controle da Alexia segue so gestao (nunca teve cadastro). IDs de elementos preservados: bindings do modulo ecom intactos. (3) NOVO botao "+ Gravar e gerar anuncio": grava o produto (mesma rotina/validacoes do + Adicionar) e PRE-PREENCHE o Cadastro de anuncio (codigo, titulo, preco, tipo, data hoje) — TUDO editavel; MLB manual (rito: anuncio nasce no ML). Flag zera em erro/validacao/edicao. (4) Quadro do Comando GERAL INTOCADO — substituicao na proxima rodada, por decisao. | base: 2026-07-30-A -->
@@ -1306,7 +1307,7 @@
         <div id="al-atv-integridade"></div>
         <div id="al-atv-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
           <h3 style="margin:0;color:var(--eemerald)">Anúncios ativos — matemática ML</h3>
-          <span class="vmsg" id="al-atv-count" style="margin:0"></span>
+          <span class="vmsg" id="al-atv-count" style="margin:0"></span><span class="vmsg" id="al-atv-live" style="margin:0;color:var(--emuted2);font-size:11px"></span>
           <button class="vbtn sm" id="al-atv-refresh" style="margin-left:auto">↻ Atualizar</button>
         </div>
         <div id="al-atv-list"><div class="ph">Carregando anúncios…</div></div>
@@ -5009,8 +5010,8 @@ const ecomAlvo={
     const ea=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const fR=v=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
     const clsCor={o:'var(--eemerald)',a:'var(--eamber)',c:'var(--ered)'};
-    const ativos=anns.filter(a=>!a.pausado).sort((a,b)=>((+a.id||0)-(+b.id||0))); // ordem de inclusão (BUILD 30-D)
-    const paus=anns.filter(a=>a.pausado).sort((a,b)=>((+a.id||0)-(+b.id||0)));
+    const ativos=anns.filter(a=>!a.pausado).sort((a,b)=>((+b.id||0)-(+a.id||0))); // mais recente no topo (BUILD 31-B)
+    const paus=anns.filter(a=>a.pausado).sort((a,b)=>((+b.id||0)-(+a.id||0)));
     const linha=(an,dim)=>{
       const cod=String(an.produto_codigo||'').trim().toUpperCase();
       const prod=prodMap[cod]||null;
@@ -7380,6 +7381,33 @@ window.importacao = (function () {
 // =====================================================================
 checkSession();
 
+
+// ===== BUILD 31/07-B · TEMPO REAL (Supabase Realtime — reintegracao do 31-A nao publicado) =====
+// Pré-requisito aplicado: ecom_anuncios + ecom_produtos na publication supabase_realtime (Success 31/07).
+(function(){
+  try{
+    let timer=null; const pend={anuncios:false,produtos:false};
+    const setLive=t=>{ const lv=document.getElementById('al-atv-live'); if(lv) lv.textContent=t; };
+    const sync=async()=>{
+      const doA=pend.anuncios, doP=pend.produtos; pend.anuncios=false; pend.produtos=false;
+      try{
+        if(doA){ const r=await sb.from('ecom_anuncios').select('*');
+          if(!r.error && typeof ecomAlvo!=='undefined'){ ecomAlvo.anuncios=r.data||[];
+            if(ecomAlvo.renderAnuncios) ecomAlvo.renderAnuncios();
+            if(ecomAlvo.renderAtivos) ecomAlvo.renderAtivos(); } }
+        if(doP){ if(typeof ecom!=='undefined' && ecom.loaded){ await ecom.loadProdutos(); if(ecom.render) ecom.render(); }
+          if(!doA && typeof ecomAlvo!=='undefined' && ecomAlvo.renderAtivos) ecomAlvo.renderAtivos(); }
+        setLive('· ao vivo · sincronizado '+new Date().toLocaleTimeString('pt-BR'));
+      }catch(e){ console.warn('live sync:',e.message); }
+    };
+    const mark=k=>{ pend[k]=true; clearTimeout(timer); timer=setTimeout(sync,600); };
+    sb.channel('selecta-live')
+      .on('postgres_changes',{event:'*',schema:'public',table:'ecom_anuncios'},()=>mark('anuncios'))
+      .on('postgres_changes',{event:'*',schema:'public',table:'ecom_produtos'},()=>mark('produtos'))
+      .subscribe(st=>{ if(st==='SUBSCRIBED') setLive('· ao vivo');
+        else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){ setLive(''); console.warn('realtime indisponível ('+st+') — telas seguem no modo refresh manual.'); } });
+  }catch(e){ console.warn('realtime não inicializado:',e.message); }
+})();
 </script>
 
 </body>
