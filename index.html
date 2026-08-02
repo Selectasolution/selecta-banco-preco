@@ -1,3 +1,4 @@
+<!-- BUILD 2026-07-31-C | selecta-banco-preco | OVERRIDE DO PISO POR LOGIN (decisao Igor 01/08): no formulario Editar Anuncio do Controle, faixa 5% <= margem vigente < 10% ganha caixa "Liberar abaixo do piso" VISIVEL APENAS no login do dono (selectasolution@gmail.com, oficial p/ tudo). Alexia segue vendo NEGADO seco, sem indicio do caminho. Marcada a caixa, Salvar destrava; ao gravar, CAIXA DE CONFIRMACAO obrigatoria (margem exibida + aviso de registro); log em ecom_anuncio_alteracao ganha marcador abaixo_piso (rotulo ABAIXO_PISO no historico). Margem < 5% ou prejuizo: NEGADO ABSOLUTO para todos, inclusive o dono. Motivo continua obrigatorio. Limite declarado: trava de interface (como todo o gate), suficiente p/ operacao de 2 pessoas; blindagem server-side avaliada e adiada por desproporcional. | base: 2026-07-31-B -->
 <!-- BUILD 2026-07-31-B | selecta-banco-preco | (Igor 31/07) DOIS ITENS + AUDITORIA: (1) REINTEGRACAO DO TEMPO REAL: o BUILD 31-A (canal Supabase Realtime selecta-live em ecom_anuncios/ecom_produtos) foi entregue em 31/07 mas NUNCA publicado — detectado pela trava de md5 quando a base recebida voltou como 30-D; SQL da publication ja aplicado (Success 31/07). Este build recoloca o canal: interacao da Alexia reflete em ~1s (Anuncios ativos, Controle, Consulta Produto) e vice-versa; indicador "ao vivo · sincronizado HH:MM:SS"; falha degrada p/ refresh manual. (2) ORDENACAO: Anuncios ativos com MAIS RECENTE INCLUIDO NO TOPO (id desc), ativos e pausados. (3) AUDITORIA MARGENS (sem mudanca de codigo): confirmado que TODAS as superficies da Alexia ja usam margem REAL com colchao — Controle/gate (custo*1.06 no _simMargem), Consulta Produto (ecom.calc) e break-even; unica margem sem colchao e o espelho ML da listagem do Igor, por decisao. Rotulos mantidos como estao, por decisao. | base: 2026-07-30-D -->
 <!-- BUILD 2026-07-30-D | selecta-banco-preco | AJUSTES FINOS (Igor 30/07): (1) BUG: alterar Parametros Comerciais (comissao/imposto/outros/colchao) agora recalcula tambem a simulacao do formulario de cadastro (margem R$, margem %, break-even) alem da tabela — visualizacao ao vivo; NADA e persistido com valores alternativos (decisao explicita: parametros seguem globais e volateis, sem colchao por produto). (2) Anuncios ativos (Analise Comercial): ordenacao muda de alfabetica por codigo para ORDEM DE INCLUSAO (id sequencial do banco, primeiro incluido no topo); pausados idem, na secao propria. | base: 2026-07-30-C REV.1 -->
 <!-- BUILD 2026-07-30-C | selecta-banco-preco | ANALISE COMERCIAL INDIVIDUAL (decisao Igor 30/07 — fim do comando geral em lote): (1) Card de analise em lote (quadrantes ATIVOS/NOVOS via ecom_analise_alvo + Importar para a Alvo) SUBSTITUIDO por "Anuncios ativos — matematica ML": 1 linha POR ANUNCIO (2 anuncios do mesmo produto = 2 linhas, estrategia classico+premium respeitada), cenarios cheio E promocao com "Voce recebe" (preco − comissao real − frete, espelho do painel ML) e margem ML (recebe − imposto − custo NF, SEM colchao — colchao segue so no gate da Alexia). Vigencia: promocao preenchida governa o selo. (2) BANNER DE INTEGRIDADE automatico contra o ULTIMO LOTE do snapshot (capturas 04h50/14h50 seguem ativas): ZUMBI-2 (ativo no lote sem cadastro/produto inativo) + divergencia publicado × registro (nem cheio nem promo) — matematica do proprio app, sem ritual. (3) IMPORT INDIVIDUAL por linha: JSON de UM anuncio, MLB do JSON validado contra o MLB da linha, dedup v1.8 preservada, grava em ecom_resultado_anuncio (condicoes_gap vai em dados) — sugestao nasce no Controle da Alexia como sempre. (4) Comando GERAL v1.9 APOSENTADO: card reduzido ao botao Copiar comando com o texto v2.0 (analise individual: 4 eixos + gap de condicoes do ganhador + piso 10% + bandas de frete + JSON objetivo); export de cenario e data removidos do card (exportarCenario segue vivo na Consulta Produto). Funcoes do fluxo antigo (loadAnalise/renderAnalise/importarAnalise) ficam DORMENTES no codigo, sem chamadas — expurgo em BUILD futuro; ecom_analise_alvo para de receber gravacao; historico intacto. copiarComando ganha guarda p/ ausencia do campo data. REV.1 (30/07, pre-deploy, a pedido do Igor): apresentacao dos Anuncios ativos volta ao FORMATO DE TABELA anterior do quadrante (mesmo cabecalho/colunas compactas, sugestao em 1 linha) com colunas novas MLB e PRECO PRATICADO (promocao vigente, senao cheio; cheio no tooltip); import individual via botao JSON por linha que abre faixa colapsavel. | base: 2026-07-30-B -->
@@ -4683,7 +4684,7 @@ const ecomAlvo={
       +'<div class="efield"><label>Margem Líquida</label><div class="mginline mute" data-mgp><span class="mgi-pct">—</span><span class="mgi-luc">lucro <b>R$ —</b></span><span class="mgi-selo" hidden></span></div></div></div>'
       +'<div class="efield"><label>Motivo da alteração *</label><input class="vinput" data-ef="motivo" placeholder="descreva por que está alterando (obrigatório para gravar)"></div>'
       +'<div data-alsim="'+id+'" style="display:none"></div>'
-      +'<div style="display:flex;gap:8px;align-items:center"><button class="vbtn sm" data-alsave="'+id+'">Salvar</button><button class="vbtn sm" data-alcancel="'+id+'" style="background:var(--epanel3);color:var(--emuted)">Cancelar</button><span class="vmsg" data-alemsg="'+id+'"></span>'
+      +'<div style="display:flex;gap:8px;align-items:center"><button class="vbtn sm" data-alsave="'+id+'">Salvar</button><button class="vbtn sm" data-alcancel="'+id+'" style="background:var(--epanel3);color:var(--emuted)">Cancelar</button><label data-alovr style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--eamber);cursor:pointer;user-select:none"><input type="checkbox" data-ef="ovr" style="accent-color:var(--eamber)"> ⚠ Liberar abaixo do piso</label><span class="vmsg" data-alemsg="'+id+'"></span>'
       +'<details class="msim-det"><summary>\u25B8 detalhes do cálculo</summary><div class="msim-meta2" data-msim-meta2><div class="meta-grid">—</div></div></details>'
       +'<span data-msim-rep style="margin-left:10px"></span></div>';
     box.style.display='';
@@ -4691,6 +4692,7 @@ const ecomAlvo={
     box.querySelectorAll('[data-ef="cod"],[data-ef="preco"],[data-ef="promo"]').forEach(el=>el.addEventListener('input',()=>this.renderSim(id)));
     box.querySelector('[data-ef="tipo"]').addEventListener('change',()=>this.renderSim(id));
     box.querySelector('[data-ef="tipop"]').addEventListener('change',()=>this.renderSim(id));
+    { const ov=box.querySelector('[data-ef="ovr"]'); if(ov) ov.addEventListener('change',()=>this.renderSim(id)); }
     this.renderSim(id);
   },
   _simAvalGate(id){
@@ -4806,11 +4808,22 @@ const ecomAlvo={
       return;
     }
     const pctEf=efet.margemPct*100;
-    const liberado=pctEf>=10;
-    if(msg&&msg.classList.contains('err')&&!liberado){ /* mantém */ }
-    if(msg){ if(liberado){ msg.className='vmsg'; msg.textContent=''; } else { msg.className='vmsg err'; msg.textContent='NEGADO — margem vigente ('+(promoAtiva?'promoção':'preço cheio')+') abaixo do piso de 10%.'; } }
+    // BUILD 31-C: zonas — >=10 normal · 5..10 override do dono · <5 negado absoluto
+    const ownerEmail='selectasolution@gmail.com';
+    const isOwner=(typeof state!=='undefined'&&state.user&&String(state.user.email||'').trim().toLowerCase()===ownerEmail);
+    const ovrEl=box.querySelector('[data-ef="ovr"]'), ovrLbl=box.querySelector('[data-alovr]');
+    const naFaixa=pctEf>=5&&pctEf<10;
+    if(ovrLbl) ovrLbl.style.display=(isOwner&&naFaixa)?'inline-flex':'none';
+    if(ovrEl&&!(isOwner&&naFaixa)&&ovrEl.checked) ovrEl.checked=false;
+    const override=!!(isOwner&&naFaixa&&ovrEl&&ovrEl.checked);
+    const liberado=pctEf>=10||override;
+    if(msg){
+      if(pctEf>=10){ msg.className='vmsg'; msg.textContent=''; }
+      else if(override){ msg.className='vmsg'; msg.style.color='var(--eamber)'; msg.textContent='⚠ liberação abaixo do piso ativa — margem '+pctEf.toFixed(1)+'%. Será registrada como ABAIXO_PISO.'; }
+      else { msg.className='vmsg err'; msg.style.color=''; msg.textContent='NEGADO — margem vigente ('+(promoAtiva?'promoção':'preço cheio')+') abaixo do piso de 10%.'; }
+    }
     if(btnSave){ if(liberado) btnSave.removeAttribute('disabled'); else btnSave.setAttribute('disabled',''); }
-    wrap._simState={ok:liberado, piorPct:pctEf, comPct:efet.comPct*100, promoAtiva:promoVal!=null, promoVal, tipoP};
+    wrap._simState={ok:liberado, override, piorPct:pctEf, comPct:efet.comPct*100, promoAtiva:promoVal!=null, promoVal, tipoP};
   },
   _fmtBR(n){ const v=Number(n); if(isNaN(v)) return '—'; return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); },
   async salvarEdicao(id){ const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
@@ -4828,6 +4841,7 @@ const ecomAlvo={
     const wrap=box.querySelector('[data-alsim="'+id+'"]');
     const st=wrap&&wrap._simState;
     if(!st||!st.ok){ if(msg){ msg.className='vmsg err'; msg.textContent='Gravação bloqueada: piso 10% não atendido ou dado incompleto.'; } return; }
+    if(st.override){ const okc=window.confirm('Confirmar gravação ABAIXO DO PISO?\n\nMargem vigente: '+(st.piorPct!=null?st.piorPct.toFixed(1):'?')+'%.\nA alteração será registrada como ABAIXO_PISO no histórico.'); if(!okc){ if(msg){ msg.className='vmsg'; msg.textContent='Gravação cancelada.'; } return; } }
     try{ const chk=await sb.from('ecom_produtos').select('codigo').eq('codigo',cod).maybeSingle(); if(chk.error) throw chk.error; if(!chk.data){ if(msg){ msg.className='vmsg err'; msg.textContent='Código não existe no catálogo.'; } return; }
       // Snapshot do estado ANTES do update (preço anterior vem de this.anuncios)
       const anAtual=this.anuncios.find(x=>String(x.id)===String(id));
@@ -4852,7 +4866,7 @@ const ecomAlvo={
       // Promoção: entrada (null->valor), alteração (valor->valor), saída (valor->null) e troca de tipo da promoção
       const houvePromo=((Number(promoAnterior)||0)!==(Number(promoNovo)||0)) || (promoNovo!=null && tipoPromoAnterior!==tipoPromo);
       if(houvePreco||houveTipo||houvePromo){
-        const partes=[]; if(houvePreco) partes.push('preco'); if(houveTipo) partes.push('tipo_anuncio'); if(houvePromo) partes.push('promocao');
+        const partes=[]; if(houvePreco) partes.push('preco'); if(houveTipo) partes.push('tipo_anuncio'); if(houvePromo) partes.push('promocao'); if(st.override) partes.push('abaixo_piso');
         const logRow={ anuncio_sku:cod, mlb:mlb, campo:partes.join('+'),
           preco_anterior:houvePreco?precoAnterior:(houvePromo?promoAnterior:null),
           preco_novo:houvePreco?precoNovo:(houvePromo?promoNovo:null),
@@ -4875,7 +4889,7 @@ const ecomAlvo={
     } else {
       const linhas=hist.map(h=>{
         const dt=fmtDt(h.criado_em);
-        const tag=String(h.campo||'preco').split('+').map(c=>c==='tipo_anuncio'||c==='tipo'?'tipo':(c==='promocao'?'promoção':'preço')).join('+');
+        const tag=String(h.campo||'preco').split('+').map(c=>c==='tipo_anuncio'||c==='tipo'?'tipo':(c==='promocao'?'promoção':(c==='abaixo_piso'?'ABAIXO_PISO':'preço'))).join('+');
         const delta=(h.preco_anterior!=null&&h.preco_novo!=null)?' <span style="color:var(--emuted2)">· R$ '+(+h.preco_anterior).toFixed(2).replace('.',',')+' → R$ '+(+h.preco_novo).toFixed(2).replace('.',',')+'</span>':'';
         const mot=h.motivo?esc(h.motivo):'<span style="color:var(--emuted2)">sem motivo registrado</span>';
         return '<div class="al-histli"><span class="al-histdt">'+esc(dt)+'</span><span class="al-histtag b">'+esc(tag)+'</span><span class="al-histmeta" style="font-size:12px;color:var(--etxt)">'+mot+delta+'</span></div>';
