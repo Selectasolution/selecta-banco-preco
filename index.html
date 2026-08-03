@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-03-A | selecta-banco-preco | VENDAS 2 QUADRANTES + CANDIDATOS NO RADAR (piloto v2 aprovado 03/08; schema ecom_vendas verificado via information_schema nesta sessao — tipo_anuncio NAO existe, desfecho 3: classificacao segue derivada de comissao_pct_efetiva): (1) Aba Vendas: faixa vd-resumo REMOVIDA (controle de envio vive no semaforo linha a linha); empilhamento vertical padrao Alvo — form "Lancar venda" em 3 linhas densas alinhadas a esquerda (larguras fixas) + listagem "Lancadas" MES A MES FECHADO (seletor ◀ mes ▶, competencia data_solicitacao, todos os status do mes, totalizador de VALIDOS = exclui cancelado/perda). (2) TRAVA DO RAZAO imposta pelo app: campos Comissao/Tarifa/Frete so habilitam com Status inicial != a_enviar (venda ao vivo = taxas NULL sempre, nunca estimadas; defesa dupla no DOM e no lancar()); status != a_enviar permite lancar direto do relatorio ML com taxas reais (fees_conferidas=true quando comissao preenchida; tarifa/frete vazios viram 0 SO quando ha comissao) ou em transito com taxas em aberto. Campo Observacoes no form (coluna verificada). (3) Candidatos a importacao MUDOU de Vendas para o Radar de Nicho — 3a sub-aba data-rdtab=cand, card intacto (mesmo al-import/refreshCandidatos), refresh ao abrir a sub-aba. Sem SQL — nenhuma tabela alterada. | base: 2026-08-01-A (md5 74dd1185fc2c814a9c24c1c59b1f3c13 conferido na sessao) -->
 <!-- BUILD 2026-08-01-A | selecta-banco-preco | OVERRIDE v2 (Igor 01/08, apos validacao do 31-C em producao — o "nao salva" era checkbox nao marcado, licao de UX assumida): (1) SELO DE ESTADO: ao abrir a edicao, se a ULTIMA alteracao do MLB no historico carrega abaixo_piso E os valores na tela sao exatamente os gravados, a faixa NEGADO da lugar ao selo ambar "Liberado abaixo do piso — gravado em dd/mm hh:mm" (mensagem e celula da margem); qualquer mudanca de preco/tipo/promocao derruba o selo e o gate volta ao fluxo normal — a liberacao vale por GRAVACAO, nunca por anuncio. (2) CHAVE OBVIA: checkbox miudo vira botao-chave ambar com borda/preenchimento e input ampliado (CSS :has), clicavel no rotulo inteiro. (3) CONFIRMACAO IN-PAGE: window.confirm substituido por dupla confirmacao dentro do app (1o clique no Salvar avisa "clique novamente p/ confirmar ABAIXO DO PISO", 2o clique grava) — imune ao bloqueio de dialogos do navegador; qualquer alteracao no form cancela a pendencia. Sem SQL. | base: 2026-07-31-D (build de outro chat sobre o 31-C; md5 conferido) -->
 <!-- BUILD 2026-07-31-D | selecta-banco-preco | CATEGORIA COMPRESSOR PORTATIL (sigla CMP — proposta Claude, PENDENTE conferencia contra catalogo do Banco de Preco antes do 1o produto). Comissao estimativa 14/19 (teto conservador; enquadramento ML provavel: Acessorios p/ Veiculos ~12/17 — aferir no painel). NOTA: BEL (26-B) ausente desta base — nao reaplicada, aguardando decisao do Igor. | base: 31-C (override do piso por login) -->
 <!-- BUILD 2026-07-31-B | selecta-banco-preco | (Igor 31/07) DOIS ITENS + AUDITORIA: (1) REINTEGRACAO DO TEMPO REAL: o BUILD 31-A (canal Supabase Realtime selecta-live em ecom_anuncios/ecom_produtos) foi entregue em 31/07 mas NUNCA publicado — detectado pela trava de md5 quando a base recebida voltou como 30-D; SQL da publication ja aplicado (Success 31/07). Este build recoloca o canal: interacao da Alexia reflete em ~1s (Anuncios ativos, Controle, Consulta Produto) e vice-versa; indicador "ao vivo · sincronizado HH:MM:SS"; falha degrada p/ refresh manual. (2) ORDENACAO: Anuncios ativos com MAIS RECENTE INCLUIDO NO TOPO (id desc), ativos e pausados. (3) AUDITORIA MARGENS (sem mudanca de codigo): confirmado que TODAS as superficies da Alexia ja usam margem REAL com colchao — Controle/gate (custo*1.06 no _simMargem), Consulta Produto (ecom.calc) e break-even; unica margem sem colchao e o espelho ML da listagem do Igor, por decisao. Rotulos mantidos como estao, por decisao. | base: 2026-07-30-D -->
@@ -819,6 +820,23 @@
     #tab-ecommerce .vform label{display:block;font-size:11px;color:var(--emuted);margin-bottom:5px}
     #tab-ecommerce .vrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     #tab-ecommerce .vrow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    /* BUILD 2026-08-03-A: linhas densas alinhadas à esquerda (larguras fixas, sem esticar) */
+    #tab-ecommerce .vlinha{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+    #tab-ecommerce .vlinha .efield{margin-bottom:10px}
+    #tab-ecommerce .vd-mlbox{border-left:2px solid var(--eteal);padding-left:10px;margin-top:4px}
+    #tab-ecommerce .vd-mlbox.travado{border-left-color:var(--eborder)}
+    #tab-ecommerce .vd-mlbox .vinput:disabled{opacity:.35;cursor:not-allowed}
+    #tab-ecommerce .vd-mlhint{font-size:11.5px;color:var(--eteal);margin:0 0 8px}
+    #tab-ecommerce .vd-mlbox.travado .vd-mlhint{color:var(--emuted2)}
+    #tab-ecommerce .vd-messel{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    #tab-ecommerce .vd-messel button{background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:5px 11px;cursor:pointer;font-size:12px}
+    #tab-ecommerce .vd-mes{font-weight:700;font-size:14px;color:var(--eteal);font-family:var(--emono)}
+    #tab-ecommerce .vd-mestot{margin-left:auto;font-size:12.5px;color:var(--emuted);font-family:var(--emono)}
+    #tab-ecommerce .vpill.st-aenv{background:rgba(245,158,11,.15);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
+    #tab-ecommerce .vpill.st-env{background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.35)}
+    #tab-ecommerce .vpill.st-ent{background:rgba(16,185,129,.15);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
+    #tab-ecommerce .vpill.st-can{background:rgba(95,111,140,.18);color:var(--emuted2);border:1px solid var(--eborder)}
+    #tab-ecommerce .vpill.st-per{background:rgba(239,68,68,.15);color:var(--ered);border:1px solid rgba(239,68,68,.35)}
     #tab-ecommerce .vinput{width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:8px;padding:9px 11px;font:inherit}
     #tab-ecommerce .vinput.mono{font-family:var(--emono);font-variant-numeric:tabular-nums}
     #tab-ecommerce .vinput:focus{outline:2px solid var(--eemerald);border-color:transparent}
@@ -1110,39 +1128,45 @@
 
     <!-- ===== SUBPASTA: VENDAS ===== -->
     <div id="ecom-sub-vendas" class="ecom-subpanel" style="display:none">
-      <div id="vd-resumo" class="rp-idxrow" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;max-width:560px"></div>
-      <div class="vgrid">
-        <div class="ecard vform">
-          <h3>Lançar venda</h3>
-          <div class="vrow3">
-            <div class="efield"><label>Nº do pedido ML *</label><input class="vinput mono" id="vd-ped" placeholder="2000000000000"></div>
-            <div class="efield"><label>Comprador (apelido)</label><input class="vinput" id="vd-comp" placeholder="opcional"></div>
-            <div class="efield"><label>UF</label><input class="vinput mono" id="vd-uf" maxlength="2" placeholder="SP"></div>
-          </div>
-          <div class="efield"><label>Data/hora da solicitação *</label><input class="vinput mono" id="vd-dt" type="datetime-local"></div>
-          <div class="efield"><label>Código do produto · SKU *</label><input class="vinput mono" id="vd-cod" placeholder="ex.: SSD-0001"></div>
-          <div class="vpulled" id="vd-nome">digite o SKU — produto, anúncio e preço são puxados</div>
-          <div id="vd-anuncio-wrap"></div>
-          <div class="vrow" style="margin-top:12px">
-            <div class="efield"><label>Qtd *</label><input class="vinput mono" id="vd-qtd" type="number" value="1" min="1"></div>
-            <div class="efield"><label>Preço un. * <span style="color:var(--emuted);font-weight:400">(do anúncio · editável)</span></label><input class="vinput mono" id="vd-preco" type="number" step="0.01" placeholder="0,00"></div>
-          </div>
-          <div class="vrow">
-            <div class="efield"><label>Postar até</label><input class="vinput mono" id="vd-pp" type="date"></div>
-            <div class="efield"><label>Previsão de entrega</label><input class="vinput mono" id="vd-pe" type="date"></div>
-          </div>
-          <button class="vbtn" id="vd-add" style="margin-top:6px">Lançar venda</button>
-          <div class="vmsg" id="vd-msg"></div>
+      <div class="ecard vform" style="margin-bottom:14px">
+        <h3>Lançar venda</h3>
+        <div class="vlinha">
+          <div class="efield" style="width:165px"><label>Nº pedido ML *</label><input class="vinput mono" id="vd-ped" placeholder="2000000000000"></div>
+          <div class="efield" style="width:180px"><label>Data/hora *</label><input class="vinput mono" id="vd-dt" type="datetime-local"></div>
+          <div class="efield" style="width:125px"><label>SKU *</label><input class="vinput mono" id="vd-cod" placeholder="ex.: SEG-0001"></div>
+          <div class="efield" style="width:64px"><label>Qtd *</label><input class="vinput mono" id="vd-qtd" type="number" value="1" min="1"></div>
+          <div class="efield" style="width:108px"><label>Preço un. *</label><input class="vinput mono" id="vd-preco" type="number" step="0.01" placeholder="0,00" title="puxado do anúncio · editável"></div>
+          <div class="efield" style="width:56px"><label>UF</label><input class="vinput mono" id="vd-uf" maxlength="2" placeholder="SP"></div>
+          <div class="efield" style="width:160px"><label>Comprador</label><input class="vinput" id="vd-comp" placeholder="opcional"></div>
         </div>
-        <div class="ecard">
-          <h3>Lançadas — ativas, por data</h3>
-          <div id="vd-list"><div class="ph">carregando…</div></div>
+        <div class="vpulled" id="vd-nome">digite o SKU — produto, anúncio e preço são puxados</div>
+        <div id="vd-anuncio-wrap"></div>
+        <div id="vd-mlbox" class="vd-mlbox travado">
+          <div class="vd-mlhint" id="vd-mlhint">🔒 Dados do relatório ML — travados: venda ao vivo entra com taxas em aberto (convenção do razão)</div>
+          <div class="vlinha">
+            <div class="efield" style="width:125px"><label>Status inicial</label><select class="vinput mono" id="vd-status"><option value="a_enviar">a_enviar</option><option value="enviado">enviado</option><option value="entregue">entregue</option><option value="cancelado">cancelado</option><option value="perda">perda</option></select></div>
+            <div class="efield" style="width:112px"><label>Comissão R$</label><input class="vinput mono" id="vd-com" type="number" step="0.01" placeholder="—" disabled></div>
+            <div class="efield" style="width:112px"><label>Tarifa fixa R$</label><input class="vinput mono" id="vd-tar" type="number" step="0.01" placeholder="—" disabled></div>
+            <div class="efield" style="width:118px"><label>Frete líq. R$</label><input class="vinput mono" id="vd-fre" type="number" step="0.01" placeholder="—" disabled></div>
+          </div>
         </div>
-      <div class="ecard" style="margin-top:14px;padding:13px">
-        <h3 style="font-size:13px">Candidatos a importação</h3>
-        <div id="al-import"><div class="ph">carregando…</div></div>
-        <p class="hint" style="font-size:12.5px;color:var(--emuted);margin-top:8px">Alimentado pelas VENDAS lançadas aqui (saída + margem acima da média — vendas desatualizadas = candidatos errados). Margem importada depende da DUIMP — estudo no Import OS / Mesa de Análise.</p>
+        <div class="vlinha" style="margin-top:8px">
+          <div class="efield" style="width:140px"><label>Postar até</label><input class="vinput mono" id="vd-pp" type="date"></div>
+          <div class="efield" style="width:140px"><label>Previsão entrega</label><input class="vinput mono" id="vd-pe" type="date"></div>
+          <div class="efield" style="width:250px"><label>Observações</label><input class="vinput" id="vd-obs" placeholder="opcional"></div>
+          <div class="efield" style="width:auto"><label>&nbsp;</label><button class="vbtn" id="vd-add">Lançar venda</button></div>
+        </div>
+        <div class="vmsg" id="vd-msg"></div>
       </div>
+      <div class="ecard">
+        <h3>Lançadas</h3>
+        <div class="vd-messel">
+          <button id="vd-mes-prev" title="mês anterior">◀</button>
+          <span class="vd-mes" id="vd-mes-label">—</span>
+          <button id="vd-mes-next" title="mês seguinte">▶</button>
+          <span class="vd-mestot" id="vd-mes-tot"></span>
+        </div>
+        <div id="vd-list"><div class="ph">carregando…</div></div>
       </div>
     </div>
 
@@ -1407,6 +1431,7 @@
       <div class="alsubbar" id="rdtabbar" style="margin-bottom:10px">
         <button class="alsub-btn active" data-rdtab="pesquisa">🔎 Pesquisa</button>
         <button class="alsub-btn" data-rdtab="alvo">🎯 Itens alvo pesquisa</button>
+        <button class="alsub-btn" data-rdtab="cand">📦 Candidatos importação</button>
       </div>
 
       <div id="rdtab-pesquisa">
@@ -1505,6 +1530,15 @@
         <div id="pq-alvos"><div class="ph">carregando…</div></div>
 
         <p class="note" style="margin-top:10px">Método declarado: velocidade = Δ avaliações/semana do anúncio; fluxo estimado do nicho = soma do top-3 × razão 1:10–1:30 (avaliação→venda, ML) — <b>piso conservador com asterisco, nunca faturamento</b>. Faixa "+N vendidos" entra como texto exato do print (salto de faixa = piso garantido). Arquivar alvo é decisão exclusiva do Igor. Rodada parada não afeta nada do dia a dia — no máximo atrasa uma decisão.</p>
+      </div>
+
+      <!-- BUILD 2026-08-03-A: Candidatos a importação MUDOU de Vendas para cá (card como estava; melhorias de formato = ciclo futuro) -->
+      <div id="rdtab-cand" style="display:none">
+        <div class="ecard" style="padding:13px">
+          <h3 style="font-size:13px">Candidatos a importação</h3>
+          <div id="al-import"><div class="ph">carregando…</div></div>
+          <p class="hint" style="font-size:12.5px;color:var(--emuted);margin-top:8px">Alimentado pelas VENDAS lançadas (saída + margem acima da média — vendas desatualizadas = candidatos errados). Margem importada depende da DUIMP — estudo no Import OS / Mesa de Análise.</p>
+        </div>
       </div>
     </div>
 
@@ -3987,9 +4021,25 @@ $$('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.
 const UFS=['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 const ecomVendas={
   prod:null, anuncios:[], anuncioMlb:null, loaded:false,
+  mes:null, // BUILD 2026-08-03-A: 'YYYY-MM' do mês exibido na listagem (padrão = mês corrente)
   _g:id=>document.getElementById(id),
   fmt:v=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
   nowLocal(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); },
+  // ===== BUILD 2026-08-03-A · seletor de mês (competência = data_solicitacao, mesma régua dos Relatórios) =====
+  mesAtual(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); },
+  mesShift(delta){ const [y,m]=this.mes.split('-').map(Number); const d=new Date(y,m-1+delta,1);
+    this.mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); this.load(); },
+  mesLabelTxt(){ const nm=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const [y,m]=this.mes.split('-').map(Number); return nm[m-1]+'/'+y; },
+  // ===== BUILD 2026-08-03-A · TRAVA das taxas ML: o app IMPÕE a convenção do razão =====
+  // a_enviar (venda ao vivo) => taxas obrigatoriamente NULL (nunca estimadas);
+  // demais status (origem: relatório ML) => campos habilitam para taxas REAIS.
+  travaML(){ const st=this._g('vd-status'); if(!st) return; const aberto=(st.value!=='a_enviar');
+    ['vd-com','vd-tar','vd-fre'].forEach(id=>{ const el=this._g(id); if(!el) return; el.disabled=!aberto; if(!aberto) el.value=''; });
+    const box=this._g('vd-mlbox'), hint=this._g('vd-mlhint');
+    if(box) box.classList.toggle('travado',!aberto);
+    if(hint) hint.textContent=aberto?'Dados do relatório ML — taxas reais do relatório (venda finalizada)':'🔒 Dados do relatório ML — travados: venda ao vivo entra com taxas em aberto (convenção do razão)';
+  },
   async lookup(){
     const cod=this._g('vd-cod').value.trim().toUpperCase(); const box=this._g('vd-nome'); const wrap=this._g('vd-anuncio-wrap'); box.style.cssText='';
     this.anuncios=[]; this.anuncioMlb=null;
@@ -4032,6 +4082,13 @@ const ecomVendas={
     if(faltas.length){ msg.className='vmsg err'; msg.textContent='Falta preencher: '+faltas.join(', ')+'.'; return; }
     if(uf && !UFS.includes(uf)){ msg.className='vmsg err'; msg.textContent='UF inválida.'; return; }
     const pp=this._g('vd-pp').value, pe=this._g('vd-pe').value;
+    // BUILD 2026-08-03-A: status inicial + taxas do relatório ML. TRAVA imposta também aqui
+    // (defesa em profundidade): a_enviar => taxas NULL sempre, mesmo que o DOM seja burlado.
+    const stSel=this._g('vd-status'); const stIni=stSel?stSel.value:'a_enviar';
+    const numOf=id=>{ const el=this._g(id); if(!el||el.value==='') return null; const v=parseFloat(el.value); return isNaN(v)?null:v; };
+    const aoVivo=(stIni==='a_enviar');
+    const com=aoVivo?null:numOf('vd-com'), tar=aoVivo?null:numOf('vd-tar'), fre=aoVivo?null:numOf('vd-fre');
+    const obs=(this._g('vd-obs')?this._g('vd-obs').value.trim():'')||null;
     const dados={ canal:'mercado_livre', ml_pedido_id:ped, comprador:this._g('vd-comp').value.trim()||null,
       produto_id:this.prod.id, produto:this.prod.produto, marca:this.prod.marca, modelo:this.prod.modelo, produto_codigo:this.prod.codigo,
       anuncio_mlb:this.anuncioMlb, custo_unitario:(this.prod.custo!=null?this.prod.custo:null),
@@ -4039,13 +4096,16 @@ const ecomVendas={
       data_solicitacao:new Date(dt).toISOString(),
       prazo_postagem: pp?new Date(pp+'T23:59:59').toISOString():null,
       prazo_entrega: pe?new Date(pe+'T23:59:59').toISOString():null,
-      status:'a_enviar' };
+      status:stIni, observacoes:obs,
+      comissao_valor:com, tarifa_fixa_valor:(com!=null?(tar!=null?tar:0):tar), frete_valor:(com!=null?(fre!=null?fre:0):fre),
+      fees_conferidas:(com!=null) };
     try{ const r=await sb.from('ecom_vendas').insert(dados).select().single(); if(r.error) throw r.error;
-      ['vd-ped','vd-comp','vd-cod','vd-preco','vd-uf','vd-pp','vd-pe'].forEach(i=>this._g(i).value='');
+      ['vd-ped','vd-comp','vd-cod','vd-preco','vd-uf','vd-pp','vd-pe','vd-obs','vd-com','vd-tar','vd-fre'].forEach(i=>{ const el=this._g(i); if(el) el.value=''; });
       this._g('vd-qtd').value='1'; this._g('vd-dt').value=this.nowLocal(); this.prod=null; this.anuncios=[]; this.anuncioMlb=null;
+      if(stSel){ stSel.value='a_enviar'; } this.travaML();
       this._g('vd-nome').style.cssText=''; this._g('vd-nome').innerHTML='digite o SKU — produto, anúncio e preço são puxados';
       this._g('vd-anuncio-wrap').innerHTML=''; this.calcPostarAte();
-      msg.className='vmsg ok'; msg.textContent='✓ Venda lançada · pedido criado no Financeiro'; setTimeout(()=>{msg.textContent='';},3000);
+      msg.className='vmsg ok'; msg.textContent=aoVivo?'✓ Venda lançada · pedido criado no Financeiro':'✓ Venda lançada como '+stIni+(com!=null?' · taxas reais gravadas':' · taxas em aberto (fechar com export)'); setTimeout(()=>{msg.textContent='';},3500);
       this.load();
     }catch(e){ msg.className='vmsg err'; msg.textContent=(e.code==='23505'||/duplicate|unique/i.test(e.message||''))?'Essa venda (pedido + produto) já foi lançada.':'Erro: '+e.message; }
   },
@@ -4060,25 +4120,36 @@ const ecomVendas={
     const dias=Math.round((new Date(hoje+'T12:00:00')-new Date(limite+'T12:00:00'))/86400000);
     return {bucket:'atr', pill:'<span class="vpill err">ATRASADA · +'+dias+'d</span>'};
   },
-  resumo(itens){ const box=this._g('vd-resumo'); if(!box) return;
-    let ok=0,lim=0,atr=0,sem=0;
-    itens.forEach(v=>{ const b=this.semaforo(v).bucket; if(b==='ok')ok++; else if(b==='lim')lim++; else if(b==='atr')atr++; else if(b==='sem')sem++; });
-    const card=(l,n,cor)=>'<div class="rp-idx'+(n>0&&cor==='bad'?' bad':(n>0&&cor==='good'?' good':''))+'" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px"><span class="l" style="margin:0">'+l+'</span><span style="font-family:var(--emono);font-size:15px;font-weight:700;color:'+(n>0?(cor==='good'?'var(--eemerald)':cor==='warn'?'var(--eamber)':'var(--ered)'):'var(--emuted2)')+'">'+n+'</span></div>';
-    box.innerHTML=card('🟢 No prazo',ok,'good')+card('🟡 Limite hoje',lim,'warn')+card('🔴 Atrasadas',atr,'bad')
-      +(sem>0?'<div style="grid-column:1/-1;font-size:11px;color:var(--eamber)">⚠ '+sem+' venda(s) a enviar sem "Postar até" cadastrado — fora do semáforo.</div>':'');
-  },
+  // BUILD 2026-08-03-A: load por MÊS FECHADO (todas as vendas do mês, todos os status).
+  // Competência = data_solicitacao (mesma régua do Termômetro e dos Relatórios).
   async load(){ const box=this._g('vd-list');
-    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,preco_venda,quantidade,status,data_solicitacao,prazo_postagem').eq('status','a_enviar').order('data_solicitacao',{ascending:false});
-      if(r.error) throw r.error; const itens=r.data||[]; this.render(itens); this.resumo(itens);
-    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar: '+e.message+'</div>'; const rs=this._g('vd-resumo'); if(rs) rs.innerHTML=''; }
+    if(!this.mes) this.mes=this.mesAtual();
+    const lbl=this._g('vd-mes-label'); if(lbl) lbl.textContent=this.mesLabelTxt();
+    const [y,m]=this.mes.split('-').map(Number);
+    const d0=new Date(y,m-1,1), d1=new Date(y,m,1);
+    try{ const r=await sb.from('ecom_vendas')
+        .select('id,ml_pedido_id,produto,produto_codigo,preco_venda,quantidade,status,data_solicitacao,prazo_postagem')
+        .gte('data_solicitacao',d0.toISOString()).lt('data_solicitacao',d1.toISOString())
+        .order('data_solicitacao',{ascending:false});
+      if(r.error) throw r.error; const itens=r.data||[]; this.render(itens); this.totalizador(itens);
+    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar: '+e.message+'</div>'; const tt=this._g('vd-mes-tot'); if(tt) tt.textContent=''; }
+  },
+  // Totalizador do mês: VÁLIDOS = tudo menos cancelado/perda (mesma régua do "total vendido válido" do razão)
+  totalizador(itens){ const tt=this._g('vd-mes-tot'); if(!tt) return;
+    const val=itens.filter(v=>v.status!=='cancelado'&&v.status!=='perda');
+    const soma=val.reduce((s,v)=>s+((+v.preco_venda||0)*(+v.quantidade||1)),0);
+    tt.textContent=itens.length?val.length+' pedidos · R$ '+this.fmt(soma)+' válidos'+(itens.length>val.length?' · '+(itens.length-val.length)+' cancel/perda':''):'';
   },
   render(itens){ const box=this._g('vd-list');
-    if(!itens.length){ box.innerHTML='<div class="ph">nenhuma venda ativa</div>'; return; }
+    if(!itens.length){ box.innerHTML='<div class="ph">nenhuma venda no mês selecionado</div>'; return; }
+    const stp={a_enviar:['st-aenv','a enviar'],enviado:['st-env','enviado'],entregue:['st-ent','entregue'],concluido:['st-ent','concluído'],cancelado:['st-can','cancelado'],perda:['st-per','perda']};
     box.innerHTML=itens.map(v=>{
       const dt=new Date(v.data_solicitacao).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-      const pill=this.semaforo(v).pill;
-      const btnPost=v.status==='a_enviar'?'<button class="vbtn sm" data-act="postar" data-id="'+v.id+'">postado</button>':'';
-      return '<div data-vwrap="'+v.id+'"><div class="vli"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · '+(v.produto_codigo||'')+' · '+dt+' · R$ '+this.fmt(v.preco_venda)+'</div></div>'+pill+'<div style="display:flex;gap:6px">'+btnPost+'</div></div></div>';
+      const st=stp[v.status]||['mut',v.status];
+      const sem=(v.status==='a_enviar')?this.semaforo(v).pill:'';
+      const btnPost=v.status==='a_enviar'?'<div style="display:flex;gap:6px"><button class="vbtn sm" data-act="postar" data-id="'+v.id+'">postado</button></div>':'';
+      const q=(+v.quantidade||1); const qtxt=q>1?q+'× ':'';
+      return '<div data-vwrap="'+v.id+'"><div class="vli"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · '+(v.produto_codigo||'')+' · '+dt+' · '+qtxt+'R$ '+this.fmt(v.preco_venda)+'</div></div><span class="vpill '+st[0]+'">'+st[1]+'</span>'+sem+btnPost+'</div></div>';
     }).join('');
   },
   // "postado" abre confirmação inline: data/hora da postagem (prefill agora) — confirmar PARA o cronômetro
@@ -5930,7 +6001,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
   const sub=b.dataset.sub;
   $$('.ecom-subpanel').forEach(p=>{ p.style.display=(p.id==='ecom-sub-'+sub)?'':'none'; });
-  if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value){ dt.value=ecomVendas.nowLocal(); } ecomVendas.calcPostarAte(); ecomVendas.loaded=true; ecomVendas.load(); try{ ecomAlvo.refreshCandidatos(); }catch(_e){} }
+  if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value){ dt.value=ecomVendas.nowLocal(); } ecomVendas.calcPostarAte(); ecomVendas.loaded=true; ecomVendas.load(); } // BUILD 2026-08-03-A: Candidatos mudou para o Radar
   if(sub==='financeiro'){ ecomFinanceiro.load(); }
   if(sub==='relatorios'){ ecomRelatorios.load(); }
   if(sub==='alvo'){ ecomAlvo.load(); }
@@ -5944,10 +6015,13 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
     ['vend','proc'].forEach(v=>{ const el=document.getElementById('rdview-'+v); if(el) el.style.display=(b.dataset.rdview===v)?'':'none'; }); });
   const tbar=document.getElementById('rdtabbar'); if(tbar) tbar.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
     tbar.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x===b));
-    const alvo=b.dataset.rdtab==='alvo';
-    const tp=document.getElementById('rdtab-pesquisa'); if(tp) tp.style.display=alvo?'none':'';
-    const pv=document.getElementById('rdview-pesq'); if(pv) pv.style.display=alvo?'':'none';
-    if(alvo && !ecomPesq.loaded) ecomPesq.load(); });
+    // BUILD 2026-08-03-A: 3 sub-abas — pesquisa | alvo | cand (Candidatos a importação, ex-Vendas)
+    const t=b.dataset.rdtab;
+    const tp=document.getElementById('rdtab-pesquisa'); if(tp) tp.style.display=(t==='pesquisa')?'':'none';
+    const pv=document.getElementById('rdview-pesq'); if(pv) pv.style.display=(t==='alvo')?'':'none';
+    const cd=document.getElementById('rdtab-cand'); if(cd) cd.style.display=(t==='cand')?'':'none';
+    if(t==='alvo' && !ecomPesq.loaded) ecomPesq.load();
+    if(t==='cand'){ try{ ecomAlvo.refreshCandidatos(); }catch(_e){} } });
   // ITENS ALVO PESQUISA v1.0 — wiring
   const pqAdd=document.getElementById('pq-add'); if(pqAdd) pqAdd.addEventListener('click',()=>ecomPesq.cadastrar());
   const pqExp=document.getElementById('pq-export'); if(pqExp) pqExp.addEventListener('click',()=>ecomPesq.exportar());
@@ -6002,6 +6076,10 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const vddt=ecomVendas._g('vd-dt'); if(vddt) vddt.addEventListener('change',()=>ecomVendas.calcPostarAte());
   const add=ecomVendas._g('vd-add'); if(add) add.addEventListener('click',()=>ecomVendas.lancar());
   const uf=ecomVendas._g('vd-uf'); if(uf) uf.addEventListener('input',()=>{ uf.value=uf.value.toUpperCase(); });
+  // BUILD 2026-08-03-A: trava das taxas ML comandada pelo Status inicial + seletor de mês da listagem
+  const vst=ecomVendas._g('vd-status'); if(vst) vst.addEventListener('change',()=>ecomVendas.travaML());
+  const mp=ecomVendas._g('vd-mes-prev'); if(mp) mp.addEventListener('click',()=>ecomVendas.mesShift(-1));
+  const mn=ecomVendas._g('vd-mes-next'); if(mn) mn.addEventListener('click',()=>ecomVendas.mesShift(1));
   const list=ecomVendas._g('vd-list');
   if(list) list.addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return; const id=b.dataset.id;
     if(b.dataset.act==='postar') ecomVendas.openPostar(id);
