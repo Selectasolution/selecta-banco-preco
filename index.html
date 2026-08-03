@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-01-A | selecta-banco-preco | OVERRIDE v2 (Igor 01/08, apos validacao do 31-C em producao — o "nao salva" era checkbox nao marcado, licao de UX assumida): (1) SELO DE ESTADO: ao abrir a edicao, se a ULTIMA alteracao do MLB no historico carrega abaixo_piso E os valores na tela sao exatamente os gravados, a faixa NEGADO da lugar ao selo ambar "Liberado abaixo do piso — gravado em dd/mm hh:mm" (mensagem e celula da margem); qualquer mudanca de preco/tipo/promocao derruba o selo e o gate volta ao fluxo normal — a liberacao vale por GRAVACAO, nunca por anuncio. (2) CHAVE OBVIA: checkbox miudo vira botao-chave ambar com borda/preenchimento e input ampliado (CSS :has), clicavel no rotulo inteiro. (3) CONFIRMACAO IN-PAGE: window.confirm substituido por dupla confirmacao dentro do app (1o clique no Salvar avisa "clique novamente p/ confirmar ABAIXO DO PISO", 2o clique grava) — imune ao bloqueio de dialogos do navegador; qualquer alteracao no form cancela a pendencia. Sem SQL. | base: 2026-07-31-D (build de outro chat sobre o 31-C; md5 conferido) -->
 <!-- BUILD 2026-07-31-D | selecta-banco-preco | CATEGORIA COMPRESSOR PORTATIL (sigla CMP — proposta Claude, PENDENTE conferencia contra catalogo do Banco de Preco antes do 1o produto). Comissao estimativa 14/19 (teto conservador; enquadramento ML provavel: Acessorios p/ Veiculos ~12/17 — aferir no painel). NOTA: BEL (26-B) ausente desta base — nao reaplicada, aguardando decisao do Igor. | base: 31-C (override do piso por login) -->
 <!-- BUILD 2026-07-31-B | selecta-banco-preco | (Igor 31/07) DOIS ITENS + AUDITORIA: (1) REINTEGRACAO DO TEMPO REAL: o BUILD 31-A (canal Supabase Realtime selecta-live em ecom_anuncios/ecom_produtos) foi entregue em 31/07 mas NUNCA publicado — detectado pela trava de md5 quando a base recebida voltou como 30-D; SQL da publication ja aplicado (Success 31/07). Este build recoloca o canal: interacao da Alexia reflete em ~1s (Anuncios ativos, Controle, Consulta Produto) e vice-versa; indicador "ao vivo · sincronizado HH:MM:SS"; falha degrada p/ refresh manual. (2) ORDENACAO: Anuncios ativos com MAIS RECENTE INCLUIDO NO TOPO (id desc), ativos e pausados. (3) AUDITORIA MARGENS (sem mudanca de codigo): confirmado que TODAS as superficies da Alexia ja usam margem REAL com colchao — Controle/gate (custo*1.06 no _simMargem), Consulta Produto (ecom.calc) e break-even; unica margem sem colchao e o espelho ML da listagem do Igor, por decisao. Rotulos mantidos como estao, por decisao. | base: 2026-07-30-D -->
 <!-- BUILD 2026-07-30-D | selecta-banco-preco | AJUSTES FINOS (Igor 30/07): (1) BUG: alterar Parametros Comerciais (comissao/imposto/outros/colchao) agora recalcula tambem a simulacao do formulario de cadastro (margem R$, margem %, break-even) alem da tabela — visualizacao ao vivo; NADA e persistido com valores alternativos (decisao explicita: parametros seguem globais e volateis, sem colchao por produto). (2) Anuncios ativos (Analise Comercial): ordenacao muda de alfabetica por codigo para ORDEM DE INCLUSAO (id sequencial do banco, primeiro incluido no topo); pausados idem, na secao propria. | base: 2026-07-30-C REV.1 -->
@@ -874,6 +875,11 @@
     #tab-ecommerce .msim-main .msim-selo.v{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
     #tab-ecommerce .msim-main .msim-selo.r{background:rgba(239,68,68,.12);color:var(--ered);border:1px solid rgba(239,68,68,.4)}
     #tab-ecommerce .msim-main .msim-selo.warn{background:rgba(245,158,11,.12);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
+    /* BUILD 01/08-A: chave do override + selo de estado */
+    #tab-ecommerce label[data-alovr]{border:1px solid rgba(245,158,11,.5);border-radius:8px;padding:7px 14px;background:rgba(245,158,11,.07);font-weight:700;font-size:12.5px}
+    #tab-ecommerce label[data-alovr]:hover{background:rgba(245,158,11,.14)}
+    #tab-ecommerce label[data-alovr]:has(input:checked){background:rgba(245,158,11,.22);color:#fbbf24;border-color:var(--eamber)}
+    #tab-ecommerce label[data-alovr] input{transform:scale(1.35);margin-right:4px;accent-color:var(--eamber)}
     /* BUILD 30/07-C: anúncios ativos + integridade */
     #tab-ecommerce .atv-integ{border-radius:8px;padding:7px 11px;font-size:12px;margin-bottom:8px}
     #tab-ecommerce .atv-integ.v{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);color:var(--eemerald)}
@@ -4693,6 +4699,16 @@ const ecomAlvo={
     box.querySelector('[data-ef="tipo"]').addEventListener('change',()=>this.renderSim(id));
     box.querySelector('[data-ef="tipop"]').addEventListener('change',()=>this.renderSim(id));
     { const ov=box.querySelector('[data-ef="ovr"]'); if(ov) ov.addEventListener('change',()=>this.renderSim(id)); }
+    // BUILD 01/08-A: baseline dos valores gravados + última liberação ABAIXO_PISO (p/ selo de estado)
+    { const wrapEl=box.querySelector('[data-alsim="'+id+'"]');
+      if(wrapEl){
+        wrapEl._baseline={ preco:an.preco!=null?+an.preco:null, tipo:(an.tipo_anuncio==='premium'?'premium':'classico'),
+          promo:an.preco_promocao!=null?+an.preco_promocao:null, tipop:(an.tipo_promocao==='premium'?'premium':'classico') };
+        const hh=(this.altHist&&(this.altHist[an.anuncio_mlb]||this.altHist[this._normMlb(an.anuncio_mlb)]))||[];
+        const ult=hh[0]||null;
+        wrapEl._ovrGravado=(ult&&String(ult.campo||'').indexOf('abaixo_piso')>=0)?{quando:ult.criado_em}:null;
+        wrapEl._ovrConfirm=false;
+      } }
     this.renderSim(id);
   },
   _simAvalGate(id){
@@ -4808,6 +4824,22 @@ const ecomAlvo={
       return;
     }
     const pctEf=efet.margemPct*100;
+    wrap._ovrConfirm=false; // qualquer recálculo cancela confirmação pendente (BUILD 01/08-A)
+    // BUILD 01/08-A: selo de estado — liberação já gravada + form intocado = não gritar NEGADO
+    { const bl=wrap._baseline||null;
+      const eqN=(x,y)=>((x==null&&y==null)||(x!=null&&y!=null&&Math.abs(+x-+y)<0.005));
+      const intocado=!!(bl&&eqN(gate.preco,bl.preco)&&gate.tipo===bl.tipo&&eqN(promoVal,bl.promo)&&(promoVal==null||tipoP===bl.tipop));
+      if(wrap._ovrGravado&&intocado&&pctEf<10){
+        const qd=(function(iso){ try{ return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } })(wrap._ovrGravado.quando);
+        const ovrEl0=box.querySelector('[data-ef="ovr"]'), ovrLbl0=box.querySelector('[data-alovr]');
+        if(ovrLbl0) ovrLbl0.style.display='none'; if(ovrEl0) ovrEl0.checked=false;
+        if(msg){ msg.className='vmsg'; msg.style.color='var(--eamber)'; msg.textContent='✓ Liberado abaixo do piso — gravado em '+qd+'. Alterar qualquer valor reabre o gate.'; }
+        const cel=box.querySelector(promoAtiva?'[data-mgp] .mgi-selo':'[data-mgc] .mgi-selo');
+        if(cel){ cel.hidden=false; cel.className='mgi-selo warn'; cel.textContent='\u2714 LIBERADO ABAIXO DO PISO'; }
+        const btn0=box.querySelector('[data-alsave="'+id+'"]'); if(btn0) btn0.setAttribute('disabled','');
+        wrap._simState={ok:false, selo:true, piorPct:pctEf, promoAtiva:promoVal!=null, promoVal, tipoP};
+        return;
+      } }
     // BUILD 31-C: zonas — >=10 normal · 5..10 override do dono · <5 negado absoluto
     const ownerEmail='selectasolution@gmail.com';
     const isOwner=(typeof state!=='undefined'&&state.user&&String(state.user.email||'').trim().toLowerCase()===ownerEmail);
@@ -4841,7 +4873,12 @@ const ecomAlvo={
     const wrap=box.querySelector('[data-alsim="'+id+'"]');
     const st=wrap&&wrap._simState;
     if(!st||!st.ok){ if(msg){ msg.className='vmsg err'; msg.textContent='Gravação bloqueada: piso 10% não atendido ou dado incompleto.'; } return; }
-    if(st.override){ const okc=window.confirm('Confirmar gravação ABAIXO DO PISO?\n\nMargem vigente: '+(st.piorPct!=null?st.piorPct.toFixed(1):'?')+'%.\nA alteração será registrada como ABAIXO_PISO no histórico.'); if(!okc){ if(msg){ msg.className='vmsg'; msg.textContent='Gravação cancelada.'; } return; } }
+    if(st.override){
+      // BUILD 01/08-A: dupla confirmação DENTRO da página (imune a bloqueio de diálogos do navegador)
+      if(wrap&&!wrap._ovrConfirm){ wrap._ovrConfirm=true;
+        if(msg){ msg.className='vmsg'; msg.style.color='var(--eamber)'; msg.textContent='⚠ Margem '+(st.piorPct!=null?st.piorPct.toFixed(1):'?')+'% — clique Salvar NOVAMENTE para confirmar a gravação ABAIXO DO PISO.'; }
+        return; }
+      if(wrap) wrap._ovrConfirm=false; }
     try{ const chk=await sb.from('ecom_produtos').select('codigo').eq('codigo',cod).maybeSingle(); if(chk.error) throw chk.error; if(!chk.data){ if(msg){ msg.className='vmsg err'; msg.textContent='Código não existe no catálogo.'; } return; }
       // Snapshot do estado ANTES do update (preço anterior vem de this.anuncios)
       const anAtual=this.anuncios.find(x=>String(x.id)===String(id));
