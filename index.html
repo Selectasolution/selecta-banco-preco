@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-03-B | selecta-banco-preco | RELATORIOS: MES CORRENTE + CONSULTA LISTA PEDIDOS (ordens Igor 03/08, mesma sessao do 03-A): (1) Quadrante "Proxima semana · projecao" REMOVIDO inteiro (HTML rl-forecast, renderForecast() e CSS rl-fc exclusivo). (2) Visao geral vira SO O MES CORRENTE (titulo dinamico rl-kpis-titulo "Visao geral · mes/ano"; mesmos 8 indicadores; competencia data_solicitacao). (3) Por mes (competencia) ganha linha TOTAL ao final — Faturamento/Lucro/Vendas somados e Margem RECALCULADA sobre o total (nunca media de percentuais); vs mes ant. vazio. (4) Consulta gerencial: Status ganha "vendidos" (= venda do periodo em qualquer estagio de envio, EXCLUI cancelado e perda) e "cancelados"; o resultado do Consultar deixa de ser quadro agregado e vira LISTA venda a venda do cruzamento (data · pedido · SKU/produto · qtd×preco · UF · pilula de status · receita · lucro real/margem quando fechados), ordenada por data desc, com contagem de pedidos no topo; select do load() ganha ml_pedido_id (coluna verificada no information_schema desta sessao). Sem SQL. | base: 2026-08-03-A (md5 7edf8890179ab636af76eb3c278bc8a5, gerado e conferido nesta sessao; deploy confirmado pelo Igor) -->
 <!-- BUILD 2026-08-03-A | selecta-banco-preco | VENDAS 2 QUADRANTES + CANDIDATOS NO RADAR (piloto v2 aprovado 03/08; schema ecom_vendas verificado via information_schema nesta sessao — tipo_anuncio NAO existe, desfecho 3: classificacao segue derivada de comissao_pct_efetiva): (1) Aba Vendas: faixa vd-resumo REMOVIDA (controle de envio vive no semaforo linha a linha); empilhamento vertical padrao Alvo — form "Lancar venda" em 3 linhas densas alinhadas a esquerda (larguras fixas) + listagem "Lancadas" MES A MES FECHADO (seletor ◀ mes ▶, competencia data_solicitacao, todos os status do mes, totalizador de VALIDOS = exclui cancelado/perda). (2) TRAVA DO RAZAO imposta pelo app: campos Comissao/Tarifa/Frete so habilitam com Status inicial != a_enviar (venda ao vivo = taxas NULL sempre, nunca estimadas; defesa dupla no DOM e no lancar()); status != a_enviar permite lancar direto do relatorio ML com taxas reais (fees_conferidas=true quando comissao preenchida; tarifa/frete vazios viram 0 SO quando ha comissao) ou em transito com taxas em aberto. Campo Observacoes no form (coluna verificada). (3) Candidatos a importacao MUDOU de Vendas para o Radar de Nicho — 3a sub-aba data-rdtab=cand, card intacto (mesmo al-import/refreshCandidatos), refresh ao abrir a sub-aba. Sem SQL — nenhuma tabela alterada. | base: 2026-08-01-A (md5 74dd1185fc2c814a9c24c1c59b1f3c13 conferido na sessao) -->
 <!-- BUILD 2026-08-01-A | selecta-banco-preco | OVERRIDE v2 (Igor 01/08, apos validacao do 31-C em producao — o "nao salva" era checkbox nao marcado, licao de UX assumida): (1) SELO DE ESTADO: ao abrir a edicao, se a ULTIMA alteracao do MLB no historico carrega abaixo_piso E os valores na tela sao exatamente os gravados, a faixa NEGADO da lugar ao selo ambar "Liberado abaixo do piso — gravado em dd/mm hh:mm" (mensagem e celula da margem); qualquer mudanca de preco/tipo/promocao derruba o selo e o gate volta ao fluxo normal — a liberacao vale por GRAVACAO, nunca por anuncio. (2) CHAVE OBVIA: checkbox miudo vira botao-chave ambar com borda/preenchimento e input ampliado (CSS :has), clicavel no rotulo inteiro. (3) CONFIRMACAO IN-PAGE: window.confirm substituido por dupla confirmacao dentro do app (1o clique no Salvar avisa "clique novamente p/ confirmar ABAIXO DO PISO", 2o clique grava) — imune ao bloqueio de dialogos do navegador; qualquer alteracao no form cancela a pendencia. Sem SQL. | base: 2026-07-31-D (build de outro chat sobre o 31-C; md5 conferido) -->
 <!-- BUILD 2026-07-31-D | selecta-banco-preco | CATEGORIA COMPRESSOR PORTATIL (sigla CMP — proposta Claude, PENDENTE conferencia contra catalogo do Banco de Preco antes do 1o produto). Comissao estimativa 14/19 (teto conservador; enquadramento ML provavel: Acessorios p/ Veiculos ~12/17 — aferir no painel). NOTA: BEL (26-B) ausente desta base — nao reaplicada, aguardando decisao do Igor. | base: 31-C (override do piso por login) -->
@@ -1021,13 +1022,7 @@
     #tab-ecommerce .rpfar.o{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
     #tab-ecommerce .rpfar.n{background:var(--epanel2);color:var(--emuted2);border:1px solid var(--eborder)}
     #tab-ecommerce .mono{font-family:var(--emono);font-variant-numeric:tabular-nums}
-    #tab-ecommerce .rl-forecast{background:linear-gradient(135deg,#0f1d2e,#101a2c);border:1px solid var(--eborder);border-radius:14px;padding:18px;margin-bottom:20px}
-    #tab-ecommerce .rl-fc-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-    #tab-ecommerce .rl-fc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-    @media(max-width:760px){#tab-ecommerce .rl-fc-grid{grid-template-columns:1fr}}
-    #tab-ecommerce .rl-fc{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:13px}
-    #tab-ecommerce .rl-fc .l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted)}
-    #tab-ecommerce .rl-fc .b{font-family:var(--emono);font-size:19px;font-weight:600;margin-top:6px}
+    /* BUILD 2026-08-03-B: CSS da projeção (rl-forecast/rl-fc) removido junto com o quadrante */
     #tab-ecommerce .al-quad{display:grid;grid-template-columns:78px 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:10px}
     #tab-ecommerce .al-quad .qaxis{font-size:10px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;text-align:center}
     #tab-ecommerce .al-quad .qaxis.v{writing-mode:vertical-rl;transform:rotate(180deg)}
@@ -1208,15 +1203,14 @@
       </div>
       <div id="rlsub-painel">
       <p class="esub">Painel de capital, dinâmico — recalcula sempre do banco. Competência pela <b>data do pedido</b>: a venda conta no mês em que foi vendida, mesmo que o Mercado Pago libere o dinheiro depois.</p>
-      <div id="rl-forecast" class="rl-forecast"></div>
-      <h3 style="font-size:12.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Visão geral</h3>
+      <h3 id="rl-kpis-titulo" style="font-size:12.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Visão geral · mês corrente</h3>
       <div id="rl-kpis"><div class="ph">carregando…</div></div>
       <div class="ecard" style="margin-top:18px">
         <h3>Consulta gerencial</h3>
         <div class="vrow3">
           <div class="efield"><label>De (data pedido)</label><input class="vinput mono" id="rl-de" type="date"></div>
           <div class="efield"><label>Até</label><input class="vinput mono" id="rl-ate" type="date"></div>
-          <div class="efield"><label>Status</label><select class="vinput mono" id="rl-status"><option value="">todos</option><option value="a_enviar">a enviar</option><option value="enviado">enviado</option><option value="entregue">entregue</option></select></div>
+          <div class="efield"><label>Status</label><select class="vinput mono" id="rl-status"><option value="">todos</option><option value="vendidos">vendidos (exclui cancel/perda)</option><option value="a_enviar">a enviar</option><option value="enviado">enviado</option><option value="entregue">entregue</option><option value="cancelado">cancelados</option></select></div>
         </div>
         <div class="vrow">
           <div class="efield"><label>Produto ou código</label><input class="vinput mono" id="rl-prod" placeholder="ex.: Havit ou SSD-0001"></div>
@@ -4271,14 +4265,7 @@ const ecomFinanceiro={
       const tot='<div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:#1a2740"><span style="font-weight:700">Lucro real do mês</span><span style="font-family:var(--emono);font-size:19px;font-weight:700;color:'+(nF===0?'var(--emuted2)':(luc>=0?'var(--eemerald)':'var(--ered)'))+'">'+(nF===0?'—':'R$ '+F(luc))+'</span></div>';
       const pend=n-nF;
       const aviso=pend>0?'<div style="font-size:11px;color:var(--eamber);margin-top:8px">⚠ '+pend+' venda(s) do mês sem margem fechada — custos e lucro acumulados ainda parciais.</div>':'';
-      // projeção próxima semana (mesma matemática dos Relatórios: janela de 8 semanas, todas as vendas)
-      const ms=7*24*3600*1000; const recent=all.filter(v=>v.data_solicitacao && (now-new Date(v.data_solicitacao))<=8*ms);
-      const wk={}; recent.forEach(v=>{ wk[Math.floor((now-new Date(v.data_solicitacao))/ms)]=true; });
-      const nSem=Object.keys(wk).length, sem=nSem>0?nSem:1;
-      let fatS=0,lucS=0,volS=0,saiS=0,entraS=0;
-      recent.forEach(v=>{ const rb=v.receita_bruta!=null?+v.receita_bruta:((+v.preco_venda||0)*(+v.quantidade||1)); fatS+=rb; volS++;
-        if(v.resultado_liquido!=null) lucS+=+v.resultado_liquido; if(v.custo_total!=null) saiS+=+v.custo_total; if(v.valor_recebido_ml!=null) entraS+=+v.valor_recebido_ml; });
-      const conf=nSem>=5?{t:'razoável',c:'var(--eemerald)'}:nSem>=2?{t:'fraca',c:'var(--eamber)'}:{t:'muito fraca',c:'var(--ered)'};
+      // BUILD 2026-08-03-B: cálculo da projeção "próxima semana" removido junto com o bloco (morreu nos dois lugares)
       box.innerHTML=
         '<div style="border:1px solid var(--eborder);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;gap:1px;background:var(--eborder)">'
         +line('Receita bruta do mês · '+n+' venda(s)','R$ '+F(rec))
@@ -4291,13 +4278,8 @@ const ecomFinanceiro={
         +tot
         +line('Margem ponderada (fechadas)',margem==null?'—':F(margem)+' %')
         +line('Capital em giro preso (MP)','R$ '+F(preso))
-        +'</div>'+aviso
-        +'<div class="rl-fc-head" style="margin:16px 0 10px"><div style="font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--emuted)">Próxima semana · projeção</div><span style="font-size:10.5px;font-weight:600;color:'+conf.c+';background:var(--epanel2);border:1px solid var(--eborder);border-radius:999px;padding:3px 10px">estimativa '+conf.t+' · '+nSem+' sem. de dados</span></div>'
-        +'<div class="rl-fc-grid">'
-        +'<div class="rl-fc"><div class="l">Faturamento &amp; lucro</div><div class="b">R$ '+F0(fatS/sem)+' <span style="color:var(--emuted);font-size:13px">/ R$ '+F0(lucS/sem)+'</span></div></div>'
-        +'<div class="rl-fc"><div class="l">Volume</div><div class="b">~'+Math.round(volS/sem)+' vendas</div></div>'
-        +'<div class="rl-fc"><div class="l">Fluxo de caixa</div><div class="b" style="color:var(--eteal)">+'+F0(entraS/sem)+' <span style="color:var(--emuted);font-size:13px">/ –'+F0(saiS/sem)+'</span></div></div>'
-        +'</div>';
+        +'</div>'+aviso;
+      // BUILD 2026-08-03-B: projeção "Próxima semana" removida também daqui (decisão Igor 03/08 — morre nos dois lugares)
     }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro no termômetro: '+e.message+'</div>'; }
   }
 };
@@ -4369,9 +4351,14 @@ const ecomRelatorios={
   fmt:v=>(v==null||isNaN(v))?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
   fmt0:v=>(v==null||isNaN(v))?'—':Math.round(v).toLocaleString('pt-BR'),
   async load(){
-    try{ const r=await sb.from('ecom_vendas').select('id,produto,produto_codigo,uf,quantidade,preco_venda,status,data_solicitacao,data_entrega,receita_bruta,valor_recebido_ml,custo_total,resultado_liquido,margem_pct');
+    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,uf,quantidade,preco_venda,status,data_solicitacao,data_entrega,receita_bruta,valor_recebido_ml,custo_total,resultado_liquido,margem_pct');
       if(r.error) throw r.error; this.data=r.data||[]; this.loaded=true;
-      this.renderForecast(); this.renderKpis(this.agg(this.data),false); this.renderMensal(); this._g('rl-query-result').innerHTML='';
+      // BUILD 2026-08-03-B: projeção removida; Visão geral passa a ser SÓ o mês corrente
+      const mesCor=new Date().toISOString().slice(0,7);
+      const doMes=this.data.filter(v=>v.data_solicitacao&&v.data_solicitacao.slice(0,7)===mesCor);
+      const nm=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+      const tit=this._g('rl-kpis-titulo'); if(tit) tit.textContent='Visão geral · '+nm[new Date().getMonth()]+'/'+new Date().getFullYear();
+      this.renderKpis(this.agg(doMes),false); this.renderMensal(); this._g('rl-query-result').innerHTML='';
     }catch(e){ this._g('rl-kpis').innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
   },
   agg(vendas){ let fat=0,luc=0,fatComp=0,custo=0,presoMP=0,n=0,nComp=0,nPend=0;
@@ -4385,10 +4372,28 @@ const ecomRelatorios={
     return this.data.filter(v=>{ const d=v.data_solicitacao?v.data_solicitacao.slice(0,10):'';
       if(de && d<de) return false; if(ate && d>ate) return false;
       if(prod && !(((v.produto||'')+' '+(v.produto_codigo||'')).toLowerCase().includes(prod))) return false;
-      if(uf && (v.uf||'')!==uf) return false; if(st && v.status!==st) return false; return true;
+      if(uf && (v.uf||'')!==uf) return false;
+      // BUILD 2026-08-03-B: "vendidos" = venda do dia/período em qualquer estágio de envio (exclui cancelado e perda)
+      if(st==='vendidos'){ if(v.status==='cancelado'||v.status==='perda') return false; }
+      else if(st && v.status!==st) return false;
+      return true;
     });
   },
-  consultar(){ const a=this.agg(this.filtered()); this.renderKpis(a,true); },
+  // BUILD 2026-08-03-B: Consultar responde a LISTA dos pedidos do cruzamento (data × status × produto × UF),
+  // venda a venda com suas informações — não mais o quadro agregado.
+  consultar(){ const box=this._g('rl-query-result'); const itens=this.filtered()
+      .slice().sort((a,b)=>(b.data_solicitacao||'').localeCompare(a.data_solicitacao||''));
+    if(!itens.length){ box.innerHTML='<div class="ph">nenhum pedido no cruzamento consultado</div>'; return; }
+    const stp={a_enviar:['st-aenv','a enviar'],enviado:['st-env','enviado'],entregue:['st-ent','entregue'],concluido:['st-ent','concluído'],cancelado:['st-can','cancelado'],perda:['st-per','perda']};
+    const rows=itens.map(v=>{
+      const dt=v.data_solicitacao?new Date(v.data_solicitacao).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+      const st=stp[v.status]||['mut',v.status]; const q=(+v.quantidade||1);
+      const luc=(v.resultado_liquido!=null)?('R$ '+this.fmt(v.resultado_liquido)+(v.margem_pct!=null?' · '+this.fmt(v.margem_pct)+'%':'')):'—';
+      return '<tr><td class="mono" style="white-space:nowrap">'+dt+'</td><td class="mono">#'+(v.ml_pedido_id||'—')+'</td><td>'+(v.produto_codigo?'<span class="mono">'+v.produto_codigo+'</span> · ':'')+(v.produto||'')+'</td><td class="mono">'+q+'× R$ '+this.fmt(v.preco_venda)+'</td><td class="mono">'+(v.uf||'—')+'</td><td><span class="vpill '+st[0]+'">'+st[1]+'</span></td><td class="mono">'+(v.receita_bruta!=null?'R$ '+this.fmt(v.receita_bruta):'—')+'</td><td class="mono">'+luc+'</td></tr>';
+    }).join('');
+    box.innerHTML='<div style="font-size:12px;color:var(--emuted);margin-bottom:8px">'+itens.length+' pedido(s) no cruzamento</div>'
+      +'<div style="border:1px solid var(--eborder);border-radius:12px;overflow:auto"><table class="rptab"><thead><tr><th>Data</th><th>Pedido</th><th>Produto</th><th>Qtd × Preço</th><th>UF</th><th>Status</th><th>Receita</th><th>Lucro real</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  },
   kpiHtml(a){ const F=this.fmt;
     const pend=a.nPend>0?'<div style="font-size:11px;color:var(--eamber);margin-top:8px">⚠ '+a.nPend+' venda(s) sem margem fechada — lucro e margem ainda parciais.</div>':'';
     return '<div class="rp-idxrow">'
@@ -4414,21 +4419,10 @@ const ecomRelatorios={
       const p=m.split('-'); const nome=nm[(+p[1])-1]+'/'+p[0];
       return '<tr><td style="font-weight:500">'+nome+'</td><td class="mono">R$ '+this.fmt(a.fat)+'</td><td class="mono">R$ '+this.fmt(a.luc)+'</td><td class="mono">'+(a.margem==null?'—':this.fmt(a.margem)+'%')+'</td><td class="mono">'+a.n+'</td><td class="mono">'+vt+'</td></tr>';
     }).join('');
-    box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab"><thead><tr><th>Mês</th><th>Faturamento</th><th>Lucro</th><th>Margem</th><th>Vendas</th><th>vs mês ant.</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
-  },
-  renderForecast(){ const box=this._g('rl-forecast'); const now=new Date(), ms=7*24*3600*1000;
-    const recent=this.data.filter(v=>{ if(v.status==='cancelado'||!v.data_solicitacao) return false; return (now-new Date(v.data_solicitacao))<=8*ms; });
-    const wk={}; recent.forEach(v=>{ const w=Math.floor((now-new Date(v.data_solicitacao))/ms); wk[w]=true; });
-    const nSem=Object.keys(wk).length, sem=nSem>0?nSem:1, a=this.agg(recent);
-    let entra=0; recent.forEach(v=>{ if(v.valor_recebido_ml!=null) entra+=+v.valor_recebido_ml; }); entra/=sem;
-    const fatP=a.fat/sem, lucP=a.luc/sem, volP=a.n/sem, saiP=a.custo/sem;
-    const conf=nSem>=5?{t:'razoável',c:'var(--eemerald)'}:nSem>=2?{t:'fraca',c:'var(--eamber)'}:{t:'muito fraca',c:'var(--ered)'};
-    box.innerHTML='<div class="rl-fc-head"><h3 style="margin:0">Próxima semana · projeção</h3><span style="font-size:10.5px;font-weight:600;color:'+conf.c+';background:var(--epanel2);border:1px solid var(--eborder);border-radius:999px;padding:3px 10px">estimativa '+conf.t+' · '+nSem+' sem. de dados</span></div>'
-      +'<div class="rl-fc-grid">'
-      +'<div class="rl-fc"><div class="l">Faturamento &amp; lucro</div><div class="b">R$ '+this.fmt0(fatP)+' <span style="color:var(--emuted);font-size:13px">/ R$ '+this.fmt0(lucP)+'</span></div></div>'
-      +'<div class="rl-fc"><div class="l">Volume</div><div class="b">~'+Math.round(volP)+' vendas</div></div>'
-      +'<div class="rl-fc"><div class="l">Fluxo de caixa</div><div class="b" style="color:var(--eteal)">+'+this.fmt0(entra)+' <span style="color:var(--emuted);font-size:13px">/ –'+this.fmt0(saiP)+'</span></div></div>'
-      +'</div>';
+    // BUILD 2026-08-03-B: linha TOTAL — soma real da operação; margem RECALCULADA sobre o total (média de % mente)
+    const tot=this.agg(this.data);
+    const totRow='<tr style="border-top:2px solid var(--eborder);background:var(--epanel2)"><td style="font-weight:700">TOTAL</td><td class="mono" style="font-weight:700">R$ '+this.fmt(tot.fat)+'</td><td class="mono" style="font-weight:700;color:'+(tot.luc>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(tot.luc)+'</td><td class="mono" style="font-weight:700">'+(tot.margem==null?'—':this.fmt(tot.margem)+'%')+'</td><td class="mono" style="font-weight:700">'+tot.n+'</td><td class="mono">—</td></tr>';
+    box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab"><thead><tr><th>Mês</th><th>Faturamento</th><th>Lucro</th><th>Margem</th><th>Vendas</th><th>vs mês ant.</th></tr></thead><tbody>'+rows+totRow+'</tbody></table></div>';
   }
 };
 // ===== E-COMMERCE · Alvo (sortimento + ponte importação + anúncios) =====
