@@ -1,3 +1,5 @@
+<!-- BUILD 2026-08-08-F | selecta-banco-preco | CATALOGO = CADASTRO PURO (decisao Igor 08/08; BUILD E NAO commitado — este F o substitui, producao segue no D ate o commit): (1) Tabela do Catalogo em layout NEUTRO: Codigo / Produto / Preco Venda / Mercado (media, edicao inline) / vs (preco x media) / Custo NF / Acoes. Colunas Frete, Mordida, Margem e VEREDITO removidas — viabilidade agora aparece SO no cadastro de anuncio de cada plataforma (na Alvo, a matematica ML ja existe). (2) Filtros trocados: Codigo (busca parcial, uppercase) + Categoria (select dinamico com contagem, rotulos herdados do form de cadastro); filtros Produto/Veredito removidos (fProd/fVer -> fCod/fCat; populateProdFilter -> populateCatFilter; isVis reescrito). itemVer/veredito ficam dormentes p/ a tabela (veredito segue em uso no exportar cenario/Alvo). Campo "menor" (minimo mercado) sai da edicao inline — so media, decisao Igor. (3) Mantem tudo do E: sub-aba Parametros comerciais na Alvo com os blocos ML; form de cadastro neutro (7 campos + Adicionar). Sem SQL. | base: 2026-08-08-E (md5 b0eef041d83c7060b28c4b3bc6d7de39) -->
+<!-- BUILD 2026-08-08-E | selecta-banco-preco | CATALOGO NEUTRO + PARAMETROS ML NA ALVO (decisao Igor 08/08): (1) NOVA sub-aba "Parametros comerciais" na Analise Comercial (Alvo, data-alsub=parametros — handler generico, zero JS novo): recebe da aba Catalogo os blocos exclusivos do ML — card Parametros comerciais, sentinela de integridade, barra Modalidade de envio + Exportar cenario, card Frete oficial ML e rodape da regra ML. IDs 100% preservados; ecom.calc/updateCtx/buildFreteRef seguem lendo os mesmos elementos (acoplamento cross-aba TEMPORARIO ate a extracao total do simulador). (2) Cadastrar produto no Catalogo reduzido ao cadastro neutro: Categoria/Marca/Modelo/Peso/Custo NF/Media de mercado/Meu preco + Adicionar. Campos Anuncio (tipo), Minimo mercado, Break-even, Margem R$/% sim. e botao "+ Gravar e gerar anuncio" OCULTOS (display:none, JS e gravacao intactos — excisao real do codigo na extracao do simulador; tipo_anuncio grava default classico, tipo REAL governa no Cadastro de anuncio da plataforma, campo al-tipo ja existente). Campos condicionais Capacidade/Interface (SSD/MEM) MANTIDOS por decisao tecnica — alimentam nome/descricao do produto; veto do Igor reverte. Consulta/tabela de vereditos permanece no Catalogo NESTA rodada (le parametros do novo endereco via ids — funciona; realocacao na extracao). Sem SQL. | base: 2026-08-08-D (md5 99674d5b63d7d46d3181e2da927f66bb) -->
 <!-- BUILD 2026-08-08-D | selecta-banco-preco | HOTFIX CSS DO BUILD C (defeito detectado no teste do Igor: aba Catalogo renderizava cards crus): o BUILD C duplicou apenas o <style> interno da secao #tab-ecommerce, mas as classes centrais (ecard, param-grid, addform, ainput, mtx, chips, sentinela, modtog, num/field-row etc.) vivem no bloco <style id="ecom-v8-style"> — que nao foi duplicado. Este build injeta a duplicata desse bloco com escopo #tab-catalogo dentro do <style> da aba Catalogo. Nenhuma outra mudanca; zero JS tocado; sem SQL. Extracao do simulador ML p/ aba Mercado Livre passa a ser o BUILD E. | base: 2026-08-08-C (md5 8b5f40921e0e4b6b637cb86fe13c0b7b) -->
 <!-- BUILD 2026-08-08-C | selecta-banco-preco | VIRADA E-COMMERCE TOTAL (decisao Igor 08/08 — foco 100% digital, saida gradual de licitacoes): (1) Rotulo da aba "E-commerce" -> "Mercado Livre" (so texto visivel; IDs/funcoes ecom* e tab-ecommerce INTOCADOS — organizada geral de nomes fica p/ sessao propria). (2) Aba Catalogo ANTIGA (banco de preco de licitacao) REMOVIDA da navegacao: secao renomeada tab-catalogo-legado, oculta e dormente; loadFilters/loadCatalog desligados do boot; tabelas produtos/ofertas/fornecedores INTACTAS no banco (expurgo = decisao pos-desmobilizacao dez/2026); Agente de Cotacao aposentado (banco_padrao.json publicado congela). (3) NOVA aba principal "Catalogo" (reusa id tab-catalogo) = cadastro unico de produtos: cards Parametros comerciais + Cadastrar/simular produto (movidos da Alvo) + Consulta Produto (payload ecom-sub-simulador movido da barra ML) — ids 100% preservados, bindings do modulo ecom intactos; CSS do escopo #tab-ecommerce duplicado para #tab-catalogo. Simulacao ML embutida = TEMPORARIA (extracao p/ aba Mercado Livre + motor de frete por plataforma = BUILD D). (4) Simulador PC: botao proprio removido; iframe montador.html ANINHADO como secao logica da aba Catalogo (padrao tab-apple/Instagram); reconfiguracao futura anunciada pelo Igor. (5) Barra Mercado Livre: Consulta Produto sai; Alvo vira sub-aba default (carga automatica na 1a entrada via _alvoBoot); handler de subpaineis com escopo #tab-ecommerce. (6) App abre no Mercado Livre (operacao diaria). Fluxo cross-aba declarado: "+ Gravar e gerar anuncio" grava produto no Catalogo e pre-preenche o Cadastro de anuncio que VIVE na aba Mercado Livre > Alvo. Sem SQL — nenhuma tabela tocada. | base: 2026-08-08-B (md5 820417067bc58a236effbf7637565616 conferido na sessao) -->
 <!-- BUILD 2026-08-03-C | selecta-banco-preco | CATEGORIA ANTENA/RADIO DE REDE (sigla ANT — confirmada por Igor: inexistente no catalogo, produto novo). Fronteira: ANT = radios outdoor de enlace PtP/PtMP, CPEs, antenas direcionais/setoriais, kit radio+antena; AP segue com access points indoor; RTR com roteadores. Comissao estimativa 14/19 em SQL proprio (que tambem FECHA a pendencia TAB de 13/07 — linha nunca inserida no banco). | base: 03-B (relatorios mes corrente) -->
@@ -736,24 +738,6 @@
       <button class="ctl-sec-btn px-4 py-2 text-sm font-medium" data-csec="simpc">Simulador PC</button>
     </nav>
     <div id="csec-consulta">
-    <!-- PARÂMETROS -->
-    <div class="ecard">
-      <h3>Parâmetros comerciais</h3>
-      <div class="param-grid">
-        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Clássico (fallback)</label><div class="field-row"><input class="num" id="ecom-com-classico" type="number" step="0.5" value="13"><span class="unit">%</span></div></div>
-        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Premium (fallback)</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Imposto (regime)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" step="0.5" value="4"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Outros custos</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Colchão</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="6"><span class="unit">%</span></div></div>
-      </div>
-      <p class="note">Simples Anexo I 1ª faixa = 4% · Outros = antecip./parcel. · Colchão = % sobre a compra (custos operacionais).</p>
-      <div style="margin-top:14px">
-        <p class="note" style="color:var(--emuted);font-size:12.5px;line-height:1.6">
-          <b>Custo fixo &lt;R$79 aposentado (02/07/2026).</b> Frete agora vem 100% da tabela oficial ML (peso × faixa de preço × reputação), inclusive abaixo de R$79. A antiga regra fixa (R$6,25/6,50/6,75) não existe mais no modelo oficial.
-        </p>
-      </div>
-    </div>
-
     <!-- CADASTRO -->
     <div class="ecard">
       <h3 id="ecom-form-title">Cadastrar / simular produto</h3>
@@ -765,63 +749,27 @@
         <div class="efield" id="ecom-f-capacidade-wrap" style="display:none"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px"></div>
         <div class="efield" id="ecom-f-interface-wrap" style="display:none"><label>Interface</label><select class="ainput" id="ecom-f-interface" style="width:110px"><option value="">—</option><option value="SATA III">SATA III</option><option value="NVMe">NVMe</option></select></div>
         <div class="efield pesofield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px"><span id="ecom-f-faixa-msg" class="ffaixa"></span><select id="ecom-f-peso" style="display:none"></select><span id="ecom-f-peso-warn" style="display:none"></span></div>
-        <div class="efield"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
+        <div class="efield" style="display:none"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
         <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
-        <div class="efield"><label>Mínimo mercado</label><input class="ainput mono" id="ecom-f-menor" type="number" style="width:90px"></div>
+        <div class="efield" style="display:none"><label>Mínimo mercado</label><input class="ainput mono" id="ecom-f-menor" type="number" style="width:90px"></div>
         <div class="efield"><label>Média mercado</label><input class="ainput mono" id="ecom-f-media" type="number" style="width:90px"></div>
-        <div class="efield"><label>Break-even <span style="color:var(--emuted2);font-weight:400">(ref.)</span></label><input class="ainput mono" id="ecom-f-breakeven" type="text" style="width:90px" readonly tabindex="-1"></div>
+        <div class="efield" style="display:none"><label>Break-even <span style="color:var(--emuted2);font-weight:400">(ref.)</span></label><input class="ainput mono" id="ecom-f-breakeven" type="text" style="width:90px" readonly tabindex="-1"></div>
         <div class="efield"><label>Meu preço <span class="req">*</span></label><input class="ainput mono" id="ecom-f-preco" type="number" style="width:90px"></div>
-        <div class="efield simfield"><label>Margem R$ <span class="hsim">sim.</span></label><input class="ainput mono robe" id="ecom-f-mgrs" type="text" style="width:84px" readonly tabindex="-1"></div>
-        <div class="efield simfield"><label>Margem % <span class="hsim">sim.</span></label><input class="ainput mono robe mgsimf" id="ecom-f-mgpct" type="text" style="width:72px" readonly tabindex="-1"></div>
+        <div class="efield simfield" style="display:none"><label>Margem R$ <span class="hsim">sim.</span></label><input class="ainput mono robe" id="ecom-f-mgrs" type="text" style="width:84px" readonly tabindex="-1"></div>
+        <div class="efield simfield" style="display:none"><label>Margem % <span class="hsim">sim.</span></label><input class="ainput mono robe mgsimf" id="ecom-f-mgpct" type="text" style="width:72px" readonly tabindex="-1"></div>
         <button class="addbtn" id="ecom-add">+ Adicionar</button>
-        <button class="addbtn" id="ecom-add-gerar" title="Grava o produto e pré-preenche o Cadastro de anúncio abaixo" style="background:none;border:1px solid var(--eaccent);color:var(--eaccent)">+ Gravar e gerar anúncio</button>
+        <button class="addbtn" id="ecom-add-gerar" title="Grava o produto e pré-preenche o Cadastro de anúncio abaixo" style="display:none;background:none;border:1px solid var(--eaccent);color:var(--eaccent)">+ Gravar e gerar anúncio</button>
         <button class="cancelbtn hidden-section" id="ecom-cancel">Cancelar</button>
       </div>
       <div class="formmsg" id="ecom-formmsg"></div>
     </div>
     <div id="ecom-sub-simulador" class="ecom-subpanel">
 
-    <div id="ecom-sentinela" class="ecom-sentinela"></div>
-
-    <!-- MODALIDADE -->
-    <div class="modbar">
-      <span class="ml">Modalidade de envio:</span>
-      <div class="modtog" id="ecom-modtog">
-        <span class="tg active" data-mod="flex">Flex / Correios</span>
-        <span class="tg" data-mod="full">Full</span>
-      </div>
-      <span class="modwarn" id="ecom-modwarn"></span>
-      <button id="ecom-export" class="cancelbtn" style="margin-left:auto" title="Exporta o cenário atual (parâmetros, produtos, matriz e vereditos) em .md para análise de mercado/marca">⬇ Exportar cenário (.md)</button>
-    </div>
-
-    <!-- FRETE (FRETE_TBL oficial ML) -->
     <div class="ecard">
-      <h3>Frete oficial ML — <span style="color:var(--eaccent);text-transform:none;letter-spacing:0" id="ecom-frete-ctxtop"></span></h3>
-      <div class="frete-grid">
-        <div>
-          <div class="selrow"><div class="lab">Reputação da conta</div>
-            <div class="chips" id="ecom-rep"></div></div>
-          <div class="selrow"><div class="lab" style="opacity:.6">Destino</div>
-            <div class="chips" id="ecom-dest"></div></div>
-          <div class="applied"><div class="ctx" id="ecom-frete-ctx"></div></div>
-          <p class="note">Frete calculado por lookup na tabela oficial ML: peso do produto × faixa de preço do anúncio × reputação. Zonas geográficas aposentadas em 02/07/2026 — frete ML é nacional.</p>
-        </div>
-        <div>
-          <div class="mtitle">Tabela oficial ML — reputação vigente <span style="color:var(--emuted2);font-size:11px;font-weight:400">· somente leitura · até 3kg</span></div>
-          <table class="mtx" id="ecom-mtx"></table>
-          <div class="mnote"><b>Fonte:</b> páginas oficiais MercadoLivre Ajuda (verde/amarela/laranja-vermelha), carregadas em <span id="ecom-frete-carga">02/07/2026</span>. Manutenção via SQL Editor quando o ML atualizar tarifas.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- BUILD 30/07-B: Parametros comerciais + Cadastrar/simular produto MOVIDOS para a Analise Comercial (Alvo). -->
-
-    <!-- CONSULTA -->
-    <div class="ecard">
-      <h3>Consultar <span style="color:var(--emuted2);font-weight:400;text-transform:none;letter-spacing:0">— filtre o banco conforme ele cresce</span></h3>
+      <h3>Consultar <span style="color:var(--emuted2);font-weight:400;text-transform:none;letter-spacing:0">— por código ou categoria</span></h3>
       <div class="efiltrow">
-        <div class="efield"><label>Produto</label><select class="ainput" id="ecom-flt-prod" style="width:240px"><option value="">Todos os produtos</option></select></div>
-        <div class="efield"><label>Veredito</label><select class="ainput" id="ecom-flt-ver" style="width:170px"><option value="">Todos os vereditos</option><option value="priorizar">Priorizar</option><option value="analisar">Analisar</option><option value="excluir">Excluir</option></select></div>
+        <div class="efield"><label>Código</label><input class="ainput mono" id="ecom-flt-cod" style="width:160px;text-transform:uppercase" placeholder="ex.: SSD-0001"></div>
+        <div class="efield"><label>Categoria</label><select class="ainput" id="ecom-flt-cat" style="width:190px"><option value="">Todas as categorias</option></select></div>
         <button class="cancelbtn" id="ecom-flt-clear">Limpar filtros</button>
         <span class="note" id="ecom-flt-count" style="margin:0 0 7px"></span>
       </div>
@@ -829,11 +777,10 @@
 
     <div class="tbl-wrap">
       <table class="emain">
-        <thead><tr>
-          <th class="l">Produto</th><th>Meu preço</th>
-          <th>Mercado<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">méd / mín</span></th>
-          <th>VS<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">méd / mín</span></th>
-          <th>Frete / fixo</th><th>Mordida</th><th>Custo (NF)</th><th>Margem</th><th>Veredito</th>
+        <thead><tr><!-- BUILD 2026-08-08-F: layout neutro — Codigo/Produto/Preco Venda/Mercado/vs/Custo NF/Acoes -->
+          <th>Código</th><th class="l">Produto</th><th>Preço Venda</th>
+          <th>Mercado<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">média</span></th>
+          <th>vs</th><th>Custo NF</th>
           <th style="text-align:center">Ações</th>
         </tr></thead>
         <tbody id="ecom-tbody"></tbody>
@@ -841,9 +788,8 @@
       <div id="ecom-vazio" class="text-center text-gray-500 text-sm py-10 hidden-section">Nenhum produto. Cadastre acima para começar.</div>
     </div>
 
-    <div class="efooter">
-      <b>Regra ML (pós 02/03/2026, Flex/Correios):</b> ≥R$79 → comissão (por tipo de anúncio) + frete da matriz (célula destino×peso do produto). &lt;R$79 → ML banca o frete; comissão + custo fixo por faixa (R$6,25 / R$6,50 / R$6,75; abaixo de R$12,50 = 50% do preço). Tudo sobre o preço de venda; margem e break-even líquidos do colchão. Excluir = inativar (fica salvo no banco).
-    </div>
+    <!-- BUILD 2026-08-08-E: Parametros comerciais, sentinela, modalidade, frete oficial ML e regra ML MOVIDOS p/ Mercado Livre > Alvo > Parametros comerciais (ids preservados) -->
+
     </div><!-- /ecom-sub-simulador -->
     </div>
 </section>
@@ -1852,6 +1798,7 @@
         <button class="alsub-btn active" data-alsub="analise">📊 Análise Comercial</button>
         <!-- BUILD -L 09/07/2026: aba Estratégia de Anúncios DESATIVADA — fundida à Análise Comercial (Ato único). Painel e código dormentes; expurgo previsto no BUILD -M após 2–3 ciclos. -->
         <button class="alsub-btn" data-alsub="controle">📈 Controle de Anúncios</button>
+        <button class="alsub-btn" data-alsub="parametros">⚙️ Parâmetros comerciais</button><!-- BUILD 2026-08-08-E -->
       </div>
 
       <div id="alsub-analise" class="alsub">
@@ -1926,6 +1873,65 @@
       </div>
 
       </div><!-- /alsub-controle -->
+
+      <div id="alsub-parametros" class="alsub" style="display:none">
+      <!-- BUILD 2026-08-08-E: informacoes comerciais do Mercado Livre — base de consulta p/ precificacao e simulacao na plataforma. Blocos movidos da aba Catalogo (ids preservados; modulo ecom intacto). -->
+    <!-- PARÂMETROS -->
+    <div class="ecard">
+      <h3>Parâmetros comerciais</h3>
+      <div class="param-grid">
+        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Clássico (fallback)</label><div class="field-row"><input class="num" id="ecom-com-classico" type="number" step="0.5" value="13"><span class="unit">%</span></div></div>
+        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Premium (fallback)</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Imposto (regime)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" step="0.5" value="4"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Outros custos</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Colchão</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="6"><span class="unit">%</span></div></div>
+      </div>
+      <p class="note">Simples Anexo I 1ª faixa = 4% · Outros = antecip./parcel. · Colchão = % sobre a compra (custos operacionais).</p>
+      <div style="margin-top:14px">
+        <p class="note" style="color:var(--emuted);font-size:12.5px;line-height:1.6">
+          <b>Custo fixo &lt;R$79 aposentado (02/07/2026).</b> Frete agora vem 100% da tabela oficial ML (peso × faixa de preço × reputação), inclusive abaixo de R$79. A antiga regra fixa (R$6,25/6,50/6,75) não existe mais no modelo oficial.
+        </p>
+      </div>
+    </div>
+    <div id="ecom-sentinela" class="ecom-sentinela"></div>
+
+    <!-- MODALIDADE -->
+    <div class="modbar">
+      <span class="ml">Modalidade de envio:</span>
+      <div class="modtog" id="ecom-modtog">
+        <span class="tg active" data-mod="flex">Flex / Correios</span>
+        <span class="tg" data-mod="full">Full</span>
+      </div>
+      <span class="modwarn" id="ecom-modwarn"></span>
+      <button id="ecom-export" class="cancelbtn" style="margin-left:auto" title="Exporta o cenário atual (parâmetros, produtos, matriz e vereditos) em .md para análise de mercado/marca">⬇ Exportar cenário (.md)</button>
+    </div>
+    <!-- FRETE (FRETE_TBL oficial ML) -->
+    <div class="ecard">
+      <h3>Frete oficial ML — <span style="color:var(--eaccent);text-transform:none;letter-spacing:0" id="ecom-frete-ctxtop"></span></h3>
+      <div class="frete-grid">
+        <div>
+          <div class="selrow"><div class="lab">Reputação da conta</div>
+            <div class="chips" id="ecom-rep"></div></div>
+          <div class="selrow"><div class="lab" style="opacity:.6">Destino</div>
+            <div class="chips" id="ecom-dest"></div></div>
+          <div class="applied"><div class="ctx" id="ecom-frete-ctx"></div></div>
+          <p class="note">Frete calculado por lookup na tabela oficial ML: peso do produto × faixa de preço do anúncio × reputação. Zonas geográficas aposentadas em 02/07/2026 — frete ML é nacional.</p>
+        </div>
+        <div>
+          <div class="mtitle">Tabela oficial ML — reputação vigente <span style="color:var(--emuted2);font-size:11px;font-weight:400">· somente leitura · até 3kg</span></div>
+          <table class="mtx" id="ecom-mtx"></table>
+          <div class="mnote"><b>Fonte:</b> páginas oficiais MercadoLivre Ajuda (verde/amarela/laranja-vermelha), carregadas em <span id="ecom-frete-carga">02/07/2026</span>. Manutenção via SQL Editor quando o ML atualizar tarifas.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUILD 30/07-B: Parametros comerciais + Cadastrar/simular produto MOVIDOS para a Analise Comercial (Alvo). -->
+
+    <!-- CONSULTA -->
+    <div class="efooter">
+      <b>Regra ML (pós 02/03/2026, Flex/Correios):</b> ≥R$79 → comissão (por tipo de anúncio) + frete da matriz (célula destino×peso do produto). &lt;R$79 → ML banca o frete; comissão + custo fixo por faixa (R$6,25 / R$6,50 / R$6,75; abaixo de R$12,50 = 50% do preço). Tudo sobre o preço de venda; margem e break-even líquidos do colchão. Excluir = inativar (fica salvo no banco).
+    </div>
+      </div><!-- /alsub-parametros -->
 
       <div id="alsub-estrategia" class="alsub" style="display:none">
       <div class="ecard" style="border-color:var(--eteal);border-width:1px;margin-bottom:4px">
@@ -3346,7 +3352,7 @@ const ecom = {
     [9000,11000,'9–11 kg']
   ],
   itens: [], freteTbl: [], comMap: {}, loaded:false, wired:false,
-  reputacao:'verde', modalidade:'flex', editId:null, fProd:'', fVer:'',
+  reputacao:'verde', modalidade:'flex', editId:null, fCod:'', fCat:'', // BUILD 2026-08-08-F: filtros por codigo/categoria
 
   _g(id){ return document.getElementById(id); },
   _n(id){ const v=parseFloat(this._g(id).value); return isNaN(v)?0:v; },
@@ -3420,7 +3426,7 @@ const ecom = {
     if(pct<0.10) return {k:'analisar',t:'Analisar'};
     return {k:'priorizar',t:'Priorizar'}; },
   itemVer(it){ const r=this.calc(it); const vs=it.menor?(it.preco-it.menor)/it.menor:null; return this.veredito(r.regime,r.margem,r.margemPct,vs).k; },
-  isVis(it){ if(this.fProd){ if(this.fProd.indexOf('fam:')===0){ if(this.familia(it.produto)!==this.fProd.slice(4)) return false; } else if(it.produto!==this.fProd) return false; } if(this.fVer && this.itemVer(it)!==this.fVer) return false; return true; },
+  isVis(it){ if(this.fCod && String(it.codigo||'').toUpperCase().indexOf(this.fCod)<0) return false; if(this.fCat && it.categoria!==this.fCat) return false; return true; }, // BUILD 2026-08-08-F
 
   async onEnter(){
     if(!this.loaded){ await this.loadFreteTbl(); await this.loadComissoes(); await this.loadProdutos(); this.loaded=true; }
@@ -3450,9 +3456,9 @@ const ecom = {
     g('ecom-f-peso').innerHTML=this.PESOS.map(p=>`<option value="${p[0]}">${p[1]}</option>`).join('');
     const gMod=g('ecom-modtog'); if(gMod) gMod.querySelectorAll('.tg').forEach(t=>t.addEventListener('click',()=>{ this.modalidade=t.dataset.mod; gMod.querySelectorAll('.tg').forEach(x=>x.classList.remove('active')); t.classList.add('active'); const w=g('ecom-modwarn'); if(w) w.textContent=''; this.render(); }));
     ['ecom-com-classico','ecom-com-premium','ecom-imp','ecom-outros','ecom-colchao'].forEach(id=>{ const el=g(id); if(el) el.addEventListener('input',()=>{ this.render(); this.updateFormBreakeven(); }); });
-    g('ecom-flt-prod').addEventListener('change',e=>{ this.fProd=e.target.value; this.render(); });
-    g('ecom-flt-ver').addEventListener('change',e=>{ this.fVer=e.target.value; this.render(); });
-    g('ecom-flt-clear').addEventListener('click',()=>{ this.fProd=''; this.fVer=''; g('ecom-flt-prod').value=''; g('ecom-flt-ver').value=''; this.render(); });
+    g('ecom-flt-cod').addEventListener('input',e=>{ this.fCod=e.target.value.trim().toUpperCase(); this.render(); }); // BUILD 2026-08-08-F
+    g('ecom-flt-cat').addEventListener('change',e=>{ this.fCat=e.target.value; this.render(); });
+    g('ecom-flt-clear').addEventListener('click',()=>{ this.fCod=''; this.fCat=''; g('ecom-flt-cod').value=''; g('ecom-flt-cat').value=''; this.render(); });
     g('ecom-add').addEventListener('click',()=>this.save());
     { const bg=g('ecom-add-gerar'); if(bg) bg.addEventListener('click',()=>{ this.gerarAposSalvar=true; this.save(); }); }
     g('ecom-cancel').addEventListener('click',()=>this.cancelEdit());
@@ -3493,42 +3499,34 @@ const ecom = {
     t.innerHTML=h;
   },
 
-  populateProdFilter(){ const sel=this._g('ecom-flt-prod'); const cur=sel.value; const fams={};
-    this.itens.forEach(it=>{ const f=this.familia(it.produto); (fams[f]=fams[f]||new Set()).add(it.produto); });
-    let o='<option value="">Todos os produtos</option>';
-    Object.keys(fams).sort((a,b)=>a.localeCompare(b,'pt-BR')).forEach(f=>{
-      const nomes=[...fams[f]].sort((a,b)=>a.localeCompare(b,'pt-BR'));
-      o+=`<option value="fam:${f.replace(/"/g,'&quot;')}">${f} — todos</option>`;
-      if(nomes.length>1) nomes.forEach(n=>{ o+=`<option value="${n.replace(/"/g,'&quot;')}">\u00A0\u00A0${n}</option>`; }); });
-    sel.innerHTML=o; sel.value=[].some.call(sel.options,x=>x.value===cur)?cur:''; this.fProd=sel.value; },
+  populateCatFilter(){ const sel=this._g('ecom-flt-cat'); if(!sel) return; const cur=sel.value;
+    const labels={}; const fsel=this._g('ecom-f-categoria'); if(fsel) [].forEach.call(fsel.options,o=>{ if(o.value) labels[o.value]=o.textContent; });
+    const cats={}; this.itens.forEach(it=>{ if(it.categoria) cats[it.categoria]=(cats[it.categoria]||0)+1; });
+    let o='<option value="">Todas as categorias</option>';
+    Object.keys(cats).sort((a,b)=>(labels[a]||a).localeCompare(labels[b]||b)).forEach(c=>{ o+=`<option value="${c}">${labels[c]||c} (${cats[c]})</option>`; });
+    sel.innerHTML=o; sel.value=[].some.call(sel.options,x=>x.value===cur)?cur:''; this.fCat=sel.value; }, // BUILD 2026-08-08-F
   updateCount(){ const vis=this.itens.filter(it=>this.isVis(it)).length;
-    this._g('ecom-flt-count').textContent=(this.fProd||this.fVer)?`${vis} de ${this.itens.length} itens`:`${this.itens.length} itens no banco`; },
+    this._g('ecom-flt-count').textContent=(this.fCod||this.fCat)?`${vis} de ${this.itens.length} itens`:`${this.itens.length} itens no banco`; },
 
-  render(){ this.populateProdFilter(); this.sentinela(); const tb=this._g('ecom-tbody');
+  render(){ this.populateCatFilter(); this.sentinela(); const tb=this._g('ecom-tbody');
     if(!this.itens.length){ tb.innerHTML=''; show('#ecom-vazio'); this.updateCount(); return; }
     hide('#ecom-vazio');
     const vsCell=(p,ref)=>{ if(!ref||ref<=0) return '<span class="vsnull">—</span>'; const d=(p-ref)/ref*100; return `<span class="${d>0?'vsacima':'vsabaixo'}">${d>0?'+':''}${d.toFixed(1)}%</span>`; };
     const rows=this.itens.map(it=>{ if(!this.isVis(it)) return '';
-      const r=this.calc(it); const vsMin=it.menor?(it.preco-it.menor)/it.menor:null; const v=this.veredito(r.regime,r.margem,r.margemPct,vsMin);
-      const mord=r.mordida*100; const mc=mord>=40?'mneg':'';
-      const frCell=r.regime==='fixa'?`<span class="gratis">grátis ML<small>fixo ${this.fmt(r.custoFixo)}</small></span>`:this.fmt(r.freteItem);
-      const zonaAlert=r.zona!=null?`<div class="ezona">⚠ Zona-vale: a R$78,99 sobra ${this.fmt(r.zona)} a mais</div>`:'';
-      const _det=[it.interface,it.modelo,it.capacidade].filter(Boolean).join(' · ');
+      // BUILD 2026-08-08-F: linha NEUTRA de cadastro — sem frete/mordida/margem/veredito (matematica vive no cadastro de anuncio de cada plataforma)
+      const _det=[it.marca,it.modelo,it.capacidade,it.interface].filter(Boolean).join(' · ');
       const modeloSub=_det?`<div class="emodel">${_det}</div>`:'';
-      const tipoTag=it.tipo_anuncio==='premium'?' <span class="emodel">· Premium</span>':'';
+      const codCell=it.codigo?`<span style="font-family:var(--emono);font-size:12px;color:var(--eteal);background:var(--epanel2);border:1px solid var(--eborder);border-radius:5px;padding:2px 7px;white-space:nowrap">${it.codigo}</span>`:`<span style="font-size:10px;color:var(--eamber)">sem código</span>`;
       return `<tr>
-        <td class="l"><span class="eprod">${it.produto}</span>${it.codigo?`<span style="font-family:var(--emono);font-size:11px;color:var(--eteal);background:var(--epanel2);border:1px solid var(--eborder);border-radius:5px;padding:1px 6px;margin-left:6px">${it.codigo}</span>`:`<span style="font-size:10px;color:var(--eamber);margin-left:6px">sem código</span>`} · ${it.marca||''}${tipoTag}${modeloSub}<div class="emodel">${this.pesoLabel(it.peso_faixa)}</div>${zonaAlert}</td>
+        <td>${codCell}</td>
+        <td class="l"><span class="eprod">${it.produto}</span>${modeloSub}<div class="emodel">${this.pesoLabel(it.peso_faixa)}</div></td>
         <td><input class="cellInput me" type="text" inputmode="decimal" data-id="${it.id}" data-f="preco" value="${this.fmt(it.preco)}"></td>
-        <td><div class="stack"><input class="cellInput mkt" type="text" inputmode="decimal" data-id="${it.id}" data-f="media" placeholder="méd" value="${it.media==null?'':this.fmt(it.media)}"><input class="cellInput mkt" type="text" inputmode="decimal" data-id="${it.id}" data-f="menor" placeholder="mín" value="${it.menor==null?'':this.fmt(it.menor)}"></div></td>
-        <td><div class="stack">${vsCell(it.preco,it.media)}${vsCell(it.preco,it.menor)}</div></td>
-        <td>${frCell}</td>
-        <td class="${mc}">${this.fmtPct(mord)}</td>
+        <td><input class="cellInput mkt" type="text" inputmode="decimal" data-id="${it.id}" data-f="media" placeholder="méd" value="${it.media==null?'':this.fmt(it.media)}"></td>
+        <td>${vsCell(it.preco,it.media)}</td>
         <td>${this.fmt(it.custo)}</td>
-        <td><div class="stack"><span class="${r.margem<0?'mneg':''}">${this.fmt(r.margem)}</span><span class="smper" style="color:${(r.margemPct*100)>=10?'var(--eemerald)':(r.margemPct*100)>0?'var(--eamber)':'var(--ered)'};font-weight:700">${this.fmtPct(r.margemPct*100)}</span></div></td>
-        <td><span class="pill ${v.k}">${v.t}</span></td>
         <td><div class="acts"><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
       </tr>`; }).join('');
-    tb.innerHTML=rows||'<tr><td class="l" colspan="10" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
+    tb.innerHTML=rows||'<tr><td class="l" colspan="7" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
     tb.querySelectorAll('.cellInput').forEach(inp=>inp.addEventListener('change',e=>this.inlineEdit(e.target)));
     tb.querySelectorAll('.ecom-edit').forEach(b=>b.addEventListener('click',()=>this.edit(b.dataset.id)));
     tb.querySelectorAll('.ecom-del').forEach(b=>b.addEventListener('click',()=>this.del(b.dataset.id)));
