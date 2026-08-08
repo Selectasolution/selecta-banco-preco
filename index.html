@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-08-M | selecta-banco-preco | FINANCEIRO DENTRO DE RELATORIOS (decisao Igor 08/08): sub-aba Financeiro REMOVIDA da barra Mercado Livre; conteudo integral do painel (lancamento por pedido + Termometro financeiro, ids fn-* preservados, bindings intactos) ANINHADO como pane rlsub-financeiro em Relatorios, com botao "Financeiro" ENTRE Painel e Historico. Handler do rlsubbar reescrito de binario p/ 3 panes (carga sob clique: financeiro -> ecomFinanceiro.load, historico -> ecomHistorico.load); branch morto do financeiro removido do handler da barra ML. Barra Mercado Livre agora: Alvo / Vendas / Relatorios / Radar. Ajuste de FUNCOES dessas abas = proxima rodada, anunciado pelo Igor. Sem SQL. | base: 2026-08-08-L (md5 83b196a6b3ae90f65e7b4245ceb92c4c) -->
 <!-- BUILD 2026-08-08-L | selecta-banco-preco | LIMPEZA (pedido Igor 08/08, "menos informacao que nao uso"): apagada a nota "Fonte: paginas oficiais MercadoLivre Ajuda... Manutencao via SQL Editor" sob a matriz de frete (span ecom-frete-carga sem nenhuma referencia em JS — remocao limpa). Informacao segue registrada aqui no cabecalho: tarifas FRETE_TBL carregadas em 02/07/2026 das paginas oficiais ML, manutencao via SQL Editor quando o ML atualizar. Sem SQL. | base: 2026-08-08-K (md5 3d7432667884d0cc66e89ebf0e692bcf) -->
 <!-- BUILD 2026-08-08-K | selecta-banco-preco | FAXINA DA ANALISE COMERCIAL (decisao Igor 08/08, com prints): APAGADOS — nota "Simples Anexo I..." e paragrafo "Custo fixo <R$79 aposentado" do card Parametros; sentinela "Integridade do catalogo" (funcao sentinela() tem guarda if(!box), segue inofensiva); barra Modalidade de envio INTEIRA (toggle Flex/Full sai da tela — modalidade fica fixa no default flex; listener guardado; recolocacao discreta se precisar simular Full); rodape "Regra ML (pos 02/03/2026...)". REALOCADOS p/ o rodape da tela — botao "Exportar cenario (.md)" p/ dentro do card Comando ao lado do Copiar comando (mesmo id, binding intacto) e painel de integridade ZUMBI-2/divergencia (al-atv-integridade, inclui carimbo "lote de...") p/ o final da Analise Comercial, apos o card Comando (render por id, local-independente). Zero logica alterada; sem SQL. | base: 2026-08-08-J (md5 6373233771a48d622d4f2f26b6de8697) -->
 <!-- BUILD 2026-08-08-J | selecta-banco-preco | PARAMETROS DENTRO DA ANALISE COMERCIAL (decisao Igor 08/08): sub-aba "Parametros comerciais" (criada no E) EXTINTA — botao removido, pane dissolvido; todo o conteudo (card Parametros, sentinela, Modalidade+Exportar cenario, Frete oficial ML, regra ML) agora vive DENTRO da Analise Comercial, imediatamente apos o card Cadastro de anuncio, para simular acoes comerciais com os parametros a mao (mexer em comissao/imposto/colchao/modalidade recalcula o simulador do anuncio ao vivo — mesmos ids, mesmos listeners). Alsubbar volta a 2 botoes (Analise / Controle). Zero JS; sem SQL. | base: 2026-08-08-I (md5 300310db07fdef2f3431e0e56a803e45) -->
@@ -1654,7 +1655,6 @@
     <div class="ecom-subnav">
       <button class="ecom-subtab alvo active" data-sub="alvo">🎯 Alvo</button>
       <button class="ecom-subtab" data-sub="vendas">Vendas</button>
-      <button class="ecom-subtab" data-sub="financeiro">Financeiro</button>
       <button class="ecom-subtab" data-sub="relatorios">Relatórios</button>
       <button class="ecom-subtab radar" data-sub="radar">📡 Radar de Nicho</button>
     </div>
@@ -1705,7 +1705,38 @@
       </div>
     </div>
 
-    <div id="ecom-sub-financeiro" class="ecom-subpanel" style="display:none">
+    <!-- BUILD 2026-08-08-M: painel Financeiro movido p/ dentro de Relatorios (rlsub-financeiro, entre Painel e Historico) -->
+    <div id="ecom-sub-relatorios" class="ecom-subpanel" style="display:none">
+      <div class="alsubbar" id="rlsubbar" style="margin:0 0 14px">
+        <button class="alsub-btn active" data-rlsub="painel">📊 Painel</button>
+        <button class="alsub-btn" data-rlsub="financeiro">💰 Financeiro</button><!-- BUILD 2026-08-08-M -->
+        <button class="alsub-btn" data-rlsub="historico">🗂 Histórico</button>
+      </div>
+      <div id="rlsub-painel">
+      <p class="esub">Painel de capital, dinâmico — recalcula sempre do banco. Competência pela <b>data do pedido</b>: a venda conta no mês em que foi vendida, mesmo que o Mercado Pago libere o dinheiro depois.</p>
+      <h3 id="rl-kpis-titulo" style="font-size:12.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Visão geral · mês corrente</h3>
+      <div id="rl-kpis"><div class="ph">carregando…</div></div>
+      <div class="ecard" style="margin-top:18px">
+        <h3>Consulta gerencial</h3>
+        <div class="vrow3">
+          <div class="efield"><label>De (data pedido)</label><input class="vinput mono" id="rl-de" type="date"></div>
+          <div class="efield"><label>Até</label><input class="vinput mono" id="rl-ate" type="date"></div>
+          <div class="efield"><label>Status</label><select class="vinput mono" id="rl-status"><option value="">todos</option><option value="vendidos">vendidos (exclui cancel/perda)</option><option value="a_enviar">a enviar</option><option value="enviado">enviado</option><option value="entregue">entregue</option><option value="cancelado">cancelados</option></select></div>
+        </div>
+        <div class="vrow">
+          <div class="efield"><label>Produto ou código</label><input class="vinput mono" id="rl-prod" placeholder="ex.: Havit ou SSD-0001"></div>
+          <div class="efield"><label>UF</label><input class="vinput mono" id="rl-uf" maxlength="2" placeholder="SP"></div>
+        </div>
+        <button class="vbtn" id="rl-consultar">Consultar</button>
+        <div id="rl-query-result" style="margin-top:14px"></div>
+      </div>
+      <div class="ecard" style="margin-top:18px">
+        <h3>Por mês (competência)</h3>
+        <div id="rl-mensal"></div>
+      </div>
+      </div><!-- /rlsub-painel -->
+      <div id="rlsub-financeiro" style="display:none"><!-- BUILD 2026-08-08-M: conteudo integral do ex-ecom-sub-financeiro (ids preservados) -->
+
       <p class="esub">Cada venda lançada chega aqui. <b>Clique no pedido</b> — o quadro de lançamento abre logo abaixo dele (taxas reais do ML e custo do fornecedor; o lucro fica vazio, não zero, até completar). À direita, o <b>Termômetro financeiro</b> acumula receita, custos e lucro real do mês, direto do banco, a cada movimento das vendas. A <b>postagem</b> retira o pedido daqui — o que não foi fechado antes se fecha depois no Histórico (Relatórios), pelo Editar.</p>
       <div class="vgrid">
         <div class="ecard">
@@ -1735,35 +1766,8 @@
           <div class="vmsg" id="fn-msg"></div>
         </div>
       </div>
-    </div>
-    <div id="ecom-sub-relatorios" class="ecom-subpanel" style="display:none">
-      <div class="alsubbar" id="rlsubbar" style="margin:0 0 14px">
-        <button class="alsub-btn active" data-rlsub="painel">📊 Painel</button>
-        <button class="alsub-btn" data-rlsub="historico">🗂 Histórico</button>
-      </div>
-      <div id="rlsub-painel">
-      <p class="esub">Painel de capital, dinâmico — recalcula sempre do banco. Competência pela <b>data do pedido</b>: a venda conta no mês em que foi vendida, mesmo que o Mercado Pago libere o dinheiro depois.</p>
-      <h3 id="rl-kpis-titulo" style="font-size:12.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Visão geral · mês corrente</h3>
-      <div id="rl-kpis"><div class="ph">carregando…</div></div>
-      <div class="ecard" style="margin-top:18px">
-        <h3>Consulta gerencial</h3>
-        <div class="vrow3">
-          <div class="efield"><label>De (data pedido)</label><input class="vinput mono" id="rl-de" type="date"></div>
-          <div class="efield"><label>Até</label><input class="vinput mono" id="rl-ate" type="date"></div>
-          <div class="efield"><label>Status</label><select class="vinput mono" id="rl-status"><option value="">todos</option><option value="vendidos">vendidos (exclui cancel/perda)</option><option value="a_enviar">a enviar</option><option value="enviado">enviado</option><option value="entregue">entregue</option><option value="cancelado">cancelados</option></select></div>
-        </div>
-        <div class="vrow">
-          <div class="efield"><label>Produto ou código</label><input class="vinput mono" id="rl-prod" placeholder="ex.: Havit ou SSD-0001"></div>
-          <div class="efield"><label>UF</label><input class="vinput mono" id="rl-uf" maxlength="2" placeholder="SP"></div>
-        </div>
-        <button class="vbtn" id="rl-consultar">Consultar</button>
-        <div id="rl-query-result" style="margin-top:14px"></div>
-      </div>
-      <div class="ecard" style="margin-top:18px">
-        <h3>Por mês (competência)</h3>
-        <div id="rl-mensal"></div>
-      </div>
-      </div><!-- /rlsub-painel -->
+
+      </div><!-- /rlsub-financeiro -->
       <div id="rlsub-historico" style="display:none">
       <p class="esub">Entra aqui na <b>postagem</b>. Registro de cada venda postada — <b>Editar</b> corrige qualquer campo (preço, taxas, custo, datas; toda edição fica marcada) e fecha margem pendente. O botão <b>✓ entregue</b> (opcional, 1 clique) marca a entrega efetiva — mantém honesto o capital em giro preso. Cada linha exporta o relatório do pedido em PDF.</p>
       <div id="hs-list"><div class="ph">carregando…</div></div>
@@ -6798,7 +6802,6 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const sub=b.dataset.sub;
   $$('#tab-ecommerce .ecom-subpanel').forEach(p=>{ p.style.display=(p.id==='ecom-sub-'+sub)?'':'none'; }); // BUILD 2026-08-08-C: escopo restrito — Consulta Produto vive na aba Catálogo
   if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value){ dt.value=ecomVendas.nowLocal(); } ecomVendas.calcPostarAte(); ecomVendas.loaded=true; ecomVendas.load(); } // BUILD 2026-08-03-A: Candidatos mudou para o Radar
-  if(sub==='financeiro'){ ecomFinanceiro.load(); }
   if(sub==='relatorios'){ ecomRelatorios.load(); }
   if(sub==='alvo'){ ecomAlvo.load(); }
   if(sub==='radar'){ ecomRadar.load(); }
@@ -6855,12 +6858,13 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const sv=ecomHistorico._g('hs-savebtn'); if(sv) sv.addEventListener('click',()=>ecomHistorico.saveEdit());
   const md=ecomHistorico._g('hs-modal'); if(md) md.addEventListener('click',e=>{ if(e.target===md) ecomHistorico.closeEdit(); });
   // BUILD 2026-07-16-A · Historico vive dentro de Relatorios (seletor Painel | Historico)
+  // BUILD 2026-08-08-M: seletor Painel | Financeiro | Historico (3 panes)
   const rb=document.getElementById('rlsubbar'); if(rb) rb.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
     rb.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x===b));
-    const h=(b.dataset.rlsub==='historico');
-    const pp=document.getElementById('rlsub-painel'), ph=document.getElementById('rlsub-historico');
-    if(pp) pp.style.display=h?'none':''; if(ph) ph.style.display=h?'':'none';
-    if(h) ecomHistorico.load(); });
+    const t=b.dataset.rlsub;
+    ['painel','financeiro','historico'].forEach(k=>{ const el=document.getElementById('rlsub-'+k); if(el) el.style.display=(k===t)?'':'none'; });
+    if(t==='historico') ecomHistorico.load();
+    if(t==='financeiro') ecomFinanceiro.load(); });
 })();
 (function(){
   const list=ecomFinanceiro._g('fn-list');
