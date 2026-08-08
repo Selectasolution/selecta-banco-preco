@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-08-K | selecta-banco-preco | FAXINA DA ANALISE COMERCIAL (decisao Igor 08/08, com prints): APAGADOS — nota "Simples Anexo I..." e paragrafo "Custo fixo <R$79 aposentado" do card Parametros; sentinela "Integridade do catalogo" (funcao sentinela() tem guarda if(!box), segue inofensiva); barra Modalidade de envio INTEIRA (toggle Flex/Full sai da tela — modalidade fica fixa no default flex; listener guardado; recolocacao discreta se precisar simular Full); rodape "Regra ML (pos 02/03/2026...)". REALOCADOS p/ o rodape da tela — botao "Exportar cenario (.md)" p/ dentro do card Comando ao lado do Copiar comando (mesmo id, binding intacto) e painel de integridade ZUMBI-2/divergencia (al-atv-integridade, inclui carimbo "lote de...") p/ o final da Analise Comercial, apos o card Comando (render por id, local-independente). Zero logica alterada; sem SQL. | base: 2026-08-08-J (md5 6373233771a48d622d4f2f26b6de8697) -->
 <!-- BUILD 2026-08-08-J | selecta-banco-preco | PARAMETROS DENTRO DA ANALISE COMERCIAL (decisao Igor 08/08): sub-aba "Parametros comerciais" (criada no E) EXTINTA — botao removido, pane dissolvido; todo o conteudo (card Parametros, sentinela, Modalidade+Exportar cenario, Frete oficial ML, regra ML) agora vive DENTRO da Analise Comercial, imediatamente apos o card Cadastro de anuncio, para simular acoes comerciais com os parametros a mao (mexer em comissao/imposto/colchao/modalidade recalcula o simulador do anuncio ao vivo — mesmos ids, mesmos listeners). Alsubbar volta a 2 botoes (Analise / Controle). Zero JS; sem SQL. | base: 2026-08-08-I (md5 300310db07fdef2f3431e0e56a803e45) -->
 <!-- BUILD 2026-08-08-I | selecta-banco-preco | SIMULADOR EM TEMPO REAL NO CADASTRO DE ANUNCIO (decisao Igor 08/08 — codigo padrao oficial em todas as plataformas): (1) Layout na ordem definida: [Codigo Produto / MLB / Data] > [Titulo / Tipo] > [Preco anunciado / MARGEM]. (2) Campo Margem = display ao vivo: codigo valido ecoa produto + custo NF; com preco, mostra margem % (verde >=10 / ambar 5-10 / vermelho <5 — cores da clausula petrea), lucro liquido R$ e detalhe frete+comissao. (3) Matematica: REUSO de ecomAlvo._simMargem (FRETE_TBL x reputacao vigente de ecom.reputacao, comissao por categoria, colchao sobre custo) — a MESMA do gate do Controle; nenhum calculo paralelo criado. (4) Listeners em al-cod/al-preco (input) e al-tipo (change); reset do display apos cadastrar. Produto buscado em ecom.itens (so ativos, ja carregados na entrada da aba). Sem SQL. | base: 2026-08-08-H (md5 98b076e02ac828485da8064f1b531978) -->
 <!-- BUILD 2026-08-08-H | selecta-banco-preco | INVERSAO NO CAMPO PRODUTO (pedido Igor 08/08): descricao do item (marca · modelo · capacidade · interface) vira a LINHA PRINCIPAL em branco forte (eprod); o tipo de produto (coluna produto) desce como sub-linha na cor discreta (emodel); fallback: sem descricao, o tipo segue como principal. Linha do peso mantida. So o render da tabela do Catalogo; zero HTML/CSS; sem SQL. | base: 2026-08-08-G (md5 fbebfaa833d2ffc08602c8fb1a7e2a8e) -->
@@ -1838,25 +1839,10 @@
         <div class="efield"><label>Outros custos</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
         <div class="efield"><label>Colchão</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="6"><span class="unit">%</span></div></div>
       </div>
-      <p class="note">Simples Anexo I 1ª faixa = 4% · Outros = antecip./parcel. · Colchão = % sobre a compra (custos operacionais).</p>
-      <div style="margin-top:14px">
-        <p class="note" style="color:var(--emuted);font-size:12.5px;line-height:1.6">
-          <b>Custo fixo &lt;R$79 aposentado (02/07/2026).</b> Frete agora vem 100% da tabela oficial ML (peso × faixa de preço × reputação), inclusive abaixo de R$79. A antiga regra fixa (R$6,25/6,50/6,75) não existe mais no modelo oficial.
-        </p>
-      </div>
-    </div>
-    <div id="ecom-sentinela" class="ecom-sentinela"></div>
 
-    <!-- MODALIDADE -->
-    <div class="modbar">
-      <span class="ml">Modalidade de envio:</span>
-      <div class="modtog" id="ecom-modtog">
-        <span class="tg active" data-mod="flex">Flex / Correios</span>
-        <span class="tg" data-mod="full">Full</span>
-      </div>
-      <span class="modwarn" id="ecom-modwarn"></span>
-      <button id="ecom-export" class="cancelbtn" style="margin-left:auto" title="Exporta o cenário atual (parâmetros, produtos, matriz e vereditos) em .md para análise de mercado/marca">⬇ Exportar cenário (.md)</button>
     </div>
+
+    <!-- BUILD 2026-08-08-K: barra Modalidade removida (pedido Igor). Toggle Flex/Full FORA da tela — modalidade fixa no estado default flex; botao Exportar cenario realocado p/ o card Comando, ao lado do Copiar comando. -->
     <!-- FRETE (FRETE_TBL oficial ML) -->
     <div class="ecard">
       <h3>Frete oficial ML — <span style="color:var(--eaccent);text-transform:none;letter-spacing:0" id="ecom-frete-ctxtop"></span></h3>
@@ -1880,12 +1866,10 @@
     <!-- BUILD 30/07-B: Parametros comerciais + Cadastrar/simular produto MOVIDOS para a Analise Comercial (Alvo). -->
 
     <!-- CONSULTA -->
-    <div class="efooter">
-      <b>Regra ML (pós 02/03/2026, Flex/Correios):</b> ≥R$79 → comissão (por tipo de anúncio) + frete da matriz (célula destino×peso do produto). &lt;R$79 → ML banca o frete; comissão + custo fixo por faixa (R$6,25 / R$6,50 / R$6,75; abaixo de R$12,50 = 50% do preço). Tudo sobre o preço de venda; margem e break-even líquidos do colchão. Excluir = inativar (fica salvo no banco).
-    </div>
+
       <!-- BUILD 30/07-C: Anúncios ativos — matemática ML (substitui os quadrantes do comando geral) -->
       <div class="ecard" style="border-color:var(--eemerald);border-width:1px">
-        <div id="al-atv-integridade"></div>
+        <!-- BUILD 2026-08-08-K: al-atv-integridade movido p/ o rodape da Analise Comercial -->
         <div id="al-atv-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
           <h3 style="margin:0;color:var(--eemerald)">Anúncios ativos — matemática ML</h3>
           <span class="vmsg" id="al-atv-count" style="margin:0"></span><span class="vmsg" id="al-atv-live" style="margin:0;color:var(--emuted2);font-size:11px"></span>
@@ -1904,6 +1888,7 @@
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <h3 style="font-size:12.5px;margin:0">📋 Comando — Análise Individual <span class="faint" style="font-weight:400;font-size:11px">v2.0 · 1 anúncio por chat</span></h3>
           <button class="vbtn sm" id="al-cmd-copy">📋 Copiar comando</button>
+          <button class="vbtn sm" id="ecom-export" title="Exporta o cenário atual (parâmetros, produtos, matriz e vereditos) em .md para análise de mercado/marca">⬇ Exportar cenário (.md)</button><!-- BUILD 2026-08-08-K -->
           <span class="vmsg" id="al-cmd-msg" style="margin:0"></span>
         </div>
         <p class="hint" style="font-size:11.5px;color:var(--emuted2);margin:6px 0 0">Colar no chat junto com o quadro do anúncio no painel ML. O retorno é UM JSON — importe na linha do anúncio, acima.</p>
@@ -1913,6 +1898,7 @@
           <textarea id="al-cmd-text" readonly style="width:100%;min-height:300px;margin-top:8px;background:var(--epanel2);color:var(--etxt);border:1px solid var(--eborder);border-radius:10px;padding:14px;font:12.5px/1.55 ui-monospace,Menlo,Consolas,monospace;resize:vertical" spellcheck="false"></textarea>
         </details>
       </div>
+      <div id="al-atv-integridade" style="margin-top:14px"></div><!-- BUILD 2026-08-08-K: painel ZUMBI-2 / divergencia publicado x registro no rodape -->
       </div><!-- /alsub-analise -->
 
       <div id="alsub-controle" class="alsub" style="display:none">
