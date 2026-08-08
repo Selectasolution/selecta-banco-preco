@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-08-D | selecta-banco-preco | HOTFIX CSS DO BUILD C (defeito detectado no teste do Igor: aba Catalogo renderizava cards crus): o BUILD C duplicou apenas o <style> interno da secao #tab-ecommerce, mas as classes centrais (ecard, param-grid, addform, ainput, mtx, chips, sentinela, modtog, num/field-row etc.) vivem no bloco <style id="ecom-v8-style"> — que nao foi duplicado. Este build injeta a duplicata desse bloco com escopo #tab-catalogo dentro do <style> da aba Catalogo. Nenhuma outra mudanca; zero JS tocado; sem SQL. Extracao do simulador ML p/ aba Mercado Livre passa a ser o BUILD E. | base: 2026-08-08-C (md5 8b5f40921e0e4b6b637cb86fe13c0b7b) -->
 <!-- BUILD 2026-08-08-C | selecta-banco-preco | VIRADA E-COMMERCE TOTAL (decisao Igor 08/08 — foco 100% digital, saida gradual de licitacoes): (1) Rotulo da aba "E-commerce" -> "Mercado Livre" (so texto visivel; IDs/funcoes ecom* e tab-ecommerce INTOCADOS — organizada geral de nomes fica p/ sessao propria). (2) Aba Catalogo ANTIGA (banco de preco de licitacao) REMOVIDA da navegacao: secao renomeada tab-catalogo-legado, oculta e dormente; loadFilters/loadCatalog desligados do boot; tabelas produtos/ofertas/fornecedores INTACTAS no banco (expurgo = decisao pos-desmobilizacao dez/2026); Agente de Cotacao aposentado (banco_padrao.json publicado congela). (3) NOVA aba principal "Catalogo" (reusa id tab-catalogo) = cadastro unico de produtos: cards Parametros comerciais + Cadastrar/simular produto (movidos da Alvo) + Consulta Produto (payload ecom-sub-simulador movido da barra ML) — ids 100% preservados, bindings do modulo ecom intactos; CSS do escopo #tab-ecommerce duplicado para #tab-catalogo. Simulacao ML embutida = TEMPORARIA (extracao p/ aba Mercado Livre + motor de frete por plataforma = BUILD D). (4) Simulador PC: botao proprio removido; iframe montador.html ANINHADO como secao logica da aba Catalogo (padrao tab-apple/Instagram); reconfiguracao futura anunciada pelo Igor. (5) Barra Mercado Livre: Consulta Produto sai; Alvo vira sub-aba default (carga automatica na 1a entrada via _alvoBoot); handler de subpaineis com escopo #tab-ecommerce. (6) App abre no Mercado Livre (operacao diaria). Fluxo cross-aba declarado: "+ Gravar e gerar anuncio" grava produto no Catalogo e pre-preenche o Cadastro de anuncio que VIVE na aba Mercado Livre > Alvo. Sem SQL — nenhuma tabela tocada. | base: 2026-08-08-B (md5 820417067bc58a236effbf7637565616 conferido na sessao) -->
 <!-- BUILD 2026-08-03-C | selecta-banco-preco | CATEGORIA ANTENA/RADIO DE REDE (sigla ANT — confirmada por Igor: inexistente no catalogo, produto novo). Fronteira: ANT = radios outdoor de enlace PtP/PtMP, CPEs, antenas direcionais/setoriais, kit radio+antena; AP segue com access points indoor; RTR com roteadores. Comissao estimativa 14/19 em SQL proprio (que tambem FECHA a pendencia TAB de 13/07 — linha nunca inserida no banco). | base: 03-B (relatorios mes corrente) -->
 <!-- BUILD 2026-08-03-A | selecta-banco-preco | VENDAS 2 QUADRANTES + CANDIDATOS NO RADAR (piloto v2 aprovado 03/08; schema ecom_vendas verificado via information_schema nesta sessao — tipo_anuncio NAO existe, desfecho 3: classificacao segue derivada de comissao_pct_efetiva): (1) Aba Vendas: faixa vd-resumo REMOVIDA (controle de envio vive no semaforo linha a linha); empilhamento vertical padrao Alvo — form "Lancar venda" em 3 linhas densas alinhadas a esquerda (larguras fixas) + listagem "Lancadas" MES A MES FECHADO (seletor ◀ mes ▶, competencia data_solicitacao, todos os status do mes, totalizador de VALIDOS = exclui cancelado/perda). (2) TRAVA DO RAZAO imposta pelo app: campos Comissao/Tarifa/Frete so habilitam com Status inicial != a_enviar (venda ao vivo = taxas NULL sempre, nunca estimadas; defesa dupla no DOM e no lancar()); status != a_enviar permite lancar direto do relatorio ML com taxas reais (fees_conferidas=true quando comissao preenchida; tarifa/frete vazios viram 0 SO quando ha comissao) ou em transito com taxas em aberto. Campo Observacoes no form (coluna verificada). (3) Candidatos a importacao MUDOU de Vendas para o Radar de Nicho — 3a sub-aba data-rdtab=cand, card intacto (mesmo al-import/refreshCandidatos), refresh ao abrir a sub-aba. Sem SQL — nenhuma tabela alterada. | base: 2026-08-01-A (md5 74dd1185fc2c814a9c24c1c59b1f3c13 conferido na sessao) -->
@@ -299,6 +300,165 @@
     #tab-catalogo .ctl-sec-btn{color:#9ca3af;border-bottom:2px solid transparent}
     #tab-catalogo .ctl-sec-btn.active{color:#10b981;border-bottom-color:#10b981}
     #tab-catalogo .ctl-sec-btn:hover:not(.active){color:#e5e7eb}
+    /* BUILD 2026-08-08-D: duplicata do bloco central ecom-v8-style (ecard/param-grid/addform/ainput/mtx/chips) — faltava no C */
+
+  #tab-catalogo{--ebg:#0b1220;--epanel:#131c2e;--epanel2:#0f1726;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#34d399;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  #tab-catalogo *{box-sizing:border-box}
+  #tab-catalogo{color:var(--etxt);font-size:14px;line-height:1.5}
+  #tab-catalogo .esub{color:var(--emuted);font-size:12.5px;margin:0 0 16px}
+  #tab-catalogo .esub b{color:var(--eaccent);font-weight:600}
+  #tab-catalogo .addform .pesofield{position:relative}
+  #tab-catalogo .ffaixa{position:absolute;top:100%;left:0;margin-top:4px;font-size:10.5px;color:var(--eteal);white-space:nowrap}
+  #tab-catalogo .ffaixa.warn{color:var(--eamber)}
+  #tab-catalogo .ecom-sentinela{border-radius:10px;padding:9px 13px;margin-bottom:12px;font-size:12px;border:1px solid var(--eborder)}
+  #tab-catalogo .ecom-sentinela.ok{background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.28);color:var(--eemerald)}
+  #tab-catalogo .ecom-sentinela.warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.32);color:var(--etxt)}
+  #tab-catalogo .ecom-sentinela.crit{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.38);color:var(--etxt)}
+  #tab-catalogo .ecom-sentinela .sent-h{font-weight:600;margin-bottom:5px}
+  #tab-catalogo .ecom-sentinela ul{margin:0;padding-left:18px}
+  #tab-catalogo .ecom-sentinela li{margin:2px 0;color:var(--emuted)}
+  #tab-catalogo .simfield label .hsim{font-size:9px;color:var(--emuted2);font-weight:400;text-transform:none;letter-spacing:0}
+  #tab-catalogo .robe{background:#0c1422;border-style:dashed;color:var(--emuted)}
+  #tab-catalogo .mgsimf{font-weight:700}
+  #tab-catalogo .mgsimf.v{color:var(--eemerald)} #tab-catalogo .mgsimf.a{color:var(--eamber)} #tab-catalogo .mgsimf.r{color:var(--ered)}
+  #tab-catalogo .ecard{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:13px 16px;margin-bottom:10px}
+  #tab-catalogo .ecard h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin:0 0 12px;font-weight:600}
+  #tab-catalogo .frete-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:18px}
+  @media(max-width:880px){#tab-catalogo .frete-grid{grid-template-columns:1fr}}
+  #tab-catalogo .selrow{margin-bottom:11px}
+  #tab-catalogo .selrow .lab{font-size:11px;color:var(--emuted);margin-bottom:5px}
+  #tab-catalogo .chips{display:flex;gap:6px;flex-wrap:wrap}
+  #tab-catalogo .chip{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:6px 11px;font-size:12px;cursor:pointer}
+  #tab-catalogo .chip:hover{border-color:var(--eaccent);color:var(--etxt)}
+  #tab-catalogo .chip.active{background:var(--eaccent);color:#06281d;border-color:var(--eaccent);font-weight:600}
+  #tab-catalogo .applied{margin-top:12px;padding:8px 12px;background:#0c2c22;border:1px solid #1c5c44;border-radius:10px}
+  #tab-catalogo .applied .ctx{font-size:12px;color:var(--eteal)}
+  #tab-catalogo .mtitle{font-size:11px;color:var(--emuted);margin-bottom:6px}
+  #tab-catalogo table.mtx{border-collapse:collapse;width:100%}
+  #tab-catalogo table.mtx th{font-size:10px;color:var(--emuted2);font-weight:600;padding:4px;text-align:center;white-space:nowrap}
+  #tab-catalogo table.mtx td.rl{font-size:11px;color:var(--emuted);text-align:left;padding-right:8px;white-space:nowrap}
+  #tab-catalogo .mcell{width:100%;background:#26220c;border:1px solid #4a4118;color:#f3e6a8;border-radius:6px;padding:5px 6px;font-family:var(--emono);font-size:12px;text-align:right}
+  #tab-catalogo .mcell:focus{outline:none;border-color:var(--eamber)}
+  #tab-catalogo .mcell.sel{border-color:var(--eaccent);box-shadow:0 0 0 1px var(--eaccent)}
+  #tab-catalogo .mcell.calib{background:#082418;border-color:#1c5c44;color:#a8f3d0}
+  #tab-catalogo .mcell.calib:focus{border-color:var(--eemerald)}
+  #tab-catalogo .mcell.calib.sel{box-shadow:0 0 0 1px var(--eemerald)}
+  #tab-catalogo .mtxlegend{display:flex;gap:14px;font-size:10.5px;color:var(--emuted2);margin-top:6px;flex-wrap:wrap}
+  #tab-catalogo .mtxlegend .lg{display:inline-flex;align-items:center;gap:5px}
+  #tab-catalogo .mtxlegend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;border:1px solid}
+  #tab-catalogo .mtxlegend .sw.c{background:#082418;border-color:#1c5c44}
+  #tab-catalogo .mtxlegend .sw.e{background:#26220c;border-color:#4a4118}
+  #tab-catalogo .mnote{font-size:12.5px;color:var(--eamber);margin-top:8px;line-height:1.6}
+  #tab-catalogo .mnote b{color:#f3e6a8}
+  #tab-catalogo .param-grid{display:flex;flex-wrap:wrap;gap:11px 16px;align-items:flex-end}
+  #tab-catalogo .efield label{display:block;font-size:11px;color:var(--emuted);margin-bottom:5px}
+  #tab-catalogo .field-row{display:flex;align-items:center;gap:6px}
+  #tab-catalogo .num{width:56px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:7px 8px;font-family:var(--emono);font-size:14px;text-align:right}
+  #tab-catalogo .num:focus{outline:none;border-color:var(--eaccent)}
+  #tab-catalogo .unit{color:var(--emuted2);font-family:var(--emono);font-size:13px}
+  #tab-catalogo .toggle-row{display:flex;gap:6px;margin-top:5px}
+  #tab-catalogo .note{font-size:12.5px;color:var(--emuted);margin-top:8px;line-height:1.6}
+  #tab-catalogo .modbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:9px 12px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:9px}
+  #tab-catalogo .modbar .ml{font-size:11px;color:var(--emuted)}
+  #tab-catalogo .modtog{display:flex;gap:6px}
+  #tab-catalogo .modtog .tg{background:var(--ebg);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:12px}
+  #tab-catalogo .modtog .tg.active{background:#0c2c22;border-color:var(--eaccent);color:var(--eaccent);font-weight:600}
+  #tab-catalogo .modwarn{font-size:11px;color:var(--eamber)}
+  #tab-catalogo .fixgrid{display:flex;flex-wrap:wrap;gap:11px 14px;margin-top:8px}
+  #tab-catalogo .fixgrid .fx label{font-size:10px;color:var(--emuted2);display:block;margin-bottom:4px;white-space:nowrap}
+  #tab-catalogo .fixnum{width:66px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:6px;padding:6px 7px;font-family:var(--emono);font-size:12.5px;text-align:right}
+  #tab-catalogo .fixnum:focus{outline:none;border-color:var(--eaccent)}
+  #tab-catalogo .fixnum.locked{background:#0c1320;color:var(--emuted2)}
+  #tab-catalogo .efiltrow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  #tab-catalogo .addform{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  #tab-catalogo .addform .efield{display:flex;flex-direction:column}
+  #tab-catalogo .ainput{background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:7px 9px;font-size:13px}
+  #tab-catalogo .ainput:focus{outline:none;border-color:var(--eaccent)}
+  #tab-catalogo .ainput.mono{font-family:var(--emono);text-align:right}
+  #tab-catalogo .req{color:var(--eamber)}
+  #tab-catalogo .addbtn{background:var(--eaccent);color:#06281d;border:none;border-radius:7px;padding:9px 18px;font-weight:600;cursor:pointer;font-size:13px}
+  #tab-catalogo .addbtn:hover{filter:brightness(1.08)}
+  #tab-catalogo .cancelbtn{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:9px 14px;cursor:pointer;font-size:13px}
+  #tab-catalogo .formmsg{font-size:11.5px;color:var(--eamber);margin-top:8px;min-height:14px}
+  #tab-catalogo .tbl-wrap{overflow-x:auto;margin-top:6px}
+  #tab-catalogo table.emain{width:auto;border-collapse:collapse;font-size:13px}
+  #tab-catalogo table.emain thead th{text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--emuted);font-weight:600;padding:0 9px 9px;border-bottom:1px solid var(--eborder);white-space:nowrap}
+  #tab-catalogo table.emain thead th.l{text-align:left}
+  #tab-catalogo table.emain tbody td{padding:7px 9px;border-bottom:1px solid #1c2740;text-align:right;font-family:var(--emono);white-space:nowrap;vertical-align:middle}
+  #tab-catalogo table.emain tbody td.l{text-align:left;font-family:inherit;font-size:13.5px}
+  #tab-catalogo table.emain tbody tr:hover{background:#0f1828}
+  #tab-catalogo table.emain .cellInput.mkt{font-size:11px}
+  #tab-catalogo .eprod{font-weight:600}
+  #tab-catalogo .emodel{color:var(--emuted2);font-size:12px;font-family:var(--emono)}
+  #tab-catalogo .ezona{font-size:10.5px;color:var(--eamber);margin-top:2px}
+  #tab-catalogo .cellInput{width:74px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:6px;padding:5px 7px;font-family:var(--emono);font-size:12.5px;text-align:right}
+  #tab-catalogo .cellInput:focus{outline:none;border-color:var(--eaccent)}
+  #tab-catalogo .cellInput.me{border-color:#3a4a6a;color:var(--eaccent)}
+  #tab-catalogo .stack{display:flex;flex-direction:column;gap:3px;align-items:flex-end}
+  #tab-catalogo .gratis{color:var(--eemerald);font-size:11.5px}
+  #tab-catalogo .gratis small{display:block;color:var(--emuted2);font-size:10px}
+  #tab-catalogo .pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+  #tab-catalogo .pill.priorizar{background:#0c2c22;color:var(--eemerald)}
+  #tab-catalogo .pill.analisar{background:#2e2410;color:var(--eamber)}
+  #tab-catalogo .pill.excluir{background:#2e1517;color:var(--ered)}
+  #tab-catalogo .mneg{color:var(--ered)} #tab-catalogo .vsacima{color:var(--ered)} #tab-catalogo .vsabaixo{color:var(--eemerald)} #tab-catalogo .vsnull{color:var(--emuted2)}
+  #tab-catalogo .smper{font-size:11px;color:var(--emuted)}
+  #tab-catalogo .acts{display:flex;gap:6px;justify-content:center}
+  #tab-catalogo .rowbtn{background:none;border:1px solid var(--eborder);color:var(--emuted);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer}
+  #tab-catalogo .rowbtn:hover{border-color:var(--eaccent);color:var(--etxt)}
+  #tab-catalogo .rowbtn.del:hover{border-color:var(--ered);color:var(--ered)}
+  #tab-catalogo .efooter{margin-top:14px;padding-top:13px;border-top:1px solid var(--eborder);font-size:12.5px;color:var(--emuted);line-height:1.6}
+  #tab-catalogo select.ainput{appearance:auto}
+
+  /* BUILD 2026-07-12-A: aba Vendas — redesenho v5 aprovado em preview.
+     Causa-raiz dos builds F/G/H: (1) variáveis --e* declaradas apenas em #tab-catalogo não resolviam
+     dentro de #tab-apple; (2) alinhamento à direita sob cabeçalhos largos. Agora: variáveis no escopo,
+     cabeçalho com faixa de fundo, campo e valor com a MESMA origem esquerda (padding-left 12px),
+     card abraça o conteúdo, coluna Nº, badges semânticos, valores sem prefixo R$. */
+  #tab-apple{--epanel:#131c2e;--epanel2:#0f1726;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#34d399;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  #tab-apple .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  #tab-apple .toolbar input[type=search]{background:var(--epanel2);border:1px solid var(--eborder);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--etxt);width:300px;outline:none}
+  #tab-apple .toolbar input[type=search]:focus{border-color:var(--eaccent)}
+  #tab-apple .toolbar input[type=search]::placeholder{color:var(--emuted2)}
+  #tab-apple .btn-primario{background:var(--eemerald);color:#06281d;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer}
+  #tab-apple .btn-primario:hover{background:var(--eaccent)}
+  #tab-apple .ecard{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:14px 16px 10px;margin-bottom:14px;width:max-content;max-width:100%}
+  #tab-apple .ecard-head{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:12px}
+  #tab-apple .ecard-head h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin:0;font-weight:600}
+  #tab-apple .count{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:999px;padding:2px 10px;font-size:11px;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  #tab-apple .count:empty{display:none}
+  #tab-apple .tbl-wrap{overflow-x:auto}
+  #tab-apple table.emain{width:auto;border-collapse:separate;border-spacing:0;font-size:13px}
+  #tab-apple table.emain thead th{background:var(--epanel2);text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted);font-weight:600;padding:8px 26px 8px 12px;vertical-align:middle;line-height:1.3;white-space:nowrap}
+  #tab-apple table.emain thead th:first-child{border-radius:8px 0 0 8px}
+  #tab-apple table.emain thead th:last-child{border-radius:0 8px 8px 0;padding-right:12px}
+  #tab-apple table.emain thead th .sub{display:block;font-weight:400;text-transform:none;letter-spacing:0;color:var(--emuted2)}
+  #tab-apple table.emain tbody td{text-align:left;padding:10px 26px 10px 12px;border-bottom:1px solid #1c2740;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;vertical-align:middle}
+  #tab-apple table.emain tbody td:last-child{padding-right:12px}
+  #tab-apple table.emain tbody tr:last-child td{border-bottom:none}
+  #tab-apple table.emain tbody tr:hover td{background:#0f1828}
+  #tab-apple table.emain tbody td.l{font-family:inherit;font-size:13.5px}
+  #tab-apple table.emain .num{color:var(--emuted2);font-size:11.5px;width:26px;min-width:26px}
+  #tab-apple .eprod{font-weight:600}
+  #tab-apple .emodel{color:var(--emuted2);font-size:12px;font-family:var(--emono);margin-top:1px}
+  #tab-apple .vbadge{display:inline-flex;align-items:baseline;gap:6px;border-radius:6px;padding:3px 9px;font-size:12.5px;font-weight:600;font-family:var(--emono);font-variant-numeric:tabular-nums}
+  #tab-apple .vbadge .pc{font-size:10.5px;font-weight:400;opacity:.75}
+  #tab-apple .vbadge.ok{background:rgba(16,185,129,.13);color:#5fe0a8}
+  #tab-apple .vbadge.err{background:rgba(239,68,68,.13);color:#fca5a5}
+  #tab-apple .stk{display:inline-block;min-width:26px;text-align:center;border:1px solid var(--eborder);border-radius:6px;padding:2px 8px;font-size:12px;color:var(--etxt)}
+  #tab-apple .stk.zero{border-color:rgba(239,68,68,.45);color:#fca5a5}
+  #tab-apple .muted2{color:var(--emuted2)}
+  #tab-apple .acts{display:flex;gap:6px}
+  #tab-apple .rowbtn{cursor:pointer;background:none;border:1px solid var(--eborder);color:var(--emuted);border-radius:6px;padding:3px 10px;font-size:11px;font-family:inherit}
+  #tab-apple .rowbtn:hover{border-color:var(--eaccent);color:var(--etxt)}
+  #tab-apple .rowbtn.del:hover{border-color:var(--ered);color:var(--ered)}
+  #tab-apple .rowbtn.venda{border-color:rgba(16,185,129,.5);color:var(--eemerald)}
+  #tab-apple .rowbtn.venda:hover{background:#0c2c22}
+  #tab-apple .rowbtn:disabled{opacity:.35;cursor:not-allowed}
+  #tab-apple .mneg{color:var(--ered)}
+  #tab-apple .mok{color:var(--eemerald)}
+  #tab-apple .smper{font-size:11px;color:var(--emuted)}
+
     
     #tab-catalogo .ecom-subnav{display:flex;gap:2px;border-bottom:1px solid var(--eborder);margin:0 0 18px;overflow-x:auto}
     #tab-catalogo .ecom-subtab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--emuted);font:inherit;font-size:13.5px;padding:9px 14px;cursor:pointer;white-space:nowrap}
