@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-08-I | selecta-banco-preco | SIMULADOR EM TEMPO REAL NO CADASTRO DE ANUNCIO (decisao Igor 08/08 — codigo padrao oficial em todas as plataformas): (1) Layout na ordem definida: [Codigo Produto / MLB / Data] > [Titulo / Tipo] > [Preco anunciado / MARGEM]. (2) Campo Margem = display ao vivo: codigo valido ecoa produto + custo NF; com preco, mostra margem % (verde >=10 / ambar 5-10 / vermelho <5 — cores da clausula petrea), lucro liquido R$ e detalhe frete+comissao. (3) Matematica: REUSO de ecomAlvo._simMargem (FRETE_TBL x reputacao vigente de ecom.reputacao, comissao por categoria, colchao sobre custo) — a MESMA do gate do Controle; nenhum calculo paralelo criado. (4) Listeners em al-cod/al-preco (input) e al-tipo (change); reset do display apos cadastrar. Produto buscado em ecom.itens (so ativos, ja carregados na entrada da aba). Sem SQL. | base: 2026-08-08-H (md5 98b076e02ac828485da8064f1b531978) -->
 <!-- BUILD 2026-08-08-H | selecta-banco-preco | INVERSAO NO CAMPO PRODUTO (pedido Igor 08/08): descricao do item (marca · modelo · capacidade · interface) vira a LINHA PRINCIPAL em branco forte (eprod); o tipo de produto (coluna produto) desce como sub-linha na cor discreta (emodel); fallback: sem descricao, o tipo segue como principal. Linha do peso mantida. So o render da tabela do Catalogo; zero HTML/CSS; sem SQL. | base: 2026-08-08-G (md5 fbebfaa833d2ffc08602c8fb1a7e2a8e) -->
 <!-- BUILD 2026-08-08-G | selecta-banco-preco | AJUSTE VISUAL (pedido Igor 08/08): campo Produto da tabela do Catalogo — nome em 14.5px peso 700 cor plena; sub-linha (marca/modelo/capacidade) sai da fonte mono p/ a fonte padrao em 12.5px cinza medio. Escopo restrito a #tab-catalogo (tabelas do Mercado Livre e Instagram inalteradas). Duas linhas de CSS; zero HTML/JS; sem SQL. | base: 2026-08-08-F (md5 8e426b72d3b7bb1860b3f628a6e6bfa2) -->
 <!-- BUILD 2026-08-08-F | selecta-banco-preco | CATALOGO = CADASTRO PURO (decisao Igor 08/08; BUILD E NAO commitado — este F o substitui, producao segue no D ate o commit): (1) Tabela do Catalogo em layout NEUTRO: Codigo / Produto / Preco Venda / Mercado (media, edicao inline) / vs (preco x media) / Custo NF / Acoes. Colunas Frete, Mordida, Margem e VEREDITO removidas — viabilidade agora aparece SO no cadastro de anuncio de cada plataforma (na Alvo, a matematica ML ja existe). (2) Filtros trocados: Codigo (busca parcial, uppercase) + Categoria (select dinamico com contagem, rotulos herdados do form de cadastro); filtros Produto/Veredito removidos (fProd/fVer -> fCod/fCat; populateProdFilter -> populateCatFilter; isVis reescrito). itemVer/veredito ficam dormentes p/ a tabela (veredito segue em uso no exportar cenario/Alvo). Campo "menor" (minimo mercado) sai da edicao inline — so media, decisao Igor. (3) Mantem tudo do E: sub-aba Parametros comerciais na Alvo com os blocos ML; form de cadastro neutro (7 campos + Adicionar). Sem SQL. | base: 2026-08-08-E (md5 b0eef041d83c7060b28c4b3bc6d7de39) -->
@@ -1810,14 +1811,18 @@
       <div class="ecard" style="margin-bottom:12px;padding:12px 14px;border-color:var(--eteal);border-width:1px">
         <h3 style="color:var(--eemerald)">Cadastro de anúncio</h3>
         <div class="vrow3" style="margin-bottom:2px">
-          <div class="efield"><label>Código do produto *</label><input class="vinput mono" id="al-cod" placeholder="SSD-0001"></div>
+          <div class="efield"><label>Código Produto *</label><input class="vinput mono" id="al-cod" placeholder="SSD-0001" style="text-transform:uppercase"></div>
           <div class="efield"><label>Nº do anúncio · MLB *</label><input class="vinput mono" id="al-mlb" placeholder="MLB4811359527 ou 4811359527"></div>
           <div class="efield"><label>Data de publicação *</label><input class="vinput mono" id="al-pub" type="date"></div>
         </div>
-        <div class="efield" style="margin-bottom:2px"><label>Título do anúncio *</label><input class="vinput" id="al-tit" placeholder="como está no ML"></div>
+        <!-- BUILD 2026-08-08-I: simulador em tempo real — Titulo/Tipo, depois Preco/Margem -->
+        <div class="vrow" style="margin-bottom:2px">
+          <div class="efield"><label>Título do anúncio *</label><input class="vinput" id="al-tit" placeholder="como está no ML"></div>
+          <div class="efield"><label>Tipo *</label><select class="vinput" id="al-tipo"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
+        </div>
         <div class="vrow" style="margin-bottom:2px">
           <div class="efield"><label>Preço anunciado</label><input class="vinput mono" id="al-preco" type="number" step="0.01" placeholder="0,00"></div>
-          <div class="efield"><label>Tipo *</label><select class="vinput" id="al-tipo"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
+          <div class="efield"><label>Margem</label><div class="vinput mono" id="al-margem" style="display:flex;align-items:center;min-height:38px;gap:8px;flex-wrap:wrap"><span style="color:var(--emuted2)">digite código, tipo e preço</span></div></div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-top:4px"><button class="vbtn" id="al-cadastrar" style="padding:8px 18px">Cadastrar anúncio</button><div class="vmsg" id="al-amsg" style="margin:0"></div></div>
 
@@ -5338,6 +5343,27 @@ const ecomAlvo={
     if(pesoEf==null) return {status:'warn',reason:'peso ausente no cadastro do produto (peso_g / banda efetiva)',prod,preco,tipo};
     return {status:'ok',prod,preco,tipo};
   },
+  // BUILD 2026-08-08-I: simulador em tempo real do Cadastro de anuncio — Codigo+Tipo identificam produto/NF/frete/custos; Preco devolve margem e liquido. Mesma matematica do gate (_simMargem).
+  simAnuncio(){
+    const box=this._g('al-margem'); if(!box) return;
+    const F=v=>'R$ '+(+v).toFixed(2).replace('.',',');
+    const neutro=t=>{ box.innerHTML='<span style="color:var(--emuted2)">'+t+'</span>'; };
+    const cod=this._g('al-cod').value.trim().toUpperCase();
+    if(!cod){ neutro('digite código, tipo e preço'); return; }
+    if(typeof ecom==='undefined'||!ecom.loaded){ neutro('carregando catálogo…'); return; }
+    const prod=(ecom.itens||[]).find(x=>x.codigo===cod);
+    if(!prod){ neutro('código não encontrado no Catálogo'); return; }
+    const tipo=this._g('al-tipo').value;
+    const preco=parseFloat(this._g('al-preco').value);
+    if(!(preco>0)){ box.innerHTML='<span style="color:var(--eemerald)">✓ '+(prod.produto||'')+'</span><span style="color:var(--emuted2)">· custo NF '+F(prod.custo)+' · digite o preço</span>'; return; }
+    const r=this._simMargem(prod, preco, tipo, (ecom.reputacao||'verde'));
+    if(!r.ok){ box.innerHTML='<span style="color:var(--eamber)">'+r.reason+'</span>'; return; }
+    const pct=r.margemPct*100;
+    const cor=pct>=10?'var(--eemerald)':pct>=5?'var(--eamber)':'var(--ered)';
+    box.innerHTML='<b style="color:'+cor+';font-size:14px">'+pct.toFixed(1).replace('.',',')+'%</b>'
+      +'<span style="color:'+cor+'">'+F(r.margem)+' líq.</span>'
+      +'<span class="faint" style="font-size:11px;color:var(--emuted2)">frete '+F(r.frete)+' · comissão '+(r.comPct*100).toFixed(1).replace('.',',')+'%</span>';
+  },
   _simMargem(prod,preco,tipo,rep){
     // Espelha ecom.calc usando FRETE_TBL para a reputação escolhida
     const pr={ comC:13, comP:17,
@@ -5620,7 +5646,7 @@ const ecomAlvo={
     if(!/^(MLB)?\d{6,}$/.test(mlb)){ msg.className='vmsg err'; msg.textContent='MLB inválido. Use o nº do anúncio (ex.: MLB4811359527 ou 4811359527).'; return; }
     try{ const chk=await sb.from('ecom_produtos').select('codigo').eq('codigo',cod).maybeSingle(); if(chk.error) throw chk.error; if(!chk.data){ msg.className='vmsg err'; msg.textContent='Código não existe no catálogo.'; return; }
       const r=await sb.from('ecom_anuncios').insert({produto_codigo:cod,anuncio_mlb:mlb,titulo:tit,preco:isNaN(preco)?null:preco,data_publicacao:pub,tipo_anuncio:tipo,ativo:true}).select().single(); if(r.error) throw r.error;
-      ['al-cod','al-mlb','al-tit','al-preco','al-pub'].forEach(i=>this._g(i).value=''); this._g('al-tipo').value='classico'; msg.className='vmsg ok'; msg.textContent='✓ Anúncio cadastrado'; setTimeout(()=>msg.textContent='',2500); this.load();
+      ['al-cod','al-mlb','al-tit','al-preco','al-pub'].forEach(i=>this._g(i).value=''); this._g('al-tipo').value='classico'; this.simAnuncio(); // BUILD 2026-08-08-I msg.className='vmsg ok'; msg.textContent='✓ Anúncio cadastrado'; setTimeout(()=>msg.textContent='',2500); this.load();
     }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
   },
   // BUILD 2026-07-13-A · Pausar preserva o VÍNCULO anúncio×produto (Remover apagava o registro e criou os
@@ -6816,6 +6842,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const pqBox=document.getElementById('pq-alvos'); if(pqBox) pqBox.addEventListener('click',e=>{ const s=e.target.closest('[data-pqst]'); if(s) ecomPesq.setStatus(s.dataset.pqid, s.dataset.pqst); });
 })();
 (function(){ const c=ecomAlvo._g('al-cadastrar'); if(c) c.addEventListener('click',()=>ecomAlvo.cadastrar());
+  ['al-cod','al-preco'].forEach(i=>{ const el=ecomAlvo._g(i); if(el) el.addEventListener('input',()=>ecomAlvo.simAnuncio()); }); const tp=ecomAlvo._g('al-tipo'); if(tp) tp.addEventListener('change',()=>ecomAlvo.simAnuncio()); // BUILD 2026-08-08-I
   const imp=ecomAlvo._g('al-import'); if(imp) imp.addEventListener('click',e=>{ if(e.target.closest('[data-alimport]')) alert('Leva à Mesa de Análise / Import OS para estudar fornecedor e tributação da importação direta (DUIMP).'); });
   const an=ecomAlvo._g('al-anuncios'); if(an) an.addEventListener('click',e=>{
     const d=e.target.closest('[data-aldel]'); if(d){ ecomAlvo.remover(d.dataset.aldel); return; }
