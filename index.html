@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-08-J | selecta-banco-preco | PARAMETROS DENTRO DA ANALISE COMERCIAL (decisao Igor 08/08): sub-aba "Parametros comerciais" (criada no E) EXTINTA — botao removido, pane dissolvido; todo o conteudo (card Parametros, sentinela, Modalidade+Exportar cenario, Frete oficial ML, regra ML) agora vive DENTRO da Analise Comercial, imediatamente apos o card Cadastro de anuncio, para simular acoes comerciais com os parametros a mao (mexer em comissao/imposto/colchao/modalidade recalcula o simulador do anuncio ao vivo — mesmos ids, mesmos listeners). Alsubbar volta a 2 botoes (Analise / Controle). Zero JS; sem SQL. | base: 2026-08-08-I (md5 300310db07fdef2f3431e0e56a803e45) -->
 <!-- BUILD 2026-08-08-I | selecta-banco-preco | SIMULADOR EM TEMPO REAL NO CADASTRO DE ANUNCIO (decisao Igor 08/08 — codigo padrao oficial em todas as plataformas): (1) Layout na ordem definida: [Codigo Produto / MLB / Data] > [Titulo / Tipo] > [Preco anunciado / MARGEM]. (2) Campo Margem = display ao vivo: codigo valido ecoa produto + custo NF; com preco, mostra margem % (verde >=10 / ambar 5-10 / vermelho <5 — cores da clausula petrea), lucro liquido R$ e detalhe frete+comissao. (3) Matematica: REUSO de ecomAlvo._simMargem (FRETE_TBL x reputacao vigente de ecom.reputacao, comissao por categoria, colchao sobre custo) — a MESMA do gate do Controle; nenhum calculo paralelo criado. (4) Listeners em al-cod/al-preco (input) e al-tipo (change); reset do display apos cadastrar. Produto buscado em ecom.itens (so ativos, ja carregados na entrada da aba). Sem SQL. | base: 2026-08-08-H (md5 98b076e02ac828485da8064f1b531978) -->
 <!-- BUILD 2026-08-08-H | selecta-banco-preco | INVERSAO NO CAMPO PRODUTO (pedido Igor 08/08): descricao do item (marca · modelo · capacidade · interface) vira a LINHA PRINCIPAL em branco forte (eprod); o tipo de produto (coluna produto) desce como sub-linha na cor discreta (emodel); fallback: sem descricao, o tipo segue como principal. Linha do peso mantida. So o render da tabela do Catalogo; zero HTML/CSS; sem SQL. | base: 2026-08-08-G (md5 fbebfaa833d2ffc08602c8fb1a7e2a8e) -->
 <!-- BUILD 2026-08-08-G | selecta-banco-preco | AJUSTE VISUAL (pedido Igor 08/08): campo Produto da tabela do Catalogo — nome em 14.5px peso 700 cor plena; sub-linha (marca/modelo/capacidade) sai da fonte mono p/ a fonte padrao em 12.5px cinza medio. Escopo restrito a #tab-catalogo (tabelas do Mercado Livre e Instagram inalteradas). Duas linhas de CSS; zero HTML/JS; sem SQL. | base: 2026-08-08-F (md5 8e426b72d3b7bb1860b3f628a6e6bfa2) -->
@@ -1801,7 +1802,6 @@
         <button class="alsub-btn active" data-alsub="analise">📊 Análise Comercial</button>
         <!-- BUILD -L 09/07/2026: aba Estratégia de Anúncios DESATIVADA — fundida à Análise Comercial (Ato único). Painel e código dormentes; expurgo previsto no BUILD -M após 2–3 ciclos. -->
         <button class="alsub-btn" data-alsub="controle">📈 Controle de Anúncios</button>
-        <button class="alsub-btn" data-alsub="parametros">⚙️ Parâmetros comerciais</button><!-- BUILD 2026-08-08-E -->
       </div>
 
       <div id="alsub-analise" class="alsub">
@@ -1827,62 +1827,7 @@
         <div style="display:flex;align-items:center;gap:10px;margin-top:4px"><button class="vbtn" id="al-cadastrar" style="padding:8px 18px">Cadastrar anúncio</button><div class="vmsg" id="al-amsg" style="margin:0"></div></div>
 
       </div>
-      <!-- BUILD 30/07-C: Anúncios ativos — matemática ML (substitui os quadrantes do comando geral) -->
-      <div class="ecard" style="border-color:var(--eemerald);border-width:1px">
-        <div id="al-atv-integridade"></div>
-        <div id="al-atv-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
-          <h3 style="margin:0;color:var(--eemerald)">Anúncios ativos — matemática ML</h3>
-          <span class="vmsg" id="al-atv-count" style="margin:0"></span><span class="vmsg" id="al-atv-live" style="margin:0;color:var(--emuted2);font-size:11px"></span>
-          <button class="vbtn sm" id="al-atv-refresh" style="margin-left:auto">↻ Atualizar</button>
-        </div>
-        <div id="al-atv-list"><div class="ph">Carregando anúncios…</div></div>
-      </div>
-
-
-
-
-
-
-
-      <div class="ecard" style="margin-top:14px;padding:10px 13px;border-style:dashed">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <h3 style="font-size:12.5px;margin:0">📋 Comando — Análise Individual <span class="faint" style="font-weight:400;font-size:11px">v2.0 · 1 anúncio por chat</span></h3>
-          <button class="vbtn sm" id="al-cmd-copy">📋 Copiar comando</button>
-          <span class="vmsg" id="al-cmd-msg" style="margin:0"></span>
-        </div>
-        <p class="hint" style="font-size:11.5px;color:var(--emuted2);margin:6px 0 0">Colar no chat junto com o quadro do anúncio no painel ML. O retorno é UM JSON — importe na linha do anúncio, acima.</p>
-
-        <details style="margin-top:8px">
-          <summary style="cursor:pointer;color:var(--emuted2);font-size:11.5px;user-select:none">ver o texto do comando</summary>
-          <textarea id="al-cmd-text" readonly style="width:100%;min-height:300px;margin-top:8px;background:var(--epanel2);color:var(--etxt);border:1px solid var(--eborder);border-radius:10px;padding:14px;font:12.5px/1.55 ui-monospace,Menlo,Consolas,monospace;resize:vertical" spellcheck="false"></textarea>
-        </details>
-      </div>
-      </div><!-- /alsub-analise -->
-
-      <div id="alsub-controle" class="alsub" style="display:none">
-      <div class="ecard" style="margin-top:18px">
-        <div class="al-header">
-          <div class="al-header-l">
-            <h3 class="al-htitle">Anúncios ativos</h3>
-            <span class="al-hsub">ranking por vendas</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span id="al-anuncios-count" class="al-hcount"></span>
-            <button class="vbtn sm" id="al-anuncios-refresh" title="Puxar as últimas alterações da Alexia e atualizar as sugestões (azul = ação registrada após a estratégia)">🔄 Atualizar</button>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;margin:4px 0 12px;flex-wrap:wrap">
-          <input class="vinput mono" id="al-anuncios-busca" type="text" placeholder="consultar por código do produto (ex.: SSD-0001)" style="flex:1;min-width:220px;max-width:360px" spellcheck="false" autocomplete="off">
-          <button class="vbtn sm" id="al-anuncios-busca-clear" style="background:var(--epanel3);color:var(--emuted)">limpar</button>
-          <span class="faint" id="al-anuncios-busca-msg" style="font-size:11.5px"></span>
-        </div>
-        <div id="al-anuncios"><div class="ph">nenhum anúncio cadastrado</div></div>
-      </div>
-
-      </div><!-- /alsub-controle -->
-
-      <div id="alsub-parametros" class="alsub" style="display:none">
-      <!-- BUILD 2026-08-08-E: informacoes comerciais do Mercado Livre — base de consulta p/ precificacao e simulacao na plataforma. Blocos movidos da aba Catalogo (ids preservados; modulo ecom intacto). -->
+      <!-- BUILD 2026-08-08-J: Parametros comerciais MOVIDOS da sub-aba propria (extinta) p/ dentro da Analise Comercial, junto ao Cadastro de anuncio — simulacao de acoes comerciais com os parametros a mao -->
     <!-- PARÂMETROS -->
     <div class="ecard">
       <h3>Parâmetros comerciais</h3>
@@ -1938,7 +1883,60 @@
     <div class="efooter">
       <b>Regra ML (pós 02/03/2026, Flex/Correios):</b> ≥R$79 → comissão (por tipo de anúncio) + frete da matriz (célula destino×peso do produto). &lt;R$79 → ML banca o frete; comissão + custo fixo por faixa (R$6,25 / R$6,50 / R$6,75; abaixo de R$12,50 = 50% do preço). Tudo sobre o preço de venda; margem e break-even líquidos do colchão. Excluir = inativar (fica salvo no banco).
     </div>
-      </div><!-- /alsub-parametros -->
+      <!-- BUILD 30/07-C: Anúncios ativos — matemática ML (substitui os quadrantes do comando geral) -->
+      <div class="ecard" style="border-color:var(--eemerald);border-width:1px">
+        <div id="al-atv-integridade"></div>
+        <div id="al-atv-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <h3 style="margin:0;color:var(--eemerald)">Anúncios ativos — matemática ML</h3>
+          <span class="vmsg" id="al-atv-count" style="margin:0"></span><span class="vmsg" id="al-atv-live" style="margin:0;color:var(--emuted2);font-size:11px"></span>
+          <button class="vbtn sm" id="al-atv-refresh" style="margin-left:auto">↻ Atualizar</button>
+        </div>
+        <div id="al-atv-list"><div class="ph">Carregando anúncios…</div></div>
+      </div>
+
+
+
+
+
+
+
+      <div class="ecard" style="margin-top:14px;padding:10px 13px;border-style:dashed">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <h3 style="font-size:12.5px;margin:0">📋 Comando — Análise Individual <span class="faint" style="font-weight:400;font-size:11px">v2.0 · 1 anúncio por chat</span></h3>
+          <button class="vbtn sm" id="al-cmd-copy">📋 Copiar comando</button>
+          <span class="vmsg" id="al-cmd-msg" style="margin:0"></span>
+        </div>
+        <p class="hint" style="font-size:11.5px;color:var(--emuted2);margin:6px 0 0">Colar no chat junto com o quadro do anúncio no painel ML. O retorno é UM JSON — importe na linha do anúncio, acima.</p>
+
+        <details style="margin-top:8px">
+          <summary style="cursor:pointer;color:var(--emuted2);font-size:11.5px;user-select:none">ver o texto do comando</summary>
+          <textarea id="al-cmd-text" readonly style="width:100%;min-height:300px;margin-top:8px;background:var(--epanel2);color:var(--etxt);border:1px solid var(--eborder);border-radius:10px;padding:14px;font:12.5px/1.55 ui-monospace,Menlo,Consolas,monospace;resize:vertical" spellcheck="false"></textarea>
+        </details>
+      </div>
+      </div><!-- /alsub-analise -->
+
+      <div id="alsub-controle" class="alsub" style="display:none">
+      <div class="ecard" style="margin-top:18px">
+        <div class="al-header">
+          <div class="al-header-l">
+            <h3 class="al-htitle">Anúncios ativos</h3>
+            <span class="al-hsub">ranking por vendas</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="al-anuncios-count" class="al-hcount"></span>
+            <button class="vbtn sm" id="al-anuncios-refresh" title="Puxar as últimas alterações da Alexia e atualizar as sugestões (azul = ação registrada após a estratégia)">🔄 Atualizar</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin:4px 0 12px;flex-wrap:wrap">
+          <input class="vinput mono" id="al-anuncios-busca" type="text" placeholder="consultar por código do produto (ex.: SSD-0001)" style="flex:1;min-width:220px;max-width:360px" spellcheck="false" autocomplete="off">
+          <button class="vbtn sm" id="al-anuncios-busca-clear" style="background:var(--epanel3);color:var(--emuted)">limpar</button>
+          <span class="faint" id="al-anuncios-busca-msg" style="font-size:11.5px"></span>
+        </div>
+        <div id="al-anuncios"><div class="ph">nenhum anúncio cadastrado</div></div>
+      </div>
+
+      </div><!-- /alsub-controle -->
+
 
       <div id="alsub-estrategia" class="alsub" style="display:none">
       <div class="ecard" style="border-color:var(--eteal);border-width:1px;margin-bottom:4px">
