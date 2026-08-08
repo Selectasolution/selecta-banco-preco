@@ -1,5 +1,6 @@
 <!-- BUILD 2026-08-08-M | selecta-banco-preco | FINANCEIRO DENTRO DE RELATORIOS (decisao Igor 08/08): sub-aba Financeiro REMOVIDA da barra Mercado Livre; conteudo integral do painel (lancamento por pedido + Termometro financeiro, ids fn-* preservados, bindings intactos) ANINHADO como pane rlsub-financeiro em Relatorios, com botao "Financeiro" ENTRE Painel e Historico. Handler do rlsubbar reescrito de binario p/ 3 panes (carga sob clique: financeiro -> ecomFinanceiro.load, historico -> ecomHistorico.load); branch morto do financeiro removido do handler da barra ML. Barra Mercado Livre agora: Alvo / Vendas / Relatorios / Radar. Ajuste de FUNCOES dessas abas = proxima rodada, anunciado pelo Igor. Sem SQL. | base: 2026-08-08-L (md5 83b196a6b3ae90f65e7b4245ceb92c4c) -->
 <!-- BUILD 2026-08-08-L | selecta-banco-preco | LIMPEZA (pedido Igor 08/08, "menos informacao que nao uso"): apagada a nota "Fonte: paginas oficiais MercadoLivre Ajuda... Manutencao via SQL Editor" sob a matriz de frete (span ecom-frete-carga sem nenhuma referencia em JS — remocao limpa). Informacao segue registrada aqui no cabecalho: tarifas FRETE_TBL carregadas em 02/07/2026 das paginas oficiais ML, manutencao via SQL Editor quando o ML atualizar. Sem SQL. | base: 2026-08-08-K (md5 3d7432667884d0cc66e89ebf0e692bcf) -->
+<!-- BUILD 2026-08-08-O | selecta-banco-preco | EXCLUSAO REAL + CODIGO SO ATIVO (decisao Igor 08/08; conferencias na sessao: pg_policies ecom_produtos tem DELETE p/ authenticated; ZERO FKs apontam p/ ecom_produtos; colunas ecom_anuncios/ecom_catalogo_insta verificadas via information_schema): (1) Botao Excluir do Catalogo agora APAGA a linha de ecom_produtos (antes: update ativo=false — soft delete em contradicao com a convencao "descontinuado = exclusao permanente"). GUARDAS pre-delete: anuncio ML (ecom_anuncios) ou Insta (ecom_catalogo_insta) vinculado ao codigo BLOQUEIA com alerta — remover das plataformas primeiro. Confirm reescrito dizendo a verdade; rollback otimista em erro. Vendas historicas seguras: ecom_vendas e desnormalizada (copia propria de produto/codigo), zero joins com ecom_produtos nas telas — auditado. (2) ecomInsta.buscar() com eq(ativo,true): codigo so vincula se produto ATIVO no Catalogo; mensagem de erro cobre inexistente/inativo; fragmento do aviso INATIVO removido (codigo morto). (3) Coluna ativo permanece no schema; cadastro segue gravando ativo:true; deteccao de divergencia "sem cadastro" captura anuncios orfaos de produto excluido. Expurgo dos inativos remanescentes = operacao SQL separada (Conferencia 4). Sem SQL neste build. | base: 2026-08-08-N (md5 5ad732f7980ed54c358af4b0c8087aca conferido na sessao e em producao) -->
 <!-- BUILD 2026-08-08-N | selecta-banco-preco | PUXADA INSTA SEM ML (pedido Igor 08/08, piloto aprovado): (1) ecomInsta.buscar(): linha de eco do produto mostra apenas descricao + custo NF (rotulo "custo" -> "custo NF"); trecho "preco ML R$..." REMOVIDO — canal Instagram nao referencia dados do ML. (2) Coluna preco removida do select em ecom_produtos (dado deixa de trafegar; verificado: prodAtual.preco sem uso no modulo — margem usa so custo). (3) Aviso "produto INATIVO no cadastro" MANTIDO (sinal de integridade do cadastro neutro, nao e referencia ML). Duas linhas alteradas; zero SQL. | base: 2026-08-08-M (md5 516060f7a59d3843aab3c221103a2579 conferido na sessao) -->
 <!-- BUILD 2026-08-08-K | selecta-banco-preco | FAXINA DA ANALISE COMERCIAL (decisao Igor 08/08, com prints): APAGADOS — nota "Simples Anexo I..." e paragrafo "Custo fixo <R$79 aposentado" do card Parametros; sentinela "Integridade do catalogo" (funcao sentinela() tem guarda if(!box), segue inofensiva); barra Modalidade de envio INTEIRA (toggle Flex/Full sai da tela — modalidade fica fixa no default flex; listener guardado; recolocacao discreta se precisar simular Full); rodape "Regra ML (pos 02/03/2026...)". REALOCADOS p/ o rodape da tela — botao "Exportar cenario (.md)" p/ dentro do card Comando ao lado do Copiar comando (mesmo id, binding intacto) e painel de integridade ZUMBI-2/divergencia (al-atv-integridade, inclui carimbo "lote de...") p/ o final da Analise Comercial, apos o card Comando (render por id, local-independente). Zero logica alterada; sem SQL. | base: 2026-08-08-J (md5 6373233771a48d622d4f2f26b6de8697) -->
 <!-- BUILD 2026-08-08-J | selecta-banco-preco | PARAMETROS DENTRO DA ANALISE COMERCIAL (decisao Igor 08/08): sub-aba "Parametros comerciais" (criada no E) EXTINTA — botao removido, pane dissolvido; todo o conteudo (card Parametros, sentinela, Modalidade+Exportar cenario, Frete oficial ML, regra ML) agora vive DENTRO da Analise Comercial, imediatamente apos o card Cadastro de anuncio, para simular acoes comerciais com os parametros a mao (mexer em comissao/imposto/colchao/modalidade recalcula o simulador do anuncio ao vivo — mesmos ids, mesmos listeners). Alsubbar volta a 2 botoes (Analise / Controle). Zero JS; sem SQL. | base: 2026-08-08-I (md5 300310db07fdef2f3431e0e56a803e45) -->
@@ -3620,12 +3621,26 @@ const ecom = {
     return sigla+'-'+String(max+1).padStart(4,'0'); },
 
   async del(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
-    if(!confirm(`Inativar "${it.produto} · ${it.marca||''}"? O produto sai da lista mas fica salvo no banco (preserva vínculo com vendas históricas). Não é destrutivo.`)) return;
-    if(this.editId&&String(this.editId)===String(id)) this.cancelEdit();
-    const idx=this.itens.findIndex(x=>String(x.id)===String(id)); const rem=this.itens[idx];
-    this.itens=this.itens.filter(x=>String(x.id)!==String(id)); this.render();
-    try{ const r=await sb.from('ecom_produtos').update({ativo:false,atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; }
-    catch(e){ if(rem) this.itens.splice(idx,0,rem); console.error('inativar:',e.message); alert('Não foi possível inativar: '+e.message); this.render(); } },
+    // BUILD 2026-08-08-O: exclusão REAL (decisão Igor 08/08 — alinha com a convenção "descontinuado = exclusão permanente").
+    // Guardas: anúncio ML ou Insta vinculado ao código BLOQUEIA — remova das plataformas antes de apagar o cadastro.
+    // Vendas históricas são desnormalizadas (guardam cópia própria de produto/código) — exclusão não quebra o histórico.
+    const cod=(it.codigo||'').trim();
+    try{
+      if(cod){
+        const gml=await sb.from('ecom_anuncios').select('id',{count:'exact',head:true}).eq('produto_codigo',cod);
+        if(gml.error) throw gml.error;
+        const gin=await sb.from('ecom_catalogo_insta').select('id',{count:'exact',head:true}).eq('produto_codigo',cod);
+        if(gin.error) throw gin.error;
+        const nml=gml.count||0, nin=gin.count||0;
+        if(nml>0||nin>0){ alert('Exclusão bloqueada: "'+cod+'" tem '+nml+' anúncio(s) ML e '+nin+' anúncio(s) Instagram vinculados.\n\nOrdem correta: remova os anúncios nas plataformas (Controle de Anúncios / Catálogo Instagram) e depois exclua o produto.'); return; }
+      }
+      if(!confirm(`Excluir DEFINITIVAMENTE "${it.produto} · ${it.marca||''}" (${cod||'sem código'}) do banco?\n\nVendas históricas ficam preservadas (têm cópia própria dos dados). Esta ação NÃO tem volta.`)) return;
+      if(this.editId&&String(this.editId)===String(id)) this.cancelEdit();
+      const idx=this.itens.findIndex(x=>String(x.id)===String(id)); const rem=this.itens[idx];
+      this.itens=this.itens.filter(x=>String(x.id)!==String(id)); this.render();
+      const r=await sb.from('ecom_produtos').delete().eq('id',id); if(r.error){ if(rem) this.itens.splice(idx,0,rem); this.render(); throw r.error; }
+    }
+    catch(e){ console.error('excluir:',e.message); alert('Não foi possível excluir: '+e.message); } },
 
   // BUILD -L · seção Mercado do lote atual embutida no export (insumo único do Ato único)
   async loadMercado(){ this.mercado=null; this.mercadoQuando=null;
@@ -6650,16 +6665,15 @@ const ecomInsta = {
     this.prodAtual = null; box.style.display='none';
     if(!cod){ this.msg('Digite o código do produto.', 'var(--eamber)'); return; }
     try{
-      const r = await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,custo,ativo').eq('codigo',cod).limit(1); // BUILD 2026-08-08-N: preco (ML) fora da consulta — canal Insta não referencia ML
+      const r = await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,custo').eq('codigo',cod).eq('ativo',true).limit(1); // BUILD 2026-08-08-O: só produto ATIVO vincula (regra Igor: código só vale se listado no Catálogo)
       if(r.error) throw r.error;
       const p = (r.data||[])[0];
-      if(!p){ this.msg('Código não encontrado. Produto nasce na Consulta Produto (cadastro do Igor).', 'var(--ered)'); this.margem(); return; }
+      if(!p){ this.msg('Código não encontrado ou produto não está ativo no Catálogo. Produto nasce na Consulta Produto (cadastro do Igor).', 'var(--ered)'); this.margem(); return; }
       this.prodAtual = p;
       box.style.display='';
       box.innerHTML = '<b style="color:var(--etxt)">'+p.produto+'</b>'
         + (p.marca?' · '+p.marca:'') + (p.modelo?' · '+p.modelo:'')
-        + ' &nbsp;|&nbsp; custo NF <b style="color:var(--etxt)">'+this.fmt(p.custo)+'</b>' // BUILD 2026-08-08-N: só custo NF na puxada — referência ao preço ML removida (pedido Igor)
-        + (p.ativo? '' : ' · <span style="color:var(--eamber)">produto INATIVO no cadastro</span>');
+        + ' &nbsp;|&nbsp; custo NF <b style="color:var(--etxt)">'+this.fmt(p.custo)+'</b>'; // BUILD 2026-08-08-O: aviso INATIVO removido — código morto, a busca só retorna ativos
       const nome = this._g('ig-nome');
       if(!nome.value.trim()){
         nome.value = [p.produto, p.marca, p.modelo].filter(Boolean).join(' ').slice(0,90);
