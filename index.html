@@ -5,6 +5,7 @@
 <!-- BUILD 2026-07-31-B | selecta-banco-preco | (Igor 31/07) DOIS ITENS + AUDITORIA: (1) REINTEGRACAO DO TEMPO REAL: o BUILD 31-A (canal Supabase Realtime selecta-live em ecom_anuncios/ecom_produtos) foi entregue em 31/07 mas NUNCA publicado — detectado pela trava de md5 quando a base recebida voltou como 30-D; SQL da publication ja aplicado (Success 31/07). Este build recoloca o canal: interacao da Alexia reflete em ~1s (Anuncios ativos, Controle, Consulta Produto) e vice-versa; indicador "ao vivo · sincronizado HH:MM:SS"; falha degrada p/ refresh manual. (2) ORDENACAO: Anuncios ativos com MAIS RECENTE INCLUIDO NO TOPO (id desc), ativos e pausados. (3) AUDITORIA MARGENS (sem mudanca de codigo): confirmado que TODAS as superficies da Alexia ja usam margem REAL com colchao — Controle/gate (custo*1.06 no _simMargem), Consulta Produto (ecom.calc) e break-even; unica margem sem colchao e o espelho ML da listagem do Igor, por decisao. Rotulos mantidos como estao, por decisao. | base: 2026-07-30-D -->
 <!-- BUILD 2026-07-30-D | selecta-banco-preco | AJUSTES FINOS (Igor 30/07): (1) BUG: alterar Parametros Comerciais (comissao/imposto/outros/colchao) agora recalcula tambem a simulacao do formulario de cadastro (margem R$, margem %, break-even) alem da tabela — visualizacao ao vivo; NADA e persistido com valores alternativos (decisao explicita: parametros seguem globais e volateis, sem colchao por produto). (2) Anuncios ativos (Analise Comercial): ordenacao muda de alfabetica por codigo para ORDEM DE INCLUSAO (id sequencial do banco, primeiro incluido no topo); pausados idem, na secao propria. | base: 2026-07-30-C REV.1 -->
 <!-- BUILD 2026-07-30-C | selecta-banco-preco | ANALISE COMERCIAL INDIVIDUAL (decisao Igor 30/07 — fim do comando geral em lote): (1) Card de analise em lote (quadrantes ATIVOS/NOVOS via ecom_analise_alvo + Importar para a Alvo) SUBSTITUIDO por "Anuncios ativos — matematica ML": 1 linha POR ANUNCIO (2 anuncios do mesmo produto = 2 linhas, estrategia classico+premium respeitada), cenarios cheio E promocao com "Voce recebe" (preco − comissao real − frete, espelho do painel ML) e margem ML (recebe − imposto − custo NF, SEM colchao — colchao segue so no gate da Alexia). Vigencia: promocao preenchida governa o selo. (2) BANNER DE INTEGRIDADE automatico contra o ULTIMO LOTE do snapshot (capturas 04h50/14h50 seguem ativas): ZUMBI-2 (ativo no lote sem cadastro/produto inativo) + divergencia publicado × registro (nem cheio nem promo) — matematica do proprio app, sem ritual. (3) IMPORT INDIVIDUAL por linha: JSON de UM anuncio, MLB do JSON validado contra o MLB da linha, dedup v1.8 preservada, grava em ecom_resultado_anuncio (condicoes_gap vai em dados) — sugestao nasce no Controle da Alexia como sempre. (4) Comando GERAL v1.9 APOSENTADO: card reduzido ao botao Copiar comando com o texto v2.0 (analise individual: 4 eixos + gap de condicoes do ganhador + piso 10% + bandas de frete + JSON objetivo); export de cenario e data removidos do card (exportarCenario segue vivo na Consulta Produto). Funcoes do fluxo antigo (loadAnalise/renderAnalise/importarAnalise) ficam DORMENTES no codigo, sem chamadas — expurgo em BUILD futuro; ecom_analise_alvo para de receber gravacao; historico intacto. copiarComando ganha guarda p/ ausencia do campo data. REV.1 (30/07, pre-deploy, a pedido do Igor): apresentacao dos Anuncios ativos volta ao FORMATO DE TABELA anterior do quadrante (mesmo cabecalho/colunas compactas, sugestao em 1 linha) com colunas novas MLB e PRECO PRATICADO (promocao vigente, senao cheio; cheio no tooltip); import individual via botao JSON por linha que abre faixa colapsavel. | base: 2026-07-30-B -->
+<!-- BUILD 2026-08-08-B | selecta-banco-preco | ABA INSTAGRAM (decisao Igor 08/08): (1) NOVA aba principal "Instagram" no topo, no lugar do botao "Vendas" (apos E-commerce), com 2 secoes internas: Catalogo (painel do 08-A MOVIDO da barra E-commerce) e Vendas (antiga aba Vendas/tab-apple ANINHADA — vendas "por fora" viram o modulo de vendas do canal Instagram; conteudo, IDs e JS 100% preservados: enterAppleTab/switchAppleSubtab intactos). (2) Sub-aba "Catalogo Insta" REMOVIDA da barra E-commerce (payload movido, modulo ecomInsta inalterado). (3) Reorg barra E-commerce: Alvo movido para ao lado de Consulta Produto (ordem: Consulta, Alvo, Vendas, Financeiro, Relatorios, Radar). (4) CSS: tokens e componentes replicados no escopo #tab-instagram (ecard/vinput/rd-tbl/badges) — visual identico ao E-commerce. Multi-plataforma futuro (Amazon/Shopee/TikTok): cada canal tera sua aba; livro-razao unico ecom_vendas via coluna canal. | base: 2026-08-08-A -->
 <!-- BUILD 2026-08-08-A | selecta-banco-preco | CATALOGO INSTA (decisao Igor 08/08, proposta 4B aprovada): (1) NOVA sub-aba "Catalogo Insta" na barra E-commerce (data-sub=insta) — gestao dos ANUNCIOS da vitrine publica (tabela ecom_catalogo_insta, RLS homologado: anon so le ativos). (2) Produto NAO nasce aqui: fluxo codigo-first — digita codigo de ecom_produtos, sistema puxa dados (produto/marca/modelo/custo) e sugere nome de exibicao; sem produto cadastrado nao publica (regra: produto nasce na Consulta Produto, so Igor). (3) SEM travas ML — canal direto; indicador INFORMATIVO de margem bruta (preco-custo)/preco, sem veredito de clausula petrea (modelo de custo do canal direto e trabalho futuro). (4) Categorias fechadas: tecnologia / bem-estar. (5) Acoes na lista: editar, ativar/desativar (liga-desliga da vitrine), excluir com confirmacao. Nenhum modulo existente alterado; carga sob demanda no clique. | base: 2026-07-30-B -->
 <!-- BUILD 2026-07-30-B | selecta-banco-preco | REORGANIZACAO CADASTRO (decisao Igor 30/07, piloto reorg v1 aprovado): (1) Sub-aba "Simulador" RENOMEADA para "Consulta Produto" (uso comum Igor+Alexia) — mantem frete oficial, filtros e tabela de consulta; data-sub interno inalterado (simulador) p/ nao quebrar JS. (2) Cards "Parametros comerciais" e "Cadastrar/simular produto" MOVIDOS da Consulta Produto para a ANALISE COMERCIAL (Alvo), acima do quadrante Cadastro de anuncio — so o Igor cadastra produto e anuncio; Controle da Alexia segue so gestao (nunca teve cadastro). IDs de elementos preservados: bindings do modulo ecom intactos. (3) NOVO botao "+ Gravar e gerar anuncio": grava o produto (mesma rotina/validacoes do + Adicionar) e PRE-PREENCHE o Cadastro de anuncio (codigo, titulo, preco, tipo, data hoje) — TUDO editavel; MLB manual (rito: anuncio nasce no ML). Flag zera em erro/validacao/edicao. (4) Quadro do Comando GERAL INTOCADO — substituicao na proxima rodada, por decisao. | base: 2026-07-30-A -->
 <!-- BUILD 2026-07-30-A | selecta-banco-preco | PROMOCAO NO CONTROLE (decisao Igor 30/07, piloto v6 aprovado): (1) Colunas novas preco_promocao/tipo_promocao em ecom_anuncios (SQL separado — aplicar ANTES deste index). (2) Form Editar Anuncio compacto: linha Preco·Tipo·Margem e linha Produto em promocao·Tipo·Margem, margem inline na altura do input (% + lucro em R$); bloco grande MARGEM LIQUIDA removido. (3) REGRA DE VIGENCIA: promocao preenchida = linha da promocao governa selo LIBERADO/NEGADO, gate do piso 10% e log; promocao apagada = volta automaticamente o preco cheio. (4) Comissao/frete/custo NF saem da vista: popover "detalhes do calculo" no rodape, valores alinhados em grade, CUSTO NF em destaque maior (pedido p/ Alexia). (5) Log ecom_anuncio_alteracao ganha campo 'promocao' (entrada, alteracao e saida de promocao registradas com motivo). (6) Sync CONTROLE->SIMULADOR inalterado: continua no preco cheio; promocao NAO sincroniza ecom_produtos.preco (decisao pendente, sinalizada ao Igor). | base: 2026-07-26-A -->
@@ -186,7 +187,7 @@
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="simulador">Simulador PC</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="importacao">📦 Importação</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="ecommerce">🛒 E-commerce</button>
-          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="apple">Vendas</button>
+          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="instagram">📸 Instagram</button>
         </nav>
       </div>
       <div class="flex items-center gap-3 text-sm">
@@ -262,6 +263,101 @@
   <!-- =========================================================== -->
   <!-- TAB: VENDAS (ex-APPLE)                                        -->
   <!-- =========================================================== -->
+  <style>
+/* ===== BUILD 2026-08-08-B: escopo visual da aba Instagram (réplica dos tokens E-commerce) ===== */
+#tab-instagram{--epanel:#131c2e;--epanel2:#0f1726;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#34d399;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+#tab-instagram .ecard{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:13px 16px;margin-bottom:12px}
+#tab-instagram .ecard h3{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--eemerald);margin:0 0 10px;font-weight:600}
+#tab-instagram .hint{color:var(--emuted)}
+#tab-instagram .vrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#tab-instagram .vrow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:820px){#tab-instagram .vrow,#tab-instagram .vrow3{grid-template-columns:1fr}}
+#tab-instagram .efield{margin-bottom:12px}
+#tab-instagram .efield label{display:block;font-size:11px;color:var(--emuted);margin-bottom:5px}
+#tab-instagram .vinput{width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:8px;padding:9px 11px;font:inherit}
+#tab-instagram .vpulled{background:var(--epanel2);border:1px dashed var(--eborder);border-radius:8px;padding:8px 11px;font-size:12.5px;color:var(--emuted)}
+#tab-instagram .cancelbtn{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:9px 14px;cursor:pointer;font-size:13px}
+#tab-instagram .cancelbtn:hover{color:var(--etxt)}
+#tab-instagram .alsub-btn{background:var(--epanel2);color:var(--emuted);border:1px solid var(--eborder);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all .12s}
+#tab-instagram .alsub-btn.active{background:#18233a;color:var(--etxt);border-color:var(--eteal)}
+#tab-instagram .rd-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+#tab-instagram .rd-tbl th{color:var(--emuted);text-align:left;font-weight:600;padding:7px 9px;border-bottom:1px solid var(--eborder);white-space:nowrap}
+#tab-instagram .rd-tbl td{padding:7px 9px;border-bottom:1px solid var(--epanel2);color:var(--etxt);vertical-align:top}
+#tab-instagram .rd-tbl td.mono{font-family:var(--emono);white-space:nowrap}
+#tab-instagram .rd-badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600}
+#tab-instagram .rd-badge.ok{background:rgba(16,185,129,.14);color:var(--eemerald)}
+#tab-instagram .rd-badge.warn{background:rgba(245,158,11,.14);color:var(--eamber)}
+#tab-instagram .rd-badge.err{background:rgba(239,68,68,.14);color:var(--ered)}
+#tab-instagram .ph{color:var(--emuted2);font-size:13px;text-align:center;padding:30px 10px}
+#tab-instagram .insta-pane-btn{color:#9ca3af;border-bottom:2px solid transparent}
+#tab-instagram .insta-pane-btn.active{color:#10b981;border-bottom-color:#10b981}
+#tab-instagram .insta-pane-btn:hover:not(.active){color:#e5e7eb}
+</style>
+<section id="tab-instagram" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
+    <!-- BUILD 2026-08-08-B: aba do canal Instagram — Catálogo (vitrine) + Vendas (canal direto) -->
+    <nav class="flex gap-1 mb-5 border-b border-gray-700" id="insta-nav">
+      <button class="insta-pane-btn px-4 py-2 text-sm font-medium active" data-ipane="catalogo">Catálogo</button>
+      <button class="insta-pane-btn px-4 py-2 text-sm font-medium" data-ipane="vendas">Vendas</button>
+    </nav>
+
+    <div id="ipane-catalogo">
+    <!-- ===== BUILD 2026-08-08-A: Catálogo Insta ===== -->
+    <div id="insta-painel-catalogo">
+      <div class="ecard">
+        <h3>Catálogo Instagram — anúncio da vitrine</h3>
+        <p class="hint" style="font-size:12.5px;color:var(--emuted);margin:2px 0 14px">Produto nasce na Consulta Produto (só Igor). Aqui você publica o <b>anúncio da vitrine pública</b> — canal direto, sem travas ML. Margem bruta é informativa.</p>
+        <div class="vrow">
+          <div class="efield"><label>Código do produto (ecom_produtos)</label>
+            <div style="display:flex;gap:8px">
+              <input id="ig-cod" class="vinput" placeholder="ex.: ALX-0007" style="text-transform:uppercase">
+              <button id="ig-buscar" class="cancelbtn" title="Puxa produto/marca/modelo/custo do cadastro">Puxar</button>
+            </div>
+            <div id="ig-pinfo" class="vpulled" style="display:none;margin-top:8px"></div>
+          </div>
+          <div class="efield"><label>Categoria</label>
+            <select id="ig-cat" class="vinput">
+              <option value="tecnologia">Tecnologia</option>
+              <option value="bem-estar">Bem-estar</option>
+            </select>
+          </div>
+        </div>
+        <div class="efield"><label>Nome de exibição (como aparece na vitrine)</label><input id="ig-nome" class="vinput" maxlength="90"></div>
+        <div class="efield"><label>Descrição curta (1-2 linhas no card)</label><input id="ig-desc" class="vinput" maxlength="140"></div>
+        <div class="vrow3">
+          <div class="efield"><label>Preço Insta (R$)</label><input id="ig-preco" class="vinput" type="number" step="0.01" min="0"></div>
+          <div class="efield"><label>Preço "De" riscado (opcional)</label><input id="ig-precode" class="vinput" type="number" step="0.01" min="0"></div>
+          <div class="efield"><label>Ordem na vitrine (menor = primeiro)</label><input id="ig-ordem" class="vinput" type="number" step="1" value="0"></div>
+        </div>
+        <div class="vrow">
+          <div class="efield"><label>URL da foto</label><input id="ig-foto" class="vinput" placeholder="img/catalogo/arquivo.jpg ou https://…"></div>
+          <div class="efield"><label>&nbsp;</label>
+            <div style="display:flex;gap:16px;align-items:center;padding-top:8px">
+              <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--etxt);cursor:pointer"><input id="ig-promo" type="checkbox"> Promoção (selo)</label>
+              <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--etxt);cursor:pointer"><input id="ig-ativo" type="checkbox" checked> Ativo na vitrine</label>
+            </div>
+          </div>
+        </div>
+        <div id="ig-margem" class="vpulled" style="display:none;margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button id="ig-salvar" class="alsub-btn active">+ Publicar no catálogo</button>
+          <button id="ig-cancelar" class="cancelbtn" style="display:none">Cancelar edição</button>
+          <span id="ig-msg" style="font-size:12.5px"></span>
+          <a href="https://selectasolution.github.io/catalogo/" target="_blank" rel="noopener" class="cancelbtn" style="margin-left:auto;text-decoration:none" title="Abre a vitrine pública em nova aba">Ver vitrine pública ↗</a>
+        </div>
+      </div>
+      <div class="ecard">
+        <h3>Anúncios do catálogo <span class="rd-badge ok" id="ig-count" style="margin-left:6px"></span></h3>
+        <div style="overflow-x:auto">
+        <table class="rd-tbl">
+          <thead><tr><th>Ord</th><th>Vitrine</th><th>Código</th><th>Categoria</th><th>Preço</th><th>De</th><th>Promo</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="ig-lista"><tr><td colspan="9" class="ph">carregando…</td></tr></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- Antiga aba Vendas (tab-apple) — aninhada intacta como pane Vendas do Instagram -->
   <section id="tab-apple" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
 
     <!-- Sub-navigation -->
@@ -339,6 +435,8 @@
     </div>
 
   </section>
+
+  </section><!-- /tab-instagram -->
 
 
   <!-- =========================================================== -->
@@ -1048,12 +1146,11 @@
 
     <div class="ecom-subnav">
       <button class="ecom-subtab active" data-sub="simulador">🔎 Consulta Produto</button>
+      <button class="ecom-subtab alvo" data-sub="alvo">🎯 Alvo</button>
       <button class="ecom-subtab" data-sub="vendas">Vendas</button>
       <button class="ecom-subtab" data-sub="financeiro">Financeiro</button>
       <button class="ecom-subtab" data-sub="relatorios">Relatórios</button>
-      <button class="ecom-subtab alvo" data-sub="alvo">🎯 Alvo</button>
       <button class="ecom-subtab radar" data-sub="radar">📡 Radar de Nicho</button>
-      <button class="ecom-subtab" data-sub="insta">🛍 Catálogo Insta</button>
     </div>
 
     <div id="ecom-sub-simulador" class="ecom-subpanel">
@@ -1538,60 +1635,7 @@
       </div>
     </div>
 
-    <!-- ===== BUILD 2026-08-08-A: Catálogo Insta ===== -->
-    <div id="ecom-sub-insta" class="ecom-subpanel" style="display:none">
-      <div class="ecard">
-        <h3>Catálogo Instagram — anúncio da vitrine</h3>
-        <p class="hint" style="font-size:12.5px;color:var(--emuted);margin:2px 0 14px">Produto nasce na Consulta Produto (só Igor). Aqui você publica o <b>anúncio da vitrine pública</b> — canal direto, sem travas ML. Margem bruta é informativa.</p>
-        <div class="vrow">
-          <div class="efield"><label>Código do produto (ecom_produtos)</label>
-            <div style="display:flex;gap:8px">
-              <input id="ig-cod" class="vinput" placeholder="ex.: ALX-0007" style="text-transform:uppercase">
-              <button id="ig-buscar" class="cancelbtn" title="Puxa produto/marca/modelo/custo do cadastro">Puxar</button>
-            </div>
-            <div id="ig-pinfo" class="vpulled" style="display:none;margin-top:8px"></div>
-          </div>
-          <div class="efield"><label>Categoria</label>
-            <select id="ig-cat" class="vinput">
-              <option value="tecnologia">Tecnologia</option>
-              <option value="bem-estar">Bem-estar</option>
-            </select>
-          </div>
-        </div>
-        <div class="efield"><label>Nome de exibição (como aparece na vitrine)</label><input id="ig-nome" class="vinput" maxlength="90"></div>
-        <div class="efield"><label>Descrição curta (1-2 linhas no card)</label><input id="ig-desc" class="vinput" maxlength="140"></div>
-        <div class="vrow3">
-          <div class="efield"><label>Preço Insta (R$)</label><input id="ig-preco" class="vinput" type="number" step="0.01" min="0"></div>
-          <div class="efield"><label>Preço "De" riscado (opcional)</label><input id="ig-precode" class="vinput" type="number" step="0.01" min="0"></div>
-          <div class="efield"><label>Ordem na vitrine (menor = primeiro)</label><input id="ig-ordem" class="vinput" type="number" step="1" value="0"></div>
-        </div>
-        <div class="vrow">
-          <div class="efield"><label>URL da foto</label><input id="ig-foto" class="vinput" placeholder="img/catalogo/arquivo.jpg ou https://…"></div>
-          <div class="efield"><label>&nbsp;</label>
-            <div style="display:flex;gap:16px;align-items:center;padding-top:8px">
-              <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--etxt);cursor:pointer"><input id="ig-promo" type="checkbox"> Promoção (selo)</label>
-              <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--etxt);cursor:pointer"><input id="ig-ativo" type="checkbox" checked> Ativo na vitrine</label>
-            </div>
-          </div>
-        </div>
-        <div id="ig-margem" class="vpulled" style="display:none;margin-bottom:12px"></div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button id="ig-salvar" class="alsub-btn active">+ Publicar no catálogo</button>
-          <button id="ig-cancelar" class="cancelbtn" style="display:none">Cancelar edição</button>
-          <span id="ig-msg" style="font-size:12.5px"></span>
-          <a href="https://selectasolution.github.io/catalogo/" target="_blank" rel="noopener" class="cancelbtn" style="margin-left:auto;text-decoration:none" title="Abre a vitrine pública em nova aba">Ver vitrine pública ↗</a>
-        </div>
-      </div>
-      <div class="ecard">
-        <h3>Anúncios do catálogo <span class="rd-badge ok" id="ig-count" style="margin-left:6px"></span></h3>
-        <div style="overflow-x:auto">
-        <table class="rd-tbl">
-          <thead><tr><th>Ord</th><th>Vitrine</th><th>Código</th><th>Categoria</th><th>Preço</th><th>De</th><th>Promo</th><th>Status</th><th>Ações</th></tr></thead>
-          <tbody id="ig-lista"><tr><td colspan="9" class="ph">carregando…</td></tr></tbody>
-        </table>
-        </div>
-      </div>
-    </div>
+
 
   </section>
 
@@ -3232,9 +3276,10 @@ function switchTab(tabName) {
       btn.classList.add('text-gray-400', 'hover:bg-gray-700');
     }
   });
-  hide('#tab-catalogo'); hide('#tab-apple'); hide('#tab-simulador'); hide('#tab-importacao'); hide('#tab-ecommerce');
+  hide('#tab-catalogo'); hide('#tab-apple'); hide('#tab-simulador'); hide('#tab-importacao'); hide('#tab-ecommerce'); hide('#tab-instagram'); // BUILD 2026-08-08-B
   show(`#tab-${tabName}`);
   if (tabName === 'apple') enterAppleTab();
+  if (tabName === 'instagram') instagramTab.onEnter(); // BUILD 2026-08-08-B
   if (tabName === 'importacao') importacao.onEnter();
   if (tabName === 'ecommerce') ecom.onEnter();
 }
@@ -6048,6 +6093,34 @@ const ecomPesq={
   },
 };
 
+/* ===== BUILD 2026-08-08-B: aba Instagram — roteador Catálogo / Vendas ===== */
+const instagramTab = {
+  pane: 'catalogo', _b: false,
+  onEnter(){ this.bind(); this.showPane(this.pane); },
+  bind(){
+    if(this._b) return; this._b = true;
+    document.querySelectorAll('#insta-nav .insta-pane-btn').forEach(b=>{
+      b.addEventListener('click', ()=>this.showPane(b.dataset.ipane));
+    });
+  },
+  showPane(p){
+    this.pane = p;
+    document.querySelectorAll('#insta-nav .insta-pane-btn').forEach(b=>{
+      b.classList.toggle('active', b.dataset.ipane === p);
+    });
+    const cat = document.getElementById('ipane-catalogo');
+    if(p === 'catalogo'){
+      cat.style.display = '';
+      hide('#tab-apple');
+      ecomInsta.load();
+    } else {
+      cat.style.display = 'none';
+      show('#tab-apple');
+      enterAppleTab();
+    }
+  }
+};
+
 /* ===== BUILD 2026-08-08-A: Catálogo Insta — gestão da vitrine pública (ecom_catalogo_insta) ===== */
 const ecomInsta = {
   itens: [], editId: null, prodAtual: null, _b: false,
@@ -6244,7 +6317,6 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   if(sub==='relatorios'){ ecomRelatorios.load(); }
   if(sub==='alvo'){ ecomAlvo.load(); }
   if(sub==='radar'){ ecomRadar.load(); }
-  if(sub==='insta'){ ecomInsta.load(); } // BUILD 2026-08-08-A
 }));
 (function(){ const v=document.getElementById('rd-varrer'); if(v) v.addEventListener('click',()=>ecomRadar.varrer());
   const vt=document.getElementById('rd-varrer-termo'); if(vt) vt.addEventListener('click',()=>ecomRadar.varrerTermo());
