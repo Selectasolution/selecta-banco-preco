@@ -5,6 +5,7 @@
 <!-- BUILD 2026-07-31-B | selecta-banco-preco | (Igor 31/07) DOIS ITENS + AUDITORIA: (1) REINTEGRACAO DO TEMPO REAL: o BUILD 31-A (canal Supabase Realtime selecta-live em ecom_anuncios/ecom_produtos) foi entregue em 31/07 mas NUNCA publicado — detectado pela trava de md5 quando a base recebida voltou como 30-D; SQL da publication ja aplicado (Success 31/07). Este build recoloca o canal: interacao da Alexia reflete em ~1s (Anuncios ativos, Controle, Consulta Produto) e vice-versa; indicador "ao vivo · sincronizado HH:MM:SS"; falha degrada p/ refresh manual. (2) ORDENACAO: Anuncios ativos com MAIS RECENTE INCLUIDO NO TOPO (id desc), ativos e pausados. (3) AUDITORIA MARGENS (sem mudanca de codigo): confirmado que TODAS as superficies da Alexia ja usam margem REAL com colchao — Controle/gate (custo*1.06 no _simMargem), Consulta Produto (ecom.calc) e break-even; unica margem sem colchao e o espelho ML da listagem do Igor, por decisao. Rotulos mantidos como estao, por decisao. | base: 2026-07-30-D -->
 <!-- BUILD 2026-07-30-D | selecta-banco-preco | AJUSTES FINOS (Igor 30/07): (1) BUG: alterar Parametros Comerciais (comissao/imposto/outros/colchao) agora recalcula tambem a simulacao do formulario de cadastro (margem R$, margem %, break-even) alem da tabela — visualizacao ao vivo; NADA e persistido com valores alternativos (decisao explicita: parametros seguem globais e volateis, sem colchao por produto). (2) Anuncios ativos (Analise Comercial): ordenacao muda de alfabetica por codigo para ORDEM DE INCLUSAO (id sequencial do banco, primeiro incluido no topo); pausados idem, na secao propria. | base: 2026-07-30-C REV.1 -->
 <!-- BUILD 2026-07-30-C | selecta-banco-preco | ANALISE COMERCIAL INDIVIDUAL (decisao Igor 30/07 — fim do comando geral em lote): (1) Card de analise em lote (quadrantes ATIVOS/NOVOS via ecom_analise_alvo + Importar para a Alvo) SUBSTITUIDO por "Anuncios ativos — matematica ML": 1 linha POR ANUNCIO (2 anuncios do mesmo produto = 2 linhas, estrategia classico+premium respeitada), cenarios cheio E promocao com "Voce recebe" (preco − comissao real − frete, espelho do painel ML) e margem ML (recebe − imposto − custo NF, SEM colchao — colchao segue so no gate da Alexia). Vigencia: promocao preenchida governa o selo. (2) BANNER DE INTEGRIDADE automatico contra o ULTIMO LOTE do snapshot (capturas 04h50/14h50 seguem ativas): ZUMBI-2 (ativo no lote sem cadastro/produto inativo) + divergencia publicado × registro (nem cheio nem promo) — matematica do proprio app, sem ritual. (3) IMPORT INDIVIDUAL por linha: JSON de UM anuncio, MLB do JSON validado contra o MLB da linha, dedup v1.8 preservada, grava em ecom_resultado_anuncio (condicoes_gap vai em dados) — sugestao nasce no Controle da Alexia como sempre. (4) Comando GERAL v1.9 APOSENTADO: card reduzido ao botao Copiar comando com o texto v2.0 (analise individual: 4 eixos + gap de condicoes do ganhador + piso 10% + bandas de frete + JSON objetivo); export de cenario e data removidos do card (exportarCenario segue vivo na Consulta Produto). Funcoes do fluxo antigo (loadAnalise/renderAnalise/importarAnalise) ficam DORMENTES no codigo, sem chamadas — expurgo em BUILD futuro; ecom_analise_alvo para de receber gravacao; historico intacto. copiarComando ganha guarda p/ ausencia do campo data. REV.1 (30/07, pre-deploy, a pedido do Igor): apresentacao dos Anuncios ativos volta ao FORMATO DE TABELA anterior do quadrante (mesmo cabecalho/colunas compactas, sugestao em 1 linha) com colunas novas MLB e PRECO PRATICADO (promocao vigente, senao cheio; cheio no tooltip); import individual via botao JSON por linha que abre faixa colapsavel. | base: 2026-07-30-B -->
+<!-- BUILD 2026-08-08-A | selecta-banco-preco | CATALOGO INSTA (decisao Igor 08/08, proposta 4B aprovada): (1) NOVA sub-aba "Catalogo Insta" na barra E-commerce (data-sub=insta) — gestao dos ANUNCIOS da vitrine publica (tabela ecom_catalogo_insta, RLS homologado: anon so le ativos). (2) Produto NAO nasce aqui: fluxo codigo-first — digita codigo de ecom_produtos, sistema puxa dados (produto/marca/modelo/custo) e sugere nome de exibicao; sem produto cadastrado nao publica (regra: produto nasce na Consulta Produto, so Igor). (3) SEM travas ML — canal direto; indicador INFORMATIVO de margem bruta (preco-custo)/preco, sem veredito de clausula petrea (modelo de custo do canal direto e trabalho futuro). (4) Categorias fechadas: tecnologia / bem-estar. (5) Acoes na lista: editar, ativar/desativar (liga-desliga da vitrine), excluir com confirmacao. Nenhum modulo existente alterado; carga sob demanda no clique. | base: 2026-07-30-B -->
 <!-- BUILD 2026-07-30-B | selecta-banco-preco | REORGANIZACAO CADASTRO (decisao Igor 30/07, piloto reorg v1 aprovado): (1) Sub-aba "Simulador" RENOMEADA para "Consulta Produto" (uso comum Igor+Alexia) — mantem frete oficial, filtros e tabela de consulta; data-sub interno inalterado (simulador) p/ nao quebrar JS. (2) Cards "Parametros comerciais" e "Cadastrar/simular produto" MOVIDOS da Consulta Produto para a ANALISE COMERCIAL (Alvo), acima do quadrante Cadastro de anuncio — so o Igor cadastra produto e anuncio; Controle da Alexia segue so gestao (nunca teve cadastro). IDs de elementos preservados: bindings do modulo ecom intactos. (3) NOVO botao "+ Gravar e gerar anuncio": grava o produto (mesma rotina/validacoes do + Adicionar) e PRE-PREENCHE o Cadastro de anuncio (codigo, titulo, preco, tipo, data hoje) — TUDO editavel; MLB manual (rito: anuncio nasce no ML). Flag zera em erro/validacao/edicao. (4) Quadro do Comando GERAL INTOCADO — substituicao na proxima rodada, por decisao. | base: 2026-07-30-A -->
 <!-- BUILD 2026-07-30-A | selecta-banco-preco | PROMOCAO NO CONTROLE (decisao Igor 30/07, piloto v6 aprovado): (1) Colunas novas preco_promocao/tipo_promocao em ecom_anuncios (SQL separado — aplicar ANTES deste index). (2) Form Editar Anuncio compacto: linha Preco·Tipo·Margem e linha Produto em promocao·Tipo·Margem, margem inline na altura do input (% + lucro em R$); bloco grande MARGEM LIQUIDA removido. (3) REGRA DE VIGENCIA: promocao preenchida = linha da promocao governa selo LIBERADO/NEGADO, gate do piso 10% e log; promocao apagada = volta automaticamente o preco cheio. (4) Comissao/frete/custo NF saem da vista: popover "detalhes do calculo" no rodape, valores alinhados em grade, CUSTO NF em destaque maior (pedido p/ Alexia). (5) Log ecom_anuncio_alteracao ganha campo 'promocao' (entrada, alteracao e saida de promocao registradas com motivo). (6) Sync CONTROLE->SIMULADOR inalterado: continua no preco cheio; promocao NAO sincroniza ecom_produtos.preco (decisao pendente, sinalizada ao Igor). | base: 2026-07-26-A -->
 <!-- BUILD 2026-07-26-A | selecta-banco-preco | EXPLORADOR DE CATEGORIAS no Radar (spec Igor 26/07 — descoberta de IDs deixa de ser manual; recorte "tecnologia para casa" exige folhas de várias raízes): (1) Bloco recolhível "🌳 Explorar árvore de categorias" no card de Pesquisa — navega a árvore oficial do ML direto do navegador (endpoint público /sites/MLB/categories + /categories/{id}, sem token, custo zero de API autenticada). (2) Clique na categoria desce a árvore com trilha (breadcrumb) e nº de itens por filha; folha destacada. (3) Botão "📡 pesquisar" em cada nó dispara a varredura na hora (preenche ID+nome e chama varrer()). (4) Risco declarado: CORS do endpoint público — se o ML bloquear fetch cross-origin, o bloco mostra o erro e o fallback é rotear pela Edge (branch futuro). Sem mudança de Edge, SQL ou dados. | base: 2026-07-16-D -->
@@ -1052,6 +1053,7 @@
       <button class="ecom-subtab" data-sub="relatorios">Relatórios</button>
       <button class="ecom-subtab alvo" data-sub="alvo">🎯 Alvo</button>
       <button class="ecom-subtab radar" data-sub="radar">📡 Radar de Nicho</button>
+      <button class="ecom-subtab" data-sub="insta">🛍 Catálogo Insta</button>
     </div>
 
     <div id="ecom-sub-simulador" class="ecom-subpanel">
@@ -1532,6 +1534,61 @@
           <h3 style="font-size:13px">Candidatos a importação</h3>
           <div id="al-import"><div class="ph">carregando…</div></div>
           <p class="hint" style="font-size:12.5px;color:var(--emuted);margin-top:8px">Alimentado pelas VENDAS lançadas (saída + margem acima da média — vendas desatualizadas = candidatos errados). Margem importada depende da DUIMP — estudo no Import OS / Mesa de Análise.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== BUILD 2026-08-08-A: Catálogo Insta ===== -->
+    <div id="ecom-sub-insta" class="ecom-subpanel" style="display:none">
+      <div class="ecard">
+        <h3>Catálogo Instagram — anúncio da vitrine</h3>
+        <p class="hint" style="font-size:12.5px;color:var(--emuted);margin:2px 0 14px">Produto nasce na Consulta Produto (só Igor). Aqui você publica o <b>anúncio da vitrine pública</b> — canal direto, sem travas ML. Margem bruta é informativa.</p>
+        <div class="vrow">
+          <div class="efield"><label>Código do produto (ecom_produtos)</label>
+            <div style="display:flex;gap:8px">
+              <input id="ig-cod" class="vinput" placeholder="ex.: ALX-0007" style="text-transform:uppercase">
+              <button id="ig-buscar" class="cancelbtn" title="Puxa produto/marca/modelo/custo do cadastro">Puxar</button>
+            </div>
+            <div id="ig-pinfo" class="vpulled" style="display:none;margin-top:8px"></div>
+          </div>
+          <div class="efield"><label>Categoria</label>
+            <select id="ig-cat" class="vinput">
+              <option value="tecnologia">Tecnologia</option>
+              <option value="bem-estar">Bem-estar</option>
+            </select>
+          </div>
+        </div>
+        <div class="efield"><label>Nome de exibição (como aparece na vitrine)</label><input id="ig-nome" class="vinput" maxlength="90"></div>
+        <div class="efield"><label>Descrição curta (1-2 linhas no card)</label><input id="ig-desc" class="vinput" maxlength="140"></div>
+        <div class="vrow3">
+          <div class="efield"><label>Preço Insta (R$)</label><input id="ig-preco" class="vinput" type="number" step="0.01" min="0"></div>
+          <div class="efield"><label>Preço "De" riscado (opcional)</label><input id="ig-precode" class="vinput" type="number" step="0.01" min="0"></div>
+          <div class="efield"><label>Ordem na vitrine (menor = primeiro)</label><input id="ig-ordem" class="vinput" type="number" step="1" value="0"></div>
+        </div>
+        <div class="vrow">
+          <div class="efield"><label>URL da foto</label><input id="ig-foto" class="vinput" placeholder="img/catalogo/arquivo.jpg ou https://…"></div>
+          <div class="efield"><label>&nbsp;</label>
+            <div style="display:flex;gap:16px;align-items:center;padding-top:8px">
+              <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--etxt);cursor:pointer"><input id="ig-promo" type="checkbox"> Promoção (selo)</label>
+              <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--etxt);cursor:pointer"><input id="ig-ativo" type="checkbox" checked> Ativo na vitrine</label>
+            </div>
+          </div>
+        </div>
+        <div id="ig-margem" class="vpulled" style="display:none;margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button id="ig-salvar" class="alsub-btn active">+ Publicar no catálogo</button>
+          <button id="ig-cancelar" class="cancelbtn" style="display:none">Cancelar edição</button>
+          <span id="ig-msg" style="font-size:12.5px"></span>
+          <a href="https://selectasolution.github.io/catalogo/" target="_blank" rel="noopener" class="cancelbtn" style="margin-left:auto;text-decoration:none" title="Abre a vitrine pública em nova aba">Ver vitrine pública ↗</a>
+        </div>
+      </div>
+      <div class="ecard">
+        <h3>Anúncios do catálogo <span class="rd-badge ok" id="ig-count" style="margin-left:6px"></span></h3>
+        <div style="overflow-x:auto">
+        <table class="rd-tbl">
+          <thead><tr><th>Ord</th><th>Vitrine</th><th>Código</th><th>Categoria</th><th>Preço</th><th>De</th><th>Promo</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="ig-lista"><tr><td colspan="9" class="ph">carregando…</td></tr></tbody>
+        </table>
         </div>
       </div>
     </div>
@@ -5991,6 +6048,193 @@ const ecomPesq={
   },
 };
 
+/* ===== BUILD 2026-08-08-A: Catálogo Insta — gestão da vitrine pública (ecom_catalogo_insta) ===== */
+const ecomInsta = {
+  itens: [], editId: null, prodAtual: null, _b: false,
+  _g(id){ return document.getElementById(id); },
+  fmt(v){ return (v==null||v===''||isNaN(v)) ? '—' : Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); },
+  async load(){
+    this.bind();
+    try{
+      const r = await sb.from('ecom_catalogo_insta').select('*').order('ordem',{ascending:true}).order('criado_em',{ascending:false});
+      if(r.error) throw r.error;
+      this.itens = r.data || [];
+      this.render();
+    }catch(e){
+      console.error('[insta] load', e);
+      this._g('ig-lista').innerHTML = '<tr><td colspan="9" class="ph" style="color:var(--ered)">Erro ao carregar: '+(e.message||e)+'</td></tr>';
+    }
+  },
+  bind(){
+    if(this._b) return; this._b = true;
+    this._g('ig-buscar').addEventListener('click', ()=>this.buscar());
+    this._g('ig-cod').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); this.buscar(); } });
+    this._g('ig-preco').addEventListener('input', ()=>this.margem());
+    this._g('ig-salvar').addEventListener('click', ()=>this.salvar());
+    this._g('ig-cancelar').addEventListener('click', ()=>this.clear());
+    this._g('ig-lista').addEventListener('click', e=>{
+      const b = e.target.closest('[data-igact]'); if(!b) return;
+      const id = Number(b.dataset.igid);
+      if(b.dataset.igact==='edit') this.editar(id);
+      if(b.dataset.igact==='toggle') this.toggle(id);
+      if(b.dataset.igact==='del') this.excluir(id);
+    });
+  },
+  msg(t, cor){ const m=this._g('ig-msg'); m.textContent=t; m.style.color=cor||'var(--emuted)'; },
+  async buscar(){
+    const cod = this._g('ig-cod').value.trim().toUpperCase();
+    const box = this._g('ig-pinfo');
+    this.prodAtual = null; box.style.display='none';
+    if(!cod){ this.msg('Digite o código do produto.', 'var(--eamber)'); return; }
+    try{
+      const r = await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,custo,preco,ativo').eq('codigo',cod).limit(1);
+      if(r.error) throw r.error;
+      const p = (r.data||[])[0];
+      if(!p){ this.msg('Código não encontrado. Produto nasce na Consulta Produto (cadastro do Igor).', 'var(--ered)'); this.margem(); return; }
+      this.prodAtual = p;
+      box.style.display='';
+      box.innerHTML = '<b style="color:var(--etxt)">'+p.produto+'</b>'
+        + (p.marca?' · '+p.marca:'') + (p.modelo?' · '+p.modelo:'')
+        + ' &nbsp;|&nbsp; custo <b style="color:var(--etxt)">'+this.fmt(p.custo)+'</b>'
+        + ' · preço ML '+this.fmt(p.preco)
+        + (p.ativo? '' : ' · <span style="color:var(--eamber)">produto INATIVO no cadastro</span>');
+      const nome = this._g('ig-nome');
+      if(!nome.value.trim()){
+        nome.value = [p.produto, p.marca, p.modelo].filter(Boolean).join(' ').slice(0,90);
+      }
+      this.msg('Produto vinculado: '+p.codigo, 'var(--eemerald)');
+      this.margem();
+    }catch(e){ console.error('[insta] buscar', e); this.msg('Erro na busca: '+(e.message||e), 'var(--ered)'); }
+  },
+  margem(){
+    const box = this._g('ig-margem');
+    const p = parseFloat(this._g('ig-preco').value);
+    if(!this.prodAtual || !p || p<=0){ box.style.display='none'; return; }
+    const c = Number(this.prodAtual.custo||0);
+    const m = ((p - c) / p) * 100;
+    const cor = m >= 20 ? 'var(--eemerald)' : (m >= 10 ? 'var(--eamber)' : 'var(--ered)');
+    box.style.display='';
+    box.innerHTML = 'Margem bruta (antes de frete/gateway/impostos): <b style="color:'+cor+'">'+m.toFixed(1)+'%</b>'
+      + ' &nbsp;·&nbsp; custo '+this.fmt(c)+' → preço '+this.fmt(p)
+      + ' <span style="color:var(--emuted2)">· indicativo — modelo de custo do canal direto ainda não certificado</span>';
+  },
+  clear(){
+    ['ig-cod','ig-nome','ig-desc','ig-preco','ig-precode','ig-foto'].forEach(i=>this._g(i).value='');
+    this._g('ig-ordem').value = 0;
+    this._g('ig-cat').value = 'tecnologia';
+    this._g('ig-promo').checked = false;
+    this._g('ig-ativo').checked = true;
+    this._g('ig-pinfo').style.display='none';
+    this._g('ig-margem').style.display='none';
+    this.prodAtual = null; this.editId = null;
+    this._g('ig-salvar').textContent = '+ Publicar no catálogo';
+    this._g('ig-cancelar').style.display='none';
+    this.msg('');
+  },
+  async salvar(){
+    const nome = this._g('ig-nome').value.trim();
+    const preco = parseFloat(this._g('ig-preco').value);
+    const precoDe = parseFloat(this._g('ig-precode').value);
+    if(!this.prodAtual){ this.msg('Vincule um produto pelo código antes de publicar (regra: produto nasce no cadastro).', 'var(--ered)'); return; }
+    if(!nome){ this.msg('Informe o nome de exibição.', 'var(--ered)'); return; }
+    if(!preco || preco<=0){ this.msg('Informe o preço Insta.', 'var(--ered)'); return; }
+    if(precoDe && precoDe <= preco){ this.msg('Preço "De" precisa ser MAIOR que o preço Insta (senão não é desconto).', 'var(--ered)'); return; }
+    const dados = {
+      produto_codigo: this.prodAtual.codigo,
+      nome_exibicao: nome,
+      descricao_curta: this._g('ig-desc').value.trim() || null,
+      categoria: this._g('ig-cat').value,
+      preco_insta: preco,
+      preco_de: (precoDe && precoDe>0) ? precoDe : null,
+      promocao: this._g('ig-promo').checked,
+      foto_url: this._g('ig-foto').value.trim() || null,
+      ordem: parseInt(this._g('ig-ordem').value||'0',10) || 0,
+      ativo: this._g('ig-ativo').checked,
+      atualizado_em: new Date().toISOString()
+    };
+    try{
+      if(this.editId){
+        const r = await sb.from('ecom_catalogo_insta').update(dados).eq('id',this.editId).select().single();
+        if(r.error) throw r.error;
+        this.msg('✓ Anúncio atualizado na vitrine.', 'var(--eemerald)');
+      }else{
+        const r = await sb.from('ecom_catalogo_insta').insert(dados).select().single();
+        if(r.error) throw r.error;
+        this.msg('✓ Publicado no catálogo: '+dados.nome_exibicao, 'var(--eemerald)');
+      }
+      this.clear();
+      this.load();
+    }catch(e){ console.error('[insta] salvar', e); this.msg('Erro ao salvar: '+(e.message||e), 'var(--ered)'); }
+  },
+  async editar(id){
+    const it = this.itens.find(x=>x.id===id); if(!it) return;
+    this.editId = id;
+    this._g('ig-cod').value = it.produto_codigo || '';
+    this._g('ig-nome').value = it.nome_exibicao || '';
+    this._g('ig-desc').value = it.descricao_curta || '';
+    this._g('ig-cat').value = it.categoria || 'tecnologia';
+    this._g('ig-preco').value = it.preco_insta ?? '';
+    this._g('ig-precode').value = it.preco_de ?? '';
+    this._g('ig-foto').value = it.foto_url || '';
+    this._g('ig-ordem').value = it.ordem ?? 0;
+    this._g('ig-promo').checked = !!it.promocao;
+    this._g('ig-ativo').checked = !!it.ativo;
+    this._g('ig-salvar').textContent = 'Salvar alterações';
+    this._g('ig-cancelar').style.display='';
+    this.msg('Editando anúncio #'+id+' — repuxando produto…');
+    if(it.produto_codigo){ await this.buscar(); } else { this.prodAtual=null; this._g('ig-pinfo').style.display='none'; }
+    window.scrollTo({top:0, behavior:'smooth'});
+  },
+  async toggle(id){
+    const it = this.itens.find(x=>x.id===id); if(!it) return;
+    try{
+      const r = await sb.from('ecom_catalogo_insta').update({ativo: !it.ativo, atualizado_em: new Date().toISOString()}).eq('id',id);
+      if(r.error) throw r.error;
+      this.load();
+    }catch(e){ console.error('[insta] toggle', e); this.msg('Erro: '+(e.message||e), 'var(--ered)'); }
+  },
+  async excluir(id){
+    const it = this.itens.find(x=>x.id===id); if(!it) return;
+    if(!confirm('Excluir DEFINITIVAMENTE o anúncio "'+it.nome_exibicao+'" do catálogo?\n\nSe a intenção é só tirar da vitrine, use Desativar.')) return;
+    try{
+      const r = await sb.from('ecom_catalogo_insta').delete().eq('id',id);
+      if(r.error) throw r.error;
+      this.msg('Anúncio excluído.', 'var(--eamber)');
+      this.load();
+    }catch(e){ console.error('[insta] excluir', e); this.msg('Erro ao excluir: '+(e.message||e), 'var(--ered)'); }
+  },
+  render(){
+    const tb = this._g('ig-lista');
+    const cnt = this._g('ig-count');
+    const at = this.itens.filter(x=>x.ativo).length;
+    cnt.textContent = at + ' ativo(s) / ' + this.itens.length + ' total';
+    if(!this.itens.length){
+      tb.innerHTML = '<tr><td colspan="9" class="ph">Nenhum anúncio no catálogo ainda. Publique o primeiro acima.</td></tr>';
+      return;
+    }
+    tb.innerHTML = this.itens.map(it=>{
+      const st = it.ativo
+        ? '<span class="rd-badge ok">na vitrine</span>'
+        : '<span class="rd-badge warn">oculto</span>';
+      const promo = it.promocao ? '<span class="rd-badge err">PROMO</span>' : '—';
+      return '<tr>'
+        + '<td class="mono">'+(it.ordem??0)+'</td>'
+        + '<td>'+(it.nome_exibicao||'—')+(it.descricao_curta?'<div style="font-size:11px;color:var(--emuted2)">'+it.descricao_curta+'</div>':'')+'</td>'
+        + '<td class="mono">'+(it.produto_codigo||'—')+'</td>'
+        + '<td>'+(it.categoria||'—')+'</td>'
+        + '<td class="mono">'+this.fmt(it.preco_insta)+'</td>'
+        + '<td class="mono" style="color:var(--emuted2)">'+this.fmt(it.preco_de)+'</td>'
+        + '<td>'+promo+'</td>'
+        + '<td>'+st+'</td>'
+        + '<td style="white-space:nowrap">'
+          + '<button class="cancelbtn" style="padding:4px 9px;font-size:11.5px" data-igact="edit" data-igid="'+it.id+'">Editar</button> '
+          + '<button class="cancelbtn" style="padding:4px 9px;font-size:11.5px" data-igact="toggle" data-igid="'+it.id+'">'+(it.ativo?'Desativar':'Ativar')+'</button> '
+          + '<button class="cancelbtn" style="padding:4px 9px;font-size:11.5px;color:var(--ered)" data-igact="del" data-igid="'+it.id+'">Excluir</button>'
+        + '</td></tr>';
+    }).join('');
+  }
+};
+
 $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
   const sub=b.dataset.sub;
@@ -6000,6 +6244,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   if(sub==='relatorios'){ ecomRelatorios.load(); }
   if(sub==='alvo'){ ecomAlvo.load(); }
   if(sub==='radar'){ ecomRadar.load(); }
+  if(sub==='insta'){ ecomInsta.load(); } // BUILD 2026-08-08-A
 }));
 (function(){ const v=document.getElementById('rd-varrer'); if(v) v.addEventListener('click',()=>ecomRadar.varrer());
   const vt=document.getElementById('rd-varrer-termo'); if(vt) vt.addEventListener('click',()=>ecomRadar.varrerTermo());
