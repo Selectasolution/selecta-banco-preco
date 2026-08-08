@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-08-C | selecta-banco-preco | VIRADA E-COMMERCE TOTAL (decisao Igor 08/08 — foco 100% digital, saida gradual de licitacoes): (1) Rotulo da aba "E-commerce" -> "Mercado Livre" (so texto visivel; IDs/funcoes ecom* e tab-ecommerce INTOCADOS — organizada geral de nomes fica p/ sessao propria). (2) Aba Catalogo ANTIGA (banco de preco de licitacao) REMOVIDA da navegacao: secao renomeada tab-catalogo-legado, oculta e dormente; loadFilters/loadCatalog desligados do boot; tabelas produtos/ofertas/fornecedores INTACTAS no banco (expurgo = decisao pos-desmobilizacao dez/2026); Agente de Cotacao aposentado (banco_padrao.json publicado congela). (3) NOVA aba principal "Catalogo" (reusa id tab-catalogo) = cadastro unico de produtos: cards Parametros comerciais + Cadastrar/simular produto (movidos da Alvo) + Consulta Produto (payload ecom-sub-simulador movido da barra ML) — ids 100% preservados, bindings do modulo ecom intactos; CSS do escopo #tab-ecommerce duplicado para #tab-catalogo. Simulacao ML embutida = TEMPORARIA (extracao p/ aba Mercado Livre + motor de frete por plataforma = BUILD D). (4) Simulador PC: botao proprio removido; iframe montador.html ANINHADO como secao logica da aba Catalogo (padrao tab-apple/Instagram); reconfiguracao futura anunciada pelo Igor. (5) Barra Mercado Livre: Consulta Produto sai; Alvo vira sub-aba default (carga automatica na 1a entrada via _alvoBoot); handler de subpaineis com escopo #tab-ecommerce. (6) App abre no Mercado Livre (operacao diaria). Fluxo cross-aba declarado: "+ Gravar e gerar anuncio" grava produto no Catalogo e pre-preenche o Cadastro de anuncio que VIVE na aba Mercado Livre > Alvo. Sem SQL — nenhuma tabela tocada. | base: 2026-08-08-B (md5 820417067bc58a236effbf7637565616 conferido na sessao) -->
 <!-- BUILD 2026-08-03-C | selecta-banco-preco | CATEGORIA ANTENA/RADIO DE REDE (sigla ANT — confirmada por Igor: inexistente no catalogo, produto novo). Fronteira: ANT = radios outdoor de enlace PtP/PtMP, CPEs, antenas direcionais/setoriais, kit radio+antena; AP segue com access points indoor; RTR com roteadores. Comissao estimativa 14/19 em SQL proprio (que tambem FECHA a pendencia TAB de 13/07 — linha nunca inserida no banco). | base: 03-B (relatorios mes corrente) -->
 <!-- BUILD 2026-08-03-A | selecta-banco-preco | VENDAS 2 QUADRANTES + CANDIDATOS NO RADAR (piloto v2 aprovado 03/08; schema ecom_vendas verificado via information_schema nesta sessao — tipo_anuncio NAO existe, desfecho 3: classificacao segue derivada de comissao_pct_efetiva): (1) Aba Vendas: faixa vd-resumo REMOVIDA (controle de envio vive no semaforo linha a linha); empilhamento vertical padrao Alvo — form "Lancar venda" em 3 linhas densas alinhadas a esquerda (larguras fixas) + listagem "Lancadas" MES A MES FECHADO (seletor ◀ mes ▶, competencia data_solicitacao, todos os status do mes, totalizador de VALIDOS = exclui cancelado/perda). (2) TRAVA DO RAZAO imposta pelo app: campos Comissao/Tarifa/Frete so habilitam com Status inicial != a_enviar (venda ao vivo = taxas NULL sempre, nunca estimadas; defesa dupla no DOM e no lancar()); status != a_enviar permite lancar direto do relatorio ML com taxas reais (fees_conferidas=true quando comissao preenchida; tarifa/frete vazios viram 0 SO quando ha comissao) ou em transito com taxas em aberto. Campo Observacoes no form (coluna verificada). (3) Candidatos a importacao MUDOU de Vendas para o Radar de Nicho — 3a sub-aba data-rdtab=cand, card intacto (mesmo al-import/refreshCandidatos), refresh ao abrir a sub-aba. Sem SQL — nenhuma tabela alterada. | base: 2026-08-01-A (md5 74dd1185fc2c814a9c24c1c59b1f3c13 conferido na sessao) -->
 <!-- BUILD 2026-08-01-A | selecta-banco-preco | OVERRIDE v2 (Igor 01/08, apos validacao do 31-C em producao — o "nao salva" era checkbox nao marcado, licao de UX assumida): (1) SELO DE ESTADO: ao abrir a edicao, se a ULTIMA alteracao do MLB no historico carrega abaixo_piso E os valores na tela sao exatamente os gravados, a faixa NEGADO da lugar ao selo ambar "Liberado abaixo do piso — gravado em dd/mm hh:mm" (mensagem e celula da margem); qualquer mudanca de preco/tipo/promocao derruba o selo e o gate volta ao fluxo normal — a liberacao vale por GRAVACAO, nunca por anuncio. (2) CHAVE OBVIA: checkbox miudo vira botao-chave ambar com borda/preenchimento e input ampliado (CSS :has), clicavel no rotulo inteiro. (3) CONFIRMACAO IN-PAGE: window.confirm substituido por dupla confirmacao dentro do app (1o clique no Salvar avisa "clique novamente p/ confirmar ABAIXO DO PISO", 2o clique grava) — imune ao bloqueio de dialogos do navegador; qualquer alteracao no form cancela a pendencia. Sem SQL. | base: 2026-07-31-D (build de outro chat sobre o 31-C; md5 conferido) -->
@@ -184,9 +185,8 @@
         <img src="selecta-solution-logo.png" alt="Selecta Solution" class="h-9 w-auto" />
         <nav class="flex gap-1">
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="catalogo">Catálogo</button>
-          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="simulador">Simulador PC</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="importacao">📦 Importação</button>
-          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="ecommerce">🛒 E-commerce</button>
+          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="ecommerce">🛒 Mercado Livre</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="instagram">📸 Instagram</button>
         </nav>
       </div>
@@ -200,7 +200,7 @@
   <!-- =========================================================== -->
   <!-- TAB: CATÁLOGO (Banco de Preço — licitação)                   -->
   <!-- =========================================================== -->
-  <section id="tab-catalogo" class="max-w-screen-2xl mx-auto px-4 py-6">
+  <section id="tab-catalogo-legado" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6"><!-- BUILD 2026-08-08-C: banco de preço de licitação DORMENTE (aba removida da navegação; tabelas produtos/ofertas/fornecedores intactas no banco; expurgo pós-desmobilização) -->
     <div class="bg-gray-800 rounded-lg p-4 mb-4 border border-gray-700">
       <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
         <div class="md:col-span-2">
@@ -293,6 +293,401 @@
 #tab-instagram .insta-pane-btn.active{color:#10b981;border-bottom-color:#10b981}
 #tab-instagram .insta-pane-btn:hover:not(.active){color:#e5e7eb}
 </style>
+<section id="tab-catalogo" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
+    <!-- BUILD 2026-08-08-C: aba Catálogo — cadastro único de produtos (ecom_produtos) + Simulador PC aninhado (iframe montador.html, seção lógica como a Vendas do Instagram). Simulação ML embutida TEMPORÁRIA — extração para a aba Mercado Livre no BUILD D. -->
+    <style>
+    #tab-catalogo .ctl-sec-btn{color:#9ca3af;border-bottom:2px solid transparent}
+    #tab-catalogo .ctl-sec-btn.active{color:#10b981;border-bottom-color:#10b981}
+    #tab-catalogo .ctl-sec-btn:hover:not(.active){color:#e5e7eb}
+    
+    #tab-catalogo .ecom-subnav{display:flex;gap:2px;border-bottom:1px solid var(--eborder);margin:0 0 18px;overflow-x:auto}
+    #tab-catalogo .ecom-subtab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--emuted);font:inherit;font-size:13.5px;padding:9px 14px;cursor:pointer;white-space:nowrap}
+    #tab-catalogo .ecom-subtab:hover{color:var(--etxt)}
+    #tab-catalogo .ecom-subtab.active{color:var(--etxt);border-bottom-color:var(--eemerald)}
+    #tab-catalogo .ecom-subtab.alvo.active{border-bottom-color:var(--eteal)}
+    #tab-catalogo .ecom-subtab.radar.active{border-bottom-color:var(--eamber)}
+    #tab-catalogo .rd-kw{display:inline-block;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:8px;padding:5px 10px;font-size:12.5px;margin:0 6px 6px 0}
+    #tab-catalogo .rd-kw .n{color:var(--emuted2);font-family:var(--emono);font-size:11px;margin-right:5px}
+    #tab-catalogo .rd-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+    #tab-catalogo .rd-tbl th{color:var(--emuted);text-align:left;font-weight:600;padding:7px 9px;border-bottom:1px solid var(--eborder);white-space:nowrap}
+    #tab-catalogo .rd-tbl td{padding:7px 9px;border-bottom:1px solid var(--epanel2);color:var(--etxt);vertical-align:top}
+    #tab-catalogo .rd-tbl td.mono{font-family:var(--emono);white-space:nowrap}
+    #tab-catalogo .rd-row-pesq{cursor:pointer}
+    #tab-catalogo .rd-row-pesq:hover td{background:var(--epanel2)}
+    #tab-catalogo .rd-row-pesq.sel td{background:var(--epanel3,#18233a)}
+    #tab-catalogo .rd-badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600}
+    #tab-catalogo .rd-badge.ok{background:rgba(16,185,129,.14);color:var(--eemerald)}
+    #tab-catalogo .rd-badge.warn{background:rgba(245,158,11,.14);color:var(--eamber)}
+    #tab-catalogo .rd-badge.err{background:rgba(239,68,68,.14);color:var(--ered)}
+    #tab-catalogo .rd-acc-head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px}
+    #tab-catalogo .rd-acc-tit{font-size:13.5px;font-weight:600;color:var(--etxt)}
+    #tab-catalogo .rd-acc-id{color:var(--emuted2);font-family:var(--emono);font-size:11px;font-weight:400;margin-left:4px}
+    #tab-catalogo .rd-acc-sub{font-size:11.5px;color:var(--emuted);margin-top:2px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    #tab-catalogo .rd-acc-chev{color:var(--eamber);font-size:15px;flex-shrink:0}
+    #tab-catalogo .rd-acc-top3{margin-top:9px;border-top:1px dashed var(--eborder);padding-top:8px}
+    #tab-catalogo .rd-top3{font-size:12.5px;color:var(--etxt);padding:3px 0}
+    #tab-catalogo .rd-top3 .n{color:var(--eamber);font-family:var(--emono);font-weight:700;margin-right:4px}
+    #tab-catalogo .rd-top3 .p{color:var(--eemerald);font-family:var(--emono);margin-left:6px}
+    #tab-catalogo .rd-top3 .v{color:var(--emuted2);font-size:11px;margin-left:6px}
+    #tab-catalogo .rd-acc-body{margin-top:10px;border-top:1px solid var(--eborder);padding-top:10px}
+    #tab-catalogo .rd-kpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    #tab-catalogo .rd-kpi{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:8px;padding:6px 10px;font-size:11.5px}
+    #tab-catalogo .rd-kpi b{color:var(--etxt);font-family:var(--emono);font-weight:600}
+    #tab-catalogo a.rd-kw{text-decoration:none;cursor:pointer}
+    #tab-catalogo a.rd-kw:hover{border-color:var(--eamber);color:var(--eamber)}
+    #tab-catalogo .alsubbar{display:flex;gap:8px;align-items:center;margin:6px 0 18px;flex-wrap:wrap}
+    #tab-catalogo .alsub-btn{background:var(--epanel2);color:var(--emuted);border:1px solid var(--eborder);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all .12s}
+    #tab-catalogo .alsub-btn:hover{color:var(--etxt);border-color:var(--emuted2)}
+    #tab-catalogo .alsub-btn.active{background:var(--epanel3);color:var(--etxt);border-color:var(--eteal)}
+    #tab-catalogo .alsub-btn.cmd{margin-left:auto;border-style:dashed}
+    #tab-catalogo .ph{color:var(--emuted2);font-size:13px;text-align:center;padding:30px 10px}
+    #tab-catalogo .vgrid{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start}
+    @media(max-width:900px){#tab-catalogo .vgrid{grid-template-columns:1fr}}
+    #tab-catalogo .vform .efield,#tab-catalogo .vrow .efield,#tab-catalogo .vrow3 .efield{margin-bottom:12px}
+    #tab-catalogo .vform label{display:block;font-size:11px;color:var(--emuted);margin-bottom:5px}
+    #tab-catalogo .vrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    #tab-catalogo .vrow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    /* BUILD 2026-08-03-A: linhas densas alinhadas à esquerda (larguras fixas, sem esticar) */
+    #tab-catalogo .vlinha{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+    #tab-catalogo .vlinha .efield{margin-bottom:10px}
+    #tab-catalogo .vd-mlbox{border-left:2px solid var(--eteal);padding-left:10px;margin-top:4px}
+    #tab-catalogo .vd-mlbox.travado{border-left-color:var(--eborder)}
+    #tab-catalogo .vd-mlbox .vinput:disabled{opacity:.35;cursor:not-allowed}
+    #tab-catalogo .vd-mlhint{font-size:11.5px;color:var(--eteal);margin:0 0 8px}
+    #tab-catalogo .vd-mlbox.travado .vd-mlhint{color:var(--emuted2)}
+    #tab-catalogo .vd-messel{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    #tab-catalogo .vd-messel button{background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:5px 11px;cursor:pointer;font-size:12px}
+    #tab-catalogo .vd-mes{font-weight:700;font-size:14px;color:var(--eteal);font-family:var(--emono)}
+    #tab-catalogo .vd-mestot{margin-left:auto;font-size:12.5px;color:var(--emuted);font-family:var(--emono)}
+    #tab-catalogo .vpill.st-aenv{background:rgba(245,158,11,.15);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
+    #tab-catalogo .vpill.st-env{background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.35)}
+    #tab-catalogo .vpill.st-ent{background:rgba(16,185,129,.15);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
+    #tab-catalogo .vpill.st-can{background:rgba(95,111,140,.18);color:var(--emuted2);border:1px solid var(--eborder)}
+    #tab-catalogo .vpill.st-per{background:rgba(239,68,68,.15);color:var(--ered);border:1px solid rgba(239,68,68,.35)}
+    #tab-catalogo .vinput{width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:8px;padding:9px 11px;font:inherit}
+    #tab-catalogo .vinput.mono{font-family:var(--emono);font-variant-numeric:tabular-nums}
+    #tab-catalogo .vinput:focus{outline:2px solid var(--eemerald);border-color:transparent}
+    #tab-catalogo .vpulled{background:var(--epanel2);border:1px dashed var(--eborder);border-radius:8px;padding:8px 11px;font-size:12.5px;color:var(--emuted)}
+    #tab-catalogo .vpulled b{color:var(--eteal)}
+    #tab-catalogo .vbtn{appearance:none;border:0;border-radius:9px;font:inherit;font-weight:600;padding:10px 16px;cursor:pointer;background:linear-gradient(135deg,var(--eemerald),var(--eteal));color:#06231a}
+    #tab-catalogo .vbtn:hover{filter:brightness(1.08)}
+    #tab-catalogo .vbtn.sm{padding:5px 10px;font-size:12px;border-radius:7px;background:none;border:1px solid var(--eborder);color:var(--etxt);font-weight:500}
+    #tab-catalogo .vbtn.sm:hover{border-color:var(--eemerald)}
+    #tab-catalogo .vli{display:flex;align-items:center;gap:6px;padding:10px 0;border-bottom:1px solid var(--eborder)}
+    #tab-catalogo .vli:last-child{border-bottom:0}
+    #tab-catalogo .vli .vmain{flex:1;min-width:0}
+    #tab-catalogo .vli .vp{font-size:13px;font-weight:500}
+    #tab-catalogo .vli .vm{font-family:var(--emono);font-size:11px;color:var(--emuted)}
+    #tab-catalogo .vpill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600}
+    #tab-catalogo .vpill.warn{background:#241c08;color:#facc6b;border:1px solid #473714}
+    #tab-catalogo .vpill.ok{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
+    /* BUILD 2026-07-16-B · semáforo de envio na lista de Vendas */
+    #tab-catalogo .vpill.err{background:#2a0d0d;color:#f28b8b;border:1px solid #5c1a1a}
+    #tab-catalogo .vpill.mut{background:var(--epanel2);color:var(--emuted);border:1px solid var(--eborder)}
+    #tab-catalogo .vd-postbox{background:var(--epanel2);border:1px solid var(--eteal);border-radius:10px;padding:10px 12px;margin:8px 0 10px;display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+    #tab-catalogo .vmsg{font-size:12px;margin-top:8px;min-height:16px}
+    #tab-catalogo .vmsg.ok{color:var(--eemerald)} #tab-catalogo .vmsg.err{color:var(--ered)}
+    /* modo edição — sinal visual (aprovado 08/07/2026): caixa verde clarinho só ao editar */
+    #tab-catalogo [data-aleditbox].editing{background:rgba(16,185,129,.06);border:1px solid rgba(52,211,153,.42)!important;border-left:3px solid var(--eemerald)!important;border-radius:10px;padding:12px 14px 14px!important;box-shadow:0 0 0 1px rgba(52,211,153,.06) inset}
+    #tab-catalogo [data-aleditbox].editing .efield label{color:#9fe6c6}
+    #tab-catalogo [data-aleditbox].editing .vinput{border-color:rgba(52,211,153,.28)}
+    #tab-catalogo [data-aleditbox].editing .msim{border-color:rgba(52,211,153,.22)}
+    #tab-catalogo .al-editflag{display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,.14);color:var(--eemerald);border:1px solid rgba(52,211,153,.3);border-radius:7px;padding:3px 9px;font-size:11px;font-weight:700;margin-bottom:11px}
+    #tab-catalogo .msim{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:8px 12px;margin:8px 0 4px}
+    #tab-catalogo .msim-h{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin-bottom:4px;font-weight:600}
+    #tab-catalogo .msim-h .msim-hint{text-transform:none;letter-spacing:0;font-weight:400;color:var(--emuted2);font-size:11px}
+    #tab-catalogo .msim-zonas{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:2px}
+    #tab-catalogo .msim-zonas:empty{display:none}
+    #tab-catalogo .msim-z{background:var(--epanel);border:1px solid var(--eborder);border-radius:8px;padding:8px 10px;font-family:var(--emono);font-variant-numeric:tabular-nums}
+    #tab-catalogo .msim-z .msim-zl{font-size:10px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.05em;font-family:inherit;display:flex;align-items:center;gap:5px}
+    #tab-catalogo .msim-z .msim-zv{font-size:15px;font-weight:600;margin-top:2px}
+    #tab-catalogo .msim-z.v .msim-zv{color:var(--eemerald)} #tab-catalogo .msim-z.a .msim-zv{color:var(--eamber)} #tab-catalogo .msim-z.r .msim-zv{color:var(--ered)}
+    #tab-catalogo .msim-z.pior{border-color:var(--eamber)}
+    #tab-catalogo .msim-z .msim-dot{display:inline-block;width:7px;height:7px;border-radius:50%}
+    #tab-catalogo .msim-z .msim-dot.calib{background:var(--eemerald)}
+    #tab-catalogo .msim-z .msim-dot.est{background:transparent;border:1px solid var(--emuted2)}
+    #tab-catalogo .msim-piso{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:7px;font-size:12px;font-weight:500}
+    #tab-catalogo .msim-piso:empty{display:none}
+    #tab-catalogo .msim-piso.ok{background:rgba(16,185,129,.10);color:var(--eemerald);border:1px solid rgba(16,185,129,.25)}
+    #tab-catalogo .msim-piso.no{background:rgba(239,68,68,.10);color:var(--ered);border:1px solid rgba(239,68,68,.30)}
+    #tab-catalogo .msim-piso.warn{background:rgba(245,158,11,.10);color:var(--eamber);border:1px solid rgba(245,158,11,.30)}
+    #tab-catalogo .msim-main{display:flex;align-items:center;gap:10px;padding:3px 4px 2px}
+    #tab-catalogo .msim-main .msim-pct{font-family:var(--emono);font-variant-numeric:tabular-nums;font-size:24px;font-weight:700;letter-spacing:-.02em}
+    #tab-catalogo .msim-main.v .msim-pct{color:var(--eemerald)}
+    #tab-catalogo .msim-main.r .msim-pct{color:var(--ered)}
+    #tab-catalogo .msim-main.warn .msim-pct{color:var(--emuted2)}
+    #tab-catalogo .msim-main .msim-selo{font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;letter-spacing:.02em}
+    #tab-catalogo .msim-main .msim-selo.v{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
+    #tab-catalogo .msim-main .msim-selo.r{background:rgba(239,68,68,.12);color:var(--ered);border:1px solid rgba(239,68,68,.4)}
+    #tab-catalogo .msim-main .msim-selo.warn{background:rgba(245,158,11,.12);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
+    /* BUILD 01/08-A: chave do override + selo de estado */
+    #tab-catalogo label[data-alovr]{border:1px solid rgba(245,158,11,.5);border-radius:8px;padding:7px 14px;background:rgba(245,158,11,.07);font-weight:700;font-size:12.5px}
+    #tab-catalogo label[data-alovr]:hover{background:rgba(245,158,11,.14)}
+    #tab-catalogo label[data-alovr]:has(input:checked){background:rgba(245,158,11,.22);color:#fbbf24;border-color:var(--eamber)}
+    #tab-catalogo label[data-alovr] input{transform:scale(1.35);margin-right:4px;accent-color:var(--eamber)}
+    /* BUILD 30/07-C: anúncios ativos + integridade */
+    #tab-catalogo .atv-integ{border-radius:8px;padding:7px 11px;font-size:12px;margin-bottom:8px}
+    #tab-catalogo .atv-integ.v{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);color:var(--eemerald)}
+    #tab-catalogo .atv-integ.a{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);color:var(--eamber)}
+    #tab-catalogo .atv-integ.r{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.35);color:var(--ered)}
+    #tab-catalogo .atv-integ.n{background:none;border:0;color:var(--emuted2);font-size:11px;padding:2px 11px}
+    #tab-catalogo details.atv-row{border:1px solid var(--eborder);border-radius:10px;margin-bottom:6px;background:var(--epanel2)}
+    #tab-catalogo details.atv-row summary{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;list-style:none;flex-wrap:wrap}
+    #tab-catalogo details.atv-row summary::-webkit-details-marker{display:none}
+    #tab-catalogo details.atv-row summary .mono{font-family:var(--emono);font-size:12px;color:var(--emuted)}
+    #tab-catalogo details.atv-row summary .mono.c{color:var(--eteal);font-weight:700}
+    #tab-catalogo details.atv-row summary .t{flex:1;min-width:180px;font-size:12.5px;color:var(--etxt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #tab-catalogo details.atv-row summary .tp{font-size:11px;color:var(--emuted2)}
+    #tab-catalogo .atv-badge{font-size:9.5px;font-weight:700;border-radius:5px;padding:2px 7px;letter-spacing:.04em}
+    #tab-catalogo .atv-badge.p{background:rgba(95,111,140,.15);color:var(--emuted);border:1px solid var(--eborder)}
+    #tab-catalogo .atv-badge.z{background:rgba(239,68,68,.12);color:var(--ered);border:1px solid rgba(239,68,68,.35)}
+    #tab-catalogo .atv-body{padding:4px 12px 10px;border-top:1px dashed var(--eborder)}
+    #tab-catalogo .atv-cen{display:flex;align-items:center;gap:10px;font-family:var(--emono);font-variant-numeric:tabular-nums;font-size:12.5px;padding:6px 8px;border-radius:8px;margin-top:6px;background:var(--epanel3);border:1px solid var(--eborder);flex-wrap:wrap}
+    #tab-catalogo .atv-cen.vig{border-color:rgba(52,211,153,.5)}
+    #tab-catalogo .atv-cen.off{opacity:.5}
+    #tab-catalogo .atv-cen .k{font-size:10.5px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.05em}
+    #tab-catalogo .atv-cen .p{color:var(--etxt)}
+    #tab-catalogo .atv-cen .m{font-weight:700}
+    #tab-catalogo .atv-cen .m.v{color:var(--eemerald)} #tab-catalogo .atv-cen .m.a{color:var(--eamber)} #tab-catalogo .atv-cen .m.r{color:var(--ered)}
+    #tab-catalogo .atv-sug{font-size:11.5px;color:var(--emuted);margin-top:8px}
+    #tab-catalogo .atv-imp{margin-top:8px}
+    #tab-catalogo .atv-imp textarea{width:100%;min-height:84px;background:var(--epanel3);color:var(--etxt);border:1px solid var(--eborder);border-radius:8px;padding:10px;font:11.5px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+    /* BUILD 30/07-A: margem inline compacta + popover detalhes */
+    #tab-catalogo .alm-row{display:grid;grid-template-columns:1.1fr .8fr 1.4fr;gap:12px}
+    #tab-catalogo .mginline{display:flex;align-items:center;gap:9px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:8px;padding:8px 11px;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+    #tab-catalogo .mginline.vigente{border-color:rgba(52,211,153,.5)}
+    #tab-catalogo .mginline .mgi-pct{font-size:16px;font-weight:700}
+    #tab-catalogo .mginline.v .mgi-pct{color:var(--eemerald)} #tab-catalogo .mginline.a .mgi-pct{color:var(--eamber)} #tab-catalogo .mginline.r .mgi-pct{color:var(--ered)} #tab-catalogo .mginline.mute .mgi-pct{color:var(--emuted2)}
+    #tab-catalogo .mginline .mgi-luc{font-size:12.5px;color:var(--emuted)}
+    #tab-catalogo .mginline .mgi-luc b{color:var(--etxt)}
+    #tab-catalogo .mginline .mgi-selo{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;margin-left:auto}
+    #tab-catalogo .mginline .mgi-selo.v{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
+    #tab-catalogo .mginline .mgi-selo.r{background:rgba(239,68,68,.12);color:var(--ered);border:1px solid rgba(239,68,68,.4)}
+    #tab-catalogo .mginline .mgi-selo.warn{background:rgba(245,158,11,.12);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
+    #tab-catalogo details.msim-det{position:relative;display:inline-block;margin-left:auto}
+    #tab-catalogo details.msim-det summary{font-size:11.5px;color:var(--emuted2);cursor:pointer;user-select:none;list-style:none}
+    #tab-catalogo details.msim-det summary::-webkit-details-marker{display:none}
+    #tab-catalogo details.msim-det[open] summary{color:var(--emuted)}
+    #tab-catalogo details.msim-det .msim-meta2{position:absolute;right:0;bottom:calc(100% + 6px);z-index:6;min-width:290px;font-size:12px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;padding:10px 14px;background:var(--epanel3);border:1px solid var(--eborder);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    #tab-catalogo .meta-grid{display:grid;grid-template-columns:auto 1fr;column-gap:16px;row-gap:4px;align-items:baseline}
+    #tab-catalogo .meta-grid .k{color:var(--emuted);font-size:11.5px;white-space:nowrap}
+    #tab-catalogo .meta-grid .vv{text-align:right;color:var(--etxt)}
+    #tab-catalogo .meta-grid .vig{grid-column:1/-1;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--eaccent);font-weight:700;padding-bottom:2px;border-bottom:1px solid var(--eborder);margin-bottom:3px}
+    #tab-catalogo .meta-grid .nf-k{color:#9fe6c6;font-size:12.5px;font-weight:700}
+    #tab-catalogo .meta-grid .nf-v{text-align:right;color:var(--eaccent);font-size:16px;font-weight:800;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:6px;padding:2px 8px}
+    #tab-catalogo .msim-reason{color:var(--eamber);font-size:12px;padding:0 4px 6px;display:block}
+    #tab-catalogo .msim-meta{font-size:12.5px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;margin-top:3px;line-height:1.45;padding-top:5px;border-top:1px solid var(--eborder)}
+    #tab-catalogo .msim-meta:empty{display:none;border-top:0;padding-top:0;margin-top:0}
+    #tab-catalogo .msim-meta b{color:var(--etxt);font-weight:600}
+    #tab-catalogo .rep-pill{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.45);color:#fca5a5;padding:2px 10px;border-radius:6px;font-family:var(--emono);font-variant-numeric:tabular-nums;font-size:12px}
+    #tab-catalogo .al-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:7px;line-height:1.35}
+    #tab-catalogo .al-line > span:not(:last-child)::after{content:"·";color:var(--emuted2);margin-left:7px;font-weight:400}
+    #tab-catalogo .al-code{color:var(--etxt);font-weight:600;font-size:13px;font-family:var(--emono);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+    #tab-catalogo .al-title{color:var(--etxt);font-weight:600;font-size:13px}
+    #tab-catalogo .al-info{font-size:11.5px;font-family:var(--emono);font-variant-numeric:tabular-nums}
+    #tab-catalogo .al-info.novo{color:var(--emuted2)}
+    #tab-catalogo .al-info.ok{color:#6ee7b7}
+    #tab-catalogo .al-info.med{color:#fcd34d}
+    #tab-catalogo .al-info.crit{color:#fca5a5}
+    #tab-catalogo .al-actions{display:flex;flex-direction:column;gap:2px;align-items:flex-start;margin-top:2px}
+    #tab-catalogo #al-anuncios .vli{padding:6px 0}
+    #tab-catalogo .al-sug{background:none;border:0;padding:0;cursor:pointer;font-size:11.5px;font-weight:600;text-decoration:underline;font-family:inherit}
+    #tab-catalogo .al-sug.gray,#tab-catalogo .al-sug.n{color:var(--emuted2)}
+    #tab-catalogo .al-sug.o{color:#6ee7b7}
+    #tab-catalogo .al-sug.a{color:#fcd34d}
+    #tab-catalogo .al-sug.c{color:#fca5a5}
+    #tab-catalogo .al-sug.b{color:#38bdf8}
+    #tab-catalogo .al-sug:hover{filter:brightness(1.15)}
+    #tab-catalogo .al-histlink{background:none;border:0;color:var(--emuted2);font-size:11.5px;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit}
+    #tab-catalogo .al-histlink:hover{color:var(--etxt)}
+    #tab-catalogo .al-sugbox{background:var(--epanel2);border:1px solid var(--eborder);border-left-width:4px;border-radius:8px;padding:10px 14px;position:relative}
+    #tab-catalogo .al-sugbox.o{border-left-color:#6ee7b7;background:linear-gradient(90deg,rgba(16,185,129,.08),var(--epanel2) 30%)}
+    #tab-catalogo .al-sugbox.a{border-left-color:#fcd34d;background:linear-gradient(90deg,rgba(245,158,11,.08),var(--epanel2) 30%)}
+    #tab-catalogo .al-sugbox.c{border-left-color:#fca5a5;background:linear-gradient(90deg,rgba(239,68,68,.08),var(--epanel2) 30%)}
+    #tab-catalogo .al-sugbox.b{border-left-color:#38bdf8;background:linear-gradient(90deg,rgba(56,189,248,.10),var(--epanel2) 30%)}
+    #tab-catalogo .al-sugbox.n,#tab-catalogo .al-sugbox.gray{border-left-color:var(--emuted2)}
+    #tab-catalogo .al-sugh{font-size:13.5px;color:var(--etxt);margin-bottom:6px;font-weight:600}
+    #tab-catalogo .al-sugp{font-size:13px;color:var(--etxt);line-height:1.6}
+    #tab-catalogo .al-sugmeta{font-size:10px;color:var(--emuted2);margin-top:8px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+    #tab-catalogo .al-histli{display:flex;gap:10px;align-items:center;font-size:11px;padding:5px 0;border-top:1px solid var(--eborder)}
+    #tab-catalogo .al-histli:first-of-type{border-top:0}
+    #tab-catalogo .al-histdt{color:var(--emuted2);font-family:var(--emono);font-variant-numeric:tabular-nums;min-width:80px;font-size:10.5px}
+    #tab-catalogo .al-histtag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.02em}
+    #tab-catalogo .al-histtag.o{background:rgba(16,185,129,.15);color:#6ee7b7}
+    #tab-catalogo .al-histtag.a{background:rgba(245,158,11,.15);color:#fcd34d}
+    #tab-catalogo .al-histtag.c{background:rgba(239,68,68,.15);color:#fca5a5}
+    #tab-catalogo .al-histtag.n{background:rgba(138,153,180,.15);color:var(--emuted2)}
+    #tab-catalogo .al-histtag.b{background:rgba(56,189,248,.15);color:#7dd3fc}
+    #tab-catalogo .al-histmeta{color:var(--emuted2);font-size:10.5px;flex:1}
+    #tab-catalogo .al-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;margin:0 -14px 10px;background:rgba(16,185,129,.07);border-radius:10px;flex-wrap:wrap}
+    #tab-catalogo .al-header-l{display:flex;flex-direction:row;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+    #tab-catalogo .al-htitle{font-size:13px;font-weight:800;color:#06231a;margin:0;padding:8px 14px;border-radius:9px;background:linear-gradient(135deg,var(--eemerald),var(--eteal));letter-spacing:-.01em;text-transform:none;box-shadow:0 3px 10px -4px rgba(16,185,129,.35)}
+    #tab-catalogo .al-hsub{font-size:11px;color:var(--emuted2);font-weight:500;letter-spacing:.05em;text-transform:uppercase}
+    #tab-catalogo .al-hcount{font-size:12px;color:#6ee7b7;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.02em;font-weight:700;background:rgba(16,185,129,.14);padding:4px 10px;border-radius:6px}
+    #tab-catalogo .rep-pill.amarela{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.45);color:#fcd34d}
+    #tab-catalogo .rep-pill.verde{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.45);color:#6ee7b7}
+    #tab-catalogo .msim-h .rep-pill{font-size:10.5px;padding:1px 8px}
+    #tab-catalogo .vbtn.sm[disabled]{opacity:.45;cursor:not-allowed;border-color:var(--eborder)}
+    #tab-catalogo .vbtn.sm[disabled]:hover{border-color:var(--eborder)}
+.ecom-subpanel .ecard>h3{color:var(--eemerald)}
+    #tab-catalogo .rp-idxrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+    @media(max-width:900px){#tab-catalogo .rp-idxrow{grid-template-columns:repeat(2,1fr)}}
+    #tab-catalogo .rp-idx{background:var(--epanel);border:1px solid var(--eborder);border-radius:10px;padding:13px}
+    #tab-catalogo .rp-idx .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted)}
+    #tab-catalogo .rp-idx .v{font-family:var(--emono);font-size:21px;font-weight:600;margin-top:5px}
+    #tab-catalogo .rp-idx.bad .v{color:var(--eamber)} #tab-catalogo .rp-idx.good .v{color:var(--eemerald)}
+    #tab-catalogo table.rptab{width:100%;border-collapse:collapse;font-size:13px}
+    #tab-catalogo table.rptab th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted);font-weight:600;padding:10px 12px;background:var(--epanel2);border-bottom:1px solid var(--eborder)}
+    #tab-catalogo table.rptab td{padding:11px 12px;border-bottom:1px solid var(--eborder);vertical-align:top}
+    #tab-catalogo table.rptab tr:last-child td{border-bottom:0}
+    #tab-catalogo table.rptab tr.crit td:first-child{box-shadow:inset 3px 0 0 var(--ered)}
+    #tab-catalogo table.rptab tr.warn td:first-child{box-shadow:inset 3px 0 0 var(--eamber)}
+    #tab-catalogo .rpfar{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:600}
+    #tab-catalogo .rpfar.c{background:#240f12;color:#fb7185;border:1px solid #4a2026}
+    #tab-catalogo .rpfar.a{background:#241c08;color:#facc6b;border:1px solid #473714}
+    #tab-catalogo .rpfar.o{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
+    #tab-catalogo .rpfar.n{background:var(--epanel2);color:var(--emuted2);border:1px solid var(--eborder)}
+    #tab-catalogo .mono{font-family:var(--emono);font-variant-numeric:tabular-nums}
+    /* BUILD 2026-08-03-B: CSS da projeção (rl-forecast/rl-fc) removido junto com o quadrante */
+    #tab-catalogo .al-quad{display:grid;grid-template-columns:78px 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:10px}
+    #tab-catalogo .al-quad .qaxis{font-size:10px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;text-align:center}
+    #tab-catalogo .al-quad .qaxis.v{writing-mode:vertical-rl;transform:rotate(180deg)}
+    #tab-catalogo .al-quad .qcell{border:1px solid var(--eborder);border-radius:11px;padding:12px;min-height:110px;background:var(--epanel2)}
+    #tab-catalogo .al-quad .qcell h4{margin:0 0 3px;font-size:13px}
+    #tab-catalogo .al-quad .qcell .d{font-size:10.5px;color:var(--emuted2);margin-bottom:8px}
+    #tab-catalogo .al-quad .qcell.scale{background:#06231f;border-color:#15514a}
+    #tab-catalogo .al-quad .qcell.scale h4{color:var(--eteal)}
+    #tab-catalogo .al-quad .qcell.fix{border-color:#473714}
+    #tab-catalogo .al-quad .qcell.fix h4{color:var(--eamber)}
+    #tab-catalogo .chip{display:inline-block;background:var(--epanel3);border:1px solid var(--eborder);border-radius:7px;padding:3px 8px;font-size:11px;margin:0 5px 5px 0}
+    #tab-catalogo .chip.t{border-color:#15514a;color:var(--eteal)}
+    #tab-catalogo .al-regs{display:flex;flex-direction:column;gap:10px}
+    #tab-catalogo .al-reg .rn{font-size:12px;font-weight:600}
+    #tab-catalogo .al-reg .rt{font-size:11.5px;color:var(--emuted);margin-top:3px}
+    #tab-catalogo .al-reg .bar{height:5px;background:var(--epanel3);border-radius:3px;margin-top:6px;overflow:hidden}
+    #tab-catalogo .al-reg .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--eemerald),var(--eteal))}
+    /* BUILD 2026-07-16-A · Financeiro: lançamento inline abaixo do pedido */
+    #tab-catalogo #fn-list #fn-form{background:var(--epanel2);border:1px solid var(--eteal);border-radius:12px;padding:14px;margin:10px 0 14px}
+    #tab-catalogo #fn-list .vli.fn-open{background:rgba(45,212,191,.06);border-radius:8px;padding-left:8px;padding-right:8px}
+    
+    </style>
+    <nav class="flex gap-1 mb-5 border-b border-gray-700" id="ctl-nav">
+      <button class="ctl-sec-btn px-4 py-2 text-sm font-medium active" data-csec="consulta">Consulta Produto</button>
+      <button class="ctl-sec-btn px-4 py-2 text-sm font-medium" data-csec="simpc">Simulador PC</button>
+    </nav>
+    <div id="csec-consulta">
+    <!-- PARÂMETROS -->
+    <div class="ecard">
+      <h3>Parâmetros comerciais</h3>
+      <div class="param-grid">
+        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Clássico (fallback)</label><div class="field-row"><input class="num" id="ecom-com-classico" type="number" step="0.5" value="13"><span class="unit">%</span></div></div>
+        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Premium (fallback)</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Imposto (regime)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" step="0.5" value="4"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Outros custos</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
+        <div class="efield"><label>Colchão</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="6"><span class="unit">%</span></div></div>
+      </div>
+      <p class="note">Simples Anexo I 1ª faixa = 4% · Outros = antecip./parcel. · Colchão = % sobre a compra (custos operacionais).</p>
+      <div style="margin-top:14px">
+        <p class="note" style="color:var(--emuted);font-size:12.5px;line-height:1.6">
+          <b>Custo fixo &lt;R$79 aposentado (02/07/2026).</b> Frete agora vem 100% da tabela oficial ML (peso × faixa de preço × reputação), inclusive abaixo de R$79. A antiga regra fixa (R$6,25/6,50/6,75) não existe mais no modelo oficial.
+        </p>
+      </div>
+    </div>
+
+    <!-- CADASTRO -->
+    <div class="ecard">
+      <h3 id="ecom-form-title">Cadastrar / simular produto</h3>
+      <div class="addform">
+        <input type="hidden" id="ecom-f-produto">
+        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="PLR">Placa de rede</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option><option value="RBL">Robô de Limpeza</option><option value="ALX">Alexa</option><option value="PWB">Power Bank</option><option value="CXS">Caixa de Som</option><option value="CAM">Câmera Digital</option><option value="CPS">Controle PS5</option><option value="FLM">Filamento Imp. 3D</option><option value="GBL">Câmera Estabilizadora</option><option value="MPD">Mouse Pad</option><option value="PDR">Pen Drive</option><option value="SPM">Suporte Monitor</option><option value="TAB">Tablet</option><option value="PTE">Porteiro Eletrônico</option><option value="DVR">CCTV / DVR</option><option value="RDE">Repetidor de Sinal</option><option value="CMP">Compressor Portátil</option><option value="ANT">Antena / Rádio de Rede</option></select></div>
+        <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px"></div>
+        <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px"></div>
+        <div class="efield" id="ecom-f-capacidade-wrap" style="display:none"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px"></div>
+        <div class="efield" id="ecom-f-interface-wrap" style="display:none"><label>Interface</label><select class="ainput" id="ecom-f-interface" style="width:110px"><option value="">—</option><option value="SATA III">SATA III</option><option value="NVMe">NVMe</option></select></div>
+        <div class="efield pesofield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px"><span id="ecom-f-faixa-msg" class="ffaixa"></span><select id="ecom-f-peso" style="display:none"></select><span id="ecom-f-peso-warn" style="display:none"></span></div>
+        <div class="efield"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
+        <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
+        <div class="efield"><label>Mínimo mercado</label><input class="ainput mono" id="ecom-f-menor" type="number" style="width:90px"></div>
+        <div class="efield"><label>Média mercado</label><input class="ainput mono" id="ecom-f-media" type="number" style="width:90px"></div>
+        <div class="efield"><label>Break-even <span style="color:var(--emuted2);font-weight:400">(ref.)</span></label><input class="ainput mono" id="ecom-f-breakeven" type="text" style="width:90px" readonly tabindex="-1"></div>
+        <div class="efield"><label>Meu preço <span class="req">*</span></label><input class="ainput mono" id="ecom-f-preco" type="number" style="width:90px"></div>
+        <div class="efield simfield"><label>Margem R$ <span class="hsim">sim.</span></label><input class="ainput mono robe" id="ecom-f-mgrs" type="text" style="width:84px" readonly tabindex="-1"></div>
+        <div class="efield simfield"><label>Margem % <span class="hsim">sim.</span></label><input class="ainput mono robe mgsimf" id="ecom-f-mgpct" type="text" style="width:72px" readonly tabindex="-1"></div>
+        <button class="addbtn" id="ecom-add">+ Adicionar</button>
+        <button class="addbtn" id="ecom-add-gerar" title="Grava o produto e pré-preenche o Cadastro de anúncio abaixo" style="background:none;border:1px solid var(--eaccent);color:var(--eaccent)">+ Gravar e gerar anúncio</button>
+        <button class="cancelbtn hidden-section" id="ecom-cancel">Cancelar</button>
+      </div>
+      <div class="formmsg" id="ecom-formmsg"></div>
+    </div>
+    <div id="ecom-sub-simulador" class="ecom-subpanel">
+
+    <div id="ecom-sentinela" class="ecom-sentinela"></div>
+
+    <!-- MODALIDADE -->
+    <div class="modbar">
+      <span class="ml">Modalidade de envio:</span>
+      <div class="modtog" id="ecom-modtog">
+        <span class="tg active" data-mod="flex">Flex / Correios</span>
+        <span class="tg" data-mod="full">Full</span>
+      </div>
+      <span class="modwarn" id="ecom-modwarn"></span>
+      <button id="ecom-export" class="cancelbtn" style="margin-left:auto" title="Exporta o cenário atual (parâmetros, produtos, matriz e vereditos) em .md para análise de mercado/marca">⬇ Exportar cenário (.md)</button>
+    </div>
+
+    <!-- FRETE (FRETE_TBL oficial ML) -->
+    <div class="ecard">
+      <h3>Frete oficial ML — <span style="color:var(--eaccent);text-transform:none;letter-spacing:0" id="ecom-frete-ctxtop"></span></h3>
+      <div class="frete-grid">
+        <div>
+          <div class="selrow"><div class="lab">Reputação da conta</div>
+            <div class="chips" id="ecom-rep"></div></div>
+          <div class="selrow"><div class="lab" style="opacity:.6">Destino</div>
+            <div class="chips" id="ecom-dest"></div></div>
+          <div class="applied"><div class="ctx" id="ecom-frete-ctx"></div></div>
+          <p class="note">Frete calculado por lookup na tabela oficial ML: peso do produto × faixa de preço do anúncio × reputação. Zonas geográficas aposentadas em 02/07/2026 — frete ML é nacional.</p>
+        </div>
+        <div>
+          <div class="mtitle">Tabela oficial ML — reputação vigente <span style="color:var(--emuted2);font-size:11px;font-weight:400">· somente leitura · até 3kg</span></div>
+          <table class="mtx" id="ecom-mtx"></table>
+          <div class="mnote"><b>Fonte:</b> páginas oficiais MercadoLivre Ajuda (verde/amarela/laranja-vermelha), carregadas em <span id="ecom-frete-carga">02/07/2026</span>. Manutenção via SQL Editor quando o ML atualizar tarifas.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUILD 30/07-B: Parametros comerciais + Cadastrar/simular produto MOVIDOS para a Analise Comercial (Alvo). -->
+
+    <!-- CONSULTA -->
+    <div class="ecard">
+      <h3>Consultar <span style="color:var(--emuted2);font-weight:400;text-transform:none;letter-spacing:0">— filtre o banco conforme ele cresce</span></h3>
+      <div class="efiltrow">
+        <div class="efield"><label>Produto</label><select class="ainput" id="ecom-flt-prod" style="width:240px"><option value="">Todos os produtos</option></select></div>
+        <div class="efield"><label>Veredito</label><select class="ainput" id="ecom-flt-ver" style="width:170px"><option value="">Todos os vereditos</option><option value="priorizar">Priorizar</option><option value="analisar">Analisar</option><option value="excluir">Excluir</option></select></div>
+        <button class="cancelbtn" id="ecom-flt-clear">Limpar filtros</button>
+        <span class="note" id="ecom-flt-count" style="margin:0 0 7px"></span>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table class="emain">
+        <thead><tr>
+          <th class="l">Produto</th><th>Meu preço</th>
+          <th>Mercado<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">méd / mín</span></th>
+          <th>VS<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">méd / mín</span></th>
+          <th>Frete / fixo</th><th>Mordida</th><th>Custo (NF)</th><th>Margem</th><th>Veredito</th>
+          <th style="text-align:center">Ações</th>
+        </tr></thead>
+        <tbody id="ecom-tbody"></tbody>
+      </table>
+      <div id="ecom-vazio" class="text-center text-gray-500 text-sm py-10 hidden-section">Nenhum produto. Cadastre acima para começar.</div>
+    </div>
+
+    <div class="efooter">
+      <b>Regra ML (pós 02/03/2026, Flex/Correios):</b> ≥R$79 → comissão (por tipo de anúncio) + frete da matriz (célula destino×peso do produto). &lt;R$79 → ML banca o frete; comissão + custo fixo por faixa (R$6,25 / R$6,50 / R$6,75; abaixo de R$12,50 = 50% do preço). Tudo sobre o preço de venda; margem e break-even líquidos do colchão. Excluir = inativar (fica salvo no banco).
+    </div>
+    </div><!-- /ecom-sub-simulador -->
+    </div>
+</section>
+
 <section id="tab-instagram" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
     <!-- BUILD 2026-08-08-B: aba do canal Instagram — Catálogo (vitrine) + Vendas (canal direto) -->
     <nav class="flex gap-1 mb-5 border-b border-gray-700" id="insta-nav">
@@ -1145,80 +1540,14 @@
     </style>
 
     <div class="ecom-subnav">
-      <button class="ecom-subtab active" data-sub="simulador">🔎 Consulta Produto</button>
-      <button class="ecom-subtab alvo" data-sub="alvo">🎯 Alvo</button>
+      <button class="ecom-subtab alvo active" data-sub="alvo">🎯 Alvo</button>
       <button class="ecom-subtab" data-sub="vendas">Vendas</button>
       <button class="ecom-subtab" data-sub="financeiro">Financeiro</button>
       <button class="ecom-subtab" data-sub="relatorios">Relatórios</button>
       <button class="ecom-subtab radar" data-sub="radar">📡 Radar de Nicho</button>
     </div>
 
-    <div id="ecom-sub-simulador" class="ecom-subpanel">
 
-    <div id="ecom-sentinela" class="ecom-sentinela"></div>
-
-    <!-- MODALIDADE -->
-    <div class="modbar">
-      <span class="ml">Modalidade de envio:</span>
-      <div class="modtog" id="ecom-modtog">
-        <span class="tg active" data-mod="flex">Flex / Correios</span>
-        <span class="tg" data-mod="full">Full</span>
-      </div>
-      <span class="modwarn" id="ecom-modwarn"></span>
-      <button id="ecom-export" class="cancelbtn" style="margin-left:auto" title="Exporta o cenário atual (parâmetros, produtos, matriz e vereditos) em .md para análise de mercado/marca">⬇ Exportar cenário (.md)</button>
-    </div>
-
-    <!-- FRETE (FRETE_TBL oficial ML) -->
-    <div class="ecard">
-      <h3>Frete oficial ML — <span style="color:var(--eaccent);text-transform:none;letter-spacing:0" id="ecom-frete-ctxtop"></span></h3>
-      <div class="frete-grid">
-        <div>
-          <div class="selrow"><div class="lab">Reputação da conta</div>
-            <div class="chips" id="ecom-rep"></div></div>
-          <div class="selrow"><div class="lab" style="opacity:.6">Destino</div>
-            <div class="chips" id="ecom-dest"></div></div>
-          <div class="applied"><div class="ctx" id="ecom-frete-ctx"></div></div>
-          <p class="note">Frete calculado por lookup na tabela oficial ML: peso do produto × faixa de preço do anúncio × reputação. Zonas geográficas aposentadas em 02/07/2026 — frete ML é nacional.</p>
-        </div>
-        <div>
-          <div class="mtitle">Tabela oficial ML — reputação vigente <span style="color:var(--emuted2);font-size:11px;font-weight:400">· somente leitura · até 3kg</span></div>
-          <table class="mtx" id="ecom-mtx"></table>
-          <div class="mnote"><b>Fonte:</b> páginas oficiais MercadoLivre Ajuda (verde/amarela/laranja-vermelha), carregadas em <span id="ecom-frete-carga">02/07/2026</span>. Manutenção via SQL Editor quando o ML atualizar tarifas.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- BUILD 30/07-B: Parametros comerciais + Cadastrar/simular produto MOVIDOS para a Analise Comercial (Alvo). -->
-
-    <!-- CONSULTA -->
-    <div class="ecard">
-      <h3>Consultar <span style="color:var(--emuted2);font-weight:400;text-transform:none;letter-spacing:0">— filtre o banco conforme ele cresce</span></h3>
-      <div class="efiltrow">
-        <div class="efield"><label>Produto</label><select class="ainput" id="ecom-flt-prod" style="width:240px"><option value="">Todos os produtos</option></select></div>
-        <div class="efield"><label>Veredito</label><select class="ainput" id="ecom-flt-ver" style="width:170px"><option value="">Todos os vereditos</option><option value="priorizar">Priorizar</option><option value="analisar">Analisar</option><option value="excluir">Excluir</option></select></div>
-        <button class="cancelbtn" id="ecom-flt-clear">Limpar filtros</button>
-        <span class="note" id="ecom-flt-count" style="margin:0 0 7px"></span>
-      </div>
-    </div>
-
-    <div class="tbl-wrap">
-      <table class="emain">
-        <thead><tr>
-          <th class="l">Produto</th><th>Meu preço</th>
-          <th>Mercado<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">méd / mín</span></th>
-          <th>VS<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">méd / mín</span></th>
-          <th>Frete / fixo</th><th>Mordida</th><th>Custo (NF)</th><th>Margem</th><th>Veredito</th>
-          <th style="text-align:center">Ações</th>
-        </tr></thead>
-        <tbody id="ecom-tbody"></tbody>
-      </table>
-      <div id="ecom-vazio" class="text-center text-gray-500 text-sm py-10 hidden-section">Nenhum produto. Cadastre acima para começar.</div>
-    </div>
-
-    <div class="efooter">
-      <b>Regra ML (pós 02/03/2026, Flex/Correios):</b> ≥R$79 → comissão (por tipo de anúncio) + frete da matriz (célula destino×peso do produto). &lt;R$79 → ML banca o frete; comissão + custo fixo por faixa (R$6,25 / R$6,50 / R$6,75; abaixo de R$12,50 = 50% do preço). Tudo sobre o preço de venda; margem e break-even líquidos do colchão. Excluir = inativar (fica salvo no banco).
-    </div>
-    </div><!-- /ecom-sub-simulador -->
 
     <!-- ===== SUBPASTA: VENDAS ===== -->
     <div id="ecom-sub-vendas" class="ecom-subpanel" style="display:none">
@@ -1357,7 +1686,7 @@
       </div>
       </div><!-- /rlsub-historico -->
     </div>
-    <div id="ecom-sub-alvo" class="ecom-subpanel" style="display:none">
+    <div id="ecom-sub-alvo" class="ecom-subpanel">
 
       <div class="alsubbar" id="alsubbar">
         <button class="alsub-btn active" data-alsub="analise">📊 Análise Comercial</button>
@@ -1367,49 +1696,7 @@
 
       <div id="alsub-analise" class="alsub">
       <!-- BUILD 30/07-B: cards vindos da ex-aba Simulador (ids preservados) -->
-    <!-- PARÂMETROS -->
-    <div class="ecard">
-      <h3>Parâmetros comerciais</h3>
-      <div class="param-grid">
-        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Clássico (fallback)</label><div class="field-row"><input class="num" id="ecom-com-classico" type="number" step="0.5" value="13"><span class="unit">%</span></div></div>
-        <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Premium (fallback)</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Imposto (regime)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" step="0.5" value="4"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Outros custos</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Colchão</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="6"><span class="unit">%</span></div></div>
-      </div>
-      <p class="note">Simples Anexo I 1ª faixa = 4% · Outros = antecip./parcel. · Colchão = % sobre a compra (custos operacionais).</p>
-      <div style="margin-top:14px">
-        <p class="note" style="color:var(--emuted);font-size:12.5px;line-height:1.6">
-          <b>Custo fixo &lt;R$79 aposentado (02/07/2026).</b> Frete agora vem 100% da tabela oficial ML (peso × faixa de preço × reputação), inclusive abaixo de R$79. A antiga regra fixa (R$6,25/6,50/6,75) não existe mais no modelo oficial.
-        </p>
-      </div>
-    </div>
-
-    <!-- CADASTRO -->
-    <div class="ecard">
-      <h3 id="ecom-form-title">Cadastrar / simular produto</h3>
-      <div class="addform">
-        <input type="hidden" id="ecom-f-produto">
-        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="PLR">Placa de rede</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option><option value="RBL">Robô de Limpeza</option><option value="ALX">Alexa</option><option value="PWB">Power Bank</option><option value="CXS">Caixa de Som</option><option value="CAM">Câmera Digital</option><option value="CPS">Controle PS5</option><option value="FLM">Filamento Imp. 3D</option><option value="GBL">Câmera Estabilizadora</option><option value="MPD">Mouse Pad</option><option value="PDR">Pen Drive</option><option value="SPM">Suporte Monitor</option><option value="TAB">Tablet</option><option value="PTE">Porteiro Eletrônico</option><option value="DVR">CCTV / DVR</option><option value="RDE">Repetidor de Sinal</option><option value="CMP">Compressor Portátil</option><option value="ANT">Antena / Rádio de Rede</option></select></div>
-        <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px"></div>
-        <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px"></div>
-        <div class="efield" id="ecom-f-capacidade-wrap" style="display:none"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px"></div>
-        <div class="efield" id="ecom-f-interface-wrap" style="display:none"><label>Interface</label><select class="ainput" id="ecom-f-interface" style="width:110px"><option value="">—</option><option value="SATA III">SATA III</option><option value="NVMe">NVMe</option></select></div>
-        <div class="efield pesofield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px"><span id="ecom-f-faixa-msg" class="ffaixa"></span><select id="ecom-f-peso" style="display:none"></select><span id="ecom-f-peso-warn" style="display:none"></span></div>
-        <div class="efield"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
-        <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
-        <div class="efield"><label>Mínimo mercado</label><input class="ainput mono" id="ecom-f-menor" type="number" style="width:90px"></div>
-        <div class="efield"><label>Média mercado</label><input class="ainput mono" id="ecom-f-media" type="number" style="width:90px"></div>
-        <div class="efield"><label>Break-even <span style="color:var(--emuted2);font-weight:400">(ref.)</span></label><input class="ainput mono" id="ecom-f-breakeven" type="text" style="width:90px" readonly tabindex="-1"></div>
-        <div class="efield"><label>Meu preço <span class="req">*</span></label><input class="ainput mono" id="ecom-f-preco" type="number" style="width:90px"></div>
-        <div class="efield simfield"><label>Margem R$ <span class="hsim">sim.</span></label><input class="ainput mono robe" id="ecom-f-mgrs" type="text" style="width:84px" readonly tabindex="-1"></div>
-        <div class="efield simfield"><label>Margem % <span class="hsim">sim.</span></label><input class="ainput mono robe mgsimf" id="ecom-f-mgpct" type="text" style="width:72px" readonly tabindex="-1"></div>
-        <button class="addbtn" id="ecom-add">+ Adicionar</button>
-        <button class="addbtn" id="ecom-add-gerar" title="Grava o produto e pré-preenche o Cadastro de anúncio abaixo" style="background:none;border:1px solid var(--eaccent);color:var(--eaccent)">+ Gravar e gerar anúncio</button>
-        <button class="cancelbtn hidden-section" id="ecom-cancel">Cancelar</button>
-      </div>
-      <div class="formmsg" id="ecom-formmsg"></div>
-    </div>
+    <!-- BUILD 2026-08-08-C: cards Parâmetros comerciais + Cadastrar produto MOVIDOS para a aba Catálogo (ids preservados) -->
 
       <div class="ecard" style="margin-bottom:12px;padding:12px 14px;border-color:var(--eteal);border-width:1px">
         <h3 style="color:var(--eemerald)">Cadastro de anúncio</h3>
@@ -2050,9 +2337,7 @@ function enterApp() {
   hide('#login-screen');
   show('#app');
   $('#user-email').textContent = state.user.email;
-  switchTab('catalogo');
-  loadFilters();
-  loadCatalog();
+  switchTab('ecommerce'); // BUILD 2026-08-08-C: abre no Mercado Livre; loads do banco de licitação desligados (módulo dormente)
   updateCartUI();
   // Inicializa módulo Importação (Selecta Import OS)
   importacao.init({
@@ -3281,7 +3566,8 @@ function switchTab(tabName) {
   if (tabName === 'apple') enterAppleTab();
   if (tabName === 'instagram') instagramTab.onEnter(); // BUILD 2026-08-08-B
   if (tabName === 'importacao') importacao.onEnter();
-  if (tabName === 'ecommerce') ecom.onEnter();
+  if (tabName === 'catalogo') catalogoTab.onEnter(); // BUILD 2026-08-08-C
+  if (tabName === 'ecommerce') { ecom.onEnter().then(()=>{ if(!window._alvoBoot){ window._alvoBoot=true; try{ ecomAlvo.load(); }catch(_e){} } }); } // BUILD 2026-08-08-C: Alvo é a sub-aba default
 }
 
 // =====================================================================
@@ -6093,6 +6379,33 @@ const ecomPesq={
   },
 };
 
+/* ===== BUILD 2026-08-08-C: aba Catálogo — roteador Consulta Produto / Simulador PC ===== */
+const catalogoTab = {
+  sec: 'consulta', _b: false,
+  onEnter(){ this.bind(); this.showSec(this.sec); },
+  bind(){
+    if(this._b) return; this._b = true;
+    document.querySelectorAll('#ctl-nav .ctl-sec-btn').forEach(b=>{
+      b.addEventListener('click', ()=>this.showSec(b.dataset.csec));
+    });
+  },
+  showSec(s){
+    this.sec = s;
+    document.querySelectorAll('#ctl-nav .ctl-sec-btn').forEach(b=>{
+      b.classList.toggle('active', b.dataset.csec === s);
+    });
+    const con = document.getElementById('csec-consulta');
+    if(s === 'consulta'){
+      con.style.display = '';
+      hide('#tab-simulador');
+      ecom.onEnter();
+    } else {
+      con.style.display = 'none';
+      show('#tab-simulador');
+    }
+  }
+};
+
 /* ===== BUILD 2026-08-08-B: aba Instagram — roteador Catálogo / Vendas ===== */
 const instagramTab = {
   pane: 'catalogo', _b: false,
@@ -6311,7 +6624,7 @@ const ecomInsta = {
 $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
   const sub=b.dataset.sub;
-  $$('.ecom-subpanel').forEach(p=>{ p.style.display=(p.id==='ecom-sub-'+sub)?'':'none'; });
+  $$('#tab-ecommerce .ecom-subpanel').forEach(p=>{ p.style.display=(p.id==='ecom-sub-'+sub)?'':'none'; }); // BUILD 2026-08-08-C: escopo restrito — Consulta Produto vive na aba Catálogo
   if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value){ dt.value=ecomVendas.nowLocal(); } ecomVendas.calcPostarAte(); ecomVendas.loaded=true; ecomVendas.load(); } // BUILD 2026-08-03-A: Candidatos mudou para o Radar
   if(sub==='financeiro'){ ecomFinanceiro.load(); }
   if(sub==='relatorios'){ ecomRelatorios.load(); }
