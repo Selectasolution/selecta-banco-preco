@@ -1,5 +1,6 @@
 <!-- BUILD 2026-08-08-M | selecta-banco-preco | FINANCEIRO DENTRO DE RELATORIOS (decisao Igor 08/08): sub-aba Financeiro REMOVIDA da barra Mercado Livre; conteudo integral do painel (lancamento por pedido + Termometro financeiro, ids fn-* preservados, bindings intactos) ANINHADO como pane rlsub-financeiro em Relatorios, com botao "Financeiro" ENTRE Painel e Historico. Handler do rlsubbar reescrito de binario p/ 3 panes (carga sob clique: financeiro -> ecomFinanceiro.load, historico -> ecomHistorico.load); branch morto do financeiro removido do handler da barra ML. Barra Mercado Livre agora: Alvo / Vendas / Relatorios / Radar. Ajuste de FUNCOES dessas abas = proxima rodada, anunciado pelo Igor. Sem SQL. | base: 2026-08-08-L (md5 83b196a6b3ae90f65e7b4245ceb92c4c) -->
 <!-- BUILD 2026-08-08-L | selecta-banco-preco | LIMPEZA (pedido Igor 08/08, "menos informacao que nao uso"): apagada a nota "Fonte: paginas oficiais MercadoLivre Ajuda... Manutencao via SQL Editor" sob a matriz de frete (span ecom-frete-carga sem nenhuma referencia em JS — remocao limpa). Informacao segue registrada aqui no cabecalho: tarifas FRETE_TBL carregadas em 02/07/2026 das paginas oficiais ML, manutencao via SQL Editor quando o ML atualizar. Sem SQL. | base: 2026-08-08-K (md5 3d7432667884d0cc66e89ebf0e692bcf) -->
+<!-- BUILD 2026-08-10-Q | selecta-banco-preco | FICHA RICA INSTA (Fase 2b; embute BUILD P) (colunas novas de ecom_catalogo_insta criadas e conferidas via information_schema na sessao de 10/08: descricao_longa, especificacoes, fotos_extras, video_url, peso_g): (1) Form do Catalogo Insta ganha: Descricao longa (textarea), Especificacoes tecnicas (uma por linha), Fotos extras (um caminho por linha), Video YouTube. (2) buscar() passa a selecionar capacidade+interface (BUILD P: eco completo "SSD - Lexar - NQ100 - 256GB - SATA III") e peso_g; eco mostra peso ou alerta ambar "SEM PESO" (produto sem peso nao simulara frete). (3) salvar() grava os 4 campos novos + peso_g COPIADO de ecom_produtos no ato de publicar (vitrine nunca le ecom_produtos). (4) clear() e editar() cobrem os campos novos; editar() repuxa o produto, re-sincronizando peso. Zero mudanca em ML/Controle/Catalogo. | base: 2026-08-08-O (md5 0c1f618e0dfd386caf32df4fe9717db0 conferido em producao imediatamente antes do build) -->
 <!-- BUILD 2026-08-08-O | selecta-banco-preco | EXCLUSAO REAL + CODIGO SO ATIVO (decisao Igor 08/08; conferencias na sessao: pg_policies ecom_produtos tem DELETE p/ authenticated; ZERO FKs apontam p/ ecom_produtos; colunas ecom_anuncios/ecom_catalogo_insta verificadas via information_schema): (1) Botao Excluir do Catalogo agora APAGA a linha de ecom_produtos (antes: update ativo=false — soft delete em contradicao com a convencao "descontinuado = exclusao permanente"). GUARDAS pre-delete: anuncio ML (ecom_anuncios) ou Insta (ecom_catalogo_insta) vinculado ao codigo BLOQUEIA com alerta — remover das plataformas primeiro. Confirm reescrito dizendo a verdade; rollback otimista em erro. Vendas historicas seguras: ecom_vendas e desnormalizada (copia propria de produto/codigo), zero joins com ecom_produtos nas telas — auditado. (2) ecomInsta.buscar() com eq(ativo,true): codigo so vincula se produto ATIVO no Catalogo; mensagem de erro cobre inexistente/inativo; fragmento do aviso INATIVO removido (codigo morto). (3) Coluna ativo permanece no schema; cadastro segue gravando ativo:true; deteccao de divergencia "sem cadastro" captura anuncios orfaos de produto excluido. Expurgo dos inativos remanescentes = operacao SQL separada (Conferencia 4). Sem SQL neste build. | base: 2026-08-08-N (md5 5ad732f7980ed54c358af4b0c8087aca conferido na sessao e em producao) -->
 <!-- BUILD 2026-08-08-N | selecta-banco-preco | PUXADA INSTA SEM ML (pedido Igor 08/08, piloto aprovado): (1) ecomInsta.buscar(): linha de eco do produto mostra apenas descricao + custo NF (rotulo "custo" -> "custo NF"); trecho "preco ML R$..." REMOVIDO — canal Instagram nao referencia dados do ML. (2) Coluna preco removida do select em ecom_produtos (dado deixa de trafegar; verificado: prodAtual.preco sem uso no modulo — margem usa so custo). (3) Aviso "produto INATIVO no cadastro" MANTIDO (sinal de integridade do cadastro neutro, nao e referencia ML). Duas linhas alteradas; zero SQL. | base: 2026-08-08-M (md5 516060f7a59d3843aab3c221103a2579 conferido na sessao) -->
 <!-- BUILD 2026-08-08-K | selecta-banco-preco | FAXINA DA ANALISE COMERCIAL (decisao Igor 08/08, com prints): APAGADOS — nota "Simples Anexo I..." e paragrafo "Custo fixo <R$79 aposentado" do card Parametros; sentinela "Integridade do catalogo" (funcao sentinela() tem guarda if(!box), segue inofensiva); barra Modalidade de envio INTEIRA (toggle Flex/Full sai da tela — modalidade fica fixa no default flex; listener guardado; recolocacao discreta se precisar simular Full); rodape "Regra ML (pos 02/03/2026...)". REALOCADOS p/ o rodape da tela — botao "Exportar cenario (.md)" p/ dentro do card Comando ao lado do Copiar comando (mesmo id, binding intacto) e painel de integridade ZUMBI-2/divergencia (al-atv-integridade, inclui carimbo "lote de...") p/ o final da Analise Comercial, apos o card Comando (render por id, local-independente). Zero logica alterada; sem SQL. | base: 2026-08-08-J (md5 6373233771a48d622d4f2f26b6de8697) -->
@@ -833,6 +834,13 @@
         </div>
         <div class="efield"><label>Nome de exibição (como aparece na vitrine)</label><input id="ig-nome" class="vinput" maxlength="90"></div>
         <div class="efield"><label>Descrição curta (1-2 linhas no card)</label><input id="ig-desc" class="vinput" maxlength="140"></div>
+        <!-- BUILD 2026-08-10-Q: ficha rica da vitrine (Fase 2b) -->
+        <div class="efield"><label>Descrição longa (ficha do produto — texto de venda completo)</label><textarea id="ig-desclonga" class="vinput" rows="4" style="resize:vertical"></textarea></div>
+        <div class="efield"><label>Especificações técnicas (UMA por linha — ex.: Capacidade: 256GB)</label><textarea id="ig-specs" class="vinput" rows="4" style="resize:vertical" placeholder="Capacidade: 256GB&#10;Interface: SATA III&#10;Leitura: até 550 MB/s"></textarea></div>
+        <div class="vrow">
+          <div class="efield"><label>Fotos extras (UM caminho por linha)</label><textarea id="ig-fotosx" class="vinput" rows="3" style="resize:vertical" placeholder="img/catalogo/arquivo-2.jpg&#10;img/catalogo/arquivo-3.jpg"></textarea></div>
+          <div class="efield"><label>Vídeo do produto (link YouTube, opcional)</label><input id="ig-video" class="vinput" placeholder="https://www.youtube.com/watch?v=…"></div>
+        </div>
         <div class="vrow3">
           <div class="efield"><label>Preço Insta (R$)</label><input id="ig-preco" class="vinput" type="number" step="0.01" min="0"></div>
           <div class="efield"><label>Preço "De" riscado (opcional)</label><input id="ig-precode" class="vinput" type="number" step="0.01" min="0"></div>
@@ -6665,7 +6673,7 @@ const ecomInsta = {
     this.prodAtual = null; box.style.display='none';
     if(!cod){ this.msg('Digite o código do produto.', 'var(--eamber)'); return; }
     try{
-      const r = await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,custo').eq('codigo',cod).eq('ativo',true).limit(1); // BUILD 2026-08-08-O: só produto ATIVO vincula (regra Igor: código só vale se listado no Catálogo)
+      const r = await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,custo,capacidade,interface,peso_g').eq('codigo',cod).eq('ativo',true).limit(1); // BUILD 2026-08-10-Q (embute P): capacidade/interface no eco + peso_g copiado p/ frete
       if(r.error) throw r.error;
       const p = (r.data||[])[0];
       if(!p){ this.msg('Código não encontrado ou produto não está ativo no Catálogo. Produto nasce na Consulta Produto (cadastro do Igor).', 'var(--ered)'); this.margem(); return; }
@@ -6673,7 +6681,9 @@ const ecomInsta = {
       box.style.display='';
       box.innerHTML = '<b style="color:var(--etxt)">'+p.produto+'</b>'
         + (p.marca?' · '+p.marca:'') + (p.modelo?' · '+p.modelo:'')
-        + ' &nbsp;|&nbsp; custo NF <b style="color:var(--etxt)">'+this.fmt(p.custo)+'</b>'; // BUILD 2026-08-08-O: aviso INATIVO removido — código morto, a busca só retorna ativos
+        + (p.capacidade?' · '+p.capacidade:'') + (p.interface?' · '+p.interface:'')
+        + ' &nbsp;|&nbsp; custo NF <b style="color:var(--etxt)">'+this.fmt(p.custo)+'</b>'
+        + (p.peso_g!=null?' · peso <b style="color:var(--etxt)">'+p.peso_g+'g</b>':' · <span style="color:var(--eamber)">SEM PESO no cadastro — frete não simulará</span>');
       const nome = this._g('ig-nome');
       if(!nome.value.trim()){
         nome.value = [p.produto, p.marca, p.modelo].filter(Boolean).join(' ').slice(0,90);
@@ -6695,7 +6705,7 @@ const ecomInsta = {
       + ' <span style="color:var(--emuted2)">· indicativo — modelo de custo do canal direto ainda não certificado</span>';
   },
   clear(){
-    ['ig-cod','ig-nome','ig-desc','ig-preco','ig-precode','ig-foto'].forEach(i=>this._g(i).value='');
+    ['ig-cod','ig-nome','ig-desc','ig-preco','ig-precode','ig-foto','ig-desclonga','ig-specs','ig-fotosx','ig-video'].forEach(i=>this._g(i).value=''); // BUILD 2026-08-10-Q
     this._g('ig-ordem').value = 0;
     this._g('ig-cat').value = 'tecnologia';
     this._g('ig-promo').checked = false;
@@ -6724,6 +6734,11 @@ const ecomInsta = {
       preco_de: (precoDe && precoDe>0) ? precoDe : null,
       promocao: this._g('ig-promo').checked,
       foto_url: this._g('ig-foto').value.trim() || null,
+      descricao_longa: this._g('ig-desclonga').value.trim() || null,
+      especificacoes: this._g('ig-specs').value.trim() || null,
+      fotos_extras: this._g('ig-fotosx').value.trim() || null,
+      video_url: this._g('ig-video').value.trim() || null,
+      peso_g: (this.prodAtual.peso_g!=null ? this.prodAtual.peso_g : null), // BUILD 2026-08-10-Q: peso copiado do produto no ato de publicar (insumo do frete; ecom_produtos jamais exposta)
       ordem: parseInt(this._g('ig-ordem').value||'0',10) || 0,
       ativo: this._g('ig-ativo').checked,
       atualizado_em: new Date().toISOString()
@@ -6752,6 +6767,10 @@ const ecomInsta = {
     this._g('ig-preco').value = it.preco_insta ?? '';
     this._g('ig-precode').value = it.preco_de ?? '';
     this._g('ig-foto').value = it.foto_url || '';
+    this._g('ig-desclonga').value = it.descricao_longa || ''; // BUILD 2026-08-10-Q
+    this._g('ig-specs').value = it.especificacoes || '';
+    this._g('ig-fotosx').value = it.fotos_extras || '';
+    this._g('ig-video').value = it.video_url || '';
     this._g('ig-ordem').value = it.ordem ?? 0;
     this._g('ig-promo').checked = !!it.promocao;
     this._g('ig-ativo').checked = !!it.ativo;
