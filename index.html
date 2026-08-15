@@ -1,5 +1,6 @@
 <!-- BUILD 2026-08-08-M | selecta-banco-preco | FINANCEIRO DENTRO DE RELATORIOS (decisao Igor 08/08): sub-aba Financeiro REMOVIDA da barra Mercado Livre; conteudo integral do painel (lancamento por pedido + Termometro financeiro, ids fn-* preservados, bindings intactos) ANINHADO como pane rlsub-financeiro em Relatorios, com botao "Financeiro" ENTRE Painel e Historico. Handler do rlsubbar reescrito de binario p/ 3 panes (carga sob clique: financeiro -> ecomFinanceiro.load, historico -> ecomHistorico.load); branch morto do financeiro removido do handler da barra ML. Barra Mercado Livre agora: Alvo / Vendas / Relatorios / Radar. Ajuste de FUNCOES dessas abas = proxima rodada, anunciado pelo Igor. Sem SQL. | base: 2026-08-08-L (md5 83b196a6b3ae90f65e7b4245ceb92c4c) -->
 <!-- BUILD 2026-08-08-L | selecta-banco-preco | LIMPEZA (pedido Igor 08/08, "menos informacao que nao uso"): apagada a nota "Fonte: paginas oficiais MercadoLivre Ajuda... Manutencao via SQL Editor" sob a matriz de frete (span ecom-frete-carga sem nenhuma referencia em JS — remocao limpa). Informacao segue registrada aqui no cabecalho: tarifas FRETE_TBL carregadas em 02/07/2026 das paginas oficiais ML, manutencao via SQL Editor quando o ML atualizar. Sem SQL. | base: 2026-08-08-K (md5 3d7432667884d0cc66e89ebf0e692bcf) -->
+<!-- BUILD 2026-08-15-R | selecta-banco-preco | KIT NO CATALOGO (decisao Igor 15/08; banco criado e conferido na sessao: ecom_kit_componentes com FK/RLS + view ecom_vw_kit_custo): (1) Categoria ganha opcao KIT (codigo KIT-000N). (2) Ao escolher KIT abre o MONTADOR DE COMPOSICAO: linhas codigo-first (componente de ecom_produtos ativo) + quantidade, eco com nome e custo unitario. (3) Modelo auto-preenchido com a composicao legivel ("2x U7-Pro + 1x U-PoE-AT"), editavel. (4) CUSTO SEGUE MANUAL (regra Igor: kit so muda quando Alexia alterar) — soma dos componentes exibida como referencia + aviso ambar se divergir (observacao, nunca trava; espelho da view ecom_vw_kit_custo). (5) save() grava produto e regrava composicao (delete+insert por kit_codigo); edit() recarrega composicao. (6) Guarda de exclusao: produto componente de kit BLOQUEIA delete (2a camada do ON DELETE RESTRICT do banco). | base: 2026-08-10-Q (arquivo recebido na sessao de 15/08) -->
 <!-- BUILD 2026-08-10-Q | selecta-banco-preco | FICHA RICA INSTA (Fase 2b; embute BUILD P) (colunas novas de ecom_catalogo_insta criadas e conferidas via information_schema na sessao de 10/08: descricao_longa, especificacoes, fotos_extras, video_url, peso_g): (1) Form do Catalogo Insta ganha: Descricao longa (textarea), Especificacoes tecnicas (uma por linha), Fotos extras (um caminho por linha), Video YouTube. (2) buscar() passa a selecionar capacidade+interface (BUILD P: eco completo "SSD - Lexar - NQ100 - 256GB - SATA III") e peso_g; eco mostra peso ou alerta ambar "SEM PESO" (produto sem peso nao simulara frete). (3) salvar() grava os 4 campos novos + peso_g COPIADO de ecom_produtos no ato de publicar (vitrine nunca le ecom_produtos). (4) clear() e editar() cobrem os campos novos; editar() repuxa o produto, re-sincronizando peso. Zero mudanca em ML/Controle/Catalogo. | base: 2026-08-08-O (md5 0c1f618e0dfd386caf32df4fe9717db0 conferido em producao imediatamente antes do build) -->
 <!-- BUILD 2026-08-08-O | selecta-banco-preco | EXCLUSAO REAL + CODIGO SO ATIVO (decisao Igor 08/08; conferencias na sessao: pg_policies ecom_produtos tem DELETE p/ authenticated; ZERO FKs apontam p/ ecom_produtos; colunas ecom_anuncios/ecom_catalogo_insta verificadas via information_schema): (1) Botao Excluir do Catalogo agora APAGA a linha de ecom_produtos (antes: update ativo=false — soft delete em contradicao com a convencao "descontinuado = exclusao permanente"). GUARDAS pre-delete: anuncio ML (ecom_anuncios) ou Insta (ecom_catalogo_insta) vinculado ao codigo BLOQUEIA com alerta — remover das plataformas primeiro. Confirm reescrito dizendo a verdade; rollback otimista em erro. Vendas historicas seguras: ecom_vendas e desnormalizada (copia propria de produto/codigo), zero joins com ecom_produtos nas telas — auditado. (2) ecomInsta.buscar() com eq(ativo,true): codigo so vincula se produto ATIVO no Catalogo; mensagem de erro cobre inexistente/inativo; fragmento do aviso INATIVO removido (codigo morto). (3) Coluna ativo permanece no schema; cadastro segue gravando ativo:true; deteccao de divergencia "sem cadastro" captura anuncios orfaos de produto excluido. Expurgo dos inativos remanescentes = operacao SQL separada (Conferencia 4). Sem SQL neste build. | base: 2026-08-08-N (md5 5ad732f7980ed54c358af4b0c8087aca conferido na sessao e em producao) -->
 <!-- BUILD 2026-08-08-N | selecta-banco-preco | PUXADA INSTA SEM ML (pedido Igor 08/08, piloto aprovado): (1) ecomInsta.buscar(): linha de eco do produto mostra apenas descricao + custo NF (rotulo "custo" -> "custo NF"); trecho "preco ML R$..." REMOVIDO — canal Instagram nao referencia dados do ML. (2) Coluna preco removida do select em ecom_produtos (dado deixa de trafegar; verificado: prodAtual.preco sem uso no modulo — margem usa so custo). (3) Aviso "produto INATIVO no cadastro" MANTIDO (sinal de integridade do cadastro neutro, nao e referencia ML). Duas linhas alteradas; zero SQL. | base: 2026-08-08-M (md5 516060f7a59d3843aab3c221103a2579 conferido na sessao) -->
@@ -753,7 +754,7 @@
       <h3 id="ecom-form-title">Cadastrar / simular produto</h3>
       <div class="addform">
         <input type="hidden" id="ecom-f-produto">
-        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="PLR">Placa de rede</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option><option value="RBL">Robô de Limpeza</option><option value="ALX">Alexa</option><option value="PWB">Power Bank</option><option value="CXS">Caixa de Som</option><option value="CAM">Câmera Digital</option><option value="CPS">Controle PS5</option><option value="FLM">Filamento Imp. 3D</option><option value="GBL">Câmera Estabilizadora</option><option value="MPD">Mouse Pad</option><option value="PDR">Pen Drive</option><option value="SPM">Suporte Monitor</option><option value="TAB">Tablet</option><option value="PTE">Porteiro Eletrônico</option><option value="DVR">CCTV / DVR</option><option value="RDE">Repetidor de Sinal</option><option value="CMP">Compressor Portátil</option><option value="ANT">Antena / Rádio de Rede</option></select></div>
+        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="KIT">Kit</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="PLR">Placa de rede</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option><option value="RBL">Robô de Limpeza</option><option value="ALX">Alexa</option><option value="PWB">Power Bank</option><option value="CXS">Caixa de Som</option><option value="CAM">Câmera Digital</option><option value="CPS">Controle PS5</option><option value="FLM">Filamento Imp. 3D</option><option value="GBL">Câmera Estabilizadora</option><option value="MPD">Mouse Pad</option><option value="PDR">Pen Drive</option><option value="SPM">Suporte Monitor</option><option value="TAB">Tablet</option><option value="PTE">Porteiro Eletrônico</option><option value="DVR">CCTV / DVR</option><option value="RDE">Repetidor de Sinal</option><option value="CMP">Compressor Portátil</option><option value="ANT">Antena / Rádio de Rede</option></select></div>
         <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px"></div>
         <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px"></div>
         <div class="efield" id="ecom-f-capacidade-wrap" style="display:none"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px"></div>
@@ -770,6 +771,13 @@
         <button class="addbtn" id="ecom-add">+ Adicionar</button>
         <button class="addbtn" id="ecom-add-gerar" title="Grava o produto e pré-preenche o Cadastro de anúncio abaixo" style="display:none;background:none;border:1px solid var(--eaccent);color:var(--eaccent)">+ Gravar e gerar anúncio</button>
         <button class="cancelbtn hidden-section" id="ecom-cancel">Cancelar</button>
+      </div>
+      <!-- BUILD 2026-08-15-R: montador de composição do KIT (ecom_kit_componentes) -->
+      <div id="ecom-kit-wrap" style="display:none;margin:8px 0 4px;padding:10px 12px;border:1px dashed var(--eaccent);border-radius:8px">
+        <div style="font-size:12px;color:var(--emuted2);margin-bottom:6px">Composição do kit — código do componente (Catálogo) + quantidade. O Modelo é montado automaticamente; o Custo (NF) continua manual (a soma abaixo é referência).</div>
+        <div id="ecom-kit-rows"></div>
+        <button class="cancelbtn" id="ecom-kit-add" type="button">+ componente</button>
+        <span class="note" id="ecom-kit-soma" style="margin-left:10px"></span>
       </div>
       <div class="formmsg" id="ecom-formmsg"></div>
     </div>
@@ -3367,6 +3375,37 @@ const ecom = {
   faixaFromPeso(g){ g=parseInt(g,10); if(isNaN(g)||g<=0) return null; if(g<=300) return 'ate300'; if(g<=500) return 'f301_500'; if(g<=1000) return 'f501_1000'; return 'f1001_2000'; },
   applyPesoG(){ const g=parseInt(this._g('ecom-f-pesog').value,10); const sel=this._g('ecom-f-peso'); const msg=this._g('ecom-f-faixa-msg'); const fx=this.faixaFromPeso(g); if(fx&&sel){ sel.value=fx; } if(msg){ if(isNaN(g)||g<=0){ msg.textContent=''; msg.className='ffaixa'; } else if(g>2000){ msg.textContent='⚠ >2kg: faixa travada em 1–2kg'; msg.className='ffaixa warn'; } else { msg.textContent='→ '+this.pesoLabel(fx); msg.className='ffaixa'; } } },
   toggleCapInterface(){ const ssd=this._g('ecom-f-categoria').value==='SSD'; const cw=this._g('ecom-f-capacidade-wrap'), iw=this._g('ecom-f-interface-wrap'); if(cw) cw.style.display=ssd?'flex':'none'; if(iw) iw.style.display=ssd?'flex':'none'; if(!ssd){ const c=this._g('ecom-f-capacidade'), i=this._g('ecom-f-interface'); if(c)c.value=''; if(i)i.value=''; } },
+  // ===== BUILD 2026-08-15-R: KIT — montador de composição (ecom_kit_componentes) =====
+  kitRows:[],
+  isKit(){ return this._g('ecom-f-categoria').value==='KIT'; },
+  toggleKit(){ const w=this._g('ecom-kit-wrap'); const on=this.isKit(); if(w) w.style.display=on?'block':'none'; if(on&&this.kitRows.length===0) this.kitAdd(); if(!on&&this.kitRows.length){ this.kitRows=[]; this.kitRender(); } },
+  kitAdd(){ this.kitRows.push({codigo:'',qtd:1,eco:null}); this.kitRender(); },
+  kitDel(i){ this.kitRows.splice(i,1); this.kitRender(); this.kitAfter(); },
+  kitRender(){ const c=this._g('ecom-kit-rows'); if(!c) return; c.innerHTML=this.kitRows.map((r,i)=>
+      '<div style="display:flex;gap:8px;align-items:center;margin:4px 0;flex-wrap:wrap">'
+      +'<input class="ainput mono" style="width:130px;text-transform:uppercase" placeholder="ex.: AP-0008" value="'+(r.codigo||'')+'" onchange="ecom.kitCod('+i+',this.value)">'
+      +'<input class="ainput mono" type="number" min="1" step="1" style="width:64px" value="'+(r.qtd||1)+'" onchange="ecom.kitQtd('+i+',this.value)">'
+      +'<span class="note" style="flex:1;min-width:200px">'+(r.eco?((r.eco.produto||'')+' · '+[r.eco.marca,r.eco.modelo].filter(Boolean).join(' ')+' — custo un. R$ '+this.fmt(r.eco.custo)):(r.codigo?'<span style="color:var(--ered)">código não encontrado ou inativo</span>':''))+'</span>'
+      +'<button class="cancelbtn" type="button" onclick="ecom.kitDel('+i+')">×</button></div>').join(''); this.kitSomaShow(); },
+  async kitCod(i,v){ const r=this.kitRows[i]; if(!r) return; r.codigo=(v||'').trim().toUpperCase(); r.eco=null;
+    if(r.codigo){ try{ const q=await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,custo').eq('codigo',r.codigo).eq('ativo',true).maybeSingle(); if(!q.error&&q.data) r.eco=q.data; }catch(_e){} }
+    this.kitRender(); this.kitAfter(); },
+  kitQtd(i,v){ const r=this.kitRows[i]; if(!r) return; const n=parseInt(v,10); r.qtd=(isNaN(n)||n<1)?1:n; this.kitRender(); this.kitAfter(); },
+  kitSoma(){ let s=0,pend=false,tem=false; this.kitRows.forEach(r=>{ if(r.eco&&r.eco.custo!=null){ s+=Number(r.eco.custo)*(r.qtd||1); tem=true; } else if(r.codigo) pend=true; }); return {soma:s,completo:tem&&!pend}; },
+  kitSomaShow(){ const el=this._g('ecom-kit-soma'); if(!el) return; if(!this.isKit()){ el.innerHTML=''; return; } const st=this.kitSoma();
+    const custo=parseFloat(this._g('ecom-f-custo').value); let t='';
+    if(st.completo) t='soma dos componentes: <b>R$ '+this.fmt(st.soma)+'</b>';
+    else if(this.kitRows.some(r=>r.codigo)) t='soma parcial: R$ '+this.fmt(st.soma);
+    if(st.completo&&!isNaN(custo)&&Math.abs(custo-st.soma)>0.01) t+=' · <span style="color:var(--eamber)">Custo (NF) difere da soma — observação, não trava</span>';
+    el.innerHTML=t; },
+  kitAfter(){ if(this.isKit()){ const partes=this.kitRows.filter(r=>r.eco).map(r=>(r.qtd||1)+'x '+(r.eco.modelo||r.eco.produto||r.codigo)); if(partes.length) this._g('ecom-f-modelo').value=partes.join(' + '); } this.kitSomaShow(); },
+  async kitLoad(cod){ this.kitRows=[]; try{ const q=await sb.from('ecom_kit_componentes').select('componente_codigo,quantidade').eq('kit_codigo',cod).order('id');
+      if(!q.error&&Array.isArray(q.data)) q.data.forEach(l=>this.kitRows.push({codigo:l.componente_codigo,qtd:l.quantidade,eco:null})); }catch(_e){}
+    this.kitRender(); this.kitRows.forEach((r,i)=>this.kitCod(i,r.codigo)); },
+  async kitPersist(cod){ const linhas=this.kitRows.filter(r=>r.eco&&r.codigo).map(r=>({kit_codigo:cod,componente_codigo:r.codigo,quantidade:r.qtd||1}));
+    const d=await sb.from('ecom_kit_componentes').delete().eq('kit_codigo',cod); if(d.error) throw d.error;
+    if(linhas.length){ const ins=await sb.from('ecom_kit_componentes').insert(linhas); if(ins.error) throw ins.error; } },
+  // ===== fim KIT =====
   repLabel(r){ return r==='verde'?'Verde':(r==='amarela'?'Amarela':'Laranja/Vermelha'); },
   familia(p){ return ((p||'').trim().split(/\s+/)[0]||'').toUpperCase(); },
 
@@ -3469,7 +3508,9 @@ const ecom = {
     g('ecom-cancel').addEventListener('click',()=>this.cancelEdit());
     ['ecom-f-preco','ecom-f-custo','ecom-f-peso','ecom-f-tipo'].forEach(id=>{ const el=g(id); if(el) el.addEventListener('input',()=>this.updateFormBreakeven()); });
     { const pe=g('ecom-f-pesog'); if(pe) pe.addEventListener('input',()=>{ this.applyPesoG(); this.updateFormBreakeven(); }); }
-    { const cat=g('ecom-f-categoria'); if(cat) cat.addEventListener('change',()=>{ this.toggleCapInterface(); this.updateFormBreakeven(); }); }
+    { const cat=g('ecom-f-categoria'); if(cat) cat.addEventListener('change',()=>{ this.toggleCapInterface(); this.toggleKit(); this.updateFormBreakeven(); }); }
+    { const kb=g('ecom-kit-add'); if(kb) kb.addEventListener('click',()=>this.kitAdd()); }
+    { const cu=g('ecom-f-custo'); if(cu) cu.addEventListener('input',()=>this.kitSomaShow()); }
     { const tp=g('ecom-f-tipo'); if(tp) tp.addEventListener('change',()=>this.updateFormBreakeven()); }
     { const eb=this._g('ecom-export'); if(eb) eb.addEventListener('click',()=>this.exportarCenario()); }
   },
@@ -3577,10 +3618,10 @@ const ecom = {
     if(mr) mr.value=this.fmt(r.margem);
     if(mp){ const pct=r.margemPct*100; mp.value=this.fmtPct(pct); mp.className='ainput mono robe mgsimf '+(pct>=10?'v':pct>0?'a':'r'); }
   },
-  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-capacidade','ecom-f-mgrs','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const m=this._g('ecom-f-faixa-msg'); if(m){ m.textContent=''; m.className='ffaixa'; } } { const mp=this._g('ecom-f-mgpct'); if(mp){ mp.value=''; mp.className='ainput mono robe mgsimf'; } } this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-interface').value=''; this._g('ecom-f-categoria').value=''; this.toggleCapInterface(); { const fm=this._g('ecom-formmsg'); fm.textContent=''; fm.style.color=''; } this.updateFormBreakeven(); },
+  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-capacidade','ecom-f-mgrs','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const m=this._g('ecom-f-faixa-msg'); if(m){ m.textContent=''; m.className='ffaixa'; } } { const mp=this._g('ecom-f-mgpct'); if(mp){ mp.value=''; mp.className='ainput mono robe mgsimf'; } } this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-interface').value=''; this._g('ecom-f-categoria').value=''; this.toggleCapInterface(); this.kitRows=[]; this.toggleKit(); { const fm=this._g('ecom-formmsg'); fm.textContent=''; fm.style.color=''; } this.updateFormBreakeven(); },
   edit(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
     this._g('ecom-f-produto').value=it.produto||''; this._g('ecom-f-marca').value=it.marca||''; this._g('ecom-f-modelo').value=it.modelo||''; this._g('ecom-f-capacidade').value=it.capacidade||''; this._g('ecom-f-interface').value=it.interface||'';
-    this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico'; this._g('ecom-f-categoria').value=it.categoria||''; this.toggleCapInterface();
+    this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico'; this._g('ecom-f-categoria').value=it.categoria||''; this.toggleCapInterface(); this.toggleKit(); if(it.categoria==='KIT'&&it.codigo) this.kitLoad(it.codigo); // BUILD 2026-08-15-R
     this._g('ecom-f-preco').value=it.preco; this._g('ecom-f-custo').value=it.custo; this._g('ecom-f-media').value=it.media==null?'':it.media; this._g('ecom-f-menor').value=it.menor==null?'':it.menor;
     this.updateFormBreakeven();
     this.editId=id; this._g('ecom-add').textContent='Salvar alteração'; show('#ecom-cancel'); this._g('ecom-f-marca').focus(); },
@@ -3591,6 +3632,7 @@ const ecom = {
     const produto=categoria?(((catSel.options[catSel.selectedIndex]||{}).text)||'').trim():''; this._g('ecom-f-produto').value=produto;
     const preco=num('ecom-f-preco'), custo=num('ecom-f-custo');
     if(!categoria||preco==null||custo==null){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='Categoria, Meu preço e Custo são obrigatórios.'; fm.style.color='var(--eamber)'; return; }
+    if(categoria==='KIT'){ const val=this.kitRows.filter(r=>r.eco&&r.codigo); if(!val.length){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='Kit precisa de ao menos 1 componente válido do Catálogo.'; fm.style.color='var(--eamber)'; return; } } // BUILD 2026-08-15-R
     this._g('ecom-formmsg').textContent='';
     const pesog=(()=>{ const v=parseInt(this._g('ecom-f-pesog').value,10); return isNaN(v)?null:v; })();
     const dados={ produto, categoria, marca:this._g('ecom-f-marca').value.trim()||null, modelo:this._g('ecom-f-modelo').value.trim()||null,
@@ -3598,10 +3640,10 @@ const ecom = {
       preco, custo, media:num('ecom-f-media'), menor:num('ecom-f-menor'), peso_g:pesog, peso_faixa:(pesog!=null?this.faixaFromPeso(pesog):this._g('ecom-f-peso').value), tipo_anuncio:this._g('ecom-f-tipo').value };
     if(this.editId){ this.gerarAposSalvar=false; const idx=this.itens.findIndex(x=>String(x.id)===String(this.editId)); const prev=idx>=0?Object.assign({},this.itens[idx]):null;
       if(idx>=0) this.itens[idx]=Object.assign({},this.itens[idx],dados);
-      try{ const r=await sb.from('ecom_produtos').update(Object.assign({},dados,{atualizado_em:new Date().toISOString()})).eq('id',this.editId).select().single(); if(r.error) throw r.error; if(idx>=0&&r.data) this.itens[idx]=r.data; this.cancelEdit(); this.render(); }
+      try{ const r=await sb.from('ecom_produtos').update(Object.assign({},dados,{atualizado_em:new Date().toISOString()})).eq('id',this.editId).select().single(); if(r.error) throw r.error; if(categoria==='KIT'&&r.data&&r.data.codigo) await this.kitPersist(r.data.codigo); /* BUILD 2026-08-15-R: antes do cancelEdit, que limpa o montador */ if(idx>=0&&r.data) this.itens[idx]=r.data; this.cancelEdit(); this.render(); }
       catch(e){ if(idx>=0&&prev) this.itens[idx]=prev; const fm=this._g('ecom-formmsg'); fm.textContent='Erro ao salvar: '+e.message; fm.style.color='var(--ered)'; this.render(); } }
     else { const codigo=await this.nextCodigo(categoria);
-      try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{codigo,ativo:true})).select().single(); if(r.error) throw r.error; this.itens.push(r.data); this.clearForm(); this.render(); const fm=this._g('ecom-formmsg'); fm.textContent='✓ Salvo no banco: '+r.data.codigo+' — campos limpos para o próximo.'; fm.style.color='var(--eemerald)';
+      try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{codigo,ativo:true})).select().single(); if(r.error) throw r.error; if(categoria==='KIT') await this.kitPersist(r.data.codigo); /* BUILD 2026-08-15-R: antes do clearForm, que limpa o montador */ this.itens.push(r.data); this.clearForm(); this.render(); const fm=this._g('ecom-formmsg'); fm.textContent='✓ Salvo no banco: '+r.data.codigo+' — campos limpos para o próximo.'; fm.style.color='var(--eemerald)';
         if(this.gerarAposSalvar){ this.gerarAposSalvar=false; this.prefillAnuncio(r.data); } }
       catch(e){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='Erro ao cadastrar: '+e.message; fm.style.color='var(--ered)'; } } },
 
@@ -3641,6 +3683,10 @@ const ecom = {
         if(gin.error) throw gin.error;
         const nml=gml.count||0, nin=gin.count||0;
         if(nml>0||nin>0){ alert('Exclusão bloqueada: "'+cod+'" tem '+nml+' anúncio(s) ML e '+nin+' anúncio(s) Instagram vinculados.\n\nOrdem correta: remova os anúncios nas plataformas (Controle de Anúncios / Catálogo Instagram) e depois exclua o produto.'); return; }
+        // BUILD 2026-08-15-R: 2a camada da guarda de kit (1a e o ON DELETE RESTRICT no banco)
+        const gkit=await sb.from('ecom_kit_componentes').select('id',{count:'exact',head:true}).eq('componente_codigo',cod);
+        if(gkit.error) throw gkit.error;
+        if((gkit.count||0)>0){ alert('Exclusão bloqueada: "'+cod+'" é componente de '+(gkit.count)+' kit(s).\n\nOrdem correta: edite o(s) kit(s) no Catálogo e remova este componente da composição antes de excluir o produto.'); return; }
       }
       if(!confirm(`Excluir DEFINITIVAMENTE "${it.produto} · ${it.marca||''}" (${cod||'sem código'}) do banco?\n\nVendas históricas ficam preservadas (têm cópia própria dos dados). Esta ação NÃO tem volta.`)) return;
       if(this.editId&&String(this.editId)===String(id)) this.cancelEdit();
