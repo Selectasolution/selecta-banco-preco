@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-17-A | selecta-banco-preco | COMPRAS DO DIA NO FINANCEIRO (decisao Igor 17/08): (1) frase explicativa (esub) do rlsub-financeiro REMOVIDA; (2) novo quadrante de leitura rapida "Compras do dia" (ecard compacto, id fn-compras-dia) ACIMA de Pedidos a fechar — 1 SELECT em ecom_vw_compras_dia (schema conferido via information_schema em 17/08 na sessao), soma de custo_compra_total (capital do dia) + soma de pedidos; asterisco ambar quando pedidos_sem_custo>0 (valor subestimado, nunca mente calado); dia vazio = R$ 0,00 · 0 pedidos. Carga junto do ecomFinanceiro.load() (novo metodo comprasDia). Somente leitura, zero SQL novo, Pedidos a fechar e Termometro INTOCADOS. Posicao em Financeiro SUBSTITUI o plano de 16/08 (topo de Vendas). | base: 2026-08-15-R (md5 ec0f8713276d3c0fd29608d30e5592ec) -->
 <!-- BUILD 2026-08-08-M | selecta-banco-preco | FINANCEIRO DENTRO DE RELATORIOS (decisao Igor 08/08): sub-aba Financeiro REMOVIDA da barra Mercado Livre; conteudo integral do painel (lancamento por pedido + Termometro financeiro, ids fn-* preservados, bindings intactos) ANINHADO como pane rlsub-financeiro em Relatorios, com botao "Financeiro" ENTRE Painel e Historico. Handler do rlsubbar reescrito de binario p/ 3 panes (carga sob clique: financeiro -> ecomFinanceiro.load, historico -> ecomHistorico.load); branch morto do financeiro removido do handler da barra ML. Barra Mercado Livre agora: Alvo / Vendas / Relatorios / Radar. Ajuste de FUNCOES dessas abas = proxima rodada, anunciado pelo Igor. Sem SQL. | base: 2026-08-08-L (md5 83b196a6b3ae90f65e7b4245ceb92c4c) -->
 <!-- BUILD 2026-08-08-L | selecta-banco-preco | LIMPEZA (pedido Igor 08/08, "menos informacao que nao uso"): apagada a nota "Fonte: paginas oficiais MercadoLivre Ajuda... Manutencao via SQL Editor" sob a matriz de frete (span ecom-frete-carga sem nenhuma referencia em JS — remocao limpa). Informacao segue registrada aqui no cabecalho: tarifas FRETE_TBL carregadas em 02/07/2026 das paginas oficiais ML, manutencao via SQL Editor quando o ML atualizar. Sem SQL. | base: 2026-08-08-K (md5 3d7432667884d0cc66e89ebf0e692bcf) -->
 <!-- BUILD 2026-08-15-R | selecta-banco-preco | KIT NO CATALOGO (decisao Igor 15/08; banco criado e conferido na sessao: ecom_kit_componentes com FK/RLS + view ecom_vw_kit_custo): (1) Categoria ganha opcao KIT (codigo KIT-000N). (2) Ao escolher KIT abre o MONTADOR DE COMPOSICAO: linhas codigo-first (componente de ecom_produtos ativo) + quantidade, eco com nome e custo unitario. (3) Modelo auto-preenchido com a composicao legivel ("2x U7-Pro + 1x U-PoE-AT"), editavel. (4) CUSTO SEGUE MANUAL (regra Igor: kit so muda quando Alexia alterar) — soma dos componentes exibida como referencia + aviso ambar se divergir (observacao, nunca trava; espelho da view ecom_vw_kit_custo). (5) save() grava produto e regrava composicao (delete+insert por kit_codigo); edit() recarrega composicao. (6) Guarda de exclusao: produto componente de kit BLOQUEIA delete (2a camada do ON DELETE RESTRICT do banco). | base: 2026-08-10-Q (arquivo recebido na sessao de 15/08) -->
@@ -1755,7 +1756,10 @@
       </div><!-- /rlsub-painel -->
       <div id="rlsub-financeiro" style="display:none"><!-- BUILD 2026-08-08-M: conteudo integral do ex-ecom-sub-financeiro (ids preservados) -->
 
-      <p class="esub">Cada venda lançada chega aqui. <b>Clique no pedido</b> — o quadro de lançamento abre logo abaixo dele (taxas reais do ML e custo do fornecedor; o lucro fica vazio, não zero, até completar). À direita, o <b>Termômetro financeiro</b> acumula receita, custos e lucro real do mês, direto do banco, a cada movimento das vendas. A <b>postagem</b> retira o pedido daqui — o que não foi fechado antes se fecha depois no Histórico (Relatórios), pelo Editar.</p>
+      <!-- BUILD 2026-08-17-A: quadrante Compras do dia (leitura rapida, ecom_vw_compras_dia) -->
+      <div class="ecard" style="margin-bottom:14px;padding:12px 16px">
+        <div id="fn-compras-dia" style="font-size:15px"><span class="ph">carregando…</span></div>
+      </div>
       <div class="vgrid">
         <div class="ecard">
           <h3>Pedidos a fechar</h3>
@@ -4790,7 +4794,17 @@ const ecomFinanceiro={
     if(f) f.style.display='none';
     document.querySelectorAll('#fn-list .vli.fn-open').forEach(el=>el.classList.remove('fn-open'));
   },
-  async load(){ this.cur=null; await this.loadList(); this.termometro(); },
+  async load(){ this.cur=null; this.comprasDia(); await this.loadList(); this.termometro(); },
+  // BUILD 2026-08-17-A: quadrante de leitura rapida — capital do dia (ecom_vw_compras_dia, somente leitura)
+  async comprasDia(){ const box=this._g('fn-compras-dia'); if(!box) return;
+    try{ const r=await sb.from('ecom_vw_compras_dia').select('pedidos,custo_compra_total,pedidos_sem_custo');
+      if(r.error) throw r.error; const rows=r.data||[];
+      const ped=rows.reduce((s,x)=>s+Number(x.pedidos||0),0);
+      const cap=rows.reduce((s,x)=>s+Number(x.custo_compra_total||0),0);
+      const sc=rows.reduce((s,x)=>s+Number(x.pedidos_sem_custo||0),0);
+      box.innerHTML='<b>Compras do dia:</b> <span class="mono" style="color:var(--eteal);font-size:18px;font-weight:600">R$ '+this.fmt(cap)+'</span> · '+ped+' pedido'+(ped===1?'':'s')+(sc>0?' <span style="color:var(--eamber);font-size:12px">* '+sc+' sem custo (valor subestimado)</span>':'');
+    }catch(e){ box.innerHTML='<span style="color:var(--ered)">erro: '+e.message+'</span>'; }
+  },
   async loadList(){ const box=this._g('fn-list');
     try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,preco_venda,quantidade,comissao_valor,custo_unitario').eq('status','a_enviar').order('data_solicitacao',{ascending:false});
       if(r.error) throw r.error; this.renderList(r.data||[]);
