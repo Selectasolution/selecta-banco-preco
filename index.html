@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-17-D | selecta-banco-preco | LANCADAS = FILA DE PENDENTES DE ENTREGA (decisao Igor 17/08): lista da aba Vendas passa a exibir SOMENTE a_enviar + enviado, sem janela de mes (pendencia antiga aparece sempre); entregue SAI automaticamente da fila quando o status vira entregue (sync ml-orders ou botao do Historico) e permanece no Historico (que ja exibe enviado+entregue — nada e apagado do banco). Seletor de mes OCULTO (ids e bindings preservados); totalizador reescrito: N a enviar · N enviados · R$ em transito aguardando entrega (leitura do capital que o Mercado Pago ainda nao liberou). Cancelado/perda saem da fila; consultaveis na Consulta gerencial (Historico). Zero SQL. | base: 2026-08-17-C (md5 3ff57d8bd8c0fd9819f913400ed59d71) -->
 <!-- BUILD 2026-08-17-C | selecta-banco-preco | LANCAR VENDA COLAPSADO (decisao Igor 17/08, item previsto no mapa de 16/08): form da aba Vendas fechado por padrao — lancamento manual e excecao (fluxo normal = automatico via ml-orders). Cabecalho vd-form-toggle clicavel abre/fecha o wrapper vd-form-body (novo); caret indica estado. TODOS os ids vd-* preservados dentro do wrapper; preenchimento automatico de data/hora e calcPostarAte na abertura da aba funcionam com o form oculto (verificado: nenhum focus() no form). Zero SQL, zero mudanca de logica de lancamento. | base: 2026-08-17-B (md5 29cfd78c03eefe62149ce07dd9dcead8) -->
 <!-- BUILD 2026-08-17-B | selecta-banco-preco | REORGANIZACAO DE RELATORIOS (decisao Igor 17/08): Painel = leitura DIARIA (Compras do dia + Pedidos a fechar com quadro de lancamento, movidos do Financeiro; Visao geral do mes abaixo); Financeiro = visao MENSAL (Termometro + Por mes/competencia movido do Painel); Historico = ARQUIVO + Consulta gerencial (movida do Painel, ids rl-* e logica intactos). 2 frases esub removidas (Painel de capital e Entra aqui na postagem). Wiring: entrada em Relatorios carrega ecomRelatorios.load + ecomFinanceiro.load; clique em Painel recarrega ecomFinanceiro.load. fn-form-park viajou junto de fn-list (form injetado na lista). Zero SQL, ids preservados, zero mudanca de logica de negocio. | base: 2026-08-17-A (md5 6c329fd8fd76c745fb739f71853f938c) -->
 <!-- BUILD 2026-08-17-A | selecta-banco-preco | COMPRAS DO DIA NO FINANCEIRO (decisao Igor 17/08): (1) frase explicativa (esub) do rlsub-financeiro REMOVIDA; (2) novo quadrante de leitura rapida "Compras do dia" (ecard compacto, id fn-compras-dia) ACIMA de Pedidos a fechar — 1 SELECT em ecom_vw_compras_dia (schema conferido via information_schema em 17/08 na sessao), soma de custo_compra_total (capital do dia) + soma de pedidos; asterisco ambar quando pedidos_sem_custo>0 (valor subestimado, nunca mente calado); dia vazio = R$ 0,00 · 0 pedidos. Carga junto do ecomFinanceiro.load() (novo metodo comprasDia). Somente leitura, zero SQL novo, Pedidos a fechar e Termometro INTOCADOS. Posicao em Financeiro SUBSTITUI o plano de 16/08 (topo de Vendas). | base: 2026-08-15-R (md5 ec0f8713276d3c0fd29608d30e5592ec) -->
@@ -1719,10 +1720,10 @@
       </div>
       <div class="ecard">
         <h3>Lançadas</h3>
-        <div class="vd-messel">
-          <button id="vd-mes-prev" title="mês anterior">◀</button>
-          <span class="vd-mes" id="vd-mes-label">—</span>
-          <button id="vd-mes-next" title="mês seguinte">▶</button>
+        <div class="vd-messel"><!-- BUILD 2026-08-17-D: fila de PENDENTES DE ENTREGA — seletor de mes oculto (ids preservados), historico mensal vive em Relatorios -->
+          <button id="vd-mes-prev" title="mês anterior" style="display:none">◀</button>
+          <span class="vd-mes" id="vd-mes-label" style="display:none">—</span>
+          <button id="vd-mes-next" title="mês seguinte" style="display:none">▶</button>
           <span class="vd-mestot" id="vd-mes-tot"></span>
         </div>
         <div id="vd-list"><div class="ph">carregando…</div></div>
@@ -4730,28 +4731,25 @@ const ecomVendas={
     const dias=Math.round((new Date(hoje+'T12:00:00')-new Date(limite+'T12:00:00'))/86400000);
     return {bucket:'atr', pill:'<span class="vpill err">ATRASADA · +'+dias+'d</span>'};
   },
-  // BUILD 2026-08-03-A: load por MÊS FECHADO (todas as vendas do mês, todos os status).
-  // Competência = data_solicitacao (mesma régua do Termômetro e dos Relatórios).
+  // BUILD 2026-08-17-D: Lancadas = fila de PENDENTES DE ENTREGA (a_enviar + enviado), SEM janela de mes.
+  // Entregue sai daqui automaticamente (status vira entregue via sync/Historico) e ja vive no Historico.
+  // Cancelado/perda: consultaveis na Consulta gerencial (Relatorios > Historico).
   async load(){ const box=this._g('vd-list');
-    if(!this.mes) this.mes=this.mesAtual();
-    const lbl=this._g('vd-mes-label'); if(lbl) lbl.textContent=this.mesLabelTxt();
-    const [y,m]=this.mes.split('-').map(Number);
-    const d0=new Date(y,m-1,1), d1=new Date(y,m,1);
     try{ const r=await sb.from('ecom_vendas')
         .select('id,ml_pedido_id,produto,produto_codigo,preco_venda,quantidade,status,data_solicitacao,prazo_postagem')
-        .gte('data_solicitacao',d0.toISOString()).lt('data_solicitacao',d1.toISOString())
+        .in('status',['a_enviar','enviado'])
         .order('data_solicitacao',{ascending:false});
       if(r.error) throw r.error; const itens=r.data||[]; this.render(itens); this.totalizador(itens);
     }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar: '+e.message+'</div>'; const tt=this._g('vd-mes-tot'); if(tt) tt.textContent=''; }
   },
-  // Totalizador do mês: VÁLIDOS = tudo menos cancelado/perda (mesma régua do "total vendido válido" do razão)
+  // BUILD 2026-08-17-D: totalizador da fila pendente — quanto ja foi vendido e ainda nao chegou ao cliente
   totalizador(itens){ const tt=this._g('vd-mes-tot'); if(!tt) return;
-    const val=itens.filter(v=>v.status!=='cancelado'&&v.status!=='perda');
-    const soma=val.reduce((s,v)=>s+((+v.preco_venda||0)*(+v.quantidade||1)),0);
-    tt.textContent=itens.length?val.length+' pedidos · R$ '+this.fmt(soma)+' válidos'+(itens.length>val.length?' · '+(itens.length-val.length)+' cancel/perda':''):'';
+    const nA=itens.filter(v=>v.status==='a_enviar').length, nE=itens.filter(v=>v.status==='enviado').length;
+    const soma=itens.reduce((s,v)=>s+((+v.preco_venda||0)*(+v.quantidade||1)),0);
+    tt.textContent=itens.length?(nA+' a enviar · '+nE+' enviado'+(nE===1?'':'s')+' · R$ '+this.fmt(soma)+' aguardando entrega'):'';
   },
   render(itens){ const box=this._g('vd-list');
-    if(!itens.length){ box.innerHTML='<div class="ph">nenhuma venda no mês selecionado</div>'; return; }
+    if(!itens.length){ box.innerHTML='<div class="ph">nenhuma entrega pendente — tudo com o cliente</div>'; return; }
     const stp={a_enviar:['st-aenv','a enviar'],enviado:['st-env','enviado'],entregue:['st-ent','entregue'],concluido:['st-ent','concluído'],cancelado:['st-can','cancelado'],perda:['st-per','perda']};
     box.innerHTML=itens.map(v=>{
       const dt=new Date(v.data_solicitacao).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
