@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-17-C | selecta-banco-preco | LANCAR VENDA COLAPSADO (decisao Igor 17/08, item previsto no mapa de 16/08): form da aba Vendas fechado por padrao — lancamento manual e excecao (fluxo normal = automatico via ml-orders). Cabecalho vd-form-toggle clicavel abre/fecha o wrapper vd-form-body (novo); caret indica estado. TODOS os ids vd-* preservados dentro do wrapper; preenchimento automatico de data/hora e calcPostarAte na abertura da aba funcionam com o form oculto (verificado: nenhum focus() no form). Zero SQL, zero mudanca de logica de lancamento. | base: 2026-08-17-B (md5 29cfd78c03eefe62149ce07dd9dcead8) -->
 <!-- BUILD 2026-08-17-B | selecta-banco-preco | REORGANIZACAO DE RELATORIOS (decisao Igor 17/08): Painel = leitura DIARIA (Compras do dia + Pedidos a fechar com quadro de lancamento, movidos do Financeiro; Visao geral do mes abaixo); Financeiro = visao MENSAL (Termometro + Por mes/competencia movido do Painel); Historico = ARQUIVO + Consulta gerencial (movida do Painel, ids rl-* e logica intactos). 2 frases esub removidas (Painel de capital e Entra aqui na postagem). Wiring: entrada em Relatorios carrega ecomRelatorios.load + ecomFinanceiro.load; clique em Painel recarrega ecomFinanceiro.load. fn-form-park viajou junto de fn-list (form injetado na lista). Zero SQL, ids preservados, zero mudanca de logica de negocio. | base: 2026-08-17-A (md5 6c329fd8fd76c745fb739f71853f938c) -->
 <!-- BUILD 2026-08-17-A | selecta-banco-preco | COMPRAS DO DIA NO FINANCEIRO (decisao Igor 17/08): (1) frase explicativa (esub) do rlsub-financeiro REMOVIDA; (2) novo quadrante de leitura rapida "Compras do dia" (ecard compacto, id fn-compras-dia) ACIMA de Pedidos a fechar — 1 SELECT em ecom_vw_compras_dia (schema conferido via information_schema em 17/08 na sessao), soma de custo_compra_total (capital do dia) + soma de pedidos; asterisco ambar quando pedidos_sem_custo>0 (valor subestimado, nunca mente calado); dia vazio = R$ 0,00 · 0 pedidos. Carga junto do ecomFinanceiro.load() (novo metodo comprasDia). Somente leitura, zero SQL novo, Pedidos a fechar e Termometro INTOCADOS. Posicao em Financeiro SUBSTITUI o plano de 16/08 (topo de Vendas). | base: 2026-08-15-R (md5 ec0f8713276d3c0fd29608d30e5592ec) -->
 <!-- BUILD 2026-08-08-M | selecta-banco-preco | FINANCEIRO DENTRO DE RELATORIOS (decisao Igor 08/08): sub-aba Financeiro REMOVIDA da barra Mercado Livre; conteudo integral do painel (lancamento por pedido + Termometro financeiro, ids fn-* preservados, bindings intactos) ANINHADO como pane rlsub-financeiro em Relatorios, com botao "Financeiro" ENTRE Painel e Historico. Handler do rlsubbar reescrito de binario p/ 3 panes (carga sob clique: financeiro -> ecomFinanceiro.load, historico -> ecomHistorico.load); branch morto do financeiro removido do handler da barra ML. Barra Mercado Livre agora: Alvo / Vendas / Relatorios / Radar. Ajuste de FUNCOES dessas abas = proxima rodada, anunciado pelo Igor. Sem SQL. | base: 2026-08-08-L (md5 83b196a6b3ae90f65e7b4245ceb92c4c) -->
@@ -1684,7 +1685,9 @@
     <!-- ===== SUBPASTA: VENDAS ===== -->
     <div id="ecom-sub-vendas" class="ecom-subpanel" style="display:none">
       <div class="ecard vform" style="margin-bottom:14px">
-        <h3>Lançar venda</h3>
+        <!-- BUILD 2026-08-17-C: Lancar venda COLAPSADO por padrao (lancamento manual = excecao; automatico via ml-orders) -->
+        <h3 id="vd-form-toggle" style="cursor:pointer;user-select:none;margin-bottom:0">Lançar venda <span id="vd-form-caret" style="color:var(--emuted);font-weight:400;font-size:12px;text-transform:none;letter-spacing:0">▸ manual — clique para abrir</span></h3>
+        <div id="vd-form-body" style="display:none;margin-top:12px">
         <div class="vlinha">
           <div class="efield" style="width:165px"><label>Nº pedido ML *</label><input class="vinput mono" id="vd-ped" placeholder="2000000000000"></div>
           <div class="efield" style="width:180px"><label>Data/hora *</label><input class="vinput mono" id="vd-dt" type="datetime-local"></div>
@@ -1712,6 +1715,7 @@
           <div class="efield" style="width:auto"><label>&nbsp;</label><button class="vbtn" id="vd-add">Lançar venda</button></div>
         </div>
         <div class="vmsg" id="vd-msg"></div>
+        </div><!-- /vd-form-body -->
       </div>
       <div class="ecard">
         <h3>Lançadas</h3>
@@ -6964,6 +6968,8 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
 (function(){
   const cod=ecomVendas._g('vd-cod'); if(cod) cod.addEventListener('input',()=>ecomVendas.lookup());
   const vddt=ecomVendas._g('vd-dt'); if(vddt) vddt.addEventListener('change',()=>ecomVendas.calcPostarAte());
+  // BUILD 2026-08-17-C: toggle do form Lancar venda (colapsado por padrao)
+  const vdtg=ecomVendas._g('vd-form-toggle'); if(vdtg) vdtg.addEventListener('click',()=>{ const b=ecomVendas._g('vd-form-body'), c=ecomVendas._g('vd-form-caret'); if(!b) return; const aberto=b.style.display!=='none'; b.style.display=aberto?'none':''; if(c) c.textContent=aberto?'\u25B8 manual \u2014 clique para abrir':'\u25BE clique para recolher'; });
   const add=ecomVendas._g('vd-add'); if(add) add.addEventListener('click',()=>ecomVendas.lancar());
   const uf=ecomVendas._g('vd-uf'); if(uf) uf.addEventListener('input',()=>{ uf.value=uf.value.toUpperCase(); });
   // BUILD 2026-08-03-A: trava das taxas ML comandada pelo Status inicial + seletor de mês da listagem
