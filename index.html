@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-18-A | selecta-banco-preco | RASTREIO NA FILA DE VENDAS (Fase 2 do acompanhamento de entrega, decisao Igor 18/08): cada item da fila de pendentes ganha 2a linha de logistica — (a) pill do envio_substatus traduzido pt-BR com severidade (err: extraviado/devolvido/tentativa frustrada = agir; warn: NF pendente/destinatario ausente/atrasado/aguardando retirada; ok: saiu para entrega; mut: fluxo normal), fallback mostra substatus cru; (b) codigo_rastreio CLICAVEL abrindo rastreamento.correios.com.br com o objeto preenchido (ninguem digita codigo no site dos Correios); (c) frescor: "ML viu ha Xh" e alerta ambar "sem movimento ha Nd" quando envio_atualizado_em > 72h (deteccao de pacote parado ANTES da reclamacao). SELECT da fila ganha envio_substatus, envio_atualizado_em, codigo_rastreio (colunas conferidas na sessao: dump information_schema de ecom_vendas + ALTER Success 17/08). Fonte de dados: ml-orders v1.4, malha 07h/17h BRT. Zero SQL novo, zero mudanca de logica. | base: 2026-08-17-D (md5 51d8b07cce1e86537180ec86eab30208) -->
 <!-- BUILD 2026-08-17-D | selecta-banco-preco | LANCADAS = FILA DE PENDENTES DE ENTREGA (decisao Igor 17/08): lista da aba Vendas passa a exibir SOMENTE a_enviar + enviado, sem janela de mes (pendencia antiga aparece sempre); entregue SAI automaticamente da fila quando o status vira entregue (sync ml-orders ou botao do Historico) e permanece no Historico (que ja exibe enviado+entregue — nada e apagado do banco). Seletor de mes OCULTO (ids e bindings preservados); totalizador reescrito: N a enviar · N enviados · R$ em transito aguardando entrega (leitura do capital que o Mercado Pago ainda nao liberou). Cancelado/perda saem da fila; consultaveis na Consulta gerencial (Historico). Zero SQL. | base: 2026-08-17-C (md5 3ff57d8bd8c0fd9819f913400ed59d71) -->
 <!-- BUILD 2026-08-17-C | selecta-banco-preco | LANCAR VENDA COLAPSADO (decisao Igor 17/08, item previsto no mapa de 16/08): form da aba Vendas fechado por padrao — lancamento manual e excecao (fluxo normal = automatico via ml-orders). Cabecalho vd-form-toggle clicavel abre/fecha o wrapper vd-form-body (novo); caret indica estado. TODOS os ids vd-* preservados dentro do wrapper; preenchimento automatico de data/hora e calcPostarAte na abertura da aba funcionam com o form oculto (verificado: nenhum focus() no form). Zero SQL, zero mudanca de logica de lancamento. | base: 2026-08-17-B (md5 29cfd78c03eefe62149ce07dd9dcead8) -->
 <!-- BUILD 2026-08-17-B | selecta-banco-preco | REORGANIZACAO DE RELATORIOS (decisao Igor 17/08): Painel = leitura DIARIA (Compras do dia + Pedidos a fechar com quadro de lancamento, movidos do Financeiro; Visao geral do mes abaixo); Financeiro = visao MENSAL (Termometro + Por mes/competencia movido do Painel); Historico = ARQUIVO + Consulta gerencial (movida do Painel, ids rl-* e logica intactos). 2 frases esub removidas (Painel de capital e Entra aqui na postagem). Wiring: entrada em Relatorios carrega ecomRelatorios.load + ecomFinanceiro.load; clique em Painel recarrega ecomFinanceiro.load. fn-form-park viajou junto de fn-list (form injetado na lista). Zero SQL, ids preservados, zero mudanca de logica de negocio. | base: 2026-08-17-A (md5 6c329fd8fd76c745fb739f71853f938c) -->
@@ -4736,7 +4737,7 @@ const ecomVendas={
   // Cancelado/perda: consultaveis na Consulta gerencial (Relatorios > Historico).
   async load(){ const box=this._g('vd-list');
     try{ const r=await sb.from('ecom_vendas')
-        .select('id,ml_pedido_id,produto,produto_codigo,preco_venda,quantidade,status,data_solicitacao,prazo_postagem')
+        .select('id,ml_pedido_id,produto,produto_codigo,preco_venda,quantidade,status,data_solicitacao,prazo_postagem,envio_substatus,envio_atualizado_em,codigo_rastreio')
         .in('status',['a_enviar','enviado'])
         .order('data_solicitacao',{ascending:false});
       if(r.error) throw r.error; const itens=r.data||[]; this.render(itens); this.totalizador(itens);
@@ -4748,6 +4749,32 @@ const ecomVendas={
     const soma=itens.reduce((s,v)=>s+((+v.preco_venda||0)*(+v.quantidade||1)),0);
     tt.textContent=itens.length?(nA+' a enviar · '+nE+' enviado'+(nE===1?'':'s')+' · R$ '+this.fmt(soma)+' aguardando entrega'):'';
   },
+  // BUILD 2026-08-18-A: rastreio na fila — traduz substatus ML, linka Correios, mede frescor.
+  // Objetivo: NUNCA precisar abrir o site dos Correios. Severidade: err=agir ja, warn=atencao, ok=boa noticia, mut=fluxo normal.
+  rastreioHtml(v){
+    const MAP={
+      invoice_pending:['warn','NF pendente'], ready_to_print:['mut','etiqueta a imprimir'],
+      printed:['mut','etiqueta impressa'], in_hub:['mut','no hub ML'], in_warehouse:['mut','no dep\u00f3sito ML'],
+      in_transit:['mut','em tr\u00e2nsito'], on_route:['mut','em rota'], soon_deliver:['ok','entrega pr\u00f3xima'],
+      out_for_delivery:['ok','saiu para entrega'], delivery_failed:['err','tentativa frustrada'],
+      receiver_absent:['warn','destinat\u00e1rio ausente'], waiting_for_withdrawal:['warn','aguardando retirada'],
+      delayed:['warn','atrasado no transporte'], at_customs:['warn','na alf\u00e2ndega'],
+      returning_to_sender:['err','retornando ao remetente'], returned:['err','devolvido'],
+      lost:['err','extraviado'], stolen:['err','roubado'], damaged:['err','danificado'],
+      buffered:['mut','aguardando fluxo ML']
+    };
+    const bits=[];
+    if(v.envio_substatus){ const m=MAP[v.envio_substatus]||['mut',String(v.envio_substatus).replace(/_/g,' ')];
+      bits.push('<span class="vpill '+m[0]+'">'+m[1]+'</span>'); }
+    if(v.status==='enviado'){
+      if(v.codigo_rastreio){ bits.push('<a class="mono" style="color:var(--eteal);text-decoration:none" href="https://rastreamento.correios.com.br/app/index.php?objetos='+encodeURIComponent(v.codigo_rastreio)+'" target="_blank" rel="noopener" title="abrir rastreio nos Correios">\ud83d\udce6 '+v.codigo_rastreio+' \u2197</a>'); }
+      if(v.envio_atualizado_em){ const h=(Date.now()-new Date(v.envio_atualizado_em).getTime())/36e5;
+        if(h>72){ bits.push('<span class="vpill warn">\u26a0 sem movimento h\u00e1 '+Math.round(h/24)+'d</span>'); }
+        else { bits.push('<span class="vpill mut">ML viu h\u00e1 '+(h<1?'menos de 1h':(h<48?Math.round(h)+'h':Math.round(h/24)+'d'))+'</span>'); }
+      } else { bits.push('<span class="vpill mut">sem rastreio ainda</span>'); }
+    }
+    return bits.join(' ');
+  },
   render(itens){ const box=this._g('vd-list');
     if(!itens.length){ box.innerHTML='<div class="ph">nenhuma entrega pendente — tudo com o cliente</div>'; return; }
     const stp={a_enviar:['st-aenv','a enviar'],enviado:['st-env','enviado'],entregue:['st-ent','entregue'],concluido:['st-ent','concluído'],cancelado:['st-can','cancelado'],perda:['st-per','perda']};
@@ -4757,7 +4784,8 @@ const ecomVendas={
       const sem=(v.status==='a_enviar')?this.semaforo(v).pill:'';
       const btnPost=v.status==='a_enviar'?'<div style="display:flex;gap:6px"><button class="vbtn sm" data-act="postar" data-id="'+v.id+'">postado</button></div>':'';
       const q=(+v.quantidade||1); const qtxt=q>1?q+'× ':'';
-      return '<div data-vwrap="'+v.id+'"><div class="vli"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · '+(v.produto_codigo||'')+' · '+dt+' · '+qtxt+'R$ '+this.fmt(v.preco_venda)+'</div></div><span class="vpill '+st[0]+'">'+st[1]+'</span>'+sem+btnPost+'</div></div>';
+      const rast=this.rastreioHtml(v);
+      return '<div data-vwrap="'+v.id+'"><div class="vli"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · '+(v.produto_codigo||'')+' · '+dt+' · '+qtxt+'R$ '+this.fmt(v.preco_venda)+'</div>'+(rast?'<div class="vm" style="margin-top:3px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+rast+'</div>':'')+'</div><span class="vpill '+st[0]+'">'+st[1]+'</span>'+sem+btnPost+'</div></div>';
     }).join('');
   },
   // "postado" abre confirmação inline: data/hora da postagem (prefill agora) — confirmar PARA o cronômetro
