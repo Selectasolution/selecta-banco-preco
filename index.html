@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-17-B | selecta-banco-preco | REORGANIZACAO DE RELATORIOS (decisao Igor 17/08): Painel = leitura DIARIA (Compras do dia + Pedidos a fechar com quadro de lancamento, movidos do Financeiro; Visao geral do mes abaixo); Financeiro = visao MENSAL (Termometro + Por mes/competencia movido do Painel); Historico = ARQUIVO + Consulta gerencial (movida do Painel, ids rl-* e logica intactos). 2 frases esub removidas (Painel de capital e Entra aqui na postagem). Wiring: entrada em Relatorios carrega ecomRelatorios.load + ecomFinanceiro.load; clique em Painel recarrega ecomFinanceiro.load. fn-form-park viajou junto de fn-list (form injetado na lista). Zero SQL, ids preservados, zero mudanca de logica de negocio. | base: 2026-08-17-A (md5 6c329fd8fd76c745fb739f71853f938c) -->
 <!-- BUILD 2026-08-17-A | selecta-banco-preco | COMPRAS DO DIA NO FINANCEIRO (decisao Igor 17/08): (1) frase explicativa (esub) do rlsub-financeiro REMOVIDA; (2) novo quadrante de leitura rapida "Compras do dia" (ecard compacto, id fn-compras-dia) ACIMA de Pedidos a fechar — 1 SELECT em ecom_vw_compras_dia (schema conferido via information_schema em 17/08 na sessao), soma de custo_compra_total (capital do dia) + soma de pedidos; asterisco ambar quando pedidos_sem_custo>0 (valor subestimado, nunca mente calado); dia vazio = R$ 0,00 · 0 pedidos. Carga junto do ecomFinanceiro.load() (novo metodo comprasDia). Somente leitura, zero SQL novo, Pedidos a fechar e Termometro INTOCADOS. Posicao em Financeiro SUBSTITUI o plano de 16/08 (topo de Vendas). | base: 2026-08-15-R (md5 ec0f8713276d3c0fd29608d30e5592ec) -->
 <!-- BUILD 2026-08-08-M | selecta-banco-preco | FINANCEIRO DENTRO DE RELATORIOS (decisao Igor 08/08): sub-aba Financeiro REMOVIDA da barra Mercado Livre; conteudo integral do painel (lancamento por pedido + Termometro financeiro, ids fn-* preservados, bindings intactos) ANINHADO como pane rlsub-financeiro em Relatorios, com botao "Financeiro" ENTRE Painel e Historico. Handler do rlsubbar reescrito de binario p/ 3 panes (carga sob clique: financeiro -> ecomFinanceiro.load, historico -> ecomHistorico.load); branch morto do financeiro removido do handler da barra ML. Barra Mercado Livre agora: Alvo / Vendas / Relatorios / Radar. Ajuste de FUNCOES dessas abas = proxima rodada, anunciado pelo Igor. Sem SQL. | base: 2026-08-08-L (md5 83b196a6b3ae90f65e7b4245ceb92c4c) -->
 <!-- BUILD 2026-08-08-L | selecta-banco-preco | LIMPEZA (pedido Igor 08/08, "menos informacao que nao uso"): apagada a nota "Fonte: paginas oficiais MercadoLivre Ajuda... Manutencao via SQL Editor" sob a matriz de frete (span ecom-frete-carga sem nenhuma referencia em JS — remocao limpa). Informacao segue registrada aqui no cabecalho: tarifas FRETE_TBL carregadas em 02/07/2026 das paginas oficiais ML, manutencao via SQL Editor quando o ML atualizar. Sem SQL. | base: 2026-08-08-K (md5 3d7432667884d0cc66e89ebf0e692bcf) -->
@@ -1731,44 +1732,14 @@
         <button class="alsub-btn" data-rlsub="financeiro">💰 Financeiro</button><!-- BUILD 2026-08-08-M -->
         <button class="alsub-btn" data-rlsub="historico">🗂 Histórico</button>
       </div>
-      <div id="rlsub-painel">
-      <p class="esub">Painel de capital, dinâmico — recalcula sempre do banco. Competência pela <b>data do pedido</b>: a venda conta no mês em que foi vendida, mesmo que o Mercado Pago libere o dinheiro depois.</p>
-      <h3 id="rl-kpis-titulo" style="font-size:12.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Visão geral · mês corrente</h3>
-      <div id="rl-kpis"><div class="ph">carregando…</div></div>
-      <div class="ecard" style="margin-top:18px">
-        <h3>Consulta gerencial</h3>
-        <div class="vrow3">
-          <div class="efield"><label>De (data pedido)</label><input class="vinput mono" id="rl-de" type="date"></div>
-          <div class="efield"><label>Até</label><input class="vinput mono" id="rl-ate" type="date"></div>
-          <div class="efield"><label>Status</label><select class="vinput mono" id="rl-status"><option value="">todos</option><option value="vendidos">vendidos (exclui cancel/perda)</option><option value="a_enviar">a enviar</option><option value="enviado">enviado</option><option value="entregue">entregue</option><option value="cancelado">cancelados</option></select></div>
-        </div>
-        <div class="vrow">
-          <div class="efield"><label>Produto ou código</label><input class="vinput mono" id="rl-prod" placeholder="ex.: Havit ou SSD-0001"></div>
-          <div class="efield"><label>UF</label><input class="vinput mono" id="rl-uf" maxlength="2" placeholder="SP"></div>
-        </div>
-        <button class="vbtn" id="rl-consultar">Consultar</button>
-        <div id="rl-query-result" style="margin-top:14px"></div>
-      </div>
-      <div class="ecard" style="margin-top:18px">
-        <h3>Por mês (competência)</h3>
-        <div id="rl-mensal"></div>
-      </div>
-      </div><!-- /rlsub-painel -->
-      <div id="rlsub-financeiro" style="display:none"><!-- BUILD 2026-08-08-M: conteudo integral do ex-ecom-sub-financeiro (ids preservados) -->
-
+      <div id="rlsub-painel"><!-- BUILD 2026-08-17-B: Painel = leitura diaria (Compras do dia + Pedidos a fechar, movidos do Financeiro) + Visao geral do mes. Consulta gerencial -> Historico; Por mes -> Financeiro -->
       <!-- BUILD 2026-08-17-A: quadrante Compras do dia (leitura rapida, ecom_vw_compras_dia) -->
       <div class="ecard" style="margin-bottom:14px;padding:12px 16px">
         <div id="fn-compras-dia" style="font-size:15px"><span class="ph">carregando…</span></div>
       </div>
-      <div class="vgrid">
-        <div class="ecard">
-          <h3>Pedidos a fechar</h3>
-          <div id="fn-list"><div class="ph">carregando…</div></div>
-        </div>
-        <div class="ecard" style="border-color:var(--eteal)">
-          <h3>Termômetro financeiro · <span id="fn-termo-mes" style="color:var(--eteal);text-transform:none;letter-spacing:0"></span></h3>
-          <div id="fn-termometro"><div class="ph">carregando…</div></div>
-        </div>
+      <div class="ecard">
+        <h3>Pedidos a fechar</h3>
+        <div id="fn-list"><div class="ph">carregando…</div></div>
       </div>
       <div id="fn-form-park" style="display:none">
         <div id="fn-form" style="display:none">
@@ -1788,10 +1759,34 @@
           <div class="vmsg" id="fn-msg"></div>
         </div>
       </div>
-
+      <h3 id="rl-kpis-titulo" style="font-size:12.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 10px">Visão geral · mês corrente</h3>
+      <div id="rl-kpis"><div class="ph">carregando…</div></div>
+      </div><!-- /rlsub-painel -->
+      <div id="rlsub-financeiro" style="display:none"><!-- BUILD 2026-08-17-B: Financeiro = visao mensal (Termometro + Por mes/competencia, movido do Painel) -->
+      <div class="ecard" style="border-color:var(--eteal)">
+        <h3>Termômetro financeiro · <span id="fn-termo-mes" style="color:var(--eteal);text-transform:none;letter-spacing:0"></span></h3>
+        <div id="fn-termometro"><div class="ph">carregando…</div></div>
+      </div>
+      <div class="ecard" style="margin-top:18px">
+        <h3>Por mês (competência)</h3>
+        <div id="rl-mensal"></div>
+      </div>
       </div><!-- /rlsub-financeiro -->
       <div id="rlsub-historico" style="display:none">
-      <p class="esub">Entra aqui na <b>postagem</b>. Registro de cada venda postada — <b>Editar</b> corrige qualquer campo (preço, taxas, custo, datas; toda edição fica marcada) e fecha margem pendente. O botão <b>✓ entregue</b> (opcional, 1 clique) marca a entrega efetiva — mantém honesto o capital em giro preso. Cada linha exporta o relatório do pedido em PDF.</p>
+      <div class="ecard" style="margin-bottom:18px"><!-- BUILD 2026-08-17-B: Consulta gerencial movida do Painel (mesmos ids rl-*, mesma logica) -->
+        <h3>Consulta gerencial</h3>
+        <div class="vrow3">
+          <div class="efield"><label>De (data pedido)</label><input class="vinput mono" id="rl-de" type="date"></div>
+          <div class="efield"><label>Até</label><input class="vinput mono" id="rl-ate" type="date"></div>
+          <div class="efield"><label>Status</label><select class="vinput mono" id="rl-status"><option value="">todos</option><option value="vendidos">vendidos (exclui cancel/perda)</option><option value="a_enviar">a enviar</option><option value="enviado">enviado</option><option value="entregue">entregue</option><option value="cancelado">cancelados</option></select></div>
+        </div>
+        <div class="vrow">
+          <div class="efield"><label>Produto ou código</label><input class="vinput mono" id="rl-prod" placeholder="ex.: Havit ou SSD-0001"></div>
+          <div class="efield"><label>UF</label><input class="vinput mono" id="rl-uf" maxlength="2" placeholder="SP"></div>
+        </div>
+        <button class="vbtn" id="rl-consultar">Consultar</button>
+        <div id="rl-query-result" style="margin-top:14px"></div>
+      </div>
       <div id="hs-list"><div class="ph">carregando…</div></div>
       <div id="hs-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:20px">
         <div style="background:var(--epanel);border:1px solid var(--eborder);border-radius:14px;max-width:580px;width:100%;max-height:90vh;overflow:auto;padding:20px">
@@ -6895,7 +6890,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const sub=b.dataset.sub;
   $$('#tab-ecommerce .ecom-subpanel').forEach(p=>{ p.style.display=(p.id==='ecom-sub-'+sub)?'':'none'; }); // BUILD 2026-08-08-C: escopo restrito — Consulta Produto vive na aba Catálogo
   if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value){ dt.value=ecomVendas.nowLocal(); } ecomVendas.calcPostarAte(); ecomVendas.loaded=true; ecomVendas.load(); } // BUILD 2026-08-03-A: Candidatos mudou para o Radar
-  if(sub==='relatorios'){ ecomRelatorios.load(); }
+  if(sub==='relatorios'){ ecomRelatorios.load(); ecomFinanceiro.load(); } // BUILD 2026-08-17-B: Painel abre com Compras do dia + Pedidos a fechar
   if(sub==='alvo'){ ecomAlvo.load(); }
   if(sub==='radar'){ ecomRadar.load(); }
 }));
@@ -6956,6 +6951,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
     rb.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x===b));
     const t=b.dataset.rlsub;
     ['painel','financeiro','historico'].forEach(k=>{ const el=document.getElementById('rlsub-'+k); if(el) el.style.display=(k===t)?'':'none'; });
+    if(t==='painel') ecomFinanceiro.load(); // BUILD 2026-08-17-B: leitura diaria mora no Painel
     if(t==='historico') ecomHistorico.load();
     if(t==='financeiro') ecomFinanceiro.load(); });
 })();
