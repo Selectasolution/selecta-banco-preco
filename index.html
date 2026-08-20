@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-20-F | selecta-banco-preco | VENDA MINIMA + RECUPERAVEL CORRIGIDO + FIX INPUT (Igor 20/08): (1) REMOVIDAS as linhas "Juro correndo desde a ancora" e "Juro do mes cheio -> cenario 7%" e o "empate venda" por credor. (2) NOVA linha abaixo de DEVO AOS CREDORES: VENDA MINIMA DO MES = (juros do mes + CUSTOS_FIXOS_MES) / margem viva — constante CUSTOS_FIXOS_MES=2500 (Aluguel Foz; novos fixos somam na constante); recalcula sozinha quando a margem do mes muda. (3) RECUPERAVEL redefinido (correcao Igor): A receber MP + DEVOLUCOES a custo (ocorrencia devolvido, ate reintegrar); fetch de estoque do Catalogo REMOVIDO (falhava e o conceito caiu). (4) FIX lancamento de juros: input era type=number e rejeitava virgula pt-BR silenciosamente — agora type=text inputmode=decimal com parser que aceita 9.900,00 / 9900,00 / 9900.00. TAXA_CENARIO_C1 removida (linha que a usava morreu). | base: 2026-08-20-E (mesma sessao) -->
 <!-- BUILD 2026-08-20-E | selecta-banco-preco | MINI SIMULADOR POR CREDOR (Igor 20/08): (1) Cada credor vira UMA linha-simulador no bloco INVESTIDORES: nome+taxa+saldo | juros do mes (saldo x taxa) | vencimento (ancora + 1 mes) | input valor pago + Lancar (INSERT juro_pago no ledger, data hoje, confirm antes — gera caixa despesa: entra em Custo financeiro do balancete e debita o LUCRO REAL) | empate de venda do credor (juros do credor / margem viva do mes). (2) REMOVIDAS as linhas: Empate lucro x juro global, Ciclo venda->liberacao (juro por R$1.000), Cada ponto de juro no credor_1, e o formulario solto do 20-D (metodo capLancar substituido por capPagar(credor)). Capitalizacao de juro NAO PAGO segue via SQL manual (modelos no sql-ledger). (3) REQUER ledger v2 (CHECK com juro_pago) — sem ele o Lancar falha no CHECK com erro visivel. | base: 2026-08-20-D (mesma sessao) -->
 <!-- BUILD 2026-08-20-D | selecta-banco-preco | BALANCETE LIMPO + CUSTO FINANCEIRO + LANCAMENTO NO LEDGER (Igor 20/08): (1) Rotulos removidos do balancete: "(margens fechadas)", "(vendas fechadas)", "(vendas vivas)". (2) DESPESAS ganha linha "Custo financeiro - juros dos credores": soma dos movimentos do ledger do MES corrente com tipo juro (capitalizado) ou juro_pago (pago em caixa); entra no DESPESAS TOTAIS e DEBITA o LUCRO REAL (lucLiq = luc - perdas - jurosMes). Amortizacao NAO e despesa (movimento de balanco: reduz DEVO, nao reduz lucro). Decisao Igor+analise: juro como linha explicita de medicao; colchao segue regua de PRECIFICACAO intocada (juro e fixo sobre saldo devedor, colchao e % da venda — nao escalam juntos). (3) Bloco INVESTIDORES ganha formulario de lancamento (credor + tipo juro_pago/juro/amortizacao + valor + data, confirm antes do INSERT em ecom_capital_mov, re-render apos) — metodo ecomFinanceiro.capLancar. REQUER SQL v2 do ledger: CHECK de tipo ampliado com juro_pago + view ecom_vw_capital_saldo v2 (juro_pago nao altera saldo mas RESETA a ancora de juro). Sem o SQL, lancamento de juro_pago falha no CHECK (erro visivel, sem corrupcao). (4) Valores de Capital preso / A receber MP CONTESTADOS pelo Igor (98.165 / 139.057 vs painel ML 75.679) — diagnostico via SQL espelho ANTES de qualquer conserto; hipotese: vendas antigas com data_liberacao_mp NULL (pre-rastreamento do sync). | base: 2026-08-20-C (mesma sessao) -->
 <!-- BUILD 2026-08-20-C | selecta-banco-preco | HOTFIX INVESTIDORES + TROCA DE CARDS (Igor 20/08): (1) BUG CORRIGIDO (introduzido no 20-A): a montagem do invHtml usava line/F/F0/margem ANTES das declaracoes (TDZ — "Cannot access line before initialization"); ficou latente enquanto a view ecom_vw_capital_saldo nao existia (ramo else nunca rodava) e estourou quando o ledger nasceu. Correcao: bloco de montagem do invHtml MOVIDO para depois das declaracoes dos auxiliares, imediatamente antes do box.innerHTML; fetches (ledger/estoque/medCic) permanecem onde estavam. (2) Painel Geral: cards "N de vendas" e "Devolucoes (custo preso)" trocados de posicao (pedido Igor 20/08). | base: 2026-08-20-B (mesma sessao) -->
@@ -4943,7 +4944,8 @@ const ecomFinanceiro={
   // BUILD 2026-08-20-E: pagamento de juros por credor (gate do Igor: confirm antes do INSERT; gera caixa despesa)
   async capPagar(credor){
     const el=document.getElementById('cap-pago-'+credor);
-    const valor=parseFloat(el?el.value:'');
+    const bruto=el?String(el.value).trim():'';
+    const valor=bruto.indexOf(',')>=0?parseFloat(bruto.replace(/\./g,'').replace(',','.')):parseFloat(bruto);
     if(!credor||!(valor>0)){ alert('Informe o valor pago (>0).'); return; }
     const hoje=new Date().toISOString().slice(0,10);
     if(!confirm('Lançar JURO PAGO?\n\n'+credor+' · R$ '+this.fmt(valor)+' em '+hoje+'\n(não capitaliza · entra como despesa do mês)')) return;
@@ -4987,13 +4989,13 @@ const ecomFinanceiro={
         .map(v=>(new Date(v.data_liberacao_mp)-new Date(v.data_entrega))/86400000).filter(d=>d>=0).sort((a,b)=>a-b);
       const medLib=dias.length?(dias.length%2?dias[(dias.length-1)/2]:(dias[dias.length/2-1]+dias[dias.length/2])/2):null;
       // BUILD 2026-08-20-A: INVESTIDORES — ledger de credores + recuperavel + descoberto + custo de capital
-      const TAXA_CREDOR={credor_1:0.10,credor_2:0.05}, TAXA_CENARIO_C1=0.07; // pitch 24/08: credor_1 renegociado a 7%
+      const TAXA_CREDOR={credor_1:0.10,credor_2:0.05}; // taxas por credor
+      const CUSTOS_FIXOS_MES=2500; // custos fixos mensais: Aluguel Foz R$ 2.500 (Igor 20/08) — novos fixos somam aqui
       let ledger=null; try{ const rl=await sb.from('ecom_vw_capital_saldo').select('*'); if(!rl.error) ledger=rl.data||[]; }catch(_e){}
       // BUILD 2026-08-20-D: juros do mes (juro capitalizado + juro pago) viram despesa do balancete; amortizacao NAO
       let jurosMes=0; try{ const rm=await sb.from('ecom_capital_mov').select('tipo,valor,data_mov');
         if(!rm.error) (rm.data||[]).forEach(m=>{ if((m.tipo==='juro'||m.tipo==='juro_pago')&&String(m.data_mov||'').slice(0,7)===mkey) jurosMes+=(+m.valor||0); }); }catch(_e){}
-      let estq=0, estqOk=false; try{ const re=await sb.from('ecom_produtos').select('estoque_atual,custo').eq('ativo',true);
-        if(!re.error){ estqOk=true; (re.data||[]).forEach(p=>{ estq+=(Number(p.estoque_atual)||0)*(Number(p.custo)||0); }); } }catch(_e){}
+      let devCusto=0; all.forEach(v=>{ if(v.ocorrencia==='devolvido') devCusto+=(+v.custo_total||0); }); // itens de devolucao retornando, a custo
       // mediana venda->liberacao (ciclo cheio de capital; so vendas sem ocorrencia ja liberadas)
       const dCic=all.filter(v=>!v.ocorrencia&&v.data_solicitacao&&v.data_liberacao_mp&&v.data_liberacao_mp<=hojeIso)
         .map(v=>(new Date(v.data_liberacao_mp)-new Date(v.data_solicitacao))/86400000).filter(d=>d>=0).sort((a,b)=>a-b);
@@ -5015,34 +5017,32 @@ const ecomFinanceiro={
       if(ledger===null){
         invHtml='<div style="padding:9px 13px;background:#241c08;font-size:11.5px;color:var(--eamber)">INVESTIDORES aguardando: aplicar SQL do ledger (ecom_capital_mov + view) — o restante do Termômetro segue válido.</div>';
       } else {
-        let devo=0,juroCorr=0,juroMes=0,juroMesCen=0,saldoC1=0,capAtraso=false; const credL=[];
+        let devo=0,juroMes=0,capAtraso=false; const credL=[];
         ledger.forEach(c=>{ const s=+c.saldo_devedor||0; if(s===0) return; devo+=s;
           const tx=(TAXA_CREDOR[c.credor]!=null)?TAXA_CREDOR[c.credor]:0.10;
-          if(c.credor==='credor_1') saldoC1=s;
           const anc=c.ancora_juro||c.ultimo_mov; const dj=anc?Math.max(0,Math.floor((now-new Date(anc+'T00:00:00'))/86400000)):0;
           if(dj>32) capAtraso=true;
-          juroCorr+=s*tx*dj/30; juroMes+=s*tx; juroMesCen+=s*(c.credor==='credor_1'?TAXA_CENARIO_C1:tx);
-          const jM=s*tx; const empC=(margem!=null&&margem>0)?jM/(margem/100):null;
+          juroMes+=s*tx;
+          const jM=s*tx;
           const venc=anc?(()=>{const d=new Date(anc+'T00:00:00');d.setMonth(d.getMonth()+1);return d;})():null;
           credL.push('<div style="display:flex;justify-content:space-between;gap:8px;padding:9px 13px;background:var(--epanel);flex-wrap:wrap;align-items:center">'
             +'<span style="font-size:12.5px">'+c.credor+' · '+(tx*100).toFixed(0)+'% · saldo <b style="font-family:var(--emono)">R$ '+F(s)+'</b></span>'
             +'<span style="font-size:12px;color:var(--eamber);font-family:var(--emono)">juros R$ '+F(jM)+'</span>'
             +'<span style="font-size:12px">vence <b>'+(venc?venc.toLocaleDateString('pt-BR'):'—')+'</b></span>'
-            +'<span style="display:flex;gap:6px;align-items:center"><input id="cap-pago-'+c.credor+'" class="inp" type="number" step="0.01" min="0.01" placeholder="valor pago R$" style="width:118px;padding:5px 8px;font-size:12px"><button class="btn" style="padding:5px 10px;font-size:12px" onclick="ecomFinanceiro.capPagar(\''+c.credor+'\')">Lançar</button></span>'
-            +'<span style="font-size:12px;color:var(--emuted)">empate venda '+(empC!=null?'R$ '+F0(empC):'—')+'/mês</span>'
+            +'<span style="display:flex;gap:6px;align-items:center"><input id="cap-pago-'+c.credor+'" class="inp" type="text" inputmode="decimal" placeholder="valor pago R$" style="width:118px;padding:5px 8px;font-size:12px"><button class="btn" style="padding:5px 10px;font-size:12px" onclick="ecomFinanceiro.capPagar(\''+c.credor+'\')">Lançar</button></span>'
             +'</div>'); });
-        const recup=recMP+(estqOk?estq:0), desc=devo-recup;
+        const recup=recMP+devCusto, desc=devo-recup;
+        const vendaMin=(margem!=null&&margem>0)?(juroMes+CUSTOS_FIXOS_MES)/(margem/100):null;
         invHtml='<div style="padding:7px 13px;background:var(--epanel2);font-size:10.5px;letter-spacing:1px;color:var(--emuted)">INVESTIDORES · capital de terceiros</div>'
           +credL.join('')
           +line('= DEVO AOS CREDORES','R$ '+F(devo),'#2a0d0d','var(--ered)')
-          +line('Juro correndo desde a âncora (pró-rata)',devo>0?'– R$ '+F(juroCorr):'—','#241c08','var(--eamber)')
-          +line('Juro do mês cheio · hoje → cenário 7% no credor_1','R$ '+F(juroMes)+' → R$ '+F(juroMesCen)+' (Δ R$ '+F(juroMes-juroMesCen)+'/mês)')
-          +line('Tenho recuperável · A receber MP + estoque a custo'+(estqOk?'':' (estoque indisponível)'),'R$ '+F(recup))
+          +line('Venda mínima do mês · (juros + custos fixos) ÷ margem viva'+(margem!=null&&margem>0?' ('+F(margem)+'%)':''),vendaMin!=null?('R$ '+F0(vendaMin)+'/mês'):'— (sem margem fechada no mês)','#241c08','var(--eamber)')
+          +line('Tenho recuperável · A receber MP + devoluções a custo','R$ '+F(recup))
           +(desc>0
             ?line('= DESCOBERTO (devo além do recuperável)','R$ '+F(desc),'#2a0d0d','var(--ered)')
             :line('= COBERTO (recuperável excede a dívida)','R$ '+F(-desc),'#08231f','var(--eteal)'))
           +(capAtraso?'<div style="padding:7px 13px;background:#241c08;font-size:11px;color:var(--eamber)">⚠ Capitalização atrasada (&gt;32d sem lançamento de juro) — lançar movimento tipo \'juro\' no dia-base (c1 dia 05 · c2 dia 20).</div>':'')
-          +'<div style="padding:6px 13px;background:var(--epanel2);font-size:10px;color:var(--emuted)">Fora da conta (decisão 20/08): recebíveis externos e estoque Full — estudo à parte pós-PR. Capital preso a custo não soma aqui (já contido no A receber MP).</div>';
+          +'<div style="padding:6px 13px;background:var(--epanel2);font-size:10px;color:var(--emuted)">Fora da conta (decisão 20/08): recebíveis externos, estoque em mãos e Full. Custos fixos na venda mínima: Aluguel Foz R$ 2.500/mês. Capital preso não soma no recuperável (já contido no A receber MP).</div>';
       }
       box.innerHTML=
         '<div style="border:1px solid var(--eborder);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;gap:1px;background:var(--eborder)">'
