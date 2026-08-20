@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-20-C | selecta-banco-preco | HOTFIX INVESTIDORES + TROCA DE CARDS (Igor 20/08): (1) BUG CORRIGIDO (introduzido no 20-A): a montagem do invHtml usava line/F/F0/margem ANTES das declaracoes (TDZ — "Cannot access line before initialization"); ficou latente enquanto a view ecom_vw_capital_saldo nao existia (ramo else nunca rodava) e estourou quando o ledger nasceu. Correcao: bloco de montagem do invHtml MOVIDO para depois das declaracoes dos auxiliares, imediatamente antes do box.innerHTML; fetches (ledger/estoque/medCic) permanecem onde estavam. (2) Painel Geral: cards "N de vendas" e "Devolucoes (custo preso)" trocados de posicao (pedido Igor 20/08). | base: 2026-08-20-B (mesma sessao) -->
 <!-- BUILD 2026-08-20-B | selecta-banco-preco | PAINEL DE VOLTA + TERMOMETRO v3 BALANCETE (decisao Igor 20/08): (1) Painel Geral RESTAURADO ao conjunto anterior de cards — card "A receber no Mercado Pago" REMOVIDO do kpiHtml (informacao permanece no Termometro, bloco CAPITAL; a.recMP segue calculado no agg, sem uso no Painel). (2) TERMOMETRO v3 = mini balancete mensal RECEITAS x DESPESAS: secao RECEITAS (bruta informativa + "= RECEITAS CONSIDERADAS" = receita das vendas com margem fechada, mesma base das despesas — R e D na MESMA regua para o resultado fechar); secao DESPESAS (taxas ML + custo fornecedores + colchao + imposto + perdas do mes, com "= DESPESAS TOTAIS"); secao RESULTADO (lucro operacional -> LUCRO REAL DO MES -> margem ponderada). Linha "Deposito Mercado Pago" SAIU do fluxo (era intermediario da cascata; derivavel = receitas consideradas - taxas; Igor pode mandar de volta). Blocos CAPITAL e INVESTIDORES INTACTOS abaixo do balancete. ESTRUTURA entregue; conteudo adicional a ditar pelo Igor (slots abertos por decisao — nada inserido sem ordem). | base: 2026-08-20-A (diff zero conferido na sessao) -->
 <!-- BUILD 2026-08-20-A | selecta-banco-preco | BLOCO INVESTIDORES no Termometro (decisao Igor 20/08, sem telas novas): (1) BANCO: nova tabela ecom_capital_mov (ledger dos credores; tipos saldo_inicial/aporte/juro/amortizacao/ajuste; RLS authenticated) + view ecom_vw_capital_saldo (saldo_devedor + ancora_juro = ultima capitalizacao ou saldo_inicial — amortizacao NAO reseta o relogio de juro). SQL separado, aplicar ANTES deste index; sem SQL o bloco degrada para aviso ambar e o Termometro segue integro. (2) Taxas como constantes nomeadas (TAXA_CREDOR: credor_1=10%, credor_2=5%; TAXA_CENARIO_C1=7% — municao do pitch 24/08). Juro correndo = saldo x taxa x dias desde ancora/30, linear ate a capitalizacao MANUAL (lancar tipo juro no dia-base: c1 dia 05, c2 dia 20); atraso >32d gera aviso. (3) RECUPERAVEL = A receber MP (liquido, base inteira) + estoque do Catalogo a custo (estoque_atual x custo, ativo=true); capital preso a custo FICA FORA da soma (dupla contagem com recMP — correcao de doutrina 20/08); recebiveis externos e Full FORA (decisao Igor 20/08, Full = estudo a parte pos-regularizacao PR). DESCOBERTO = devo - recuperavel. (4) Leitura de capital: mediana venda->liberacao (ciclo cheio) + juro por R$1.000 de custo no ciclo (WACC do ledger) + empate lucro x juro na margem operacional viva do mes. (5) Doutrina: 6 apreensoes confirmadas no banco (nao 2) — fonte Correios, prejuizo fallback aplicado via backfill 20/08 (R$ 15.820,36). | base: 2026-08-19-B (repo e5c928f, linha 1 conferida na sessao) -->
 <!-- BUILD 2026-08-19-B | selecta-banco-preco | FECHAMENTO DAS OCORRENCIAS (aval Igor 19/08, sobre o 19-A): (1) retido_doc VOLTA ao capital em transito — trata-se como venda viva para fins de capital (custo no preso + valor no A receber MP ate liberar; desfecho binario: ou documento resolve e segue, ou vira apreendido/devolvido por remarcacao). 'outro' idem (era inconsistente: contava como venda no P&L mas sumia do capital — corrigido, cai na regra de liberacao). (2) extraviado/roubado/avariado ganham tratamento de PERDA (mesma familia da apreensao): fora dos agregados de venda, fora do capital preso, prejuizo_valor apurado pelo Igor DEBITA o lucro real — SEM preenchimento automatico (valor depende de reembolso ML, so o Igor apura; sem apurar entra no aviso de pendencia, zero tambem e valor). Card Apreensoes segue PURO (so apreendido); extraviado/roubado/avariado aparecem na linha de Perdas do Termometro como "outra(s) perda(s)" e no aviso de pendencia. | base: 19-A desta mesma sessao -->
@@ -4981,6 +4982,18 @@ const ecomFinanceiro={
       const dCic=all.filter(v=>!v.ocorrencia&&v.data_solicitacao&&v.data_liberacao_mp&&v.data_liberacao_mp<=hojeIso)
         .map(v=>(new Date(v.data_liberacao_mp)-new Date(v.data_solicitacao))/86400000).filter(d=>d>=0).sort((a,b)=>a-b);
       const medCic=dCic.length?(dCic.length%2?dCic[(dCic.length-1)/2]:(dCic[dCic.length/2-1]+dCic[dCic.length/2])/2):null;
+      const mp=recF-tax, margem=recF>0?(luc/recF*100):null, F=this.fmt, F0=this.fmt0;
+      const line=(k,v2,bg,kc)=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:'+(bg||'var(--epanel)')+'"><span style="font-size:12.5px'+(kc?';color:'+kc:'')+'">'+k+'</span><span style="font-family:var(--emono);font-size:12.5px;white-space:nowrap">'+v2+'</span></div>';
+      // BUILD 2026-08-19-A: lucro real do mes = OPERACIONAL - PERDAS (item 3 do Painel)
+      const lucLiq=luc-perdas;
+      const tot='<div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:#1a2740"><span style="font-weight:700">LUCRO REAL DO MÊS</span><span style="font-family:var(--emono);font-size:19px;font-weight:700;color:'+(nF===0&&!mesOc.length?'var(--emuted2)':(lucLiq>=0?'var(--eemerald)':'var(--ered)'))+'">'+(nF===0&&!mesOc.length?'—':'R$ '+F(lucLiq))+'</span></div>';
+      const pend=n-nF;
+      const aviso=pend>0?'<div style="font-size:11px;color:var(--eamber);margin-top:8px">⚠ '+pend+' venda(s) do mês sem margem fechada — custos e lucro acumulados ainda parciais.</div>':'';
+      // BUILD 2026-08-03-B: cálculo da projeção "próxima semana" removido junto com o bloco (morreu nos dois lugares)
+      // BUILD 2026-08-20-B: Termometro v3 = mini balancete mensal (estrutura Igor 20/08; conteudo adicional a ditar)
+      const despTot=tax+cus+col+imp+perdas;
+      const sec=(t,bg,c)=>'<div style="padding:7px 13px;background:'+bg+';font-size:10.5px;letter-spacing:1px;color:'+c+';font-weight:600">'+t+'</div>';
+      // BUILD 2026-08-20-C: invHtml montado APOS line/F/F0/margem (correcao TDZ)
       let invHtml='';
       if(ledger===null){
         invHtml='<div style="padding:9px 13px;background:#241c08;font-size:11.5px;color:var(--eamber)">INVESTIDORES aguardando: aplicar SQL do ledger (ecom_capital_mov + view) — o restante do Termômetro segue válido.</div>';
@@ -5012,17 +5025,6 @@ const ecomFinanceiro={
           +(capAtraso?'<div style="padding:7px 13px;background:#241c08;font-size:11px;color:var(--eamber)">⚠ Capitalização atrasada (&gt;32d sem lançamento de juro) — lançar movimento tipo \'juro\' no dia-base (c1 dia 05 · c2 dia 20).</div>':'')
           +'<div style="padding:6px 13px;background:var(--epanel2);font-size:10px;color:var(--emuted)">Fora da conta (decisão 20/08): recebíveis externos e estoque Full — estudo à parte pós-PR. Capital preso a custo não soma aqui (já contido no A receber MP).</div>';
       }
-      const mp=recF-tax, margem=recF>0?(luc/recF*100):null, F=this.fmt, F0=this.fmt0;
-      const line=(k,v2,bg,kc)=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:'+(bg||'var(--epanel)')+'"><span style="font-size:12.5px'+(kc?';color:'+kc:'')+'">'+k+'</span><span style="font-family:var(--emono);font-size:12.5px;white-space:nowrap">'+v2+'</span></div>';
-      // BUILD 2026-08-19-A: lucro real do mes = OPERACIONAL - PERDAS (item 3 do Painel)
-      const lucLiq=luc-perdas;
-      const tot='<div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:#1a2740"><span style="font-weight:700">LUCRO REAL DO MÊS</span><span style="font-family:var(--emono);font-size:19px;font-weight:700;color:'+(nF===0&&!mesOc.length?'var(--emuted2)':(lucLiq>=0?'var(--eemerald)':'var(--ered)'))+'">'+(nF===0&&!mesOc.length?'—':'R$ '+F(lucLiq))+'</span></div>';
-      const pend=n-nF;
-      const aviso=pend>0?'<div style="font-size:11px;color:var(--eamber);margin-top:8px">⚠ '+pend+' venda(s) do mês sem margem fechada — custos e lucro acumulados ainda parciais.</div>':'';
-      // BUILD 2026-08-03-B: cálculo da projeção "próxima semana" removido junto com o bloco (morreu nos dois lugares)
-      // BUILD 2026-08-20-B: Termometro v3 = mini balancete mensal (estrutura Igor 20/08; conteudo adicional a ditar)
-      const despTot=tax+cus+col+imp+perdas;
-      const sec=(t,bg,c)=>'<div style="padding:7px 13px;background:'+bg+';font-size:10.5px;letter-spacing:1px;color:'+c+';font-weight:600">'+t+'</div>';
       box.innerHTML=
         '<div style="border:1px solid var(--eborder);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;gap:1px;background:var(--eborder)">'
         +sec('RECEITAS','#08231f','var(--eteal)')
@@ -5215,11 +5217,11 @@ const ecomRelatorios={
       +'<div class="rp-idx"><div class="l">Faturamento</div><div class="v">R$ '+F(a.fat)+'</div></div>'
       +'<div class="rp-idx'+(a.lucLiq>=0?' good':' bad')+'"><div class="l">Lucro real (\u2013 perdas)</div><div class="v">R$ '+F(a.lucLiq)+'</div></div>'
       +'<div class="rp-idx"><div class="l">Margem ponderada (operacional)</div><div class="v">'+(a.margem==null?'—':F(a.margem)+'%')+'</div></div>'
-      +'<div class="rp-idx"><div class="l">Nº de vendas</div><div class="v">'+a.n+'</div></div>'
+      +'<div class="rp-idx'+(a.devQ?' bad':'')+'"><div class="l">Devoluções (custo preso)</div><div class="v">'+a.devQ+' · R$ '+F(a.devV)+'</div></div>'
       +'<div class="rp-idx"><div class="l">Compras do mês (fornecedores)</div><div class="v">R$ '+F(a.custo)+'</div></div>'
       +'<div class="rp-idx bad"><div class="l">Capital de giro preso (custo)</div><div class="v">R$ '+F(a.presoCG)+'</div></div>'
       // BUILD 2026-08-20-B: card 'A receber no Mercado Pago' removido do Painel (decisao Igor 20/08) — info vive no Termometro
-      +'<div class="rp-idx'+(a.devQ?' bad':'')+'"><div class="l">Devoluções (custo preso)</div><div class="v">'+a.devQ+' · R$ '+F(a.devV)+'</div></div>'
+      +'<div class="rp-idx"><div class="l">Nº de vendas</div><div class="v">'+a.n+'</div></div>'
       +'<div class="rp-idx'+(a.aprQ?' bad':'')+'"><div class="l">Apreensões (prejuízo)</div><div class="v">'+a.aprQ+' · R$ '+F(a.aprV)+'</div></div>'
       +'</div>'+pend+prejP;
   },
