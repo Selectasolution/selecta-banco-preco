@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-20-G | selecta-banco-preco | FLUXO DE APREENSAO + CUSTO IMUTAVEL + REORDENACAO (Igor 20/08): (1) ABA VENDAS: familia PERDA (apreendido/extraviado/roubado/avariado) SAI da lista viva e do totalizador — venda finalizada vive no Historico (que ja exibe status enviado/entregue com ocorrencia; nada se perde). Devolvido PERMANECE na fila (processo em andamento). (2) BALANCETE: "Custo dos fornecedores" = custo_total de TODAS as vendas do mes (mesAll, doutrina 19/08 item 4) — NAO se move ao fechar margens; DESPESAS TOTAIS usa o mesmo numero. CONSEQUENCIA declarada: RECEITAS CONSIDERADAS - DESPESAS TOTAIS deixa de bater com o LUCRO REAL (receita e das fechadas, custo e de todas); LUCRO REAL permanece o numero oficial (luc - perdas - juros). (3) CAPITAL: nova linha "Devolucoes a custo" abaixo de A receber MP; linha "Tenho recuperavel" APAGADA; "Descoberto" (rotulo enxuto) mudou do bloco INVESTIDORES para o fim do CAPITAL (= devo - (recMP + devolucoes), Coberto em verde se inverter). (4) INVESTIDORES vai AO FINAL, apos Descoberto: header + linhas dos credores + DEVO + "Venda minima custo" (rotulo enxuto); rodape informativo REMOVIDO (doutrina segue nos comentarios de BUILD). | base: 2026-08-20-F (mesma sessao) -->
 <!-- BUILD 2026-08-20-F | selecta-banco-preco | VENDA MINIMA + RECUPERAVEL CORRIGIDO + FIX INPUT (Igor 20/08): (1) REMOVIDAS as linhas "Juro correndo desde a ancora" e "Juro do mes cheio -> cenario 7%" e o "empate venda" por credor. (2) NOVA linha abaixo de DEVO AOS CREDORES: VENDA MINIMA DO MES = (juros do mes + CUSTOS_FIXOS_MES) / margem viva — constante CUSTOS_FIXOS_MES=2500 (Aluguel Foz; novos fixos somam na constante); recalcula sozinha quando a margem do mes muda. (3) RECUPERAVEL redefinido (correcao Igor): A receber MP + DEVOLUCOES a custo (ocorrencia devolvido, ate reintegrar); fetch de estoque do Catalogo REMOVIDO (falhava e o conceito caiu). (4) FIX lancamento de juros: input era type=number e rejeitava virgula pt-BR silenciosamente — agora type=text inputmode=decimal com parser que aceita 9.900,00 / 9900,00 / 9900.00. TAXA_CENARIO_C1 removida (linha que a usava morreu). | base: 2026-08-20-E (mesma sessao) -->
 <!-- BUILD 2026-08-20-E | selecta-banco-preco | MINI SIMULADOR POR CREDOR (Igor 20/08): (1) Cada credor vira UMA linha-simulador no bloco INVESTIDORES: nome+taxa+saldo | juros do mes (saldo x taxa) | vencimento (ancora + 1 mes) | input valor pago + Lancar (INSERT juro_pago no ledger, data hoje, confirm antes — gera caixa despesa: entra em Custo financeiro do balancete e debita o LUCRO REAL) | empate de venda do credor (juros do credor / margem viva do mes). (2) REMOVIDAS as linhas: Empate lucro x juro global, Ciclo venda->liberacao (juro por R$1.000), Cada ponto de juro no credor_1, e o formulario solto do 20-D (metodo capLancar substituido por capPagar(credor)). Capitalizacao de juro NAO PAGO segue via SQL manual (modelos no sql-ledger). (3) REQUER ledger v2 (CHECK com juro_pago) — sem ele o Lancar falha no CHECK com erro visivel. | base: 2026-08-20-D (mesma sessao) -->
 <!-- BUILD 2026-08-20-D | selecta-banco-preco | BALANCETE LIMPO + CUSTO FINANCEIRO + LANCAMENTO NO LEDGER (Igor 20/08): (1) Rotulos removidos do balancete: "(margens fechadas)", "(vendas fechadas)", "(vendas vivas)". (2) DESPESAS ganha linha "Custo financeiro - juros dos credores": soma dos movimentos do ledger do MES corrente com tipo juro (capitalizado) ou juro_pago (pago em caixa); entra no DESPESAS TOTAIS e DEBITA o LUCRO REAL (lucLiq = luc - perdas - jurosMes). Amortizacao NAO e despesa (movimento de balanco: reduz DEVO, nao reduz lucro). Decisao Igor+analise: juro como linha explicita de medicao; colchao segue regua de PRECIFICACAO intocada (juro e fixo sobre saldo devedor, colchao e % da venda — nao escalam juntos). (3) Bloco INVESTIDORES ganha formulario de lancamento (credor + tipo juro_pago/juro/amortizacao + valor + data, confirm antes do INSERT em ecom_capital_mov, re-render apos) — metodo ecomFinanceiro.capLancar. REQUER SQL v2 do ledger: CHECK de tipo ampliado com juro_pago + view ecom_vw_capital_saldo v2 (juro_pago nao altera saldo mas RESETA a ancora de juro). Sem o SQL, lancamento de juro_pago falha no CHECK (erro visivel, sem corrupcao). (4) Valores de Capital preso / A receber MP CONTESTADOS pelo Igor (98.165 / 139.057 vs painel ML 75.679) — diagnostico via SQL espelho ANTES de qualquer conserto; hipotese: vendas antigas com data_liberacao_mp NULL (pre-rastreamento do sync). | base: 2026-08-20-C (mesma sessao) -->
@@ -4758,7 +4759,10 @@ const ecomVendas={
         .select('id,ml_pedido_id,produto,produto_codigo,preco_venda,quantidade,status,data_solicitacao,prazo_postagem,envio_substatus,envio_atualizado_em,codigo_rastreio,ocorrencia,ocorrencia_em,custo_total,taxas_ml_total,prejuizo_valor')
         .in('status',['a_enviar','enviado'])
         .order('data_solicitacao',{ascending:false});
-      if(r.error) throw r.error; const itens=r.data||[]; this.render(itens); this.totalizador(itens);
+      if(r.error) throw r.error;
+      // BUILD 2026-08-20-G: familia PERDA e venda finalizada — sai da aba Vendas, vive no Historico
+      const itens=(r.data||[]).filter(v=>!(v.ocorrencia==='apreendido'||v.ocorrencia==='extraviado'||v.ocorrencia==='roubado'||v.ocorrencia==='avariado'));
+      this.render(itens); this.totalizador(itens);
     }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar: '+e.message+'</div>'; const tt=this._g('vd-mes-tot'); if(tt) tt.textContent=''; }
   },
   // BUILD 2026-08-17-D: totalizador da fila pendente — quanto ja foi vendido e ainda nao chegou ao cliente
@@ -4978,6 +4982,8 @@ const ecomFinanceiro={
           cus+=+v.custo_total||0; col+=+v.colchao_valor||0;
           imp+=(v.imposto_valor!=null?+v.imposto_valor:Math.round(rb*4)/100);
           luc+=+v.resultado_liquido; } });
+      // BUILD 2026-08-20-G: compras do mes = TODAS as vendas (nao se move ao fechar margens)
+      let cusMes=0; mesAll.forEach(v=>{ cusMes+=(+v.custo_total||0); });
       // BUILD 2026-08-19-B: retido_doc e 'outro' = venda viva para o capital; familia PERDA fora do preso; devolvido a custo
       const hojeIso=new Date().toISOString(); let preso=0,recMP=0;
       all.forEach(v=>{ if(v.ocorrencia && v.ocorrencia!=='retido_doc' && v.ocorrencia!=='outro'){
@@ -5010,10 +5016,10 @@ const ecomFinanceiro={
       const aviso=pend>0?'<div style="font-size:11px;color:var(--eamber);margin-top:8px">⚠ '+pend+' venda(s) do mês sem margem fechada — custos e lucro acumulados ainda parciais.</div>':'';
       // BUILD 2026-08-03-B: cálculo da projeção "próxima semana" removido junto com o bloco (morreu nos dois lugares)
       // BUILD 2026-08-20-B: Termometro v3 = mini balancete mensal (estrutura Igor 20/08; conteudo adicional a ditar)
-      const despTot=tax+cus+col+imp+perdas+jurosMes;
+      const despTot=tax+cusMes+col+imp+perdas+jurosMes;
       const sec=(t,bg,c)=>'<div style="padding:7px 13px;background:'+bg+';font-size:10.5px;letter-spacing:1px;color:'+c+';font-weight:600">'+t+'</div>';
       // BUILD 2026-08-20-C: invHtml montado APOS line/F/F0/margem (correcao TDZ)
-      let invHtml='';
+      let invHtml='', descT=null;
       if(ledger===null){
         invHtml='<div style="padding:9px 13px;background:#241c08;font-size:11.5px;color:var(--eamber)">INVESTIDORES aguardando: aplicar SQL do ledger (ecom_capital_mov + view) — o restante do Termômetro segue válido.</div>';
       } else {
@@ -5031,18 +5037,14 @@ const ecomFinanceiro={
             +'<span style="font-size:12px">vence <b>'+(venc?venc.toLocaleDateString('pt-BR'):'—')+'</b></span>'
             +'<span style="display:flex;gap:6px;align-items:center"><input id="cap-pago-'+c.credor+'" class="inp" type="text" inputmode="decimal" placeholder="valor pago R$" style="width:118px;padding:5px 8px;font-size:12px"><button class="btn" style="padding:5px 10px;font-size:12px" onclick="ecomFinanceiro.capPagar(\''+c.credor+'\')">Lançar</button></span>'
             +'</div>'); });
-        const recup=recMP+devCusto, desc=devo-recup;
+        const recup=recMP+devCusto, desc=devo-recup; descT=desc;
         const vendaMin=(margem!=null&&margem>0)?(juroMes+CUSTOS_FIXOS_MES)/(margem/100):null;
         invHtml='<div style="padding:7px 13px;background:var(--epanel2);font-size:10.5px;letter-spacing:1px;color:var(--emuted)">INVESTIDORES · capital de terceiros</div>'
           +credL.join('')
           +line('= DEVO AOS CREDORES','R$ '+F(devo),'#2a0d0d','var(--ered)')
-          +line('Venda mínima do mês · (juros + custos fixos) ÷ margem viva'+(margem!=null&&margem>0?' ('+F(margem)+'%)':''),vendaMin!=null?('R$ '+F0(vendaMin)+'/mês'):'— (sem margem fechada no mês)','#241c08','var(--eamber)')
-          +line('Tenho recuperável · A receber MP + devoluções a custo','R$ '+F(recup))
-          +(desc>0
-            ?line('= DESCOBERTO (devo além do recuperável)','R$ '+F(desc),'#2a0d0d','var(--ered)')
-            :line('= COBERTO (recuperável excede a dívida)','R$ '+F(-desc),'#08231f','var(--eteal)'))
+          +line('Venda mínima custo',vendaMin!=null?('R$ '+F0(vendaMin)+'/mês'):'—','#241c08','var(--eamber)')
           +(capAtraso?'<div style="padding:7px 13px;background:#241c08;font-size:11px;color:var(--eamber)">⚠ Capitalização atrasada (&gt;32d sem lançamento de juro) — lançar movimento tipo \'juro\' no dia-base (c1 dia 05 · c2 dia 20).</div>':'')
-          +'<div style="padding:6px 13px;background:var(--epanel2);font-size:10px;color:var(--emuted)">Fora da conta (decisão 20/08): recebíveis externos, estoque em mãos e Full. Custos fixos na venda mínima: Aluguel Foz R$ 2.500/mês. Capital preso não soma no recuperável (já contido no A receber MP).</div>';
+          +'';
       }
       box.innerHTML=
         '<div style="border:1px solid var(--eborder);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;gap:1px;background:var(--eborder)">'
@@ -5052,7 +5054,7 @@ const ecomFinanceiro={
         +line('= RECEITAS CONSIDERADAS',nF?('R$ '+F(recF)):'—','#08231f','var(--eteal)')
         +sec('DESPESAS','#2a0d0d','var(--ered)')
         +line('Taxas do ML',nF?('– R$ '+F(tax)):'—','#241c08','var(--eamber)')
-        +line('Custo dos fornecedores',nF?('– R$ '+F(cus)):'—','#241c08','var(--eamber)')
+        +line('Custo dos fornecedores',cusMes>0?('– R$ '+F(cusMes)):'—','#241c08','var(--eamber)')
         +line('Colchão operacional',nF?('– R$ '+F(col)):'—','#241c08','var(--eamber)')
         +line('Imposto · 4% da receita',nF?('– R$ '+F(imp)):'—','#241c08','var(--eamber)')
         +line('Custo financeiro · juros dos credores',jurosMes>0?('– R$ '+F(jurosMes)):'—','#241c08','var(--eamber)')
@@ -5065,7 +5067,9 @@ const ecomFinanceiro={
         +'<div style="padding:7px 13px;background:var(--epanel2);font-size:10.5px;letter-spacing:1px;color:var(--emuted)">CAPITAL · operação inteira</div>'
         +line('Capital de giro preso (custo)','R$ '+F(preso))
         +line('A receber no Mercado Pago','R$ '+F(recMP))
+        +line('Devoluções a custo','R$ '+F(devCusto))
         +line('MP libera após entrega',medLib==null?'— (sem venda liberada medida)':'~'+Math.round(medLib)+' dia(s) · mediana')
+        +(descT!=null?(descT>0?line('Descoberto','R$ '+F(descT),'#2a0d0d','var(--ered)'):line('Coberto','R$ '+F(-descT),'#08231f','var(--eteal)')):'')
         +invHtml
         +'</div>'+aviso
         +(perdasPend>0?'<div style="font-size:11px;color:var(--ered);margin-top:6px">\u26d4 '+perdasPend+' ocorr\u00eancia(s) do m\u00eas sem preju\u00edzo apurado — abra o Editar do Hist\u00f3rico e feche o valor l\u00edquido.</div>':'');
