@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-20-A | selecta-banco-preco | BLOCO INVESTIDORES no Termometro (decisao Igor 20/08, sem telas novas): (1) BANCO: nova tabela ecom_capital_mov (ledger dos credores; tipos saldo_inicial/aporte/juro/amortizacao/ajuste; RLS authenticated) + view ecom_vw_capital_saldo (saldo_devedor + ancora_juro = ultima capitalizacao ou saldo_inicial — amortizacao NAO reseta o relogio de juro). SQL separado, aplicar ANTES deste index; sem SQL o bloco degrada para aviso ambar e o Termometro segue integro. (2) Taxas como constantes nomeadas (TAXA_CREDOR: credor_1=10%, credor_2=5%; TAXA_CENARIO_C1=7% — municao do pitch 24/08). Juro correndo = saldo x taxa x dias desde ancora/30, linear ate a capitalizacao MANUAL (lancar tipo juro no dia-base: c1 dia 05, c2 dia 20); atraso >32d gera aviso. (3) RECUPERAVEL = A receber MP (liquido, base inteira) + estoque do Catalogo a custo (estoque_atual x custo, ativo=true); capital preso a custo FICA FORA da soma (dupla contagem com recMP — correcao de doutrina 20/08); recebiveis externos e Full FORA (decisao Igor 20/08, Full = estudo a parte pos-regularizacao PR). DESCOBERTO = devo - recuperavel. (4) Leitura de capital: mediana venda->liberacao (ciclo cheio) + juro por R$1.000 de custo no ciclo (WACC do ledger) + empate lucro x juro na margem operacional viva do mes. (5) Doutrina: 6 apreensoes confirmadas no banco (nao 2) — fonte Correios, prejuizo fallback aplicado via backfill 20/08 (R$ 15.820,36). | base: 2026-08-19-B (repo e5c928f, linha 1 conferida na sessao) -->
 <!-- BUILD 2026-08-19-B | selecta-banco-preco | FECHAMENTO DAS OCORRENCIAS (aval Igor 19/08, sobre o 19-A): (1) retido_doc VOLTA ao capital em transito — trata-se como venda viva para fins de capital (custo no preso + valor no A receber MP ate liberar; desfecho binario: ou documento resolve e segue, ou vira apreendido/devolvido por remarcacao). 'outro' idem (era inconsistente: contava como venda no P&L mas sumia do capital — corrigido, cai na regra de liberacao). (2) extraviado/roubado/avariado ganham tratamento de PERDA (mesma familia da apreensao): fora dos agregados de venda, fora do capital preso, prejuizo_valor apurado pelo Igor DEBITA o lucro real — SEM preenchimento automatico (valor depende de reembolso ML, so o Igor apura; sem apurar entra no aviso de pendencia, zero tambem e valor). Card Apreensoes segue PURO (so apreendido); extraviado/roubado/avariado aparecem na linha de Perdas do Termometro como "outra(s) perda(s)" e no aviso de pendencia. | base: 19-A desta mesma sessao -->
 <!-- BUILD 2026-08-19-A | selecta-banco-preco | REALIDADE DO CAPITAL (decisao Igor 19/08, itens 1-8 do Painel + D5): (1) BANCO: CHECK ecom_vendas_ocorrencia_check ampliado com 'devolvido_reintegrado' (ALTER aplicado e constraint conferida na sessao). (2) agg v2: custo = TODAS as compras (ocorrencia NAO debita custo); LUCRO REAL = liquido de perdas (perdas DEBITAM; apreensao sem prejuizo apurado usa fallback custo_total+taxas_ml_total); margem ponderada permanece OPERACIONAL (lucro vivo / faturamento fechado, sem contaminacao de sinistro); card Devolucoes vira CUSTO PRESO (era receita revertida); card Apreensoes vira PREJUIZO (era receita revertida). (3) CAPITAL DE GIRO PRESO muda de base: custo pago ao fornecedor sem retorno ao caixa; criterio = LIBERACAO MP (data_liberacao_mp<=hoje), nao mais status entregue (D5); calculado sobre a base INTEIRA, nao so o mes corrente (venda velha nao-liberada voltou a contar); devolvido soma custo ate reintegrar; apreendido FORA do preso (migrou para prejuizo). Card novo A RECEBER MP (valor de venda nao liberado — bate com painel MP). (4) TERMOMETRO v2: subtotal Lucro operacional; Perdas do mes SOBEM e DEBITAM (Lucro real do mes = liquido); bloco CAPITAL (preso a custo + A receber MP + mediana de dias entrega->liberacao MP). (5) devolvido_reintegrado: Igor marca ao dar entrada no Catalogo — sai do preso, mantem historico e contagem. (6) apreendido pre-preenche prejuizo_valor = custo_total+taxas_ml_total SOMENTE se vazio (sugestao visivel/editavel no ato manual; fila grava se nulo, Editar preenche o campo na tela). | base: 2026-08-18-B (md5 3c2d12cd64ea452d0106dae72328b06a conferido na sessao) -->
 <!-- BUILD 2026-08-18-B | selecta-banco-preco | OCORRENCIA MANUAL + REALIDADE DOS NUMEROS (decisao Igor 18/08): (1) Colunas novas ecom_vendas.ocorrencia/ocorrencia_em/prejuizo_valor (SQL separado — aplicar ANTES deste index; schema conferido via information_schema na sessao, 52 colunas, nenhuma colisao). (2) Camada de verdade manual: select de ocorrencia na fila (status enviado) e no Editar do Historico (qualquer status) — apreendido/devolvido/extraviado/roubado/avariado/retido_doc/outro; sync v1.4 nao conhece as colunas = protegidas do merge por construcao. Pill CRIT (vermelho solido) com precedencia sobre substatus ML. (3) REALIDADE CONTABIL: devolvido/apreendido saem de TODOS os agregados (Visao Geral agg, vendidos, Por mes, Termometro, capital preso, totalizador da fila) e ganham campo proprio — cards Devolucoes (qtd/R$) e Apreensoes (qtd/R$) no lugar de Ticket medio e Lucro por R$ investido; valor = receita bruta revertida. (4) Termometro ganha linha PERDAS DO MES = soma de prejuizo_valor das ocorrencias do mes (prejuizo LIQUIDO manual: devolucao ~ frete+tarifas nao estornadas-bonificacao BV; apreensao ~ custo do produto - imposto restituido; produto de devolucao VOLTA — estoque ajustado a mao no Catalogo, lembrete no app, sem escrita automatica). (5) Fila: apreendido sai do R$ aguardando entrega e entra em alerta proprio. | base: 2026-08-18-A (md5 8889b31925f457291b92491a6f6e61b3 conferido na sessao) -->
@@ -4970,6 +4971,46 @@ const ecomFinanceiro={
       const dias=all.filter(v=>!v.ocorrencia&&v.data_entrega&&v.data_liberacao_mp&&v.data_liberacao_mp<=hojeIso)
         .map(v=>(new Date(v.data_liberacao_mp)-new Date(v.data_entrega))/86400000).filter(d=>d>=0).sort((a,b)=>a-b);
       const medLib=dias.length?(dias.length%2?dias[(dias.length-1)/2]:(dias[dias.length/2-1]+dias[dias.length/2])/2):null;
+      // BUILD 2026-08-20-A: INVESTIDORES — ledger de credores + recuperavel + descoberto + custo de capital
+      const TAXA_CREDOR={credor_1:0.10,credor_2:0.05}, TAXA_CENARIO_C1=0.07; // pitch 24/08: credor_1 renegociado a 7%
+      let ledger=null; try{ const rl=await sb.from('ecom_vw_capital_saldo').select('*'); if(!rl.error) ledger=rl.data||[]; }catch(_e){}
+      let estq=0, estqOk=false; try{ const re=await sb.from('ecom_produtos').select('estoque_atual,custo').eq('ativo',true);
+        if(!re.error){ estqOk=true; (re.data||[]).forEach(p=>{ estq+=(Number(p.estoque_atual)||0)*(Number(p.custo)||0); }); } }catch(_e){}
+      // mediana venda->liberacao (ciclo cheio de capital; so vendas sem ocorrencia ja liberadas)
+      const dCic=all.filter(v=>!v.ocorrencia&&v.data_solicitacao&&v.data_liberacao_mp&&v.data_liberacao_mp<=hojeIso)
+        .map(v=>(new Date(v.data_liberacao_mp)-new Date(v.data_solicitacao))/86400000).filter(d=>d>=0).sort((a,b)=>a-b);
+      const medCic=dCic.length?(dCic.length%2?dCic[(dCic.length-1)/2]:(dCic[dCic.length/2-1]+dCic[dCic.length/2])/2):null;
+      let invHtml='';
+      if(ledger===null){
+        invHtml='<div style="padding:9px 13px;background:#241c08;font-size:11.5px;color:var(--eamber)">INVESTIDORES aguardando: aplicar SQL do ledger (ecom_capital_mov + view) — o restante do Termômetro segue válido.</div>';
+      } else {
+        let devo=0,juroCorr=0,juroMes=0,juroMesCen=0,saldoC1=0,capAtraso=false; const credL=[];
+        ledger.forEach(c=>{ const s=+c.saldo_devedor||0; if(s===0) return; devo+=s;
+          const tx=(TAXA_CREDOR[c.credor]!=null)?TAXA_CREDOR[c.credor]:0.10;
+          if(c.credor==='credor_1') saldoC1=s;
+          const anc=c.ancora_juro||c.ultimo_mov; const dj=anc?Math.max(0,Math.floor((now-new Date(anc+'T00:00:00'))/86400000)):0;
+          if(dj>32) capAtraso=true;
+          juroCorr+=s*tx*dj/30; juroMes+=s*tx; juroMesCen+=s*(c.credor==='credor_1'?TAXA_CENARIO_C1:tx);
+          credL.push(line('Devo · '+c.credor+' · '+(tx*100).toFixed(0)+'% a.m. · âncora '+(anc?new Date(anc+'T00:00:00').toLocaleDateString('pt-BR'):'—')+' ('+dj+'d)','R$ '+F(s))); });
+        const recup=recMP+(estqOk?estq:0), desc=devo-recup;
+        const wacc=devo>0?juroMes/devo:null;
+        const cc1000=(wacc!=null&&medCic!=null)?1000*wacc*medCic/30:null;
+        const empate=(margem!=null&&margem>0)?juroMes/(margem/100):null;
+        invHtml='<div style="padding:7px 13px;background:var(--epanel2);font-size:10.5px;letter-spacing:1px;color:var(--emuted)">INVESTIDORES · capital de terceiros</div>'
+          +credL.join('')
+          +line('= DEVO AOS CREDORES','R$ '+F(devo),'#2a0d0d','var(--ered)')
+          +line('Juro correndo desde a âncora (pró-rata)',devo>0?'– R$ '+F(juroCorr):'—','#241c08','var(--eamber)')
+          +line('Juro do mês cheio · hoje → cenário 7% no credor_1','R$ '+F(juroMes)+' → R$ '+F(juroMesCen)+' (Δ R$ '+F(juroMes-juroMesCen)+'/mês)')
+          +line('Tenho recuperável · A receber MP + estoque a custo'+(estqOk?'':' (estoque indisponível)'),'R$ '+F(recup))
+          +(desc>0
+            ?line('= DESCOBERTO (devo além do recuperável)','R$ '+F(desc),'#2a0d0d','var(--ered)')
+            :line('= COBERTO (recuperável excede a dívida)','R$ '+F(-desc),'#08231f','var(--eteal)'))
+          +line('Empate lucro×juro na margem viva do mês'+(margem!=null?' ('+F(margem)+'%)':''),empate!=null?'R$ '+F0(empate)+' de faturamento/mês':'— (sem margem fechada no mês)')
+          +line('Ciclo venda→liberação'+(medCic!=null?' · ~'+Math.round(medCic)+'d (mediana)':''),cc1000!=null?'R$ '+F(cc1000)+' de juro por R$ 1.000 de custo':'— (sem ciclo medido)')
+          +(saldoC1>0?line('Cada ponto de juro no credor_1','R$ '+F(saldoC1*0.01)+'/mês'):'')
+          +(capAtraso?'<div style="padding:7px 13px;background:#241c08;font-size:11px;color:var(--eamber)">⚠ Capitalização atrasada (&gt;32d sem lançamento de juro) — lançar movimento tipo \'juro\' no dia-base (c1 dia 05 · c2 dia 20).</div>':'')
+          +'<div style="padding:6px 13px;background:var(--epanel2);font-size:10px;color:var(--emuted)">Fora da conta (decisão 20/08): recebíveis externos e estoque Full — estudo à parte pós-PR. Capital preso a custo não soma aqui (já contido no A receber MP).</div>';
+      }
       const mp=recF-tax, margem=recF>0?(luc/recF*100):null, F=this.fmt, F0=this.fmt0;
       const line=(k,v2,bg,kc)=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:'+(bg||'var(--epanel)')+'"><span style="font-size:12.5px'+(kc?';color:'+kc:'')+'">'+k+'</span><span style="font-family:var(--emono);font-size:12.5px;white-space:nowrap">'+v2+'</span></div>';
       // BUILD 2026-08-19-A: lucro real do mes = OPERACIONAL - PERDAS (item 3 do Painel)
@@ -4995,6 +5036,7 @@ const ecomFinanceiro={
         +line('Capital de giro preso (custo)','R$ '+F(preso))
         +line('A receber no Mercado Pago','R$ '+F(recMP))
         +line('MP libera após entrega',medLib==null?'— (sem venda liberada medida)':'~'+Math.round(medLib)+' dia(s) · mediana')
+        +invHtml
         +'</div>'+aviso
         +(perdasPend>0?'<div style="font-size:11px;color:var(--ered);margin-top:6px">\u26d4 '+perdasPend+' ocorr\u00eancia(s) do m\u00eas sem preju\u00edzo apurado — abra o Editar do Hist\u00f3rico e feche o valor l\u00edquido.</div>':'');
       // BUILD 2026-08-03-B: projeção "Próxima semana" removida também daqui (decisão Igor 03/08 — morre nos dois lugares)
