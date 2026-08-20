@@ -1,3 +1,5 @@
+<!-- BUILD 2026-08-19-B | selecta-banco-preco | FECHAMENTO DAS OCORRENCIAS (aval Igor 19/08, sobre o 19-A): (1) retido_doc VOLTA ao capital em transito — trata-se como venda viva para fins de capital (custo no preso + valor no A receber MP ate liberar; desfecho binario: ou documento resolve e segue, ou vira apreendido/devolvido por remarcacao). 'outro' idem (era inconsistente: contava como venda no P&L mas sumia do capital — corrigido, cai na regra de liberacao). (2) extraviado/roubado/avariado ganham tratamento de PERDA (mesma familia da apreensao): fora dos agregados de venda, fora do capital preso, prejuizo_valor apurado pelo Igor DEBITA o lucro real — SEM preenchimento automatico (valor depende de reembolso ML, so o Igor apura; sem apurar entra no aviso de pendencia, zero tambem e valor). Card Apreensoes segue PURO (so apreendido); extraviado/roubado/avariado aparecem na linha de Perdas do Termometro como "outra(s) perda(s)" e no aviso de pendencia. | base: 19-A desta mesma sessao -->
+<!-- BUILD 2026-08-19-A | selecta-banco-preco | REALIDADE DO CAPITAL (decisao Igor 19/08, itens 1-8 do Painel + D5): (1) BANCO: CHECK ecom_vendas_ocorrencia_check ampliado com 'devolvido_reintegrado' (ALTER aplicado e constraint conferida na sessao). (2) agg v2: custo = TODAS as compras (ocorrencia NAO debita custo); LUCRO REAL = liquido de perdas (perdas DEBITAM; apreensao sem prejuizo apurado usa fallback custo_total+taxas_ml_total); margem ponderada permanece OPERACIONAL (lucro vivo / faturamento fechado, sem contaminacao de sinistro); card Devolucoes vira CUSTO PRESO (era receita revertida); card Apreensoes vira PREJUIZO (era receita revertida). (3) CAPITAL DE GIRO PRESO muda de base: custo pago ao fornecedor sem retorno ao caixa; criterio = LIBERACAO MP (data_liberacao_mp<=hoje), nao mais status entregue (D5); calculado sobre a base INTEIRA, nao so o mes corrente (venda velha nao-liberada voltou a contar); devolvido soma custo ate reintegrar; apreendido FORA do preso (migrou para prejuizo). Card novo A RECEBER MP (valor de venda nao liberado — bate com painel MP). (4) TERMOMETRO v2: subtotal Lucro operacional; Perdas do mes SOBEM e DEBITAM (Lucro real do mes = liquido); bloco CAPITAL (preso a custo + A receber MP + mediana de dias entrega->liberacao MP). (5) devolvido_reintegrado: Igor marca ao dar entrada no Catalogo — sai do preso, mantem historico e contagem. (6) apreendido pre-preenche prejuizo_valor = custo_total+taxas_ml_total SOMENTE se vazio (sugestao visivel/editavel no ato manual; fila grava se nulo, Editar preenche o campo na tela). | base: 2026-08-18-B (md5 3c2d12cd64ea452d0106dae72328b06a conferido na sessao) -->
 <!-- BUILD 2026-08-18-B | selecta-banco-preco | OCORRENCIA MANUAL + REALIDADE DOS NUMEROS (decisao Igor 18/08): (1) Colunas novas ecom_vendas.ocorrencia/ocorrencia_em/prejuizo_valor (SQL separado — aplicar ANTES deste index; schema conferido via information_schema na sessao, 52 colunas, nenhuma colisao). (2) Camada de verdade manual: select de ocorrencia na fila (status enviado) e no Editar do Historico (qualquer status) — apreendido/devolvido/extraviado/roubado/avariado/retido_doc/outro; sync v1.4 nao conhece as colunas = protegidas do merge por construcao. Pill CRIT (vermelho solido) com precedencia sobre substatus ML. (3) REALIDADE CONTABIL: devolvido/apreendido saem de TODOS os agregados (Visao Geral agg, vendidos, Por mes, Termometro, capital preso, totalizador da fila) e ganham campo proprio — cards Devolucoes (qtd/R$) e Apreensoes (qtd/R$) no lugar de Ticket medio e Lucro por R$ investido; valor = receita bruta revertida. (4) Termometro ganha linha PERDAS DO MES = soma de prejuizo_valor das ocorrencias do mes (prejuizo LIQUIDO manual: devolucao ~ frete+tarifas nao estornadas-bonificacao BV; apreensao ~ custo do produto - imposto restituido; produto de devolucao VOLTA — estoque ajustado a mao no Catalogo, lembrete no app, sem escrita automatica). (5) Fila: apreendido sai do R$ aguardando entrega e entra em alerta proprio. | base: 2026-08-18-A (md5 8889b31925f457291b92491a6f6e61b3 conferido na sessao) -->
 <!-- BUILD 2026-08-18-A | selecta-banco-preco | RASTREIO NA FILA DE VENDAS (Fase 2 do acompanhamento de entrega, decisao Igor 18/08): cada item da fila de pendentes ganha 2a linha de logistica — (a) pill do envio_substatus traduzido pt-BR com severidade (err: extraviado/devolvido/tentativa frustrada = agir; warn: NF pendente/destinatario ausente/atrasado/aguardando retirada; ok: saiu para entrega; mut: fluxo normal), fallback mostra substatus cru; (b) codigo_rastreio CLICAVEL abrindo rastreamento.correios.com.br com o objeto preenchido (ninguem digita codigo no site dos Correios); (c) frescor: "ML viu ha Xh" e alerta ambar "sem movimento ha Nd" quando envio_atualizado_em > 72h (deteccao de pacote parado ANTES da reclamacao). SELECT da fila ganha envio_substatus, envio_atualizado_em, codigo_rastreio (colunas conferidas na sessao: dump information_schema de ecom_vendas + ALTER Success 17/08). Fonte de dados: ml-orders v1.4, malha 07h/17h BRT. Zero SQL novo, zero mudanca de logica. | base: 2026-08-17-D (md5 51d8b07cce1e86537180ec86eab30208) -->
 <!-- BUILD 2026-08-17-D | selecta-banco-preco | LANCADAS = FILA DE PENDENTES DE ENTREGA (decisao Igor 17/08): lista da aba Vendas passa a exibir SOMENTE a_enviar + enviado, sem janela de mes (pendencia antiga aparece sempre); entregue SAI automaticamente da fila quando o status vira entregue (sync ml-orders ou botao do Historico) e permanece no Historico (que ja exibe enviado+entregue — nada e apagado do banco). Seletor de mes OCULTO (ids e bindings preservados); totalizador reescrito: N a enviar · N enviados · R$ em transito aguardando entrega (leitura do capital que o Mercado Pago ainda nao liberou). Cancelado/perda saem da fila; consultaveis na Consulta gerencial (Historico). Zero SQL. | base: 2026-08-17-C (md5 3ff57d8bd8c0fd9819f913400ed59d71) -->
@@ -1822,10 +1824,10 @@
           </div>
           <!-- BUILD 2026-08-18-B: camada de verdade manual — ocorrencia + prejuizo liquido apurado -->
           <div class="vrow" style="margin-top:4px;padding-top:8px;border-top:1px dashed var(--eborder)">
-            <div class="efield"><label style="color:var(--ered)">Ocorrência (verdade manual)</label><select class="vinput mono" id="hs-ocor"><option value="">— nenhuma</option><option value="apreendido">apreendido · fiscalização</option><option value="devolvido">devolvido pelo cliente</option><option value="extraviado">extraviado (confirmado)</option><option value="roubado">roubado</option><option value="avariado">avariado</option><option value="retido_doc">retido · aguardando documento</option><option value="outro">outra ocorrência</option></select></div>
+            <div class="efield"><label style="color:var(--ered)">Ocorrência (verdade manual)</label><select class="vinput mono" id="hs-ocor"><option value="">— nenhuma</option><option value="apreendido">apreendido · fiscalização</option><option value="devolvido">devolvido pelo cliente</option><option value="devolvido_reintegrado">devolvido · reintegrado ao estoque</option><option value="extraviado">extraviado (confirmado)</option><option value="roubado">roubado</option><option value="avariado">avariado</option><option value="retido_doc">retido · aguardando documento</option><option value="outro">outra ocorrência</option></select></div>
             <div class="efield"><label style="color:var(--ered)">Prejuízo líquido apurado (R$)</label><input class="vinput mono" id="hs-prej" type="number" step="0.01" placeholder="0,00"></div>
           </div>
-          <div id="hs-ocor-hint" style="font-size:11px;color:var(--emuted);margin-top:4px">Prejuízo LÍQUIDO, cada centavo no lugar: devolução ≈ frete + tarifas não estornadas − bonificação BV da comissão (confira no extrato MP); apreensão ≈ custo do produto + débito MP − imposto restituído. Produto de devolução volta: ajuste o estoque no Catálogo manualmente.</div>
+          <div id="hs-ocor-hint" style="font-size:11px;color:var(--emuted);margin-top:4px">Prejuízo LÍQUIDO, cada centavo no lugar: devolução ≈ frete + tarifas não estornadas − bonificação BV da comissão (confira no extrato MP); apreensão ≈ custo + taxas ML (o app SUGERE esse valor ao marcar; ajuste se o apurado for outro − imposto restituído). Devolução volta: ao dar entrada no Catálogo, marque "devolvido · reintegrado" para sair do capital preso.</div>
           <div class="vmsg" id="hs-mmsg"></div>
           <div style="display:flex;gap:10px;margin-top:14px;justify-content:flex-end">
             <button class="vbtn sm" id="hs-cancel">Cancelar</button>
@@ -4747,7 +4749,7 @@ const ecomVendas={
   // Cancelado/perda: consultaveis na Consulta gerencial (Relatorios > Historico).
   async load(){ const box=this._g('vd-list');
     try{ const r=await sb.from('ecom_vendas')
-        .select('id,ml_pedido_id,produto,produto_codigo,preco_venda,quantidade,status,data_solicitacao,prazo_postagem,envio_substatus,envio_atualizado_em,codigo_rastreio,ocorrencia,ocorrencia_em')
+        .select('id,ml_pedido_id,produto,produto_codigo,preco_venda,quantidade,status,data_solicitacao,prazo_postagem,envio_substatus,envio_atualizado_em,codigo_rastreio,ocorrencia,ocorrencia_em,custo_total,taxas_ml_total,prejuizo_valor')
         .in('status',['a_enviar','enviado'])
         .order('data_solicitacao',{ascending:false});
       if(r.error) throw r.error; const itens=r.data||[]; this.render(itens); this.totalizador(itens);
@@ -4765,7 +4767,7 @@ const ecomVendas={
     tt.textContent=txt;
   },
   // BUILD 2026-08-18-B: catalogo de ocorrencias manuais (verdade do Igor por cima do substatus ML)
-  OCORR:{apreendido:'apreendido \u00b7 fiscaliza\u00e7\u00e3o',devolvido:'devolvido pelo cliente',extraviado:'extraviado (confirmado)',roubado:'roubado',avariado:'avariado',retido_doc:'retido \u00b7 aguardando documento',outro:'outra ocorr\u00eancia'},
+  OCORR:{apreendido:'apreendido \u00b7 fiscaliza\u00e7\u00e3o',devolvido:'devolvido pelo cliente',devolvido_reintegrado:'devolvido \u00b7 reintegrado ao estoque',extraviado:'extraviado (confirmado)',roubado:'roubado',avariado:'avariado',retido_doc:'retido \u00b7 aguardando documento',outro:'outra ocorr\u00eancia'},
   ocorrSelect(v){ const cur=v.ocorrencia||'';
     const ops=['<option value="">\u2014 ocorr\u00eancia</option>'].concat(Object.entries(this.OCORR).map(([k,l])=>'<option value="'+k+'"'+(cur===k?' selected':'')+'>'+l+'</option>'));
     return '<select class="vinput mono" data-ocorr="'+v.id+'" style="width:auto;min-width:150px;padding:4px 8px;font-size:11px'+(cur?';border-color:var(--ered);color:var(--ered)':'')+'" title="marcar a situa\u00e7\u00e3o REAL do pacote (comanda os n\u00fameros do painel)">'+ops.join('')+'</select>';
@@ -4774,8 +4776,12 @@ const ecomVendas={
     const msgTxt=val?('Marcar ocorr\u00eancia "'+lbl+'"?\n\nEfeito: sai dos n\u00fameros de venda (faturamento, lucro, capital em tr\u00e2nsito) e entra nos cards de ocorr\u00eancia. O prej\u00edzo l\u00edquido voc\u00ea apura no Editar do Hist\u00f3rico.'):'Limpar a ocorr\u00eancia? O pedido volta a contar como venda normal.';
     if(!confirm(msgTxt)){ this.load(); return; }
     try{ const dados={ocorrencia:val||null, ocorrencia_em:val?new Date().toISOString():null, atualizado_em:new Date().toISOString()};
+      // BUILD 2026-08-19-A: apreendido pre-preenche prejuizo = custo_total + taxas_ml_total SOMENTE se vazio (item 8 do Painel; editavel no Historico)
+      if(val==='apreendido' && v && v.prejuizo_valor==null){ const pj=Math.round(((+v.custo_total||0)+(+v.taxas_ml_total||0))*100)/100; if(pj>0) dados.prejuizo_valor=pj; }
       const r=await sb.from('ecom_vendas').update(dados).eq('id',id); if(r.error) throw r.error;
+      if(val==='apreendido' && dados.prejuizo_valor!=null) alert('Preju\u00edzo sugerido gravado: R$ '+dados.prejuizo_valor.toLocaleString('pt-BR',{minimumFractionDigits:2})+' (custo + taxas ML). Ajuste no Editar do Hist\u00f3rico se o valor real for outro.');
       if(val==='devolvido') alert('Produto retornando \u2014 ao receber, CONFIRA o estado e ajuste o estoque no Cat\u00e1logo manualmente. O app n\u00e3o mexe em estoque sozinho.');
+      if(val==='devolvido_reintegrado') alert('Reintegrado \u2014 confirme que a entrada no estoque foi feita no Cat\u00e1logo. O item sai do capital preso.');
       this.load(); if(typeof ecomRelatorios!=='undefined'&&ecomRelatorios.loaded) ecomRelatorios.load(); if(typeof ecomFinanceiro!=='undefined') ecomFinanceiro.termometro();
     }catch(e){ alert('Erro ao gravar ocorr\u00eancia: '+e.message); this.load(); }
   },
@@ -4933,17 +4939,20 @@ const ecomFinanceiro={
     const box=this._g('fn-termometro'); if(!box) return;
     const lbl=this._g('fn-termo-mes'); if(lbl) lbl.textContent=this.mesNome();
     try{
-      const r=await sb.from('ecom_vendas').select('id,status,data_solicitacao,quantidade,preco_venda,receita_bruta,comissao_valor,tarifa_fixa_valor,frete_valor,valor_recebido_ml,custo_total,colchao_valor,imposto_valor,resultado_liquido,ocorrencia,prejuizo_valor');
+      const r=await sb.from('ecom_vendas').select('id,status,data_solicitacao,data_entrega,data_liberacao_mp,quantidade,preco_venda,receita_bruta,comissao_valor,tarifa_fixa_valor,frete_valor,taxas_ml_total,valor_recebido_ml,custo_total,colchao_valor,imposto_valor,resultado_liquido,ocorrencia,prejuizo_valor');
       if(r.error) throw r.error;
       const all=(r.data||[]).filter(v=>v.status!=='cancelado');
       const now=new Date(); const mkey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
       const mesAll=all.filter(v=>v.data_solicitacao && v.data_solicitacao.slice(0,7)===mkey);
-      // BUILD 2026-08-18-B: ocorrencias (devolvido/apreendido) fora dos agregados de venda; prejuizo liquido em linha propria
-      const isOc=v=>v.ocorrencia==='devolvido'||v.ocorrencia==='apreendido';
+      // BUILD 2026-08-19-B: familia PERDA = apreendido + extraviado/roubado/avariado; devolvido* segue como devolucao
+      const PERDA=v=>v.ocorrencia==='apreendido'||v.ocorrencia==='extraviado'||v.ocorrencia==='roubado'||v.ocorrencia==='avariado';
+      const isOc=v=>PERDA(v)||v.ocorrencia==='devolvido'||v.ocorrencia==='devolvido_reintegrado';
       const mesOc=mesAll.filter(isOc), mesV=mesAll.filter(v=>!isOc(v));
-      let perdas=0,perdasPend=0,ocDev=0,ocApr=0;
-      mesOc.forEach(v=>{ if(v.ocorrencia==='devolvido') ocDev++; else ocApr++;
-        if(v.prejuizo_valor!=null) perdas+=+v.prejuizo_valor; else perdasPend++; });
+      let perdas=0,perdasPend=0,ocDev=0,ocApr=0,ocOut=0;
+      mesOc.forEach(v=>{ if(v.ocorrencia==='apreendido'){ ocApr++;
+          perdas+=(v.prejuizo_valor!=null)?+v.prejuizo_valor:((+v.custo_total||0)+(+v.taxas_ml_total||0)); }
+        else if(PERDA(v)){ ocOut++; if(v.prejuizo_valor!=null) perdas+=+v.prejuizo_valor; else perdasPend++; }
+        else { ocDev++; if(v.prejuizo_valor!=null) perdas+=+v.prejuizo_valor; else perdasPend++; } });
       let rec=0,recF=0,tax=0,cus=0,col=0,imp=0,luc=0,n=0,nF=0;
       mesV.forEach(v=>{ n++; const rb=v.receita_bruta!=null?+v.receita_bruta:((+v.preco_venda||0)*(+v.quantidade||1)); rec+=rb;
         if(v.resultado_liquido!=null){ nF++; recF+=rb;
@@ -4951,10 +4960,21 @@ const ecomFinanceiro={
           cus+=+v.custo_total||0; col+=+v.colchao_valor||0;
           imp+=(v.imposto_valor!=null?+v.imposto_valor:Math.round(rb*4)/100);
           luc+=+v.resultado_liquido; } });
-      let preso=0; all.forEach(v=>{ if(v.valor_recebido_ml!=null && v.status!=='entregue' && !isOc(v)) preso+=+v.valor_recebido_ml; });
+      // BUILD 2026-08-19-B: retido_doc e 'outro' = venda viva para o capital; familia PERDA fora do preso; devolvido a custo
+      const hojeIso=new Date().toISOString(); let preso=0,recMP=0;
+      all.forEach(v=>{ if(v.ocorrencia && v.ocorrencia!=='retido_doc' && v.ocorrencia!=='outro'){
+          if(v.ocorrencia==='devolvido') preso+=+v.custo_total||0; return; }
+        const lib=v.data_liberacao_mp && v.data_liberacao_mp<=hojeIso;
+        if(!lib){ preso+=+v.custo_total||0; if(v.valor_recebido_ml!=null) recMP+=+v.valor_recebido_ml; } });
+      // mediana de dias entrega -> liberacao MP (so vendas ja liberadas com as duas datas; mediana nao deixa atipico distorcer)
+      const dias=all.filter(v=>!v.ocorrencia&&v.data_entrega&&v.data_liberacao_mp&&v.data_liberacao_mp<=hojeIso)
+        .map(v=>(new Date(v.data_liberacao_mp)-new Date(v.data_entrega))/86400000).filter(d=>d>=0).sort((a,b)=>a-b);
+      const medLib=dias.length?(dias.length%2?dias[(dias.length-1)/2]:(dias[dias.length/2-1]+dias[dias.length/2])/2):null;
       const mp=recF-tax, margem=recF>0?(luc/recF*100):null, F=this.fmt, F0=this.fmt0;
       const line=(k,v2,bg,kc)=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:'+(bg||'var(--epanel)')+'"><span style="font-size:12.5px'+(kc?';color:'+kc:'')+'">'+k+'</span><span style="font-family:var(--emono);font-size:12.5px;white-space:nowrap">'+v2+'</span></div>';
-      const tot='<div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:#1a2740"><span style="font-weight:700">Lucro real do mês</span><span style="font-family:var(--emono);font-size:19px;font-weight:700;color:'+(nF===0?'var(--emuted2)':(luc>=0?'var(--eemerald)':'var(--ered)'))+'">'+(nF===0?'—':'R$ '+F(luc))+'</span></div>';
+      // BUILD 2026-08-19-A: lucro real do mes = OPERACIONAL - PERDAS (item 3 do Painel)
+      const lucLiq=luc-perdas;
+      const tot='<div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:#1a2740"><span style="font-weight:700">LUCRO REAL DO MÊS</span><span style="font-family:var(--emono);font-size:19px;font-weight:700;color:'+(nF===0&&!mesOc.length?'var(--emuted2)':(lucLiq>=0?'var(--eemerald)':'var(--ered)'))+'">'+(nF===0&&!mesOc.length?'—':'R$ '+F(lucLiq))+'</span></div>';
       const pend=n-nF;
       const aviso=pend>0?'<div style="font-size:11px;color:var(--eamber);margin-top:8px">⚠ '+pend+' venda(s) do mês sem margem fechada — custos e lucro acumulados ainda parciais.</div>':'';
       // BUILD 2026-08-03-B: cálculo da projeção "próxima semana" removido junto com o bloco (morreu nos dois lugares)
@@ -4964,13 +4984,17 @@ const ecomFinanceiro={
         +line('Fechadas no Financeiro',nF+' de '+n+(recF>0?' · R$ '+F(recF):''),'var(--epanel2)')
         +line('(–) Taxas do ML',nF?('– R$ '+F(tax)):'—','#241c08','var(--eamber)')
         +line('= Depósito Mercado Pago',nF?('R$ '+F(mp)):'—','#08231f','var(--eteal)')
-        +line('(–) Custo dos fornecedores',nF?('– R$ '+F(cus)):'—','#241c08','var(--eamber)')
+        +line('(–) Custo dos fornecedores (vendas fechadas)',nF?('– R$ '+F(cus)):'—','#241c08','var(--eamber)')
         +line('(–) Colchão operacional',nF?('– R$ '+F(col)):'—','#241c08','var(--eamber)')
         +line('(–) Imposto · 4% da receita',nF?('– R$ '+F(imp)):'—','#241c08','var(--eamber)')
+        +line('= Lucro operacional (vendas vivas)',nF?('R$ '+F(luc)):'—','var(--epanel2)')
+        +(mesOc.length?line('(–) Perdas do mês · '+[ocDev?ocDev+' devolu\u00e7\u00e3o(\u00f5es)':'',ocApr?ocApr+' apreens\u00e3o(\u00f5es)':'',ocOut?ocOut+' outra(s) perda(s)':''].filter(Boolean).join(' + '),(perdas>0?'\u2013 R$ '+F(perdas):'\u2014'),'#2a0d0d','var(--ered)'):'')
         +tot
-        +(mesOc.length?line('Perdas do mês · '+(ocDev?ocDev+' devolu\u00e7\u00e3o(\u00f5es)':'')+(ocDev&&ocApr?' + ':'')+(ocApr?ocApr+' apreens\u00e3o(\u00f5es)':''),(perdas>0?'\u2013 R$ '+F(perdas):'\u2014'),'#2a0d0d','var(--ered)'):'')
-        +line('Margem ponderada (fechadas)',margem==null?'—':F(margem)+' %')
-        +line('Capital em giro preso (MP)','R$ '+F(preso))
+        +line('Margem ponderada (operacional)',margem==null?'—':F(margem)+' %')
+        +'<div style="padding:7px 13px;background:var(--epanel2);font-size:10.5px;letter-spacing:1px;color:var(--emuted)">CAPITAL · operação inteira</div>'
+        +line('Capital de giro preso (custo)','R$ '+F(preso))
+        +line('A receber no Mercado Pago','R$ '+F(recMP))
+        +line('MP libera após entrega',medLib==null?'— (sem venda liberada medida)':'~'+Math.round(medLib)+' dia(s) · mediana')
         +'</div>'+aviso
         +(perdasPend>0?'<div style="font-size:11px;color:var(--ered);margin-top:6px">\u26d4 '+perdasPend+' ocorr\u00eancia(s) do m\u00eas sem preju\u00edzo apurado — abra o Editar do Hist\u00f3rico e feche o valor l\u00edquido.</div>':'');
       // BUILD 2026-08-03-B: projeção "Próxima semana" removida também daqui (decisão Igor 03/08 — morre nos dois lugares)
@@ -5024,6 +5048,10 @@ const ecomHistorico={
     g('hs-onus').value=r.data.frete_onus||'vendedor';
     g('hs-dsol').value=this.fmtDT(r.data.data_solicitacao); g('hs-demb').value=this.fmtDT(r.data.data_embarque); g('hs-dent').value=this.fmtDT(r.data.data_entrega);
     g('hs-ocor').value=r.data.ocorrencia||''; g('hs-prej').value=r.data.prejuizo_valor!=null?r.data.prejuizo_valor:'';
+    // BUILD 2026-08-19-A: apreendido pre-preenche o prejuizo SUGERIDO (custo_total + taxas_ml_total) SOMENTE se o campo estiver vazio — visivel e editavel antes de salvar
+    g('hs-ocor').onchange=()=>{ if(g('hs-ocor').value==='apreendido' && g('hs-prej').value===''){
+      const pj=Math.round(((+this.cur.custo_total||0)+(+this.cur.taxas_ml_total||0))*100)/100;
+      if(pj>0){ g('hs-prej').value=pj; g('hs-mmsg').className='vmsg'; g('hs-mmsg').textContent='Preju\u00edzo sugerido: custo + taxas ML. Ajuste se o apurado for outro.'; } } };
     g('hs-mmsg').textContent=''; g('hs-mmsg').className='vmsg'; g('hs-modal').style.display='flex';
   }catch(e){ alert('Erro: '+e.message); } },
   closeEdit(){ this._g('hs-modal').style.display='none'; this.cur=null; },
@@ -5043,6 +5071,7 @@ const ecomHistorico={
     dados.status = dados.data_entrega ? 'entregue' : (this.cur.status==='entregue' ? 'enviado' : this.cur.status);
     try{ const r=await sb.from('ecom_vendas').update(dados).eq('id',this.cur.id); if(r.error) throw r.error;
       if(ocor==='devolvido' && (this.cur.ocorrencia||null)!=='devolvido') alert('Produto retornando \u2014 ao receber, CONFIRA o estado e ajuste o estoque no Cat\u00e1logo manualmente. O app n\u00e3o mexe em estoque sozinho.');
+      if(ocor==='devolvido_reintegrado' && (this.cur.ocorrencia||null)!=='devolvido_reintegrado') alert('Reintegrado \u2014 o item sai do capital de giro preso. Confirme que a entrada no estoque foi feita no Cat\u00e1logo.');
       this.closeEdit(); this.load();
       if(typeof ecomRelatorios!=='undefined'&&ecomRelatorios.loaded) ecomRelatorios.load(); if(typeof ecomFinanceiro!=='undefined') ecomFinanceiro.termometro(); if(typeof ecomVendas!=='undefined') ecomVendas.load();
     }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
@@ -5055,28 +5084,51 @@ const ecomRelatorios={
   fmt:v=>(v==null||isNaN(v))?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
   fmt0:v=>(v==null||isNaN(v))?'—':Math.round(v).toLocaleString('pt-BR'),
   async load(){
-    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,uf,quantidade,preco_venda,status,data_solicitacao,data_entrega,receita_bruta,valor_recebido_ml,custo_total,resultado_liquido,margem_pct,ocorrencia');
+    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,uf,quantidade,preco_venda,status,data_solicitacao,data_entrega,receita_bruta,valor_recebido_ml,custo_total,taxas_ml_total,resultado_liquido,margem_pct,ocorrencia,prejuizo_valor,data_liberacao_mp');
       if(r.error) throw r.error; this.data=r.data||[]; this.loaded=true;
       // BUILD 2026-08-03-B: projeção removida; Visão geral passa a ser SÓ o mês corrente
       const mesCor=new Date().toISOString().slice(0,7);
       const doMes=this.data.filter(v=>v.data_solicitacao&&v.data_solicitacao.slice(0,7)===mesCor);
       const nm=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
       const tit=this._g('rl-kpis-titulo'); if(tit) tit.textContent='Visão geral · '+nm[new Date().getMonth()]+'/'+new Date().getFullYear();
-      this.renderKpis(this.agg(doMes),false); this.renderMensal(); this._g('rl-query-result').innerHTML='';
+      // BUILD 2026-08-19-A: agregados sao do mes; CAPITAL (preso + a receber MP) e da base inteira — venda velha nao-liberada conta
+      this.renderKpis(Object.assign(this.agg(doMes),this.capital(this.data)),false); this.renderMensal(); this._g('rl-query-result').innerHTML='';
     }catch(e){ this._g('rl-kpis').innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
   },
-  agg(vendas){ let fat=0,luc=0,fatComp=0,custo=0,presoMP=0,n=0,nComp=0,nPend=0,devQ=0,devV=0,aprQ=0,aprV=0;
-    // BUILD 2026-08-18-B: devolvido/apreendido saem de TODOS os agregados e ganham campo proprio — realidade dos numeros
+  // BUILD 2026-08-19-A: agg v2 — realidade do capital (itens 1-8 do Painel, decisao Igor 19/08).
+  // custo = TODAS as compras (ocorrencia nao debita) · lucLiq = lucro vivo - perdas · margem = OPERACIONAL (sem sinistro)
+  // devolvido a CUSTO preso · devolvido_reintegrado fora do preso · apreendido a PREJUIZO (fallback custo+taxas se nao apurado)
+  agg(vendas){ let fat=0,luc=0,perdas=0,prejPend=0,fatComp=0,custo=0,n=0,nComp=0,nPend=0,devQ=0,devV=0,aprQ=0,aprV=0;
     vendas.forEach(v=>{ if(v.status==='cancelado') return;
-      if(v.ocorrencia==='devolvido'||v.ocorrencia==='apreendido'){
-        const val=v.receita_bruta!=null?+v.receita_bruta:((+v.preco_venda||0)*(+v.quantidade||1));
-        if(v.ocorrencia==='devolvido'){ devQ++; devV+=val; } else { aprQ++; aprV+=val; }
+      custo+=+v.custo_total||0;
+      // BUILD 2026-08-19-B: familia PERDA = apreendido + extraviado/roubado/avariado (fora dos agregados, prejuizo debita)
+      const isPerda=v.ocorrencia==='apreendido'||v.ocorrencia==='extraviado'||v.ocorrencia==='roubado'||v.ocorrencia==='avariado';
+      if(isPerda||v.ocorrencia==='devolvido'||v.ocorrencia==='devolvido_reintegrado'){
+        if(v.ocorrencia==='apreendido'){
+          const pj=(v.prejuizo_valor!=null)?+v.prejuizo_valor:((+v.custo_total||0)+(+v.taxas_ml_total||0));
+          aprQ++; aprV+=pj; perdas+=pj;
+        } else if(isPerda){
+          if(v.prejuizo_valor!=null) perdas+=+v.prejuizo_valor; else prejPend++;
+        } else {
+          devQ++; if(v.ocorrencia==='devolvido') devV+=+v.custo_total||0;
+          if(v.prejuizo_valor!=null) perdas+=+v.prejuizo_valor; else prejPend++;
+        }
         return; }
-      n++; fat+=+v.receita_bruta||0; custo+=+v.custo_total||0;
+      n++; fat+=+v.receita_bruta||0;
       if(v.resultado_liquido!=null){ luc+=+v.resultado_liquido; fatComp+=+v.receita_bruta||0; nComp++; } else nPend++;
-      if(v.valor_recebido_ml!=null && v.status!=='entregue' && !v.ocorrencia) presoMP+=+v.valor_recebido_ml;
     });
-    return {fat,luc,custo,presoMP,n,nComp,nPend,devQ,devV,aprQ,aprV,margem:fatComp?luc/fatComp*100:null};
+    return {fat,luc,lucLiq:luc-perdas,perdas,prejPend,custo,n,nComp,nPend,devQ,devV,aprQ,aprV,margem:fatComp?luc/fatComp*100:null};
+  },
+  // BUILD 2026-08-19-B: retido_doc e 'outro' = venda viva para fins de capital (custo preso + recMP ate liberar).
+  // Familia PERDA (apreendido/extraviado/roubado/avariado) FORA do preso — migrou para prejuizo. Devolvido a custo ate reintegrar.
+  capital(vendas){ const hoje=new Date().toISOString(); let presoCG=0,recMP=0;
+    vendas.forEach(v=>{ if(v.status==='cancelado') return;
+      if(v.ocorrencia && v.ocorrencia!=='retido_doc' && v.ocorrencia!=='outro'){
+        if(v.ocorrencia==='devolvido') presoCG+=+v.custo_total||0; return; }
+      const liberado=v.data_liberacao_mp && v.data_liberacao_mp<=hoje;
+      if(!liberado){ presoCG+=+v.custo_total||0; if(v.valor_recebido_ml!=null) recMP+=+v.valor_recebido_ml; }
+    });
+    return {presoCG,recMP};
   },
   filtered(){ const de=this._g('rl-de').value, ate=this._g('rl-ate').value, prod=(this._g('rl-prod').value||'').toLowerCase(), uf=(this._g('rl-uf').value||'').toUpperCase(), st=this._g('rl-status').value;
     return this.data.filter(v=>{ const d=v.data_solicitacao?v.data_solicitacao.slice(0,10):'';
@@ -5084,7 +5136,7 @@ const ecomRelatorios={
       if(prod && !(((v.produto||'')+' '+(v.produto_codigo||'')).toLowerCase().includes(prod))) return false;
       if(uf && (v.uf||'')!==uf) return false;
       // BUILD 2026-08-03-B: "vendidos" = venda do dia/período em qualquer estágio de envio (exclui cancelado e perda)
-      if(st==='vendidos'){ if(v.status==='cancelado'||v.status==='perda'||v.ocorrencia==='devolvido'||v.ocorrencia==='apreendido') return false; }
+      if(st==='vendidos'){ if(v.status==='cancelado'||v.status==='perda'||v.ocorrencia==='devolvido'||v.ocorrencia==='devolvido_reintegrado'||v.ocorrencia==='apreendido') return false; }
       else if(st && v.status!==st) return false;
       return true;
     });
@@ -5104,23 +5156,27 @@ const ecomRelatorios={
     box.innerHTML='<div style="font-size:12px;color:var(--emuted);margin-bottom:8px">'+itens.length+' pedido(s) no cruzamento</div>'
       +'<div style="border:1px solid var(--eborder);border-radius:12px;overflow:auto"><table class="rptab"><thead><tr><th>Data</th><th>Pedido</th><th>Produto</th><th>Qtd × Preço</th><th>UF</th><th>Status</th><th>Receita</th><th>Lucro real</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   },
+  // BUILD 2026-08-19-A: cards da realidade do capital — lucro liquido de perdas, devolucao a CUSTO preso,
+  // apreensao a PREJUIZO, capital preso a custo (base inteira, criterio liberacao MP) + card novo A RECEBER MP.
   kpiHtml(a){ const F=this.fmt;
     const pend=a.nPend>0?'<div style="font-size:11px;color:var(--eamber);margin-top:8px">⚠ '+a.nPend+' venda(s) sem margem fechada — lucro e margem ainda parciais.</div>':'';
+    const prejP=a.prejPend>0?'<div style="font-size:11px;color:var(--ered);margin-top:6px">\u26d4 '+a.prejPend+' ocorr\u00eancia(s) sem preju\u00edzo apurado — feche o valor no Editar do Hist\u00f3rico (zero tamb\u00e9m \u00e9 valor).</div>':'';
     return '<div class="rp-idxrow">'
       +'<div class="rp-idx"><div class="l">Faturamento</div><div class="v">R$ '+F(a.fat)+'</div></div>'
-      +'<div class="rp-idx good"><div class="l">Lucro real</div><div class="v">R$ '+F(a.luc)+'</div></div>'
-      +'<div class="rp-idx"><div class="l">Margem ponderada</div><div class="v">'+(a.margem==null?'—':F(a.margem)+'%')+'</div></div>'
-      +'<div class="rp-idx'+(a.devQ?' bad':'')+'"><div class="l">Devoluções</div><div class="v">'+a.devQ+' · R$ '+F(a.devV)+'</div></div>'
+      +'<div class="rp-idx'+(a.lucLiq>=0?' good':' bad')+'"><div class="l">Lucro real (\u2013 perdas)</div><div class="v">R$ '+F(a.lucLiq)+'</div></div>'
+      +'<div class="rp-idx"><div class="l">Margem ponderada (operacional)</div><div class="v">'+(a.margem==null?'—':F(a.margem)+'%')+'</div></div>'
       +'<div class="rp-idx"><div class="l">Nº de vendas</div><div class="v">'+a.n+'</div></div>'
-      +'<div class="rp-idx"><div class="l">Custo a fornecedores</div><div class="v">R$ '+F(a.custo)+'</div></div>'
-      +'<div class="rp-idx bad"><div class="l">Capital em giro preso</div><div class="v">R$ '+F(a.presoMP)+'</div></div>'
-      +'<div class="rp-idx'+(a.aprQ?' bad':'')+'"><div class="l">Apreensões</div><div class="v">'+a.aprQ+' · R$ '+F(a.aprV)+'</div></div>'
-      +'</div>'+pend;
+      +'<div class="rp-idx"><div class="l">Compras do mês (fornecedores)</div><div class="v">R$ '+F(a.custo)+'</div></div>'
+      +'<div class="rp-idx bad"><div class="l">Capital de giro preso (custo)</div><div class="v">R$ '+F(a.presoCG)+'</div></div>'
+      +'<div class="rp-idx"><div class="l">A receber no Mercado Pago</div><div class="v">R$ '+F(a.recMP)+'</div></div>'
+      +'<div class="rp-idx'+(a.devQ?' bad':'')+'"><div class="l">Devoluções (custo preso)</div><div class="v">'+a.devQ+' · R$ '+F(a.devV)+'</div></div>'
+      +'<div class="rp-idx'+(a.aprQ?' bad':'')+'"><div class="l">Apreensões (prejuízo)</div><div class="v">'+a.aprQ+' · R$ '+F(a.aprV)+'</div></div>'
+      +'</div>'+pend+prejP;
   },
   renderKpis(a,isQuery){ (isQuery?this._g('rl-query-result'):this._g('rl-kpis')).innerHTML=this.kpiHtml(a); },
   renderMensal(){ const box=this._g('rl-mensal'); const meses={};
     // BUILD 2026-08-18-B: devolvido/apreendido fora do Por mes — receita fantasma nao fecha mes
-    this.data.forEach(v=>{ if(v.status==='cancelado'||v.ocorrencia==='devolvido'||v.ocorrencia==='apreendido'||!v.data_solicitacao) return; const m=v.data_solicitacao.slice(0,7); (meses[m]=meses[m]||[]).push(v); });
+    this.data.forEach(v=>{ if(v.status==='cancelado'||v.ocorrencia==='devolvido'||v.ocorrencia==='devolvido_reintegrado'||v.ocorrencia==='apreendido'||!v.data_solicitacao) return; const m=v.data_solicitacao.slice(0,7); (meses[m]=meses[m]||[]).push(v); });
     const keys=Object.keys(meses).sort().reverse();
     if(!keys.length){ box.innerHTML='<div class="ph">sem vendas ainda</div>'; return; }
     const ord=keys.slice().reverse(), aggMap={}; ord.forEach(m=>aggMap[m]=this.agg(meses[m]));
