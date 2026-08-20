@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-20-D | selecta-banco-preco | BALANCETE LIMPO + CUSTO FINANCEIRO + LANCAMENTO NO LEDGER (Igor 20/08): (1) Rotulos removidos do balancete: "(margens fechadas)", "(vendas fechadas)", "(vendas vivas)". (2) DESPESAS ganha linha "Custo financeiro - juros dos credores": soma dos movimentos do ledger do MES corrente com tipo juro (capitalizado) ou juro_pago (pago em caixa); entra no DESPESAS TOTAIS e DEBITA o LUCRO REAL (lucLiq = luc - perdas - jurosMes). Amortizacao NAO e despesa (movimento de balanco: reduz DEVO, nao reduz lucro). Decisao Igor+analise: juro como linha explicita de medicao; colchao segue regua de PRECIFICACAO intocada (juro e fixo sobre saldo devedor, colchao e % da venda — nao escalam juntos). (3) Bloco INVESTIDORES ganha formulario de lancamento (credor + tipo juro_pago/juro/amortizacao + valor + data, confirm antes do INSERT em ecom_capital_mov, re-render apos) — metodo ecomFinanceiro.capLancar. REQUER SQL v2 do ledger: CHECK de tipo ampliado com juro_pago + view ecom_vw_capital_saldo v2 (juro_pago nao altera saldo mas RESETA a ancora de juro). Sem o SQL, lancamento de juro_pago falha no CHECK (erro visivel, sem corrupcao). (4) Valores de Capital preso / A receber MP CONTESTADOS pelo Igor (98.165 / 139.057 vs painel ML 75.679) — diagnostico via SQL espelho ANTES de qualquer conserto; hipotese: vendas antigas com data_liberacao_mp NULL (pre-rastreamento do sync). | base: 2026-08-20-C (mesma sessao) -->
 <!-- BUILD 2026-08-20-C | selecta-banco-preco | HOTFIX INVESTIDORES + TROCA DE CARDS (Igor 20/08): (1) BUG CORRIGIDO (introduzido no 20-A): a montagem do invHtml usava line/F/F0/margem ANTES das declaracoes (TDZ — "Cannot access line before initialization"); ficou latente enquanto a view ecom_vw_capital_saldo nao existia (ramo else nunca rodava) e estourou quando o ledger nasceu. Correcao: bloco de montagem do invHtml MOVIDO para depois das declaracoes dos auxiliares, imediatamente antes do box.innerHTML; fetches (ledger/estoque/medCic) permanecem onde estavam. (2) Painel Geral: cards "N de vendas" e "Devolucoes (custo preso)" trocados de posicao (pedido Igor 20/08). | base: 2026-08-20-B (mesma sessao) -->
 <!-- BUILD 2026-08-20-B | selecta-banco-preco | PAINEL DE VOLTA + TERMOMETRO v3 BALANCETE (decisao Igor 20/08): (1) Painel Geral RESTAURADO ao conjunto anterior de cards — card "A receber no Mercado Pago" REMOVIDO do kpiHtml (informacao permanece no Termometro, bloco CAPITAL; a.recMP segue calculado no agg, sem uso no Painel). (2) TERMOMETRO v3 = mini balancete mensal RECEITAS x DESPESAS: secao RECEITAS (bruta informativa + "= RECEITAS CONSIDERADAS" = receita das vendas com margem fechada, mesma base das despesas — R e D na MESMA regua para o resultado fechar); secao DESPESAS (taxas ML + custo fornecedores + colchao + imposto + perdas do mes, com "= DESPESAS TOTAIS"); secao RESULTADO (lucro operacional -> LUCRO REAL DO MES -> margem ponderada). Linha "Deposito Mercado Pago" SAIU do fluxo (era intermediario da cascata; derivavel = receitas consideradas - taxas; Igor pode mandar de volta). Blocos CAPITAL e INVESTIDORES INTACTOS abaixo do balancete. ESTRUTURA entregue; conteudo adicional a ditar pelo Igor (slots abertos por decisao — nada inserido sem ordem). | base: 2026-08-20-A (diff zero conferido na sessao) -->
 <!-- BUILD 2026-08-20-A | selecta-banco-preco | BLOCO INVESTIDORES no Termometro (decisao Igor 20/08, sem telas novas): (1) BANCO: nova tabela ecom_capital_mov (ledger dos credores; tipos saldo_inicial/aporte/juro/amortizacao/ajuste; RLS authenticated) + view ecom_vw_capital_saldo (saldo_devedor + ancora_juro = ultima capitalizacao ou saldo_inicial — amortizacao NAO reseta o relogio de juro). SQL separado, aplicar ANTES deste index; sem SQL o bloco degrada para aviso ambar e o Termometro segue integro. (2) Taxas como constantes nomeadas (TAXA_CREDOR: credor_1=10%, credor_2=5%; TAXA_CENARIO_C1=7% — municao do pitch 24/08). Juro correndo = saldo x taxa x dias desde ancora/30, linear ate a capitalizacao MANUAL (lancar tipo juro no dia-base: c1 dia 05, c2 dia 20); atraso >32d gera aviso. (3) RECUPERAVEL = A receber MP (liquido, base inteira) + estoque do Catalogo a custo (estoque_atual x custo, ativo=true); capital preso a custo FICA FORA da soma (dupla contagem com recMP — correcao de doutrina 20/08); recebiveis externos e Full FORA (decisao Igor 20/08, Full = estudo a parte pos-regularizacao PR). DESCOBERTO = devo - recuperavel. (4) Leitura de capital: mediana venda->liberacao (ciclo cheio) + juro por R$1.000 de custo no ciclo (WACC do ledger) + empate lucro x juro na margem operacional viva do mes. (5) Doutrina: 6 apreensoes confirmadas no banco (nao 2) — fonte Correios, prejuizo fallback aplicado via backfill 20/08 (R$ 15.820,36). | base: 2026-08-19-B (repo e5c928f, linha 1 conferida na sessao) -->
@@ -4938,6 +4939,18 @@ const ecomFinanceiro={
     }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
   },
   // ===== TERMÔMETRO FINANCEIRO · mês corrente (competência = data do pedido, mesma régua dos Relatórios) =====
+  // BUILD 2026-08-20-D: lancamento manual no ledger dos credores (gate do Igor: confirm antes do INSERT)
+  async capLancar(){
+    const g=id=>document.getElementById(id);
+    const credor=g('cap-credor')?g('cap-credor').value:null, tipo=g('cap-tipo')?g('cap-tipo').value:null;
+    const valor=parseFloat(g('cap-valor')?g('cap-valor').value:''), data=g('cap-data')?g('cap-data').value:null;
+    if(!credor||!tipo||!data||!(valor>0)){ alert('Preencha credor, tipo, valor (>0) e data.'); return; }
+    const nomes={juro_pago:'JURO PAGO (não capitaliza)',juro:'JURO CAPITALIZADO (vira dívida)',amortizacao:'AMORTIZAÇÃO (abate dívida)'};
+    if(!confirm('Lançar no ledger?\n\n'+credor+' · '+nomes[tipo]+'\nR$ '+this.fmt(valor)+' em '+data)) return;
+    const r=await sb.from('ecom_capital_mov').insert({credor,tipo,valor,data_mov:data,descricao:'Lançado via Termômetro'});
+    if(r.error){ alert('Erro ao lançar: '+r.error.message+(tipo==='juro_pago'?'\n(juro_pago exige o SQL v2 do ledger — CHECK ampliado)':'')); return; }
+    this.termometro();
+  },
   async termometro(){
     const box=this._g('fn-termometro'); if(!box) return;
     const lbl=this._g('fn-termo-mes'); if(lbl) lbl.textContent=this.mesNome();
@@ -4976,6 +4989,9 @@ const ecomFinanceiro={
       // BUILD 2026-08-20-A: INVESTIDORES — ledger de credores + recuperavel + descoberto + custo de capital
       const TAXA_CREDOR={credor_1:0.10,credor_2:0.05}, TAXA_CENARIO_C1=0.07; // pitch 24/08: credor_1 renegociado a 7%
       let ledger=null; try{ const rl=await sb.from('ecom_vw_capital_saldo').select('*'); if(!rl.error) ledger=rl.data||[]; }catch(_e){}
+      // BUILD 2026-08-20-D: juros do mes (juro capitalizado + juro pago) viram despesa do balancete; amortizacao NAO
+      let jurosMes=0; try{ const rm=await sb.from('ecom_capital_mov').select('tipo,valor,data_mov');
+        if(!rm.error) (rm.data||[]).forEach(m=>{ if((m.tipo==='juro'||m.tipo==='juro_pago')&&String(m.data_mov||'').slice(0,7)===mkey) jurosMes+=(+m.valor||0); }); }catch(_e){}
       let estq=0, estqOk=false; try{ const re=await sb.from('ecom_produtos').select('estoque_atual,custo').eq('ativo',true);
         if(!re.error){ estqOk=true; (re.data||[]).forEach(p=>{ estq+=(Number(p.estoque_atual)||0)*(Number(p.custo)||0); }); } }catch(_e){}
       // mediana venda->liberacao (ciclo cheio de capital; so vendas sem ocorrencia ja liberadas)
@@ -4985,13 +5001,14 @@ const ecomFinanceiro={
       const mp=recF-tax, margem=recF>0?(luc/recF*100):null, F=this.fmt, F0=this.fmt0;
       const line=(k,v2,bg,kc)=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:'+(bg||'var(--epanel)')+'"><span style="font-size:12.5px'+(kc?';color:'+kc:'')+'">'+k+'</span><span style="font-family:var(--emono);font-size:12.5px;white-space:nowrap">'+v2+'</span></div>';
       // BUILD 2026-08-19-A: lucro real do mes = OPERACIONAL - PERDAS (item 3 do Painel)
-      const lucLiq=luc-perdas;
+      // BUILD 2026-08-20-D: juros dos credores debitam o lucro real (custo operacional por decisao Igor 20/08)
+      const lucLiq=luc-perdas-jurosMes;
       const tot='<div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:#1a2740"><span style="font-weight:700">LUCRO REAL DO MÊS</span><span style="font-family:var(--emono);font-size:19px;font-weight:700;color:'+(nF===0&&!mesOc.length?'var(--emuted2)':(lucLiq>=0?'var(--eemerald)':'var(--ered)'))+'">'+(nF===0&&!mesOc.length?'—':'R$ '+F(lucLiq))+'</span></div>';
       const pend=n-nF;
       const aviso=pend>0?'<div style="font-size:11px;color:var(--eamber);margin-top:8px">⚠ '+pend+' venda(s) do mês sem margem fechada — custos e lucro acumulados ainda parciais.</div>':'';
       // BUILD 2026-08-03-B: cálculo da projeção "próxima semana" removido junto com o bloco (morreu nos dois lugares)
       // BUILD 2026-08-20-B: Termometro v3 = mini balancete mensal (estrutura Igor 20/08; conteudo adicional a ditar)
-      const despTot=tax+cus+col+imp+perdas;
+      const despTot=tax+cus+col+imp+perdas+jurosMes;
       const sec=(t,bg,c)=>'<div style="padding:7px 13px;background:'+bg+';font-size:10.5px;letter-spacing:1px;color:'+c+';font-weight:600">'+t+'</div>';
       // BUILD 2026-08-20-C: invHtml montado APOS line/F/F0/margem (correcao TDZ)
       let invHtml='';
@@ -5023,6 +5040,13 @@ const ecomFinanceiro={
           +line('Ciclo venda→liberação'+(medCic!=null?' · ~'+Math.round(medCic)+'d (mediana)':''),cc1000!=null?'R$ '+F(cc1000)+' de juro por R$ 1.000 de custo':'— (sem ciclo medido)')
           +(saldoC1>0?line('Cada ponto de juro no credor_1','R$ '+F(saldoC1*0.01)+'/mês'):'')
           +(capAtraso?'<div style="padding:7px 13px;background:#241c08;font-size:11px;color:var(--eamber)">⚠ Capitalização atrasada (&gt;32d sem lançamento de juro) — lançar movimento tipo \'juro\' no dia-base (c1 dia 05 · c2 dia 20).</div>':'')
+          +'<div style="padding:9px 13px;background:var(--epanel);display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
+            +'<select id="cap-credor" class="inp" style="width:auto;padding:6px 8px;font-size:12px">'+ledger.map(c=>'<option value="'+c.credor+'">'+c.credor+'</option>').join('')+'</select>'
+            +'<select id="cap-tipo" class="inp" style="width:auto;padding:6px 8px;font-size:12px"><option value="juro_pago">Juro pago (caixa · não capitaliza)</option><option value="juro">Juro capitalizado (vira dívida)</option><option value="amortizacao">Amortização (abate dívida)</option></select>'
+            +'<input id="cap-valor" class="inp" type="number" step="0.01" min="0.01" placeholder="valor R$" style="width:110px;padding:6px 8px;font-size:12px">'
+            +'<input id="cap-data" class="inp" type="date" value="'+hojeIso.slice(0,10)+'" style="width:auto;padding:6px 8px;font-size:12px">'
+            +'<button class="btn" style="padding:6px 12px;font-size:12px" onclick="ecomFinanceiro.capLancar()">Lançar</button>'
+          +'</div>'
           +'<div style="padding:6px 13px;background:var(--epanel2);font-size:10px;color:var(--emuted)">Fora da conta (decisão 20/08): recebíveis externos e estoque Full — estudo à parte pós-PR. Capital preso a custo não soma aqui (já contido no A receber MP).</div>';
       }
       box.innerHTML=
@@ -5030,16 +5054,17 @@ const ecomFinanceiro={
         +sec('RECEITAS','#08231f','var(--eteal)')
         +line('Receita bruta · '+n+' venda(s)','R$ '+F(rec))
         +line('Com margem fechada no Financeiro',nF+' de '+n,'var(--epanel2)')
-        +line('= RECEITAS CONSIDERADAS (margens fechadas)',nF?('R$ '+F(recF)):'—','#08231f','var(--eteal)')
+        +line('= RECEITAS CONSIDERADAS',nF?('R$ '+F(recF)):'—','#08231f','var(--eteal)')
         +sec('DESPESAS','#2a0d0d','var(--ered)')
         +line('Taxas do ML',nF?('– R$ '+F(tax)):'—','#241c08','var(--eamber)')
-        +line('Custo dos fornecedores (vendas fechadas)',nF?('– R$ '+F(cus)):'—','#241c08','var(--eamber)')
+        +line('Custo dos fornecedores',nF?('– R$ '+F(cus)):'—','#241c08','var(--eamber)')
         +line('Colchão operacional',nF?('– R$ '+F(col)):'—','#241c08','var(--eamber)')
         +line('Imposto · 4% da receita',nF?('– R$ '+F(imp)):'—','#241c08','var(--eamber)')
+        +line('Custo financeiro · juros dos credores',jurosMes>0?('– R$ '+F(jurosMes)):'—','#241c08','var(--eamber)')
         +(mesOc.length?line('Perdas do mês · '+[ocDev?ocDev+' devolu\u00e7\u00e3o(\u00f5es)':'',ocApr?ocApr+' apreens\u00e3o(\u00f5es)':'',ocOut?ocOut+' outra(s) perda(s)':''].filter(Boolean).join(' + '),(perdas>0?'\u2013 R$ '+F(perdas):'\u2014'),'#241c08','var(--ered)'):'')
         +line('= DESPESAS TOTAIS',(nF||mesOc.length)?('\u2013 R$ '+F(despTot)):'—','#2a0d0d','var(--ered)')
         +sec('RESULTADO','#1a2740','var(--emuted)')
-        +line('Lucro operacional (vendas vivas)',nF?('R$ '+F(luc)):'—','var(--epanel2)')
+        +line('Lucro operacional',nF?('R$ '+F(luc)):'—','var(--epanel2)')
         +tot
         +line('Margem ponderada (operacional)',margem==null?'—':F(margem)+' %')
         +'<div style="padding:7px 13px;background:var(--epanel2);font-size:10.5px;letter-spacing:1px;color:var(--emuted)">CAPITAL · operação inteira</div>'
