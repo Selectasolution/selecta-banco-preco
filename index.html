@@ -1,3 +1,5 @@
+<!-- BUILD 2026-08-21-D | selecta-banco-preco | RESULTADO EM 4 LINHAS + OPERACAO DIARIA NA ABA VENDAS (Igor 21/08): (1) TERMOMETRO/RESULTADO condensado: 'Lucro operacional' = luc - perdas - juros (resultado de Receitas x Despesas; colchao segue deduzido por venda no resultado_liquido) -> '(+) Colchao (reserva)' -> 'LUCRO REAL DO MES' = operacional + colchao (linha grande, verde/vermelho) -> 'Margem media'. Linhas 'Resultado do mes' e lucro-vivo isolado REMOVIDAS. (2) COMPRAS DO DIA + PEDIDOS A FECHAR (com fn-form-park) migraram do Relatorios>Painel para o TOPO da aba VENDAS, acima de Lancar venda. NAO APAGADO 'Pedidos a fechar' apesar da ordem: o quadro de fechamento de margem (fn-form: comissao/tarifa/frete/custo) SO existe injetado no fn-list — a fila de Lancadas lista mas NAO fecha margem; apagar mataria o fluxo de fechamento. Fusao do fechamento dentro da propria fila = proximo build, se Igor confirmar; ai o bloco morre de verdade. (3) Painel (Relatorios) = SO Visao geral do mes. Wiring: sub-aba Vendas chama ecomFinanceiro.load (compras+fila+termometro oculto); entrar em Relatorios/painel chama ecomRelatorios.load. Ids fn-* intactos (CSS #tab-ecommerce cobre o novo local). | base: 2026-08-21-C (mesma sessao) -->
+<!-- BUILD 2026-08-21-C | selecta-banco-preco | AJUSTES DO IGOR 21/08 (noite) + JURO INCORRIDO AUTOMATICO: (1) POR MES (COMPETENCIA): causa raiz do 'nao atualiza' era o wiring — clique na sub-aba Financeiro so recarregava ecomFinanceiro; agora recarrega tambem ecomRelatorios.load (renderMensal). (2) BALANCETE rotulos: '(+) Colchao (reserva)' e '= Resultado do mes' (verde/vermelho conforme sinal); INVESTIDORES: 'CREDORES' (era DEVO AOS CREDORES). (3) JURO INCORRIDO AUTOMATICO (doutrina 'juro e base e real'): despesa do mes = lancamentos do ledger (juro/juro_pago) + credor SEM lancamento no mes com dia-base vencido entra saldo x taxa sozinho (DIA_BASE c1=05 c2=20; so mes corrente; nada gravado no banco; rotulo sinaliza 'incl. incorrido s/ lancamento'). EFEITO: agosto cai ~10.400 no Resultado do mes — e o numero honesto que faltava. (4) CUSTOS_FIXOS_MES 2500 -> 3050 (aluguel 2500 + Claude 550) — venda minima sobe. (5) Botao + do capital a recuperar: prompts nativos substituidos por MODAL no padrao do sistema (epanel/vinput/vbtn, criado via DOM com addEventListener — padrao delegacao-safe da casa; Esc=clique fora fecha). | base: 2026-08-21-B (mesma sessao) -->
 <!-- BUILD 2026-08-21-B | selecta-banco-preco | COLCHAO ABAIXO DO LUCRO (ordem Igor 21/08, 2a cobranca): (1) BALANCETE: linha do colchao SAI da secao DESPESAS e do total DESPESAS TOTAIS (reserva nao e despesa paga a terceiro); nasce apos o LUCRO REAL DO MES: '(+) Colchao do mes - reserva p/ perdas (6% da venda)' e '= RESULTADO AMORTECIDO (com a reserva)' = lucro real + colchao. (2) ESCOLHA DE DOUTRINA declarada: LUCRO REAL permanece CONSERVADOR (colchao deduzido por venda no resultado_liquido do banco — dinheiro reservado nao e lucro); o RESULTADO AMORTECIDO mostra o efeito da reserva. Se Igor preferir lucro real JA com colchao dentro, e 1 linha a mudar (lucOp=luc+col) — decisao aberta sinalizada no chat. (3) Margem ponderada e venda minima INALTERADAS (apos colchao — conservadoras, 9,57% ago). Sem mudanca de banco. | base: 2026-08-21-A (mesma sessao) -->
 <!-- BUILD 2026-08-21-A | selecta-banco-preco | COLCHAO SOBRE A VENDA — MIGRACAO DE BASE (decisao Igor 21/08, apos auditoria que revelou base custo desde 12/07): (1) DOUTRINA: colchao = % do VALOR DE VENDA em TODAS as superficies de simulacao — ecom.calc (Consulta Produto/Simulador), _simMargem (gate da Alexia + cadastro de anuncio), break-even do calc e do formulario (colchao migra para dentro da aliquota t: be=(custo+frete)/(1-t-colchao)), e quadro de fechamento fn-ledger (colch=rec*0.06, era cusT*0.06 HARDCODED — achado da auditoria: o fechamento e calculado no FRONT, nao ha funcao server-side gravando colchao_valor via fechar(); as colunas derivadas de ecom_vendas sao escritas por mecanismo do banco A CONFIRMAR na varredura pg_proc/trigger/generated — SQL de varredura entregue junto). (2) CLAUSULA PERMANENTE nascida deste erro: TODO percentual exibido em painel DECLARA a base no rotulo (% da venda / % do custo) — Parametros Comerciais atualizados nos 5 campos. (3) Rotulos corrigidos: fn-ledger '6% da venda', gate 's/ venda' com valor sobre o preco vigente (promo ou cheio), export da Consulta 'sobre a VENDA - reserva p/ perdas', relatorio por venda 'Colchao (reserva)' (rotulo generico: safra ate jul/26 = 6% custo, imutavel e marcada; ago/26 em diante = 6% venda apos SQL de recalculo). (4) EFEITO NO GATE: margens caem ~2,4pp (custo medio 59,5% do preco) — catalogo precisa de reprecificacao antes da reabertura de segunda; piso 10% inalterado. (5) SQL de recalculo de AGOSTO entregue em arquivo separado (preview + update transacional), gate: rodar varredura ANTES. | base: 2026-08-20-I (recebido na sessao 21/08) -->
 <!-- BUILD 2026-08-20-I | selecta-banco-preco | FILA EM LINHA UNICA NUMERADA + BOTOES DO TERMOMETRO POR DELEGACAO (Igor 20/08): (1) ABA VENDAS: cada lancamento numerado (1., 2., ...) e TODA a informacao em UMA linha — produto, #pedido, codigo, data/hora, qtd x preco, rastreio com link Correios e alerta de movimento, seguidos dos controles (pill status, semaforo, select ocorrencia, botao postado). Estrutura data-vwrap/postbox preservada. (2) CAUSA RAIZ dos botoes mortos (Lancar juros / + / x): onclick inline dentro de innerHTML NAO dispara neste app (evidencia empirica em 3 builds; todo botao dinamico da casa usa delegacao data-act). Corrigido para o padrao da casa: atributos data-cappagar/data-recupadd/data-recupbaixar + listener UNICO por delegacao no #fn-termometro (flag _capWired; sobrevive a re-render pois o listener fica no container estatico). | base: 2026-08-20-H (mesma sessao) -->
@@ -1703,6 +1705,32 @@
 
     <!-- ===== SUBPASTA: VENDAS ===== -->
     <div id="ecom-sub-vendas" class="ecom-subpanel" style="display:none">
+      <!-- BUILD 2026-08-21-D: Compras do dia + Pedidos a fechar migraram do Painel (Igor 21/08) — o quadro de fechamento (fn-form) mora no fn-list; a fila lista mas nao fecha margem, por isso o bloco veio junto em vez de morrer -->
+      <div class="ecard" style="margin-bottom:14px;padding:12px 16px">
+        <div id="fn-compras-dia" style="font-size:15px"><span class="ph">carregando…</span></div>
+      </div>
+      <div class="ecard" style="margin-bottom:14px">
+        <h3>Pedidos a fechar</h3>
+        <div id="fn-list"><div class="ph">carregando…</div></div>
+      </div>
+      <div id="fn-form-park" style="display:none">
+        <div id="fn-form" style="display:none">
+          <h3 id="fn-titulo" style="margin-top:0"></h3>
+          <div class="vrow3">
+            <div class="efield"><label>Tarifa de venda total (Comissão ML) · R$</label><input class="vinput mono" id="fn-com" type="number" step="0.01" placeholder="extrato"></div>
+            <div class="efield"><label>Tarifa fixa (R$)</label><input class="vinput mono" id="fn-tar" type="number" step="0.01" value="0"></div>
+            <div class="efield"><label>Frete seu (R$)</label><input class="vinput mono" id="fn-fre" type="number" step="0.01" value="0"></div>
+          </div>
+          <div class="vrow">
+            <div class="efield"><label>Ônus do frete</label><select class="vinput mono" id="fn-onus"><option value="vendedor">vendedor (você pagou)</option><option value="comprador">comprador</option></select></div>
+            <div class="efield"><label>Custo do fornecedor un. (R$)</label><input class="vinput mono" id="fn-cus" type="number" step="0.01" placeholder="nota do fornecedor"></div>
+          </div>
+          <div id="fn-ledger" style="margin:6px 0 12px"></div>
+          <div id="fn-status" style="margin-bottom:12px"></div>
+          <button class="vbtn" id="fn-save">Fechar margem e gerar relatório</button>
+          <div class="vmsg" id="fn-msg"></div>
+        </div>
+      </div>
       <div class="ecard vform" style="margin-bottom:14px">
         <!-- BUILD 2026-08-17-C: Lancar venda COLAPSADO por padrao (lancamento manual = excecao; automatico via ml-orders) -->
         <h3 id="vd-form-toggle" style="cursor:pointer;user-select:none;margin-bottom:0">Lançar venda <span id="vd-form-caret" style="color:var(--emuted);font-weight:400;font-size:12px;text-transform:none;letter-spacing:0">▸ manual — clique para abrir</span></h3>
@@ -1755,34 +1783,8 @@
         <button class="alsub-btn" data-rlsub="financeiro">💰 Financeiro</button><!-- BUILD 2026-08-08-M -->
         <button class="alsub-btn" data-rlsub="historico">🗂 Histórico</button>
       </div>
-      <div id="rlsub-painel"><!-- BUILD 2026-08-17-B: Painel = leitura diaria (Compras do dia + Pedidos a fechar, movidos do Financeiro) + Visao geral do mes. Consulta gerencial -> Historico; Por mes -> Financeiro -->
-      <!-- BUILD 2026-08-17-A: quadrante Compras do dia (leitura rapida, ecom_vw_compras_dia) -->
-      <div class="ecard" style="margin-bottom:14px;padding:12px 16px">
-        <div id="fn-compras-dia" style="font-size:15px"><span class="ph">carregando…</span></div>
-      </div>
-      <div class="ecard">
-        <h3>Pedidos a fechar</h3>
-        <div id="fn-list"><div class="ph">carregando…</div></div>
-      </div>
-      <div id="fn-form-park" style="display:none">
-        <div id="fn-form" style="display:none">
-          <h3 id="fn-titulo" style="margin-top:0"></h3>
-          <div class="vrow3">
-            <div class="efield"><label>Tarifa de venda total (Comissão ML) · R$</label><input class="vinput mono" id="fn-com" type="number" step="0.01" placeholder="extrato"></div>
-            <div class="efield"><label>Tarifa fixa (R$)</label><input class="vinput mono" id="fn-tar" type="number" step="0.01" value="0"></div>
-            <div class="efield"><label>Frete seu (R$)</label><input class="vinput mono" id="fn-fre" type="number" step="0.01" value="0"></div>
-          </div>
-          <div class="vrow">
-            <div class="efield"><label>Ônus do frete</label><select class="vinput mono" id="fn-onus"><option value="vendedor">vendedor (você pagou)</option><option value="comprador">comprador</option></select></div>
-            <div class="efield"><label>Custo do fornecedor un. (R$)</label><input class="vinput mono" id="fn-cus" type="number" step="0.01" placeholder="nota do fornecedor"></div>
-          </div>
-          <div id="fn-ledger" style="margin:6px 0 12px"></div>
-          <div id="fn-status" style="margin-bottom:12px"></div>
-          <button class="vbtn" id="fn-save">Fechar margem e gerar relatório</button>
-          <div class="vmsg" id="fn-msg"></div>
-        </div>
-      </div>
-      <h3 id="rl-kpis-titulo" style="font-size:12.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 10px">Visão geral · mês corrente</h3>
+      <div id="rlsub-painel"><!-- BUILD 2026-08-21-D: Painel = SO o resumo do mes (Visao geral); Compras do dia + Pedidos a fechar (com fn-form-park) migraram para a aba Vendas -->
+      <h3 id="rl-kpis-titulo" style="font-size:12.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Visão geral · mês corrente</h3>
       <div id="rl-kpis"><div class="ph">carregando…</div></div>
       </div><!-- /rlsub-painel -->
       <div id="rlsub-financeiro" style="display:none"><!-- BUILD 2026-08-17-B: Financeiro = visao mensal (Termometro + Por mes/competencia, movido do Painel) -->
@@ -4956,15 +4958,32 @@ const ecomFinanceiro={
   },
   // ===== TERMÔMETRO FINANCEIRO · mês corrente (competência = data do pedido, mesma régua dos Relatórios) =====
   // BUILD 2026-08-20-H: itens por fora do capital a recuperar (gate do Igor: confirm; baixa preserva historico)
-  async recupAdd(){
-    const d=prompt('Descrição do item a recuperar (ex.: Impressoras a receber):'); if(!d) return;
-    const b=prompt('Valor (R$):'); if(b==null) return;
-    const t=String(b).trim(); const v=t.indexOf(',')>=0?parseFloat(t.replace(/\./g,'').replace(',','.')):parseFloat(t);
-    if(!(v>0)){ alert('Valor inválido.'); return; }
-    if(!confirm('Adicionar ao capital a recuperar?\n\n'+d+' · R$ '+this.fmt(v))) return;
-    const r=await sb.from('ecom_recuperavel_item').insert({descricao:d,valor:v});
-    if(r.error){ alert('Erro: '+r.error.message+'\n(exige o SQL da tabela ecom_recuperavel_item)'); return; }
-    this.termometro();
+  recupAdd(){ // BUILD 2026-08-21-C: modal no padrao do sistema (prompt nativo aposentado a pedido do Igor)
+    const self=this; const old=document.getElementById('recup-modal'); if(old) old.remove();
+    const ov=document.createElement('div'); ov.id='recup-modal';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9999';
+    const card=document.createElement('div');
+    card.style.cssText='background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:18px;width:min(92vw,380px);display:flex;flex-direction:column;gap:10px';
+    card.innerHTML='<div style="font-weight:700;font-size:14px">Item por fora · capital a recuperar</div>'
+      +'<input id="recup-desc" class="vinput" type="text" placeholder="Descrição (ex.: Impressoras a receber)" style="width:100%">'
+      +'<input id="recup-val" class="vinput" type="text" inputmode="decimal" placeholder="Valor (R$) — vírgula p/ centavos" style="width:100%">'
+      +'<div id="recup-err" style="display:none;font-size:11.5px;color:var(--ered)"></div>'
+      +'<div style="display:flex;gap:8px;justify-content:flex-end"><button id="recup-cancel" class="vbtn sm">Cancelar</button><button id="recup-save" class="vbtn sm" style="font-weight:700">Adicionar</button></div>';
+    ov.appendChild(card); document.body.appendChild(ov);
+    const close=()=>ov.remove();
+    ov.addEventListener('click',e=>{ if(e.target===ov) close(); });
+    card.querySelector('#recup-cancel').addEventListener('click',close);
+    card.querySelector('#recup-save').addEventListener('click',async()=>{
+      const d=(card.querySelector('#recup-desc').value||'').trim();
+      const t=(card.querySelector('#recup-val').value||'').trim();
+      const v=t.indexOf(',')>=0?parseFloat(t.replace(/\./g,'').replace(',','.')):parseFloat(t);
+      const err=card.querySelector('#recup-err');
+      if(!d||!(v>0)){ err.textContent='Preencha a descrição e um valor válido (vírgula para centavos).'; err.style.display=''; return; }
+      const r=await sb.from('ecom_recuperavel_item').insert({descricao:d,valor:v});
+      if(r.error){ err.textContent='Erro: '+r.error.message; err.style.display=''; return; }
+      close(); self.termometro();
+    });
+    card.querySelector('#recup-desc').focus();
   },
   async recupBaixar(id){
     if(!confirm('Baixar este item do capital a recuperar? (some da soma; histórico preservado)')) return;
@@ -5023,11 +5042,20 @@ const ecomFinanceiro={
       const medLib=dias.length?(dias.length%2?dias[(dias.length-1)/2]:(dias[dias.length/2-1]+dias[dias.length/2])/2):null;
       // BUILD 2026-08-20-A: INVESTIDORES — ledger de credores + recuperavel + descoberto + custo de capital
       const TAXA_CREDOR={credor_1:0.10,credor_2:0.05}; // taxas por credor
-      const CUSTOS_FIXOS_MES=2500; // custos fixos mensais: Aluguel Foz R$ 2.500 (Igor 20/08) — novos fixos somam aqui
+      const CUSTOS_FIXOS_MES=3050; // fixos mensais (Igor 21/08): Aluguel Foz 2.500 + Claude 550; viagens virao por lancamento (ecom_despesa_op, SQL pendente)
       let ledger=null; try{ const rl=await sb.from('ecom_vw_capital_saldo').select('*'); if(!rl.error) ledger=rl.data||[]; }catch(_e){}
       // BUILD 2026-08-20-D: juros do mes (juro capitalizado + juro pago) viram despesa do balancete; amortizacao NAO
-      let jurosMes=0; try{ const rm=await sb.from('ecom_capital_mov').select('tipo,valor,data_mov');
-        if(!rm.error) (rm.data||[]).forEach(m=>{ if((m.tipo==='juro'||m.tipo==='juro_pago')&&String(m.data_mov||'').slice(0,7)===mkey) jurosMes+=(+m.valor||0); }); }catch(_e){}
+      // BUILD 2026-08-21-C: juro INCORRIDO automatico (doutrina Igor 21/08 — "juro e base e real"):
+      // despesa = lancamentos do ledger (juro/juro_pago) do mes + para credor SEM lancamento no mes
+      // com dia-base ja vencido, saldo x taxa entra sozinho (so no mes corrente; nada e gravado no banco).
+      const DIA_BASE={credor_1:5,credor_2:20};
+      let jurosMes=0,jurosAuto=0; const lancCredorMes={};
+      try{ const rm=await sb.from('ecom_capital_mov').select('credor,tipo,valor,data_mov');
+        if(!rm.error) (rm.data||[]).forEach(m=>{ if((m.tipo==='juro'||m.tipo==='juro_pago')&&String(m.data_mov||'').slice(0,7)===mkey){ jurosMes+=(+m.valor||0); lancCredorMes[m.credor]=true; } }); }catch(_e){}
+      if(ledger&&mkey===new Date().toISOString().slice(0,7)){ const diaHoje=new Date().getDate();
+        ledger.forEach(c=>{ const s=+c.saldo_devedor||0; if(s<=0||lancCredorMes[c.credor]) return;
+          const db=(DIA_BASE[c.credor]!=null)?DIA_BASE[c.credor]:5;
+          if(diaHoje>=db){ const tx=(TAXA_CREDOR[c.credor]!=null)?TAXA_CREDOR[c.credor]:0.10; jurosMes+=s*tx; jurosAuto+=s*tx; } }); }
       let devCusto=0; all.forEach(v=>{ if(v.ocorrencia==='devolvido') devCusto+=(+v.custo_total||0); }); // itens de devolucao retornando, a custo
       // BUILD 2026-08-20-H: itens POR FORA que compoem o capital a recuperar (tabela ecom_recuperavel_item)
       let itensExt=[]; try{ const ri=await sb.from('ecom_recuperavel_item').select('id,descricao,valor').is('baixado_em',null).order('id');
@@ -5041,10 +5069,11 @@ const ecomFinanceiro={
       const line=(k,v2,bg,kc)=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:'+(bg||'var(--epanel)')+'"><span style="font-size:12.5px'+(kc?';color:'+kc:'')+'">'+k+'</span><span style="font-family:var(--emono);font-size:12.5px;white-space:nowrap">'+v2+'</span></div>';
       // BUILD 2026-08-19-A: lucro real do mes = OPERACIONAL - PERDAS (item 3 do Painel)
       // BUILD 2026-08-20-D: juros dos credores debitam o lucro real (custo operacional por decisao Igor 20/08)
-      const lucLiq=luc-perdas-jurosMes;
-      // BUILD 2026-08-21-B (decisao Igor 21/08): colchao abaixo do lucro final, como reserva que ATENUA perdas
-      const resAmort=lucLiq+col;
-      const tot='<div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:#1a2740"><span style="font-weight:700">LUCRO REAL DO MÊS</span><span style="font-family:var(--emono);font-size:19px;font-weight:700;color:'+(nF===0&&!mesOc.length?'var(--emuted2)':(lucLiq>=0?'var(--eemerald)':'var(--ered)'))+'">'+(nF===0&&!mesOc.length?'—':'R$ '+F(lucLiq))+'</span></div>';
+      // BUILD 2026-08-21-D (Igor 21/08): RESULTADO em 4 linhas — Lucro operacional (Receitas x Despesas,
+      // colchao deduzido por venda) -> (+) Colchao -> LUCRO REAL DO MES = operacional + colchao -> Margem media
+      const lucOp=luc-perdas-jurosMes;
+      const lucReal=lucOp+col;
+      const tot='<div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:#1a2740"><span style="font-weight:700">LUCRO REAL DO MÊS</span><span style="font-family:var(--emono);font-size:19px;font-weight:700;color:'+(nF===0&&!mesOc.length?'var(--emuted2)':(lucReal>=0?'var(--eemerald)':'var(--ered)'))+'">'+(nF===0&&!mesOc.length?'—':'R$ '+F(lucReal))+'</span></div>'; // BUILD 2026-08-21-D: = operacional + colchao
       const pend=n-nF;
       const aviso=pend>0?'<div style="font-size:11px;color:var(--eamber);margin-top:8px">⚠ '+pend+' venda(s) do mês sem margem fechada — custos e lucro acumulados ainda parciais.</div>':'';
       // BUILD 2026-08-03-B: cálculo da projeção "próxima semana" removido junto com o bloco (morreu nos dois lugares)
@@ -5074,7 +5103,7 @@ const ecomFinanceiro={
         const vendaMin=(margem!=null&&margem>0)?(juroMes+CUSTOS_FIXOS_MES)/(margem/100):null;
         invHtml='<div style="padding:7px 13px;background:var(--epanel2);font-size:10.5px;letter-spacing:1px;color:var(--emuted)">INVESTIDORES · capital de terceiros</div>'
           +credL.join('')
-          +line('= DEVO AOS CREDORES','R$ '+F(devo),'#2a0d0d','var(--ered)')
+          +line('CREDORES','R$ '+F(devo),'#2a0d0d','var(--ered)')
           +line('Venda mínima custo',vendaMin!=null?('R$ '+F0(vendaMin)+'/mês'):'—','#241c08','var(--eamber)')
           +(capAtraso?'<div style="padding:7px 13px;background:#241c08;font-size:11px;color:var(--eamber)">⚠ Capitalização atrasada (&gt;32d sem lançamento de juro) — lançar movimento tipo \'juro\' no dia-base (c1 dia 05 · c2 dia 20).</div>':'')
           +'';
@@ -5089,15 +5118,14 @@ const ecomFinanceiro={
         +line('Taxas do ML',nF?('– R$ '+F(tax)):'—','#241c08','var(--eamber)')
         +line('Custo dos fornecedores',cusMes>0?('– R$ '+F(cusMes)):'—','#241c08','var(--eamber)')
         +line('Imposto · 4% da receita',nF?('– R$ '+F(imp)):'—','#241c08','var(--eamber)')
-        +line('Custo financeiro · juros dos credores',jurosMes>0?('– R$ '+F(jurosMes)):'—','#241c08','var(--eamber)')
+        +line('Custo financeiro · juros dos credores'+(jurosAuto>0?' · incl. incorrido s/ lançamento':''),jurosMes>0?('– R$ '+F(jurosMes)):'—','#241c08','var(--eamber)')
         +(mesOc.length?line('Perdas do mês · '+[ocDev?ocDev+' devolu\u00e7\u00e3o(\u00f5es)':'',ocApr?ocApr+' apreens\u00e3o(\u00f5es)':'',ocOut?ocOut+' outra(s) perda(s)':''].filter(Boolean).join(' + '),(perdas>0?'\u2013 R$ '+F(perdas):'\u2014'),'#241c08','var(--ered)'):'')
         +line('= DESPESAS TOTAIS',(nF||mesOc.length)?('\u2013 R$ '+F(despTot)):'—','#2a0d0d','var(--ered)')
         +sec('RESULTADO','#1a2740','var(--emuted)')
-        +line('Lucro operacional',nF?('R$ '+F(luc)):'—','var(--epanel2)')
+        +line('Lucro operacional',(nF||mesOc.length)?('<span style="color:'+(lucOp>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+F(lucOp)+'</span>'):'—','var(--epanel2)')
+        +line('(+) Colchão (reserva)',nF?('R$ '+F(col)):'—','#08231f','var(--eteal)')
         +tot
-        +line('(+) Colchão do mês · reserva p/ perdas (6% da venda)',nF?('R$ '+F(col)):'—','#08231f','var(--eteal)')
-        +line('= RESULTADO AMORTECIDO (com a reserva)',(nF||mesOc.length)?('R$ '+F(resAmort)):'—','#08231f','var(--eteal)')
-        +line('Margem ponderada (operacional)',margem==null?'—':F(margem)+' %')
+        +line('Margem média',margem==null?'—':F(margem)+' %')
         +'<div style="padding:7px 13px;background:var(--epanel2);font-size:10.5px;letter-spacing:1px;color:var(--emuted)">CAPITAL · operação inteira</div>'
         +line('Capital de giro preso (custo)','R$ '+F(preso))
         +line('A receber no Mercado Pago','R$ '+F(recMP))
@@ -7153,8 +7181,8 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
   const sub=b.dataset.sub;
   $$('#tab-ecommerce .ecom-subpanel').forEach(p=>{ p.style.display=(p.id==='ecom-sub-'+sub)?'':'none'; }); // BUILD 2026-08-08-C: escopo restrito — Consulta Produto vive na aba Catálogo
-  if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value){ dt.value=ecomVendas.nowLocal(); } ecomVendas.calcPostarAte(); ecomVendas.loaded=true; ecomVendas.load(); } // BUILD 2026-08-03-A: Candidatos mudou para o Radar
-  if(sub==='relatorios'){ ecomRelatorios.load(); ecomFinanceiro.load(); } // BUILD 2026-08-17-B: Painel abre com Compras do dia + Pedidos a fechar
+  if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value){ dt.value=ecomVendas.nowLocal(); } ecomVendas.calcPostarAte(); ecomVendas.loaded=true; ecomVendas.load(); ecomFinanceiro.load(); } // BUILD 2026-08-21-D: Compras do dia + Pedidos a fechar moram em Vendas
+  if(sub==='relatorios'){ ecomRelatorios.load(); } // BUILD 2026-08-21-D: Painel = so resumo do mes; operacao diaria mora em Vendas
   if(sub==='alvo'){ ecomAlvo.load(); }
   if(sub==='radar'){ ecomRadar.load(); }
 }));
@@ -7215,9 +7243,9 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
     rb.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x===b));
     const t=b.dataset.rlsub;
     ['painel','financeiro','historico'].forEach(k=>{ const el=document.getElementById('rlsub-'+k); if(el) el.style.display=(k===t)?'':'none'; });
-    if(t==='painel') ecomFinanceiro.load(); // BUILD 2026-08-17-B: leitura diaria mora no Painel
+    if(t==='painel') ecomRelatorios.load(); // BUILD 2026-08-21-D: Painel = resumo do mes; leitura diaria foi para Vendas
     if(t==='historico') ecomHistorico.load();
-    if(t==='financeiro') ecomFinanceiro.load(); });
+    if(t==='financeiro'){ ecomFinanceiro.load(); ecomRelatorios.load(); } }); // BUILD 2026-08-21-C: Por mes (competencia) recarrega na sub-aba — antes so recarregava ao reentrar em Relatorios (causa raiz do "nao atualiza")
 })();
 (function(){
   const list=ecomFinanceiro._g('fn-list');
