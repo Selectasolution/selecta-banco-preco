@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-20-I | selecta-banco-preco | FILA EM LINHA UNICA NUMERADA + BOTOES DO TERMOMETRO POR DELEGACAO (Igor 20/08): (1) ABA VENDAS: cada lancamento numerado (1., 2., ...) e TODA a informacao em UMA linha — produto, #pedido, codigo, data/hora, qtd x preco, rastreio com link Correios e alerta de movimento, seguidos dos controles (pill status, semaforo, select ocorrencia, botao postado). Estrutura data-vwrap/postbox preservada. (2) CAUSA RAIZ dos botoes mortos (Lancar juros / + / x): onclick inline dentro de innerHTML NAO dispara neste app (evidencia empirica em 3 builds; todo botao dinamico da casa usa delegacao data-act). Corrigido para o padrao da casa: atributos data-cappagar/data-recupadd/data-recupbaixar + listener UNICO por delegacao no #fn-termometro (flag _capWired; sobrevive a re-render pois o listener fica no container estatico). | base: 2026-08-20-H (mesma sessao) -->
 <!-- BUILD 2026-08-20-H | selecta-banco-preco | ITENS EXTERNOS NO RECUPERAVEL + FIX CSS INPUT + DEVOLVIDO FORA DA FILA (Igor 20/08): (1) BUG do campo de juros "transparente" CORRIGIDO: classes .inp/.btn usadas nos BUILDs E/F NAO EXISTEM no CSS do app (erro meu — assumi padrao inexistente); trocadas pelas reais vinput/vbtn sm (tema #tab-instagram, cor --etxt). (2) ABA VENDAS: filtro final = so venda viva (sem ocorrencia, retido_doc ou outro); devolvido e devolvido_reintegrado tambem saem da fila e vivem no Historico (pedido Igor apos teste). (3) NOVA tabela ecom_recuperavel_item (SQL separado, aplicar ANTES do commit): itens POR FORA que compoem o capital a recuperar (ex. impressoras). Botao "+" na linha Devolucoes a custo (prompt descricao+valor, aceita virgula, confirm, INSERT); cada item ativo vira sublinha com botao "x" que BAIXA (update baixado_em, historico preservado, nunca DELETE). Soma dos itens ativos entra no Descoberto: descoberto = devo - (recMP + devolucoes + itens externos). Sem o SQL aplicado: fetch degrada em silencio (soma 0) e o "+" alerta a pendencia no clique. | base: 2026-08-20-G (mesma sessao) -->
 <!-- BUILD 2026-08-20-G | selecta-banco-preco | FLUXO DE APREENSAO + CUSTO IMUTAVEL + REORDENACAO (Igor 20/08): (1) ABA VENDAS: familia PERDA (apreendido/extraviado/roubado/avariado) SAI da lista viva e do totalizador — venda finalizada vive no Historico (que ja exibe status enviado/entregue com ocorrencia; nada se perde). Devolvido PERMANECE na fila (processo em andamento). (2) BALANCETE: "Custo dos fornecedores" = custo_total de TODAS as vendas do mes (mesAll, doutrina 19/08 item 4) — NAO se move ao fechar margens; DESPESAS TOTAIS usa o mesmo numero. CONSEQUENCIA declarada: RECEITAS CONSIDERADAS - DESPESAS TOTAIS deixa de bater com o LUCRO REAL (receita e das fechadas, custo e de todas); LUCRO REAL permanece o numero oficial (luc - perdas - juros). (3) CAPITAL: nova linha "Devolucoes a custo" abaixo de A receber MP; linha "Tenho recuperavel" APAGADA; "Descoberto" (rotulo enxuto) mudou do bloco INVESTIDORES para o fim do CAPITAL (= devo - (recMP + devolucoes), Coberto em verde se inverter). (4) INVESTIDORES vai AO FINAL, apos Descoberto: header + linhas dos credores + DEVO + "Venda minima custo" (rotulo enxuto); rodape informativo REMOVIDO (doutrina segue nos comentarios de BUILD). | base: 2026-08-20-F (mesma sessao) -->
 <!-- BUILD 2026-08-20-F | selecta-banco-preco | VENDA MINIMA + RECUPERAVEL CORRIGIDO + FIX INPUT (Igor 20/08): (1) REMOVIDAS as linhas "Juro correndo desde a ancora" e "Juro do mes cheio -> cenario 7%" e o "empate venda" por credor. (2) NOVA linha abaixo de DEVO AOS CREDORES: VENDA MINIMA DO MES = (juros do mes + CUSTOS_FIXOS_MES) / margem viva — constante CUSTOS_FIXOS_MES=2500 (Aluguel Foz; novos fixos somam na constante); recalcula sozinha quando a margem do mes muda. (3) RECUPERAVEL redefinido (correcao Igor): A receber MP + DEVOLUCOES a custo (ocorrencia devolvido, ate reintegrar); fetch de estoque do Catalogo REMOVIDO (falhava e o conceito caiu). (4) FIX lancamento de juros: input era type=number e rejeitava virgula pt-BR silenciosamente — agora type=text inputmode=decimal com parser que aceita 9.900,00 / 9900,00 / 9900.00. TAXA_CENARIO_C1 removida (linha que a usava morreu). | base: 2026-08-20-E (mesma sessao) -->
@@ -4828,7 +4829,7 @@ const ecomVendas={
   render(itens){ const box=this._g('vd-list'); this.itens=itens;
     if(!itens.length){ box.innerHTML='<div class="ph">nenhuma entrega pendente — tudo com o cliente</div>'; return; }
     const stp={a_enviar:['st-aenv','a enviar'],enviado:['st-env','enviado'],entregue:['st-ent','entregue'],concluido:['st-ent','concluído'],cancelado:['st-can','cancelado'],perda:['st-per','perda']};
-    box.innerHTML=itens.map(v=>{
+    box.innerHTML=itens.map((v,ix)=>{
       const dt=new Date(v.data_solicitacao).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       const st=stp[v.status]||['mut',v.status];
       const sem=(v.status==='a_enviar')?this.semaforo(v).pill:'';
@@ -4836,7 +4837,13 @@ const ecomVendas={
       const selOc=v.status==='enviado'?this.ocorrSelect(v):'';
       const q=(+v.quantidade||1); const qtxt=q>1?q+'× ':'';
       const rast=this.rastreioHtml(v);
-      return '<div data-vwrap="'+v.id+'"><div class="vli"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · '+(v.produto_codigo||'')+' · '+dt+' · '+qtxt+'R$ '+this.fmt(v.preco_venda)+'</div>'+(rast?'<div class="vm" style="margin-top:3px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+rast+'</div>':'')+'</div><span class="vpill '+st[0]+'">'+st[1]+'</span>'+sem+selOc+btnPost+'</div></div>';
+      // BUILD 2026-08-20-I: linha unica numerada — produto e meta lado a lado, rastreio inline, controles a direita
+      return '<div data-vwrap="'+v.id+'"><div class="vli" style="align-items:center"><div class="vmain" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0">'
+        +'<span class="vm mono" style="margin:0;color:var(--emuted2)">'+(ix+1)+'.</span>'
+        +'<span class="vp" style="margin:0">'+v.produto+'</span>'
+        +'<span class="vm" style="margin:0">#'+v.ml_pedido_id+' · '+(v.produto_codigo||'')+' · '+dt+' · '+qtxt+'R$ '+this.fmt(v.preco_venda)+'</span>'
+        +(rast?'<span class="vm" style="margin:0;display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">'+rast+'</span>':'')
+        +'</div><span class="vpill '+st[0]+'">'+st[1]+'</span>'+sem+selOc+btnPost+'</div></div>';
     }).join('');
   },
   // "postado" abre confirmação inline: data/hora da postagem (prefill agora) — confirmar PARA o cronômetro
@@ -5057,7 +5064,7 @@ const ecomFinanceiro={
             +'<span style="font-size:12.5px">'+c.credor+' · '+(tx*100).toFixed(0)+'% · saldo <b style="font-family:var(--emono)">R$ '+F(s)+'</b></span>'
             +'<span style="font-size:12px;color:var(--eamber);font-family:var(--emono)">juros R$ '+F(jM)+'</span>'
             +'<span style="font-size:12px">vence <b>'+(venc?venc.toLocaleDateString('pt-BR'):'—')+'</b></span>'
-            +'<span style="display:flex;gap:6px;align-items:center"><input id="cap-pago-'+c.credor+'" class="vinput" type="text" inputmode="decimal" placeholder="valor pago R$" style="width:118px;padding:5px 8px;font-size:12px"><button class="vbtn sm" style="padding:5px 10px;font-size:12px" onclick="ecomFinanceiro.capPagar(\''+c.credor+'\')">Lançar</button></span>'
+            +'<span style="display:flex;gap:6px;align-items:center"><input id="cap-pago-'+c.credor+'" class="vinput" type="text" inputmode="decimal" placeholder="valor pago R$" style="width:118px;padding:5px 8px;font-size:12px"><button class="vbtn sm" style="padding:5px 10px;font-size:12px" data-cappagar="'+c.credor+'">Lançar</button></span>'
             +'</div>'); });
         const recup=recMP+devCusto+extSum, desc=devo-recup; descT=desc;
         const vendaMin=(margem!=null&&margem>0)?(juroMes+CUSTOS_FIXOS_MES)/(margem/100):null;
@@ -5089,14 +5096,22 @@ const ecomFinanceiro={
         +'<div style="padding:7px 13px;background:var(--epanel2);font-size:10.5px;letter-spacing:1px;color:var(--emuted)">CAPITAL · operação inteira</div>'
         +line('Capital de giro preso (custo)','R$ '+F(preso))
         +line('A receber no Mercado Pago','R$ '+F(recMP))
-        +'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:var(--epanel)"><span style="font-size:12.5px">Devoluções a custo <button class="vbtn sm" style="margin-left:6px" title="adicionar item por fora ao capital a recuperar" onclick="ecomFinanceiro.recupAdd()">+</button></span><span style="font-family:var(--emono);font-size:12.5px">R$ '+F(devCusto)+'</span></div>'
-        +itensExt.map(i=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 13px 7px 26px;background:var(--epanel)"><span style="font-size:12px;color:var(--emuted)">'+String(i.descricao).replace(/</g,'&lt;')+' <button class="vbtn sm" title="baixar item (histórico preservado)" onclick="ecomFinanceiro.recupBaixar('+i.id+')">×</button></span><span style="font-family:var(--emono);font-size:12px">R$ '+F(+i.valor||0)+'</span></div>').join('')
+        +'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:var(--epanel)"><span style="font-size:12.5px">Devoluções a custo <button class="vbtn sm" style="margin-left:6px" title="adicionar item por fora ao capital a recuperar" data-recupadd="1">+</button></span><span style="font-family:var(--emono);font-size:12.5px">R$ '+F(devCusto)+'</span></div>'
+        +itensExt.map(i=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 13px 7px 26px;background:var(--epanel)"><span style="font-size:12px;color:var(--emuted)">'+String(i.descricao).replace(/</g,'&lt;')+' <button class="vbtn sm" title="baixar item (histórico preservado)" data-recupbaixar="'+i.id+'">×</button></span><span style="font-family:var(--emono);font-size:12px">R$ '+F(+i.valor||0)+'</span></div>').join('')
         +line('MP libera após entrega',medLib==null?'— (sem venda liberada medida)':'~'+Math.round(medLib)+' dia(s) · mediana')
         +(descT!=null?(descT>0?line('Descoberto','R$ '+F(descT),'#2a0d0d','var(--ered)'):line('Coberto','R$ '+F(-descT),'#08231f','var(--eteal)')):'')
         +invHtml
         +'</div>'+aviso
         +(perdasPend>0?'<div style="font-size:11px;color:var(--ered);margin-top:6px">\u26d4 '+perdasPend+' ocorr\u00eancia(s) do m\u00eas sem preju\u00edzo apurado — abra o Editar do Hist\u00f3rico e feche o valor l\u00edquido.</div>':'');
       // BUILD 2026-08-03-B: projeção "Próxima semana" removida também daqui (decisão Igor 03/08 — morre nos dois lugares)
+      // BUILD 2026-08-20-I: delegacao (padrao da casa) — onclick inline em innerHTML nao dispara neste app
+      if(!box._capWired){ box._capWired=true; const self=this;
+        box.addEventListener('click',e=>{
+          const p=e.target.closest('[data-cappagar]'); if(p){ self.capPagar(p.getAttribute('data-cappagar')); return; }
+          if(e.target.closest('[data-recupadd]')){ self.recupAdd(); return; }
+          const b2=e.target.closest('[data-recupbaixar]'); if(b2){ self.recupBaixar(+b2.getAttribute('data-recupbaixar')); }
+        });
+      }
     }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro no termômetro: '+e.message+'</div>'; }
   }
 };
