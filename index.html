@@ -1,4 +1,5 @@
-<!-- BUILD 2026-08-21-D | selecta-banco-preco | RESULTADO EM 4 LINHAS + OPERACAO DIARIA NA ABA VENDAS (Igor 21/08): (1) TERMOMETRO/RESULTADO condensado: 'Lucro operacional' = luc - perdas - juros (resultado de Receitas x Despesas; colchao segue deduzido por venda no resultado_liquido) -> '(+) Colchao (reserva)' -> 'LUCRO REAL DO MES' = operacional + colchao (linha grande, verde/vermelho) -> 'Margem media'. Linhas 'Resultado do mes' e lucro-vivo isolado REMOVIDAS. (2) COMPRAS DO DIA + PEDIDOS A FECHAR (com fn-form-park) migraram do Relatorios>Painel para o TOPO da aba VENDAS, acima de Lancar venda. NAO APAGADO 'Pedidos a fechar' apesar da ordem: o quadro de fechamento de margem (fn-form: comissao/tarifa/frete/custo) SO existe injetado no fn-list — a fila de Lancadas lista mas NAO fecha margem; apagar mataria o fluxo de fechamento. Fusao do fechamento dentro da propria fila = proximo build, se Igor confirmar; ai o bloco morre de verdade. (3) Painel (Relatorios) = SO Visao geral do mes. Wiring: sub-aba Vendas chama ecomFinanceiro.load (compras+fila+termometro oculto); entrar em Relatorios/painel chama ecomRelatorios.load. Ids fn-* intactos (CSS #tab-ecommerce cobre o novo local). | base: 2026-08-21-C (mesma sessao) -->
+<!-- BUILD 2026-08-21-F | selecta-banco-preco | POR MES v2 — RESTAURADO E CORRIGIDO NA CAUSA (resposta a cobranca do Igor 21/08): o quadrante NAO estava desatualizado — a doutrina 18-B mandava devolvido/apreendido SAIREM do Por mes, entao cada ocorrencia marcada ENCOLHIA o mes retroativamente (as 13 apreensoes derrubaram jul/ago na tabela e parecia dado velho). v2 SUPERA o 18-B: (1) Faturado = INTEGRAL do mes (todas as vendas nao-canceladas, fato historico — bate com painel ML e nao se move quando ocorrencia e marcada); (2) coluna PERDAS propria (prejuizo das ocorrencias do mes, vermelha); (3) Lucro = liquido de perdas (lucLiq, mesma regua do Termometro, verde/vermelho); (4) Margem operacional inalterada; (5) Vendas = contagem integral; vs-mes-anterior sobre o faturado integral. TOTAL na mesma regua. Se o "errado" que o Igor viu for OUTRA coisa, especificar mes/valor-mostrado/valor-esperado que o ajuste e cirurgico. | base: 2026-08-21-E (mesma sessao) -->
+<!-- BUILD 2026-08-21-E | selecta-banco-preco | MODAL PADRAO SELECTA + DESPESAS OPERACIONAIS + LIMPEZAS (Igor 21/08, noite): (1) CAUSA RAIZ do modal quebrado do 21-C: era criado via document.body.appendChild — FORA do #tab-ecommerce, e TODO o CSS da casa (.vinput/.vbtn/.efield) e escopado por aba; nasceu sem estilo (feio) e com input inutilizavel. Corrigido com MODAL ESTATICO unico (#sel-modal) DENTRO do #tab-ecommerce, tema teal Selecta, campos data/descricao/valor (parser virgula pt-BR), modo confirmacao p/ anulacoes; listeners por onclick= (sem duplicacao em reaberturas). (2) DESPESAS OPERACIONAIS: nova linha em DESPESAS com botao + (lancar aluguel/passagem/luz/hospedagem via modal; tabela ecom_despesa_op — SQL entregue junto); lancamentos do mes viram sublinhas-historico com x de ANULAR (anulado_em, nunca DELETE); soma debita lucOp e entra em DESPESAS TOTAIS. Sem o SQL aplicado a linha degrada para "aplicar SQL" sem quebrar nada. Constante CUSTOS_FIXOS_MES segue SO na regua da venda minima (projecao); o balancete usa lancamentos reais — sobreposicao declarada, propositos distintos. (3) QUADRANTE "Por mes (competencia)" APAGADO por ordem (renderMensal dormente; retorna so com especificacao de valores esperados batida). (4) Descoberto/Coberto: VALOR colorido (vermelho descoberto / teal coberto), nao so o rotulo. | base: 2026-08-21-D (mesma sessao) -->\n<!-- BUILD 2026-08-21-D | selecta-banco-preco | RESULTADO EM 4 LINHAS + OPERACAO DIARIA NA ABA VENDAS (Igor 21/08): (1) TERMOMETRO/RESULTADO condensado: 'Lucro operacional' = luc - perdas - juros (resultado de Receitas x Despesas; colchao segue deduzido por venda no resultado_liquido) -> '(+) Colchao (reserva)' -> 'LUCRO REAL DO MES' = operacional + colchao (linha grande, verde/vermelho) -> 'Margem media'. Linhas 'Resultado do mes' e lucro-vivo isolado REMOVIDAS. (2) COMPRAS DO DIA + PEDIDOS A FECHAR (com fn-form-park) migraram do Relatorios>Painel para o TOPO da aba VENDAS, acima de Lancar venda. NAO APAGADO 'Pedidos a fechar' apesar da ordem: o quadro de fechamento de margem (fn-form: comissao/tarifa/frete/custo) SO existe injetado no fn-list — a fila de Lancadas lista mas NAO fecha margem; apagar mataria o fluxo de fechamento. Fusao do fechamento dentro da propria fila = proximo build, se Igor confirmar; ai o bloco morre de verdade. (3) Painel (Relatorios) = SO Visao geral do mes. Wiring: sub-aba Vendas chama ecomFinanceiro.load (compras+fila+termometro oculto); entrar em Relatorios/painel chama ecomRelatorios.load. Ids fn-* intactos (CSS #tab-ecommerce cobre o novo local). | base: 2026-08-21-C (mesma sessao) -->
 <!-- BUILD 2026-08-21-C | selecta-banco-preco | AJUSTES DO IGOR 21/08 (noite) + JURO INCORRIDO AUTOMATICO: (1) POR MES (COMPETENCIA): causa raiz do 'nao atualiza' era o wiring — clique na sub-aba Financeiro so recarregava ecomFinanceiro; agora recarrega tambem ecomRelatorios.load (renderMensal). (2) BALANCETE rotulos: '(+) Colchao (reserva)' e '= Resultado do mes' (verde/vermelho conforme sinal); INVESTIDORES: 'CREDORES' (era DEVO AOS CREDORES). (3) JURO INCORRIDO AUTOMATICO (doutrina 'juro e base e real'): despesa do mes = lancamentos do ledger (juro/juro_pago) + credor SEM lancamento no mes com dia-base vencido entra saldo x taxa sozinho (DIA_BASE c1=05 c2=20; so mes corrente; nada gravado no banco; rotulo sinaliza 'incl. incorrido s/ lancamento'). EFEITO: agosto cai ~10.400 no Resultado do mes — e o numero honesto que faltava. (4) CUSTOS_FIXOS_MES 2500 -> 3050 (aluguel 2500 + Claude 550) — venda minima sobe. (5) Botao + do capital a recuperar: prompts nativos substituidos por MODAL no padrao do sistema (epanel/vinput/vbtn, criado via DOM com addEventListener — padrao delegacao-safe da casa; Esc=clique fora fecha). | base: 2026-08-21-B (mesma sessao) -->
 <!-- BUILD 2026-08-21-B | selecta-banco-preco | COLCHAO ABAIXO DO LUCRO (ordem Igor 21/08, 2a cobranca): (1) BALANCETE: linha do colchao SAI da secao DESPESAS e do total DESPESAS TOTAIS (reserva nao e despesa paga a terceiro); nasce apos o LUCRO REAL DO MES: '(+) Colchao do mes - reserva p/ perdas (6% da venda)' e '= RESULTADO AMORTECIDO (com a reserva)' = lucro real + colchao. (2) ESCOLHA DE DOUTRINA declarada: LUCRO REAL permanece CONSERVADOR (colchao deduzido por venda no resultado_liquido do banco — dinheiro reservado nao e lucro); o RESULTADO AMORTECIDO mostra o efeito da reserva. Se Igor preferir lucro real JA com colchao dentro, e 1 linha a mudar (lucOp=luc+col) — decisao aberta sinalizada no chat. (3) Margem ponderada e venda minima INALTERADAS (apos colchao — conservadoras, 9,57% ago). Sem mudanca de banco. | base: 2026-08-21-A (mesma sessao) -->
 <!-- BUILD 2026-08-21-A | selecta-banco-preco | COLCHAO SOBRE A VENDA — MIGRACAO DE BASE (decisao Igor 21/08, apos auditoria que revelou base custo desde 12/07): (1) DOUTRINA: colchao = % do VALOR DE VENDA em TODAS as superficies de simulacao — ecom.calc (Consulta Produto/Simulador), _simMargem (gate da Alexia + cadastro de anuncio), break-even do calc e do formulario (colchao migra para dentro da aliquota t: be=(custo+frete)/(1-t-colchao)), e quadro de fechamento fn-ledger (colch=rec*0.06, era cusT*0.06 HARDCODED — achado da auditoria: o fechamento e calculado no FRONT, nao ha funcao server-side gravando colchao_valor via fechar(); as colunas derivadas de ecom_vendas sao escritas por mecanismo do banco A CONFIRMAR na varredura pg_proc/trigger/generated — SQL de varredura entregue junto). (2) CLAUSULA PERMANENTE nascida deste erro: TODO percentual exibido em painel DECLARA a base no rotulo (% da venda / % do custo) — Parametros Comerciais atualizados nos 5 campos. (3) Rotulos corrigidos: fn-ledger '6% da venda', gate 's/ venda' com valor sobre o preco vigente (promo ou cheio), export da Consulta 'sobre a VENDA - reserva p/ perdas', relatorio por venda 'Colchao (reserva)' (rotulo generico: safra ate jul/26 = 6% custo, imutavel e marcada; ago/26 em diante = 6% venda apos SQL de recalculo). (4) EFEITO NO GATE: margens caem ~2,4pp (custo medio 59,5% do preco) — catalogo precisa de reprecificacao antes da reabertura de segunda; piso 10% inalterado. (5) SQL de recalculo de AGOSTO entregue em arquivo separado (preview + update transacional), gate: rodar varredura ANTES. | base: 2026-08-20-I (recebido na sessao 21/08) -->
@@ -1700,6 +1701,18 @@
       <button class="ecom-subtab" data-sub="relatorios">Relatórios</button>
       <button class="ecom-subtab radar" data-sub="radar">📡 Radar de Nicho</button>
     </div>
+    <!-- BUILD 2026-08-21-E: modal unico padrao Selecta (recuperavel + despesas op). DENTRO do #tab-ecommerce de proposito: o CSS da casa (.vinput/.vbtn/.efield) e escopado por aba — o modal do 21-C nascia em document.body, FORA do escopo, por isso saiu sem estilo e com input quebrado. -->
+    <div id="sel-modal" style="display:none;position:fixed;inset:0;background:rgba(2,10,8,.62);align-items:center;justify-content:center;z-index:9999">
+      <div style="background:var(--epanel);border:1px solid var(--eteal);border-radius:12px;padding:16px 18px;width:min(92vw,400px);display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+        <h3 id="sel-modal-tit" style="margin:0;color:var(--eteal);font-size:13px;text-transform:uppercase;letter-spacing:.06em"></h3>
+        <div id="sel-modal-msg" style="display:none;font-size:12.5px;color:var(--etxt)"></div>
+        <div id="sel-modal-fdata" class="efield"><label>Data</label><input class="vinput mono" id="sel-modal-data" type="date"></div>
+        <div id="sel-modal-fdesc" class="efield"><label>Descrição</label><input class="vinput" id="sel-modal-desc" type="text" placeholder="ex.: Passagem Foz 25/08"></div>
+        <div id="sel-modal-fval" class="efield"><label>Valor (R$)</label><input class="vinput mono" id="sel-modal-val" type="text" inputmode="decimal" placeholder="0,00 — vírgula p/ centavos"></div>
+        <div id="sel-modal-err" style="display:none;font-size:11.5px;color:var(--ered)"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end"><button id="sel-modal-cancel" class="vbtn sm" style="background:var(--epanel2);color:var(--etxt);border:1px solid var(--eborder)">Cancelar</button><button id="sel-modal-save" class="vbtn sm">Salvar</button></div>
+      </div>
+    </div>
 
 
 
@@ -1792,7 +1805,7 @@
         <h3>Termômetro financeiro · <span id="fn-termo-mes" style="color:var(--eteal);text-transform:none;letter-spacing:0"></span></h3>
         <div id="fn-termometro"><div class="ph">carregando…</div></div>
       </div>
-      <div class="ecard" style="margin-top:18px">
+      <div class="ecard" style="margin-top:18px"><!-- BUILD 2026-08-21-F: Por mes v2 — faturado INTEGRAL + perdas separadas (supera doutrina 18-B de exclusao) -->
         <h3>Por mês (competência)</h3>
         <div id="rl-mensal"></div>
       </div>
@@ -4958,33 +4971,44 @@ const ecomFinanceiro={
   },
   // ===== TERMÔMETRO FINANCEIRO · mês corrente (competência = data do pedido, mesma régua dos Relatórios) =====
   // BUILD 2026-08-20-H: itens por fora do capital a recuperar (gate do Igor: confirm; baixa preserva historico)
-  recupAdd(){ // BUILD 2026-08-21-C: modal no padrao do sistema (prompt nativo aposentado a pedido do Igor)
-    const self=this; const old=document.getElementById('recup-modal'); if(old) old.remove();
-    const ov=document.createElement('div'); ov.id='recup-modal';
-    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9999';
-    const card=document.createElement('div');
-    card.style.cssText='background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:18px;width:min(92vw,380px);display:flex;flex-direction:column;gap:10px';
-    card.innerHTML='<div style="font-weight:700;font-size:14px">Item por fora · capital a recuperar</div>'
-      +'<input id="recup-desc" class="vinput" type="text" placeholder="Descrição (ex.: Impressoras a receber)" style="width:100%">'
-      +'<input id="recup-val" class="vinput" type="text" inputmode="decimal" placeholder="Valor (R$) — vírgula p/ centavos" style="width:100%">'
-      +'<div id="recup-err" style="display:none;font-size:11.5px;color:var(--ered)"></div>'
-      +'<div style="display:flex;gap:8px;justify-content:flex-end"><button id="recup-cancel" class="vbtn sm">Cancelar</button><button id="recup-save" class="vbtn sm" style="font-weight:700">Adicionar</button></div>';
-    ov.appendChild(card); document.body.appendChild(ov);
-    const close=()=>ov.remove();
-    ov.addEventListener('click',e=>{ if(e.target===ov) close(); });
-    card.querySelector('#recup-cancel').addEventListener('click',close);
-    card.querySelector('#recup-save').addEventListener('click',async()=>{
-      const d=(card.querySelector('#recup-desc').value||'').trim();
-      const t=(card.querySelector('#recup-val').value||'').trim();
+  // BUILD 2026-08-21-E: modal unico padrao Selecta (estatico, dentro do #tab-ecommerce — CSS da casa aplica)
+  _selModal(cfg){
+    const ov=this._g('sel-modal'); if(!ov){ alert('modal ausente no DOM'); return; }
+    this._g('sel-modal-tit').textContent=cfg.tit||'';
+    const msg=this._g('sel-modal-msg'), err=this._g('sel-modal-err');
+    err.style.display='none'; err.textContent='';
+    msg.style.display=cfg.confirmOnly?'':'none'; msg.textContent=cfg.msg||'';
+    this._g('sel-modal-fdata').style.display=(cfg.comData&&!cfg.confirmOnly)?'':'none';
+    this._g('sel-modal-fdesc').style.display=cfg.confirmOnly?'none':'';
+    this._g('sel-modal-fval').style.display=cfg.confirmOnly?'none':'';
+    const iData=this._g('sel-modal-data'), iDesc=this._g('sel-modal-desc'), iVal=this._g('sel-modal-val');
+    if(!cfg.confirmOnly){ iData.value=new Date().toISOString().slice(0,10); iDesc.value=''; iVal.value=''; }
+    this._g('sel-modal-save').textContent=cfg.confirmOnly?'Confirmar':'Salvar';
+    ov.style.display='flex';
+    const close=()=>{ ov.style.display='none'; };
+    ov.onclick=e=>{ if(e.target===ov) close(); };
+    this._g('sel-modal-cancel').onclick=close;
+    const self=this;
+    this._g('sel-modal-save').onclick=async()=>{
+      if(cfg.confirmOnly){ const r=await cfg.onSave({}); if(r){ err.textContent=r; err.style.display=''; return; } close(); self.termometro(); return; }
+      const d=(iDesc.value||'').trim(), t=(iVal.value||'').trim();
       const v=t.indexOf(',')>=0?parseFloat(t.replace(/\./g,'').replace(',','.')):parseFloat(t);
-      const err=card.querySelector('#recup-err');
-      if(!d||!(v>0)){ err.textContent='Preencha a descrição e um valor válido (vírgula para centavos).'; err.style.display=''; return; }
-      const r=await sb.from('ecom_recuperavel_item').insert({descricao:d,valor:v});
-      if(r.error){ err.textContent='Erro: '+r.error.message; err.style.display=''; return; }
+      if(!d||!(v>0)){ err.textContent='Preencha descrição e valor válido (vírgula p/ centavos).'; err.style.display=''; return; }
+      const r=await cfg.onSave({data:iData.value,descricao:d,valor:v});
+      if(r){ err.textContent=r; err.style.display=''; return; }
       close(); self.termometro();
-    });
-    card.querySelector('#recup-desc').focus();
+    };
+    if(!cfg.confirmOnly) setTimeout(()=>iDesc.focus(),30);
   },
+  recupAdd(){ this._selModal({tit:'Item por fora · capital a recuperar',comData:false,onSave:async p=>{
+    const r=await sb.from('ecom_recuperavel_item').insert({descricao:p.descricao,valor:p.valor});
+    return r.error?('Erro: '+r.error.message):null; }}); },
+  despAdd(){ this._selModal({tit:'Lançar despesa operacional',comData:true,onSave:async p=>{
+    const r=await sb.from('ecom_despesa_op').insert({data:p.data,descricao:p.descricao,valor:p.valor});
+    return r.error?('Erro: '+r.error.message+' — aplicar o SQL ecom_despesa_op'):null; }}); },
+  despAnular(id,desc){ this._selModal({tit:'Anular despesa',confirmOnly:true,msg:(desc||('lançamento #'+id))+' — anular? (some da soma; histórico preservado)',onSave:async()=>{
+    const r=await sb.from('ecom_despesa_op').update({anulado_em:new Date().toISOString()}).eq('id',id);
+    return r.error?('Erro: '+r.error.message):null; }}); },
   async recupBaixar(id){
     if(!confirm('Baixar este item do capital a recuperar? (some da soma; histórico preservado)')) return;
     const r=await sb.from('ecom_recuperavel_item').update({baixado_em:new Date().toISOString()}).eq('id',id);
@@ -5061,6 +5085,10 @@ const ecomFinanceiro={
       let itensExt=[]; try{ const ri=await sb.from('ecom_recuperavel_item').select('id,descricao,valor').is('baixado_em',null).order('id');
         if(!ri.error) itensExt=ri.data||[]; }catch(_e){}
       const extSum=itensExt.reduce((s2,i)=>s2+(+i.valor||0),0);
+      // BUILD 2026-08-21-E: despesas operacionais lançadas (ecom_despesa_op; anulado_em preserva histórico)
+      let despOp=null,despOpMes=0;
+      try{ const rd=await sb.from('ecom_despesa_op').select('id,data,descricao,valor').is('anulado_em',null).order('data');
+        if(!rd.error){ despOp=(rd.data||[]).filter(x=>String(x.data||'').slice(0,7)===mkey); despOpMes=despOp.reduce((s2,x)=>s2+(+x.valor||0),0); } }catch(_e){}
       // mediana venda->liberacao (ciclo cheio de capital; so vendas sem ocorrencia ja liberadas)
       const dCic=all.filter(v=>!v.ocorrencia&&v.data_solicitacao&&v.data_liberacao_mp&&v.data_liberacao_mp<=hojeIso)
         .map(v=>(new Date(v.data_liberacao_mp)-new Date(v.data_solicitacao))/86400000).filter(d=>d>=0).sort((a,b)=>a-b);
@@ -5071,14 +5099,14 @@ const ecomFinanceiro={
       // BUILD 2026-08-20-D: juros dos credores debitam o lucro real (custo operacional por decisao Igor 20/08)
       // BUILD 2026-08-21-D (Igor 21/08): RESULTADO em 4 linhas — Lucro operacional (Receitas x Despesas,
       // colchao deduzido por venda) -> (+) Colchao -> LUCRO REAL DO MES = operacional + colchao -> Margem media
-      const lucOp=luc-perdas-jurosMes;
+      const lucOp=luc-perdas-jurosMes-despOpMes; // BUILD 2026-08-21-E: despesas operacionais debitam o resultado
       const lucReal=lucOp+col;
       const tot='<div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:#1a2740"><span style="font-weight:700">LUCRO REAL DO MÊS</span><span style="font-family:var(--emono);font-size:19px;font-weight:700;color:'+(nF===0&&!mesOc.length?'var(--emuted2)':(lucReal>=0?'var(--eemerald)':'var(--ered)'))+'">'+(nF===0&&!mesOc.length?'—':'R$ '+F(lucReal))+'</span></div>'; // BUILD 2026-08-21-D: = operacional + colchao
       const pend=n-nF;
       const aviso=pend>0?'<div style="font-size:11px;color:var(--eamber);margin-top:8px">⚠ '+pend+' venda(s) do mês sem margem fechada — custos e lucro acumulados ainda parciais.</div>':'';
       // BUILD 2026-08-03-B: cálculo da projeção "próxima semana" removido junto com o bloco (morreu nos dois lugares)
       // BUILD 2026-08-20-B: Termometro v3 = mini balancete mensal (estrutura Igor 20/08; conteudo adicional a ditar)
-      const despTot=tax+cusMes+imp+perdas+jurosMes; // BUILD 2026-08-21-B: colchao FORA das despesas (reserva, vive abaixo do lucro)
+      const despTot=tax+cusMes+imp+perdas+jurosMes+despOpMes; // colchao FORA (21-B); despesas operacionais DENTRO (21-E)
       const sec=(t,bg,c)=>'<div style="padding:7px 13px;background:'+bg+';font-size:10.5px;letter-spacing:1px;color:'+c+';font-weight:600">'+t+'</div>';
       // BUILD 2026-08-20-C: invHtml montado APOS line/F/F0/margem (correcao TDZ)
       let invHtml='', descT=null;
@@ -5119,6 +5147,8 @@ const ecomFinanceiro={
         +line('Custo dos fornecedores',cusMes>0?('– R$ '+F(cusMes)):'—','#241c08','var(--eamber)')
         +line('Imposto · 4% da receita',nF?('– R$ '+F(imp)):'—','#241c08','var(--eamber)')
         +line('Custo financeiro · juros dos credores'+(jurosAuto>0?' · incl. incorrido s/ lançamento':''),jurosMes>0?('– R$ '+F(jurosMes)):'—','#241c08','var(--eamber)')
+        +'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:#241c08"><span style="font-size:12.5px;color:var(--eamber)">Despesas operacionais <button class="vbtn sm" style="margin-left:6px;padding:2px 9px" title="lançar despesa (aluguel, passagem, luz, hospedagem...)" data-despadd="1">+</button></span><span style="font-family:var(--emono);font-size:12.5px">'+(despOp===null?'<span style="color:var(--eamber)">aplicar SQL</span>':(despOpMes>0?('– R$ '+F(despOpMes)):'—'))+'</span></div>'
+        +((despOp&&despOp.length)?despOp.map(x=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 13px 5px 26px;background:var(--epanel)"><span style="font-size:11.5px;color:var(--emuted)">'+String(x.data).slice(8,10)+'/'+String(x.data).slice(5,7)+' · '+String(x.descricao).replace(/</g,'&lt;')+' <button class="vbtn sm" style="padding:1px 7px;font-size:11px" title="anular (histórico preservado)" data-despanular="'+x.id+'" data-desc="'+String(x.descricao).replace(/"/g,'&quot;')+'">×</button></span><span style="font-family:var(--emono);font-size:11.5px">R$ '+F(+x.valor||0)+'</span></div>').join(''):'')
         +(mesOc.length?line('Perdas do mês · '+[ocDev?ocDev+' devolu\u00e7\u00e3o(\u00f5es)':'',ocApr?ocApr+' apreens\u00e3o(\u00f5es)':'',ocOut?ocOut+' outra(s) perda(s)':''].filter(Boolean).join(' + '),(perdas>0?'\u2013 R$ '+F(perdas):'\u2014'),'#241c08','var(--ered)'):'')
         +line('= DESPESAS TOTAIS',(nF||mesOc.length)?('\u2013 R$ '+F(despTot)):'—','#2a0d0d','var(--ered)')
         +sec('RESULTADO','#1a2740','var(--emuted)')
@@ -5132,7 +5162,7 @@ const ecomFinanceiro={
         +'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:var(--epanel)"><span style="font-size:12.5px">Devoluções a custo <button class="vbtn sm" style="margin-left:6px" title="adicionar item por fora ao capital a recuperar" data-recupadd="1">+</button></span><span style="font-family:var(--emono);font-size:12.5px">R$ '+F(devCusto)+'</span></div>'
         +itensExt.map(i=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 13px 7px 26px;background:var(--epanel)"><span style="font-size:12px;color:var(--emuted)">'+String(i.descricao).replace(/</g,'&lt;')+' <button class="vbtn sm" title="baixar item (histórico preservado)" data-recupbaixar="'+i.id+'">×</button></span><span style="font-family:var(--emono);font-size:12px">R$ '+F(+i.valor||0)+'</span></div>').join('')
         +line('MP libera após entrega',medLib==null?'— (sem venda liberada medida)':'~'+Math.round(medLib)+' dia(s) · mediana')
-        +(descT!=null?(descT>0?line('Descoberto','R$ '+F(descT),'#2a0d0d','var(--ered)'):line('Coberto','R$ '+F(-descT),'#08231f','var(--eteal)')):'')
+        +(descT!=null?(descT>0?line('Descoberto','<span style="color:var(--ered);font-weight:700">R$ '+F(descT)+'</span>','#2a0d0d','var(--ered)'):line('Coberto','<span style="color:var(--eteal);font-weight:700">R$ '+F(-descT)+'</span>','#08231f','var(--eteal)')):'')
         +invHtml
         +'</div>'+aviso
         +(perdasPend>0?'<div style="font-size:11px;color:var(--ered);margin-top:6px">\u26d4 '+perdasPend+' ocorr\u00eancia(s) do m\u00eas sem preju\u00edzo apurado — abra o Editar do Hist\u00f3rico e feche o valor l\u00edquido.</div>':'');
@@ -5142,7 +5172,9 @@ const ecomFinanceiro={
         box.addEventListener('click',e=>{
           const p=e.target.closest('[data-cappagar]'); if(p){ self.capPagar(p.getAttribute('data-cappagar')); return; }
           if(e.target.closest('[data-recupadd]')){ self.recupAdd(); return; }
-          const b2=e.target.closest('[data-recupbaixar]'); if(b2){ self.recupBaixar(+b2.getAttribute('data-recupbaixar')); }
+          const b2=e.target.closest('[data-recupbaixar]'); if(b2){ self.recupBaixar(+b2.getAttribute('data-recupbaixar')); return; }
+          if(e.target.closest('[data-despadd]')){ self.despAdd(); return; }
+          const b3=e.target.closest('[data-despanular]'); if(b3){ self.despAnular(+b3.getAttribute('data-despanular'), b3.getAttribute('data-desc')||''); }
         });
       }
     }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro no termômetro: '+e.message+'</div>'; }
@@ -5322,21 +5354,26 @@ const ecomRelatorios={
   },
   renderKpis(a,isQuery){ (isQuery?this._g('rl-query-result'):this._g('rl-kpis')).innerHTML=this.kpiHtml(a); },
   renderMensal(){ const box=this._g('rl-mensal'); const meses={};
-    // BUILD 2026-08-18-B: devolvido/apreendido fora do Por mes — receita fantasma nao fecha mes
-    this.data.forEach(v=>{ if(v.status==='cancelado'||v.ocorrencia==='devolvido'||v.ocorrencia==='devolvido_reintegrado'||v.ocorrencia==='apreendido'||!v.data_solicitacao) return; const m=v.data_solicitacao.slice(0,7); (meses[m]=meses[m]||[]).push(v); });
+    // BUILD 2026-08-21-F: SUPERA a doutrina 18-B — vendas com ocorrencia VOLTAM ao Por mes.
+    // Faturado = o que realmente faturou (fato historico, bate com o painel ML); a ocorrencia
+    // aparece na coluna PERDAS do proprio mes, e o Lucro ja e liquido delas. Antes, cada
+    // apreensao marcada ENCOLHIA o mes retroativamente — era isso que parecia "desatualizado".
+    this.data.forEach(v=>{ if(v.status==='cancelado'||!v.data_solicitacao) return; const m=v.data_solicitacao.slice(0,7); (meses[m]=meses[m]||[]).push(v); });
     const keys=Object.keys(meses).sort().reverse();
     if(!keys.length){ box.innerHTML='<div class="ph">sem vendas ainda</div>'; return; }
     const ord=keys.slice().reverse(), aggMap={}; ord.forEach(m=>aggMap[m]=this.agg(meses[m]));
     const nm=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+    const fatInt={}; ord.forEach(m=>{ fatInt[m]=meses[m].reduce((s,v)=>s+(+v.receita_bruta||0),0); }); // faturado INTEGRAL (todas as vendas do mes)
     const rows=keys.map(m=>{ const a=aggMap[m]; const idx=ord.indexOf(m); const ant=idx>0?aggMap[ord[idx-1]]:null;
-      let vt='—'; if(ant&&ant.fat>0){ const d=(a.fat-ant.fat)/ant.fat*100; vt='<span style="color:'+(d>=0?'var(--eemerald)':'var(--ered)')+'">'+(d>=0?'+':'')+d.toFixed(1)+'%</span>'; }
+      let vt='—'; if(ant&&fatInt[ord[idx-1]]>0){ const d=(fatInt[m]-fatInt[ord[idx-1]])/fatInt[ord[idx-1]]*100; vt='<span style="color:'+(d>=0?'var(--eemerald)':'var(--ered)')+'">'+(d>=0?'+':'')+d.toFixed(1)+'%</span>'; }
       const p=m.split('-'); const nome=nm[(+p[1])-1]+'/'+p[0];
-      return '<tr><td style="font-weight:500">'+nome+'</td><td class="mono">R$ '+this.fmt(a.fat)+'</td><td class="mono">R$ '+this.fmt(a.luc)+'</td><td class="mono">'+(a.margem==null?'—':this.fmt(a.margem)+'%')+'</td><td class="mono">'+a.n+'</td><td class="mono">'+vt+'</td></tr>';
+      return '<tr><td style="font-weight:500">'+nome+'</td><td class="mono">R$ '+this.fmt(fatInt[m])+'</td><td class="mono" style="color:'+(a.perdas>0?'var(--ered)':'var(--emuted)')+'">'+(a.perdas>0?('– R$ '+this.fmt(a.perdas)):'—')+'</td><td class="mono" style="color:'+(a.lucLiq>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(a.lucLiq)+'</td><td class="mono">'+(a.margem==null?'—':this.fmt(a.margem)+'%')+'</td><td class="mono">'+meses[m].length+'</td><td class="mono">'+vt+'</td></tr>';
     }).join('');
     // BUILD 2026-08-03-B: linha TOTAL — soma real da operação; margem RECALCULADA sobre o total (média de % mente)
-    const tot=this.agg(this.data);
-    const totRow='<tr style="border-top:2px solid var(--eborder);background:var(--epanel2)"><td style="font-weight:700">TOTAL</td><td class="mono" style="font-weight:700">R$ '+this.fmt(tot.fat)+'</td><td class="mono" style="font-weight:700;color:'+(tot.luc>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(tot.luc)+'</td><td class="mono" style="font-weight:700">'+(tot.margem==null?'—':this.fmt(tot.margem)+'%')+'</td><td class="mono" style="font-weight:700">'+tot.n+'</td><td class="mono">—</td></tr>';
-    box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab"><thead><tr><th>Mês</th><th>Faturamento</th><th>Lucro</th><th>Margem</th><th>Vendas</th><th>vs mês ant.</th></tr></thead><tbody>'+rows+totRow+'</tbody></table></div>';
+    const tot=this.agg(this.data.filter(v=>v.status!=='cancelado'));
+    const fatTot=ord.reduce((s,m)=>s+fatInt[m],0), nTot=ord.reduce((s,m)=>s+meses[m].length,0);
+    const totRow='<tr style="border-top:2px solid var(--eborder);background:var(--epanel2)"><td style="font-weight:700">TOTAL</td><td class="mono" style="font-weight:700">R$ '+this.fmt(fatTot)+'</td><td class="mono" style="font-weight:700;color:'+(tot.perdas>0?'var(--ered)':'var(--emuted)')+'">'+(tot.perdas>0?('– R$ '+this.fmt(tot.perdas)):'—')+'</td><td class="mono" style="font-weight:700;color:'+(tot.lucLiq>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(tot.lucLiq)+'</td><td class="mono" style="font-weight:700">'+(tot.margem==null?'—':this.fmt(tot.margem)+'%')+'</td><td class="mono" style="font-weight:700">'+nTot+'</td><td class="mono">—</td></tr>';
+    box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab"><thead><tr><th>Mês</th><th>Faturado</th><th>Perdas</th><th>Lucro</th><th>Margem</th><th>Vendas</th><th>vs mês ant.</th></tr></thead><tbody>'+rows+totRow+'</tbody></table></div>';
   }
 };
 // ===== E-COMMERCE · Alvo (sortimento + ponte importação + anúncios) =====
