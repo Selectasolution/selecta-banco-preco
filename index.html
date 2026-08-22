@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-21-I | selecta-banco-preco | SINISTRO CANCELADO PELO ML PERMANECE (forense Igor 21/08, noite): as 13 apreensoes NUNCA sairam do banco — o job ml-orders-rastreio-17h (atualizado_em 20:01:09 em massa) gravou status=cancelado nos pedidos que o ML cancelou/reembolsou pos-apreensao, e a doutrina antiga 'cancelado = fora de tudo' ESCONDIA as linhas (13->4 na tela, Compras do Mes encolhendo — violava a regra do Igor de que compras nao muda). A ocorrencia manual foi RESPEITADA pelo sync o tempo todo. DOUTRINA NOVA em 6 pontos (termometro base, colP do Painel, agg, capital, Por mes, TOTAL): cancelado SEM ocorrencia = cancelamento comum, fora de tudo (inalterado); cancelado COM ocorrencia = SINISTRO — permanece nas perdas do mes, no custo dos fornecedores (Compras do Mes volta a ser imutavel) e no Por mes. Nenhum SQL de restauracao necessario: nao havia nada perdido. Pendente (proximo passo, decisao Igor): trigger de protecao da ocorrencia contra UPDATEs futuros + revisao dos cancelados SEM ocorrencia de agosto (candidatos a apreensao nao marcada). | base: 2026-08-21-H (mesma sessao) -->
 <!-- BUILD 2026-08-21-H | selecta-banco-preco | PAINEL = LUCRO REAL DO TERMOMETRO, AGORA EXATO (Igor 21/08, 3a cobranca): a incoerencia estrutural era o COLCHAO. Termometro: lucReal = (luc - perdas - juros - despOp) + colchao (decisao 21-B/D, colchao volta abaixo do lucro). Painel (21-G) descontava juros e despOp mas NAO somava o colchao de volta — ficava lucReal - colchao (em agosto, - R$ 8.159,95). 21-H calcula colP (colchao das vendas fechadas SEM ocorrencia, mesma regua do mesV do Termometro) e faz lucLiq = luc - perdas - juros - despOp + colchao. Regra de perdas ja era identica (fallback custo+taxas p/ apreensao). Agora Painel == Termometro ao centavo. | base: 2026-08-21-G (mesma sessao) -->
 <!-- BUILD 2026-08-21-G | selecta-banco-preco | LUCRO REAL DO PAINEL = TERMOMETRO (bug Igor 21/08): o card Lucro real do Painel lia a.lucLiq do agg = luc - perdas (formula de 19/08), SEM juros nem despesas op — por isso nao batia com o Termometro nem refletia juros/despesas novos. load() do Relatorios agora busca juros incorridos do mes (mesma logica do balancete: lancamentos do ledger + incorrido automatico no dia-base vencido) e despesas operacionais (ecom_despesa_op) e debita ambos do lucLiq ANTES de renderizar o card. Rotulo: Lucro real (liquido). agg intocado (Por mes usa lucLiq sem juros de proposito — juros e do mes corrente, nao historico por competencia de venda). | base: 2026-08-21-F (mesma sessao) -->
 <!-- BUILD 2026-08-21-F | selecta-banco-preco | POR MES v2 — RESTAURADO E CORRIGIDO NA CAUSA (resposta a cobranca do Igor 21/08): o quadrante NAO estava desatualizado — a doutrina 18-B mandava devolvido/apreendido SAIREM do Por mes, entao cada ocorrencia marcada ENCOLHIA o mes retroativamente (as 13 apreensoes derrubaram jul/ago na tabela e parecia dado velho). v2 SUPERA o 18-B: (1) Faturado = INTEGRAL do mes (todas as vendas nao-canceladas, fato historico — bate com painel ML e nao se move quando ocorrencia e marcada); (2) coluna PERDAS propria (prejuizo das ocorrencias do mes, vermelha); (3) Lucro = liquido de perdas (lucLiq, mesma regua do Termometro, verde/vermelho); (4) Margem operacional inalterada; (5) Vendas = contagem integral; vs-mes-anterior sobre o faturado integral. TOTAL na mesma regua. Se o "errado" que o Igor viu for OUTRA coisa, especificar mes/valor-mostrado/valor-esperado que o ajuste e cirurgico. | base: 2026-08-21-E (mesma sessao) -->
@@ -5035,7 +5036,7 @@ const ecomFinanceiro={
     try{
       const r=await sb.from('ecom_vendas').select('id,status,data_solicitacao,data_entrega,data_liberacao_mp,quantidade,preco_venda,receita_bruta,comissao_valor,tarifa_fixa_valor,frete_valor,taxas_ml_total,valor_recebido_ml,custo_total,colchao_valor,imposto_valor,resultado_liquido,ocorrencia,prejuizo_valor');
       if(r.error) throw r.error;
-      const all=(r.data||[]).filter(v=>v.status!=='cancelado');
+      const all=(r.data||[]).filter(v=>!(v.status==='cancelado'&&!v.ocorrencia)); // BUILD 2026-08-21-I: cancelado SEM ocorrencia = fora; COM ocorrencia (apreensao que o ML cancelou/reembolsou) = SINISTRO, permanece nas perdas e no custo
       const now=new Date(); const mkey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
       const mesAll=all.filter(v=>v.data_solicitacao && v.data_solicitacao.slice(0,7)===mkey);
       // BUILD 2026-08-19-B: familia PERDA = apreendido + extraviado/roubado/avariado; devolvido* segue como devolucao
@@ -5284,7 +5285,7 @@ const ecomRelatorios={
       let despP=0; try{ const rd=await sb.from('ecom_despesa_op').select('data,valor').is('anulado_em',null);
         if(!rd.error) (rd.data||[]).forEach(x=>{ if(String(x.data||'').slice(0,7)===mkeyP) despP+=(+x.valor||0); }); }catch(_e){}
       // BUILD 2026-08-21-H: colchao do mes (mesma regua do Termometro: vendas fechadas SEM ocorrencia) — faltava no Painel
-      let colP=0; doMes.forEach(v=>{ if(v.status==='cancelado') return;
+      let colP=0; doMes.forEach(v=>{ if(v.status==='cancelado'&&!v.ocorrencia) return; // 21-I
         const oc=v.ocorrencia; if(oc&&oc!=='retido_doc'&&oc!=='outro') return;
         if(v.resultado_liquido!=null) colP+=(+v.colchao_valor||0); });
       // Termometro: lucReal = (luc - perdas - juros - despOp) + colchao. Painel espelha exatamente.
@@ -5296,7 +5297,7 @@ const ecomRelatorios={
   // custo = TODAS as compras (ocorrencia nao debita) · lucLiq = lucro vivo - perdas · margem = OPERACIONAL (sem sinistro)
   // devolvido a CUSTO preso · devolvido_reintegrado fora do preso · apreendido a PREJUIZO (fallback custo+taxas se nao apurado)
   agg(vendas){ let fat=0,luc=0,perdas=0,prejPend=0,fatComp=0,custo=0,n=0,nComp=0,nPend=0,devQ=0,devV=0,aprQ=0,aprV=0;
-    vendas.forEach(v=>{ if(v.status==='cancelado') return;
+    vendas.forEach(v=>{ if(v.status==='cancelado'&&!v.ocorrencia) return; // BUILD 2026-08-21-I: sinistro cancelado pelo ML continua no circuito
       custo+=+v.custo_total||0;
       // BUILD 2026-08-19-B: familia PERDA = apreendido + extraviado/roubado/avariado (fora dos agregados, prejuizo debita)
       const isPerda=v.ocorrencia==='apreendido'||v.ocorrencia==='extraviado'||v.ocorrencia==='roubado'||v.ocorrencia==='avariado';
@@ -5319,7 +5320,7 @@ const ecomRelatorios={
   // BUILD 2026-08-19-B: retido_doc e 'outro' = venda viva para fins de capital (custo preso + recMP ate liberar).
   // Familia PERDA (apreendido/extraviado/roubado/avariado) FORA do preso — migrou para prejuizo. Devolvido a custo ate reintegrar.
   capital(vendas){ const hoje=new Date().toISOString(); let presoCG=0,recMP=0;
-    vendas.forEach(v=>{ if(v.status==='cancelado') return;
+    vendas.forEach(v=>{ if(v.status==='cancelado'&&!v.ocorrencia) return; // 21-I
       if(v.ocorrencia && v.ocorrencia!=='retido_doc' && v.ocorrencia!=='outro'){
         if(v.ocorrencia==='devolvido') presoCG+=+v.custo_total||0; return; }
       const liberado=v.data_liberacao_mp && v.data_liberacao_mp<=hoje;
@@ -5376,7 +5377,7 @@ const ecomRelatorios={
     // Faturado = o que realmente faturou (fato historico, bate com o painel ML); a ocorrencia
     // aparece na coluna PERDAS do proprio mes, e o Lucro ja e liquido delas. Antes, cada
     // apreensao marcada ENCOLHIA o mes retroativamente — era isso que parecia "desatualizado".
-    this.data.forEach(v=>{ if(v.status==='cancelado'||!v.data_solicitacao) return; const m=v.data_solicitacao.slice(0,7); (meses[m]=meses[m]||[]).push(v); });
+    this.data.forEach(v=>{ if((v.status==='cancelado'&&!v.ocorrencia)||!v.data_solicitacao) return; const m=v.data_solicitacao.slice(0,7); (meses[m]=meses[m]||[]).push(v); }); // 21-I
     const keys=Object.keys(meses).sort().reverse();
     if(!keys.length){ box.innerHTML='<div class="ph">sem vendas ainda</div>'; return; }
     const ord=keys.slice().reverse(), aggMap={}; ord.forEach(m=>aggMap[m]=this.agg(meses[m]));
@@ -5388,7 +5389,7 @@ const ecomRelatorios={
       return '<tr><td style="font-weight:500">'+nome+'</td><td class="mono">R$ '+this.fmt(fatInt[m])+'</td><td class="mono" style="color:'+(a.perdas>0?'var(--ered)':'var(--emuted)')+'">'+(a.perdas>0?('– R$ '+this.fmt(a.perdas)):'—')+'</td><td class="mono" style="color:'+(a.lucLiq>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(a.lucLiq)+'</td><td class="mono">'+(a.margem==null?'—':this.fmt(a.margem)+'%')+'</td><td class="mono">'+meses[m].length+'</td><td class="mono">'+vt+'</td></tr>';
     }).join('');
     // BUILD 2026-08-03-B: linha TOTAL — soma real da operação; margem RECALCULADA sobre o total (média de % mente)
-    const tot=this.agg(this.data.filter(v=>v.status!=='cancelado'));
+    const tot=this.agg(this.data.filter(v=>!(v.status==='cancelado'&&!v.ocorrencia))); // 21-I
     const fatTot=ord.reduce((s,m)=>s+fatInt[m],0), nTot=ord.reduce((s,m)=>s+meses[m].length,0);
     const totRow='<tr style="border-top:2px solid var(--eborder);background:var(--epanel2)"><td style="font-weight:700">TOTAL</td><td class="mono" style="font-weight:700">R$ '+this.fmt(fatTot)+'</td><td class="mono" style="font-weight:700;color:'+(tot.perdas>0?'var(--ered)':'var(--emuted)')+'">'+(tot.perdas>0?('– R$ '+this.fmt(tot.perdas)):'—')+'</td><td class="mono" style="font-weight:700;color:'+(tot.lucLiq>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(tot.lucLiq)+'</td><td class="mono" style="font-weight:700">'+(tot.margem==null?'—':this.fmt(tot.margem)+'%')+'</td><td class="mono" style="font-weight:700">'+nTot+'</td><td class="mono">—</td></tr>';
     box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab"><thead><tr><th>Mês</th><th>Faturado</th><th>Perdas</th><th>Lucro</th><th>Margem</th><th>Vendas</th><th>vs mês ant.</th></tr></thead><tbody>'+rows+totRow+'</tbody></table></div>';
