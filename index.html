@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-22-A | selecta-banco-preco | MODULO FISCAL v0.1 — NASCIMENTO (Igor 22/08, debate de 4 turnos fechado): nova aba FISCAL (#tab-fiscal, CSS escopado, modal proprio #fis-modal DENTRO da aba — licao 21-E) com 4 paineis. Q1 CRONOMETRO: RBT12 = janela movel dos 12 meses ANTERIORES (mes corrente fora da propria base), receita tributavel = ecom_vendas.receita_bruta (exclui cancelado/devolvido; competencia = data_solicitacao) + fis_receita_outros realizado (licitacao/shopee/amazon/tiktok); tabela Anexo I PARAMETRIZADA em fis_param_simples (fallback local identico); efetiva=(RBT12*nominal-deducao)/RBT12; projecao 12m (ML=media movel 3m, outros=previstos), acumulado ano-calendario vs sublimite 3,6M e teto 4,8M com mes de cruzamento; DIVERGENCIA provisao 4% x efetiva SO MEDIDA — imposto_valor das vendas NAO e reescrito nesta versao (decisao Igor: alterar o financeiro depois, com seguranca). Q2 DOCUMENTOS: import XML NF-e (parser DOMParser; tipo pelo CNPJ 46.908.715/0001-48 emitente=saida/destinatario=entrada; finNFe 4 ou CFOP x201/x202 = devolucao); XML guardado no bucket privado fis-xml (guarda propria — hoje os XMLs vivem so no faturador do ML); fornecedor auto-criado como PENDENTE na 1a NF; situacao bloqueado_recibo/suspenso RECUSA a NF; saida vinculada a ecom_vendas por ml_pedido_id achado em infCpl/xPed, senao fila vincular; de-para fornecedor+cProd -> codigo Selecta persistido (fis_item_depara); documento manual (DI/recibo) nasce SEM LASTRO. Q2 ESTOQUE: ledger fis_estoque_mov (abertura/entrada/saida_venda/devolucao/sinistro/ajuste), view fis_vw_estoque_saldo (custo medio ponderado das entradas vivas, entradas regulares x sem lastro); estoque_atual do Catalogo vira DECLARADO (referencia), saldo documentado e o fato; saldo de abertura pre-corte (data 01/09/2026) item a item com classificacao de lastro; anuncio ativo (status_ml=active) sem saldo documentado = anomalia. Q3 FECHAMENTO: snapshot imutavel em fis_fechamento (fechado | fechado_ressalvas | reaberto), ressalvas = anomalias da competencia (venda sem NF, entrada sem estoque, sem lastro, saldo negativo...); conciliacao DAS esperado x DAS real do contador; PACOTE ZIP (JSZip via cdnjs): vendas/documentos/itens/movimentos/inventario/receita_outros/despesas_op em CSV + fechamento.json + fechamento.pdf (jsPDF autotable) + XMLs do mes; marcar enviado_contador_em. DOUTRINA: DELETE fisicamente proibido por trigger em todas as tabelas de fatos (anulado_em), toda fis_* com trigger de auditoria em fis_auditoria (antes/depois/quem), RLS so authenticated, bucket privado. SQL entregue junto (fiscal_v0.1.sql); sem ele a aba exibe aviso e degrada para leitura parcial. Q4 (plano de saida do Simples) NAO construido — e painel sobre Q1, depois. | base: 2026-08-21-I -->
 <!-- BUILD 2026-08-21-I | selecta-banco-preco | SINISTRO CANCELADO PELO ML PERMANECE (forense Igor 21/08, noite): as 13 apreensoes NUNCA sairam do banco — o job ml-orders-rastreio-17h (atualizado_em 20:01:09 em massa) gravou status=cancelado nos pedidos que o ML cancelou/reembolsou pos-apreensao, e a doutrina antiga 'cancelado = fora de tudo' ESCONDIA as linhas (13->4 na tela, Compras do Mes encolhendo — violava a regra do Igor de que compras nao muda). A ocorrencia manual foi RESPEITADA pelo sync o tempo todo. DOUTRINA NOVA em 6 pontos (termometro base, colP do Painel, agg, capital, Por mes, TOTAL): cancelado SEM ocorrencia = cancelamento comum, fora de tudo (inalterado); cancelado COM ocorrencia = SINISTRO — permanece nas perdas do mes, no custo dos fornecedores (Compras do Mes volta a ser imutavel) e no Por mes. Nenhum SQL de restauracao necessario: nao havia nada perdido. Pendente (proximo passo, decisao Igor): trigger de protecao da ocorrencia contra UPDATEs futuros + revisao dos cancelados SEM ocorrencia de agosto (candidatos a apreensao nao marcada). | base: 2026-08-21-H (mesma sessao) -->
 <!-- BUILD 2026-08-21-H | selecta-banco-preco | PAINEL = LUCRO REAL DO TERMOMETRO, AGORA EXATO (Igor 21/08, 3a cobranca): a incoerencia estrutural era o COLCHAO. Termometro: lucReal = (luc - perdas - juros - despOp) + colchao (decisao 21-B/D, colchao volta abaixo do lucro). Painel (21-G) descontava juros e despOp mas NAO somava o colchao de volta — ficava lucReal - colchao (em agosto, - R$ 8.159,95). 21-H calcula colP (colchao das vendas fechadas SEM ocorrencia, mesma regua do mesV do Termometro) e faz lucLiq = luc - perdas - juros - despOp + colchao. Regra de perdas ja era identica (fallback custo+taxas p/ apreensao). Agora Painel == Termometro ao centavo. | base: 2026-08-21-G (mesma sessao) -->
 <!-- BUILD 2026-08-21-G | selecta-banco-preco | LUCRO REAL DO PAINEL = TERMOMETRO (bug Igor 21/08): o card Lucro real do Painel lia a.lucLiq do agg = luc - perdas (formula de 19/08), SEM juros nem despesas op — por isso nao batia com o Termometro nem refletia juros/despesas novos. load() do Relatorios agora busca juros incorridos do mes (mesma logica do balancete: lancamentos do ledger + incorrido automatico no dia-base vencido) e despesas operacionais (ecom_despesa_op) e debita ambos do lucLiq ANTES de renderizar o card. Rotulo: Lucro real (liquido). agg intocado (Por mes usa lucLiq sem juros de proposito — juros e do mes corrente, nao historico por competencia de venda). | base: 2026-08-21-F (mesma sessao) -->
@@ -74,6 +75,7 @@
 <!-- jsPDF + AutoTable (para geração de orçamentos em PDF) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
   tailwind.config = {
     theme: {
@@ -227,6 +229,7 @@
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="importacao">📦 Importação</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="ecommerce">🛒 Mercado Livre</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="instagram">📸 Instagram</button>
+          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="fiscal">⚖️ Fiscal</button>
         </nav>
       </div>
       <div class="flex items-center gap-3 text-sm">
@@ -1422,6 +1425,176 @@
   #tab-apple .mok{color:var(--eemerald)}
   #tab-apple .smper{font-size:11px;color:var(--emuted)}
 </style>
+
+  <!-- =========================================================== -->
+  <!-- TAB: FISCAL — BUILD 2026-08-22-A (Módulo Fiscal v0.1)          -->
+  <!-- Q1 Cronômetro do Simples · Q2 Cadeia de custódia · Q3 Fechamento -->
+  <!-- =========================================================== -->
+  <style>
+  #tab-fiscal{--ebg:#0b1220;--epanel:#131c2e;--epanel2:#0f1726;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#34d399;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--etxt)}
+  #tab-fiscal .fis-pane{display:none}
+  #tab-fiscal .fis-pane.active{display:block}
+  #tab-fiscal .fis-card{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  #tab-fiscal .fis-card h4{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--eteal);display:flex;align-items:center;justify-content:space-between;gap:8px}
+  #tab-fiscal .fis-grid{display:grid;gap:12px}
+  #tab-fiscal .fis-grid.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #tab-fiscal .fis-grid.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #tab-fiscal .fis-grid.c2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  @media(max-width:900px){#tab-fiscal .fis-grid.c4,#tab-fiscal .fis-grid.c3,#tab-fiscal .fis-grid.c2{grid-template-columns:1fr 1fr}}
+  #tab-fiscal .fis-kpi{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:10px 12px}
+  #tab-fiscal .fis-kpi .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted);font-weight:600}
+  #tab-fiscal .fis-kpi .v{font-size:20px;font-weight:700;font-family:var(--emono);margin-top:2px}
+  #tab-fiscal .fis-kpi .h{font-size:11px;color:var(--emuted2);margin-top:2px}
+  #tab-fiscal .fis-kpi.ok .v{color:var(--eemerald)} #tab-fiscal .fis-kpi.warn .v{color:var(--eamber)} #tab-fiscal .fis-kpi.crit .v{color:var(--ered)} #tab-fiscal .fis-kpi.teal .v{color:var(--eteal)}
+  #tab-fiscal table.fis-t{width:100%;border-collapse:collapse;font-size:12px}
+  #tab-fiscal table.fis-t th{text-align:left;font-weight:600;color:var(--emuted);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;padding:6px 8px;border-bottom:1px solid var(--eborder);white-space:nowrap}
+  #tab-fiscal table.fis-t td{padding:6px 8px;border-bottom:1px solid rgba(42,54,80,.5);vertical-align:middle}
+  #tab-fiscal table.fis-t td.n,#tab-fiscal table.fis-t th.n{text-align:right;font-family:var(--emono)}
+  #tab-fiscal table.fis-t tr.cur td{background:rgba(45,212,191,.07)}
+  #tab-fiscal table.fis-t tr.proj td{color:var(--emuted)}
+  #tab-fiscal .fis-tag{display:inline-block;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:600;border:1px solid var(--eborder);color:var(--emuted)}
+  #tab-fiscal .fis-tag.ok{color:var(--eemerald);border-color:rgba(16,185,129,.4)} #tab-fiscal .fis-tag.warn{color:var(--eamber);border-color:rgba(245,158,11,.4)} #tab-fiscal .fis-tag.crit{color:var(--ered);border-color:rgba(239,68,68,.4)} #tab-fiscal .fis-tag.teal{color:var(--eteal);border-color:rgba(45,212,191,.4)}
+  #tab-fiscal .fis-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid var(--eborder);background:var(--epanel2);color:var(--etxt);cursor:pointer}
+  #tab-fiscal .fis-btn:hover{border-color:var(--eteal)}
+  #tab-fiscal .fis-btn.p{background:#0d9488;border-color:#0d9488;color:#fff} #tab-fiscal .fis-btn.p:hover{background:#0f766e}
+  #tab-fiscal .fis-btn.d{color:var(--ered)} #tab-fiscal .fis-btn.xs{padding:2px 8px;font-size:11px}
+  #tab-fiscal .fis-btn:disabled{opacity:.45;cursor:not-allowed}
+  #tab-fiscal .fis-in,#tab-fiscal select.fis-in{background:var(--epanel2);border:1px solid var(--eborder);border-radius:8px;color:var(--etxt);font-size:12.5px;padding:6px 9px;width:100%}
+  #tab-fiscal .fis-in.mono{font-family:var(--emono)}
+  #tab-fiscal .fis-field{display:flex;flex-direction:column;gap:4px} #tab-fiscal .fis-field label{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted);font-weight:600}
+  #tab-fiscal .fis-alert{border-radius:10px;padding:9px 13px;margin-bottom:12px;font-size:12px;border:1px solid var(--eborder)}
+  #tab-fiscal .fis-alert.ok{background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.28)} #tab-fiscal .fis-alert.warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.32)} #tab-fiscal .fis-alert.crit{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.38)}
+  #tab-fiscal .fis-alert b{color:var(--etxt)} #tab-fiscal .fis-alert ul{margin:4px 0 0;padding-left:18px;color:var(--emuted)}
+  #tab-fiscal .fis-muted{color:var(--emuted);font-size:11.5px}
+  #tab-fiscal .fis-drop{border:2px dashed var(--eborder);border-radius:12px;padding:22px;text-align:center;color:var(--emuted);cursor:pointer;transition:border-color .15s}
+  #tab-fiscal .fis-drop:hover,#tab-fiscal .fis-drop.over{border-color:var(--eteal);color:var(--etxt)}
+  #tab-fiscal .fis-toast{position:fixed;right:18px;bottom:18px;z-index:9998;background:var(--epanel);border:1px solid var(--eteal);color:var(--etxt);padding:10px 14px;border-radius:10px;font-size:12.5px;box-shadow:0 8px 30px rgba(0,0,0,.45);max-width:380px}
+  #tab-fiscal .fis-toast.err{border-color:var(--ered)}
+  #fis-modal{display:none;position:fixed;inset:0;background:rgba(2,10,8,.62);align-items:center;justify-content:center;z-index:9999}
+  #fis-modal .box{background:var(--epanel);border:1px solid var(--eteal);border-radius:12px;padding:16px 18px;width:min(94vw,560px);max-height:88vh;overflow:auto;display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  #fis-modal h3{margin:0;color:var(--eteal);font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+  #fis-modal .err{display:none;font-size:11.5px;color:var(--ered)}
+  #tab-fiscal .fis-scroll{overflow:auto;max-height:420px}
+  </style>
+
+  <section id="tab-fiscal" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
+    <header class="flex items-start justify-between mb-4 gap-4 flex-wrap">
+      <div>
+        <div class="flex items-center gap-3 mb-1">
+          <i data-lucide="scale" class="w-7 h-7 text-primary-500"></i>
+          <h2 class="text-2xl font-bold tracking-tight text-gray-100">Fiscal</h2>
+          <span class="imp-version-tag">v0.1 · Simples Nacional · Anexo I</span>
+        </div>
+        <div class="fis-muted">Cronômetro do Simples · Cadeia de custódia (NF → estoque → venda) · Fechamento mensal auditável. Corte prospectivo: <b id="fis-corte-lbl" style="color:var(--eteal)">01/09/2026</b>.</div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button class="fis-btn" onclick="fiscal.reload()">↻ Recarregar</button>
+      </div>
+    </header>
+
+    <nav class="border-b border-gray-700 mb-5 overflow-x-auto" id="fis-nav">
+      <div class="flex gap-1 min-w-max">
+        <button class="imp-subnav-btn fis-pane-btn active" data-fpane="cronometro">⏱ Cronômetro</button>
+        <button class="imp-subnav-btn fis-pane-btn" data-fpane="documentos">📄 Documentos</button>
+        <button class="imp-subnav-btn fis-pane-btn" data-fpane="estoque">📦 Estoque</button>
+        <button class="imp-subnav-btn fis-pane-btn" data-fpane="fechamento">🔒 Fechamento</button>
+      </div>
+    </nav>
+
+    <div id="fis-sql-warn" class="fis-alert crit" style="display:none"><b>SQL do módulo não aplicado.</b> Rode <code>fiscal_v0.1.sql</code> no Supabase. Até lá as telas abaixo ficam em modo leitura parcial.</div>
+
+    <!-- ===== Q1 CRONÔMETRO ===== -->
+    <div class="fis-pane active" id="fis-pane-cronometro">
+      <div class="fis-grid c4" id="fis-cron-kpis"></div>
+      <div id="fis-cron-alertas" style="margin-top:12px"></div>
+      <div class="fis-grid c2" style="align-items:start">
+        <div class="fis-card">
+          <h4>Base RBT12 — 12 meses anteriores à competência <span id="fis-cron-comp-lbl"></span>
+            <span><select class="fis-in mono" id="fis-cron-comp" style="width:auto;padding:3px 8px" onchange="fiscal.renderCron()"></select></span></h4>
+          <div class="fis-scroll"><table class="fis-t"><thead><tr><th>Mês</th><th class="n">ML</th><th class="n">Outros canais</th><th class="n">Total</th></tr></thead><tbody id="fis-cron-base"></tbody></table></div>
+        </div>
+        <div class="fis-card">
+          <h4>Projeção 12 meses — faixa, sublimite e teto <span class="fis-muted" style="text-transform:none;letter-spacing:0">ML = média móvel 3 meses · outros = previstos lançados</span></h4>
+          <div class="fis-scroll"><table class="fis-t"><thead><tr><th>Mês</th><th class="n">Receita</th><th class="n">RBT12</th><th>Faixa</th><th class="n">Efetiva</th><th class="n">Acum. ano</th></tr></thead><tbody id="fis-cron-proj"></tbody></table></div>
+        </div>
+      </div>
+      <div class="fis-card">
+        <h4>Receita fora do APP (licitação, Shopee, Amazon, TikTok…) e previsões
+          <button class="fis-btn xs p" onclick="fiscal.lancarReceita()">+ lançar</button></h4>
+        <div class="fis-scroll"><table class="fis-t"><thead><tr><th>Competência</th><th>Canal</th><th>Tipo</th><th class="n">Valor</th><th>Descrição</th><th></th></tr></thead><tbody id="fis-cron-outros"></tbody></table></div>
+      </div>
+      <div class="fis-card">
+        <h4>Tabela vigente — Anexo I (LC 123/2006)</h4>
+        <table class="fis-t"><thead><tr><th>Faixa</th><th class="n">RBT12 até</th><th class="n">Nominal</th><th class="n">Dedução</th><th class="n">Efetiva no topo</th></tr></thead><tbody id="fis-cron-tab"></tbody></table>
+      </div>
+    </div>
+
+    <!-- ===== Q2 DOCUMENTOS ===== -->
+    <div class="fis-pane" id="fis-pane-documentos">
+      <div id="fis-doc-anom"></div>
+      <div class="fis-grid c2" style="align-items:start">
+        <div class="fis-card">
+          <h4>Importar XML (NF-e entrada/saída)</h4>
+          <div class="fis-drop" id="fis-drop" onclick="document.getElementById('fis-file').click()">Arraste XMLs aqui ou clique para selecionar<br><span class="fis-muted">Entrada: destinatário = Selecta · Saída: emitente = Selecta · DANFE/PDF não é documento</span></div>
+          <input type="file" id="fis-file" accept=".xml,text/xml" multiple style="display:none">
+          <div id="fis-import-log" class="fis-muted" style="margin-top:8px"></div>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="fis-btn" onclick="fiscal.registrarManual()">＋ Registrar documento manual (DI / recibo / sem lastro)</button>
+          </div>
+        </div>
+        <div class="fis-card">
+          <h4>Fornecedores <span class="fis-muted" style="text-transform:none;letter-spacing:0">qualificação obrigatória · "recibo" = bloqueado</span></h4>
+          <div class="fis-scroll"><table class="fis-t"><thead><tr><th>CNPJ</th><th>Razão</th><th>UF</th><th>Situação</th><th></th></tr></thead><tbody id="fis-forn"></tbody></table></div>
+        </div>
+      </div>
+      <div class="fis-card">
+        <h4>Documentos registrados
+          <span style="display:flex;gap:6px"><select class="fis-in" id="fis-doc-filtro" style="width:auto;padding:3px 8px" onchange="fiscal.renderDocs()"><option value="">todos</option><option value="nfe_entrada">NF-e entrada</option><option value="nfe_saida">NF-e saída</option><option value="nfe_devolucao">devolução</option><option value="di">DI/DUIMP</option><option value="recibo">recibo</option></select></span></h4>
+        <div class="fis-scroll" style="max-height:520px"><table class="fis-t"><thead><tr><th>Emissão</th><th>Tipo</th><th>Número</th><th>Parte</th><th class="n">Valor</th><th>Vínculo</th><th>Lastro</th><th>Itens→estoque</th><th></th></tr></thead><tbody id="fis-docs"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ===== Q2 ESTOQUE ===== -->
+    <div class="fis-pane" id="fis-pane-estoque">
+      <div class="fis-grid c4" id="fis-est-kpis"></div>
+      <div id="fis-est-alertas" style="margin-top:12px"></div>
+      <div class="fis-card">
+        <h4>Saldo documentado × declarado
+          <span style="display:flex;gap:6px"><button class="fis-btn xs" onclick="fiscal.abrirSaldos()">Saldo de abertura (pré-corte)</button><button class="fis-btn xs" onclick="fiscal.ajusteManual()">Ajuste / sinistro</button></span></h4>
+        <div class="fis-scroll" style="max-height:560px"><table class="fis-t"><thead><tr><th>Código</th><th>Produto</th><th class="n">Entradas</th><th class="n">Saídas</th><th class="n">Saldo doc.</th><th class="n">Declarado</th><th class="n">Custo médio</th><th class="n">Valor</th><th>Lastro</th><th>Anúncio</th></tr></thead><tbody id="fis-est"></tbody></table></div>
+      </div>
+      <div class="fis-card">
+        <h4>Movimentações recentes</h4>
+        <div class="fis-scroll"><table class="fis-t"><thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th class="n">Qtd</th><th class="n">Custo</th><th>Doc / Venda</th><th>Lastro</th><th></th></tr></thead><tbody id="fis-est-mov"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ===== Q3 FECHAMENTO ===== -->
+    <div class="fis-pane" id="fis-pane-fechamento">
+      <div class="fis-card">
+        <h4>Competência <span><select class="fis-in mono" id="fis-fech-comp" style="width:auto;padding:3px 8px" onchange="fiscal.renderFech()"></select></span></h4>
+        <div class="fis-grid c4" id="fis-fech-kpis"></div>
+        <div id="fis-fech-ressalvas" style="margin-top:12px"></div>
+        <div class="fis-grid c2" style="margin-top:12px">
+          <div><table class="fis-t" id="fis-fech-tab"></table></div>
+          <div>
+            <div class="fis-muted" style="margin-bottom:8px">O fechamento grava um snapshot imutável (auditoria). Com anomalias abertas só é permitido <b>fechar com ressalvas</b> — elas ficam listadas no pacote enviado ao contador.</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="fis-btn p" id="fis-fech-btn" onclick="fiscal.fechar()">Fechar competência</button>
+              <button class="fis-btn" id="fis-pac-btn" onclick="fiscal.gerarPacote()">⬇ Gerar pacote do contador (ZIP)</button>
+              <button class="fis-btn" id="fis-env-btn" onclick="fiscal.marcarEnviado()">✓ Marcar enviado ao contador</button>
+            </div>
+            <div id="fis-fech-status" class="fis-muted" style="margin-top:10px"></div>
+            <div class="fis-field" style="margin-top:10px"><label>DAS real (informado pelo contador)</label><div style="display:flex;gap:6px"><input class="fis-in mono" id="fis-das-real" placeholder="0,00"><button class="fis-btn" onclick="fiscal.salvarDasReal()">conciliar</button></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- modal único do Fiscal (dentro da aba: CSS escopado, lição do 21-E) -->
+    <div id="fis-modal"><div class="box"><h3 id="fis-modal-tit"></h3><div id="fis-modal-body"></div><div class="err" id="fis-modal-err"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="fis-btn" id="fis-modal-cancel">Cancelar</button><button class="fis-btn p" id="fis-modal-ok">Salvar</button></div></div></div>
+  </section>
 
   <section id="tab-ecommerce" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
 
@@ -3832,11 +4005,12 @@ function switchTab(tabName) {
       btn.classList.add('text-gray-400', 'hover:bg-gray-700');
     }
   });
-  hide('#tab-catalogo'); hide('#tab-apple'); hide('#tab-simulador'); hide('#tab-importacao'); hide('#tab-ecommerce'); hide('#tab-instagram'); // BUILD 2026-08-08-B
+  hide('#tab-catalogo'); hide('#tab-apple'); hide('#tab-simulador'); hide('#tab-importacao'); hide('#tab-ecommerce'); hide('#tab-instagram'); hide('#tab-fiscal'); // BUILD 2026-08-08-B + 2026-08-22-A fiscal
   show(`#tab-${tabName}`);
   if (tabName === 'apple') enterAppleTab();
   if (tabName === 'instagram') instagramTab.onEnter(); // BUILD 2026-08-08-B
   if (tabName === 'importacao') importacao.onEnter();
+  if (tabName === 'fiscal') fiscal.onEnter(); // BUILD 2026-08-22-A
   if (tabName === 'catalogo') catalogoTab.onEnter(); // BUILD 2026-08-08-C
   if (tabName === 'ecommerce') { ecom.onEnter().then(()=>{ if(!window._alvoBoot){ window._alvoBoot=true; try{ ecomAlvo.load(); }catch(_e){} } }); } // BUILD 2026-08-08-C: Alvo é a sub-aba default
 }
@@ -8779,6 +8953,360 @@ checkSession();
         else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){ setLive(''); console.warn('realtime indisponível ('+st+') — telas seguem no modo refresh manual.'); } });
   }catch(e){ console.warn('realtime não inicializado:',e.message); }
 })();
+
+/* =====================================================================
+   BUILD 2026-08-22-A · MÓDULO FISCAL v0.1
+   Q1 Cronômetro do Simples (RBT12 janela móvel, Anexo I parametrizado)
+   Q2 Cadeia de custódia: XML → fis_documento → de-para → fis_estoque_mov
+   Q3 Fechamento mensal com ressalvas + pacote ZIP ao contador
+   Doutrina: nada é DELETE (anulado_em); toda fis_* auditada por trigger;
+   o APP NÃO reescreve imposto_valor das vendas nesta versão (só mede a divergência).
+   ===================================================================== */
+window.fiscal = (function(){
+  const CNPJ_SELECTA='46908715000148';
+  const CORTE='2026-09-01';
+  const SUBLIMITE=3600000, TETO=4800000, PROV_ATUAL=0.04;
+  const TAB_FALLBACK=[
+    {faixa:1,limite_sup:180000,aliq_nominal:.04,deducao:0},{faixa:2,limite_sup:360000,aliq_nominal:.073,deducao:5940},
+    {faixa:3,limite_sup:720000,aliq_nominal:.095,deducao:13860},{faixa:4,limite_sup:1800000,aliq_nominal:.107,deducao:22500},
+    {faixa:5,limite_sup:3600000,aliq_nominal:.143,deducao:87300},{faixa:6,limite_sup:4800000,aliq_nominal:.19,deducao:378000}];
+  const CANAIS=['licitacao','shopee','amazon','tiktok','outro'];
+  const S={pane:'cronometro',bound:false,sqlOk:true,loaded:false,
+           tab:TAB_FALLBACK,vendas:[],outros:[],produtos:[],saldos:[],docs:[],itens:[],forn:[],movs:[],depara:[],fech:[],despOp:[],anuncios:[]};
+
+  /* ---------- util ---------- */
+  const $f=id=>document.getElementById(id);
+  const F=v=>(v==null||isNaN(v))?'-':'R$ '+(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const N=v=>(+v||0).toLocaleString('pt-BR',{maximumFractionDigits:2});
+  const P=v=>(v==null)?'-':(+v*100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
+  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const parseBR=s=>{ s=String(s||'').trim().replace(/\./g,'').replace(',','.'); const v=parseFloat(s); return isNaN(v)?null:v; };
+  const comp=d=>{ const s=(d instanceof Date)?d.toISOString().slice(0,10):String(d||''); return s.slice(0,7)+'-01'; };
+  const addM=(c,n)=>{ const [y,m]=c.split('-').map(Number); const d=new Date(Date.UTC(y,m-1+n,1)); return d.toISOString().slice(0,7)+'-01'; };
+  const lbl=c=>{ const [y,m]=c.split('-'); return ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][+m-1]+'/'+y.slice(2); };
+  const today=()=>new Date().toISOString().slice(0,10);
+  const compHoje=()=>comp(today());
+  const onlyDigits=s=>String(s||'').replace(/\D/g,'');
+  const fmtCnpj=c=>{ c=onlyDigits(c); return c.length===14?c.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5'):c; };
+  function toast(msg,err){ const t=document.createElement('div'); t.className='fis-toast'+(err?' err':''); t.textContent=msg; $f('tab-fiscal').appendChild(t); setTimeout(()=>t.remove(),err?6000:3500); }
+  async function sha256(text){ try{ const b=new TextEncoder().encode(text); const h=await crypto.subtle.digest('SHA-256',b); return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join(''); }catch(_e){ return null; } }
+  function isSqlMissing(e){ return e && /relation .* does not exist|Could not find the table|schema cache/i.test(e.message||''); }
+
+  /* modal genérico: {tit, html, onOk(box)->Promise|string(err)} */
+  function modal(o){
+    const m=$f('fis-modal'); $f('fis-modal-tit').textContent=o.tit; $f('fis-modal-body').innerHTML=o.html; const err=$f('fis-modal-err'); err.style.display='none';
+    $f('fis-modal-ok').textContent=o.okLabel||'Salvar'; m.style.display='flex';
+    const close=()=>{ m.style.display='none'; };
+    $f('fis-modal-cancel').onclick=close;
+    $f('fis-modal-ok').onclick=async()=>{ try{ const r=await o.onOk($f('fis-modal-body')); if(typeof r==='string'){ err.textContent=r; err.style.display='block'; return; } close(); }catch(e){ err.textContent=e.message||String(e); err.style.display='block'; } };
+    if(o.after) o.after($f('fis-modal-body'));
+  }
+
+  /* ---------- carga ---------- */
+  async function loadBase(){
+    S.sqlOk=true;
+    const q=async(t,sel,mod)=>{ let qb=sb.from(t).select(sel); if(mod) qb=mod(qb); const {data,error}=await qb; if(error){ if(isSqlMissing(error)&&t.startsWith('fis_')){ S.sqlOk=false; return []; } console.warn('fiscal',t,error.message); return []; } return data||[]; };
+    const [tab,vendas,outros,produtos,saldos,docs,itens,forn,movs,depara,fech,despOp,anuncios]=await Promise.all([
+      q('fis_param_simples','*',b=>b.eq('anexo','I').order('faixa')),
+      q('ecom_vendas','id,ml_pedido_id,produto,produto_codigo,quantidade,receita_bruta,status,data_solicitacao,canal,ocorrencia,imposto_valor,custo_unitario,custo_total,uf'),
+      q('fis_receita_outros','*',b=>b.is('anulado_em',null).order('competencia')),
+      q('ecom_produtos','codigo,produto,custo,estoque_atual,ativo'),
+      q('fis_vw_estoque_saldo','*'),
+      q('fis_documento','*',b=>b.is('anulado_em',null).order('data_emissao',{ascending:false}).limit(2000)),
+      q('fis_documento_item','*'),
+      q('fis_fornecedor','*',b=>b.order('razao')),
+      q('fis_estoque_mov','*',b=>b.is('anulado_em',null).order('criado_em',{ascending:false}).limit(3000)),
+      q('fis_item_depara','*'),
+      q('fis_fechamento','*',b=>b.order('competencia')),
+      q('ecom_despesa_op','*',b=>b.is('anulado_em',null)),
+      q('ecom_anuncios','anuncio_mlb,produto_codigo,status_ml'),
+    ]);
+    S.tab=(tab&&tab.length)?tab.map(r=>({faixa:+r.faixa,limite_sup:+r.limite_sup,aliq_nominal:+r.aliq_nominal,deducao:+r.deducao})):TAB_FALLBACK;
+    Object.assign(S,{vendas,outros,produtos,saldos,docs,itens,forn,movs,depara,fech,despOp,anuncios}); S.loaded=true;
+    $f('fis-sql-warn').style.display=S.sqlOk?'none':'block';
+  }
+
+  /* ---------- Q1: receita, RBT12, alíquota ---------- */
+  const vendaTributavel=v=>!['cancelado','devolvido'].includes(String(v.status||'').toLowerCase());
+  function receitaML(c){ return S.vendas.filter(v=>v.data_solicitacao&&comp(v.data_solicitacao)===c&&vendaTributavel(v)).reduce((a,v)=>a+(+v.receita_bruta||0),0); }
+  function receitaOutros(c,tipo){ return S.outros.filter(o=>o.competencia===c&&o.tipo===(tipo||'realizado')).reduce((a,o)=>a+(+o.valor||0),0); }
+  function receitaMes(c){ return receitaML(c)+receitaOutros(c,'realizado'); }
+  function rbt12(c,getter){ let s=0; for(let i=12;i>=1;i--) s+=(getter||receitaMes)(addM(c,-i)); return s; }
+  function aliq(r){ const p=S.tab.find(t=>r<=t.limite_sup)||S.tab[S.tab.length-1]; const ef=r>0?(r*p.aliq_nominal-p.deducao)/r:p.aliq_nominal; return {faixa:p.faixa,nominal:p.aliq_nominal,deducao:p.deducao,efetiva:Math.max(ef,0),acima:r>TETO}; }
+  function mediaML3(c){ let s=0,n=0; for(let i=1;i<=3;i++){ const x=receitaML(addM(c,-i)); if(x>0){s+=x;n++;} } return n?s/n:0; }
+  function anoAcum(c){ const y=c.slice(0,4); let s=0; for(let m=1;m<=12;m++){ const cc=`${y}-${String(m).padStart(2,'0')}-01`; if(cc>=c) break; s+=receitaMes(cc); } return s; }
+
+  function fillCompSelect(id,cur){ const sel=$f(id); const opts=[]; for(let i=-8;i<=3;i++) opts.push(addM(compHoje(),i)); sel.innerHTML=opts.map(c=>`<option value="${c}" ${c===cur?'selected':''}>${lbl(c)}</option>`).join(''); }
+
+  function renderCron(){
+    if(!$f('fis-cron-comp').options.length) fillCompSelect('fis-cron-comp',compHoje());
+    const c=$f('fis-cron-comp').value; const r=rbt12(c); const a=aliq(r); const recAtual=receitaMes(c); const recML=receitaML(c);
+    const prox=S.tab.find(t=>t.faixa===a.faixa+1); const falta=S.tab.find(t=>t.faixa===a.faixa)?.limite_sup-r;
+    const provis=S.vendas.filter(v=>comp(v.data_solicitacao||'')===c&&vendaTributavel(v)).reduce((x,v)=>x+(v.imposto_valor!=null?+v.imposto_valor:(+v.receita_bruta||0)*PROV_ATUAL),0);
+    const devido=recML*a.efetiva; const gap=devido-provis;
+    $f('fis-cron-comp-lbl').textContent=lbl(c);
+    const kp=(l,v,h,cls)=>`<div class="fis-kpi ${cls||''}"><div class="l">${l}</div><div class="v">${v}</div><div class="h">${h||''}</div></div>`;
+    $f('fis-cron-kpis').innerHTML=
+      kp('RBT12 · '+lbl(c),F(r),`${lbl(addM(c,-12))} → ${lbl(addM(c,-1))}`,'teal')+
+      kp('Faixa · efetiva',`${a.faixa}ª · ${P(a.efetiva)}`,`nominal ${P(a.nominal)} − dedução ${F(a.deducao)}`,a.faixa>=5?'crit':a.faixa>=3?'warn':'ok')+
+      kp('Até a próxima faixa',prox?F(falta):'última faixa',prox?`faixa ${prox.faixa} a ${P(prox.aliq_nominal)} nominal`:'','')+
+      kp('DAS esperado · '+lbl(c),F(devido+receitaOutros(c)*a.efetiva),`ML ${F(devido)} + outros ${F(receitaOutros(c)*a.efetiva)}`,'');
+    const al=[];
+    if(Math.abs(gap)>1) al.push(`<div class="fis-alert ${gap>0?'crit':'ok'}"><b>Divergência de provisão em ${lbl(c)}:</b> vendas ML provisionadas a ${F(provis)} (régua 4% do financeiro) × devido pela efetiva ${P(a.efetiva)} = ${F(devido)} → <b>${gap>0?'subprovisionado':'sobreprovisionado'} em ${F(Math.abs(gap))}</b>. O APP não reescreve imposto_valor nesta versão; correção do financeiro é decisão separada.</div>`);
+    const acum=anoAcum(c)+recAtual;
+    if(acum>SUBLIMITE) al.push(`<div class="fis-alert crit"><b>Acumulado do ano ${F(acum)} acima do sublimite (${F(SUBLIMITE)}).</b> ICMS sai do DAS; DIFAL B2C passa a incidir. Ver Q4 (plano de saída).</div>`);
+    else if(acum>SUBLIMITE*0.7) al.push(`<div class="fis-alert warn"><b>Acumulado do ano ${F(acum)}</b> — ${P(acum/SUBLIMITE)} do sublimite.</div>`);
+    $f('fis-cron-alertas').innerHTML=al.join('');
+    // base 12 meses
+    let rows=''; for(let i=12;i>=1;i--){ const cc=addM(c,-i); rows+=`<tr><td>${lbl(cc)}</td><td class="n">${F(receitaML(cc))}</td><td class="n">${F(receitaOutros(cc))}</td><td class="n"><b>${F(receitaMes(cc))}</b></td></tr>`; }
+    rows+=`<tr class="cur"><td><b>RBT12</b></td><td></td><td></td><td class="n"><b>${F(r)}</b></td></tr>`;
+    $f('fis-cron-base').innerHTML=rows;
+    // projeção 12 meses
+    const getter=cc=>{ if(cc<c) return receitaMes(cc); const ml=mediaML3(c)||receitaML(c); return ml+receitaOutros(cc,'realizado')+receitaOutros(cc,'previsto'); };
+    let pr='', acumY=anoAcum(c), yCur=c.slice(0,4), crossSub=null, crossTeto=null;
+    for(let i=0;i<12;i++){ const cc=addM(c,i); if(cc.slice(0,4)!==yCur){ yCur=cc.slice(0,4); acumY=0; } const rec=getter(cc); acumY+=rec; const rr=rbt12(cc,getter); const aa=aliq(rr);
+      if(!crossSub&&acumY>SUBLIMITE) crossSub=cc; if(!crossTeto&&acumY>TETO) crossTeto=cc;
+      pr+=`<tr class="${i?'proj':'cur'}"><td>${lbl(cc)}${i?'':' ·atual'}</td><td class="n">${F(rec)}</td><td class="n">${F(rr)}</td><td><span class="fis-tag ${aa.faixa>=5?'crit':aa.faixa>=3?'warn':'ok'}">${aa.faixa}ª</span></td><td class="n">${P(aa.efetiva)}</td><td class="n ${acumY>SUBLIMITE?'':''}">${F(acumY)}${acumY>SUBLIMITE?' ⚠':''}</td></tr>`; }
+    if(crossSub) pr+=`<tr><td colspan="6" class="fis-muted">Cruza o sublimite (R$ 3,6 M) em <b style="color:var(--eamber)">${lbl(crossSub)}</b>${crossTeto?` · teto (R$ 4,8 M) em <b style="color:var(--ered)">${lbl(crossTeto)}</b>`:''} — planejar saída 12 meses antes.</td></tr>`;
+    $f('fis-cron-proj').innerHTML=pr;
+    // outros
+    $f('fis-cron-outros').innerHTML=S.outros.length?S.outros.slice().sort((a,b)=>b.competencia.localeCompare(a.competencia)).map(o=>`<tr><td>${lbl(o.competencia)}</td><td>${esc(o.canal)}</td><td><span class="fis-tag ${o.tipo==='previsto'?'':'teal'}">${o.tipo}</span></td><td class="n">${F(o.valor)}</td><td class="fis-muted">${esc(o.descricao||'')}</td><td><button class="fis-btn xs d" onclick="fiscal.anularReceita(${o.id})">anular</button></td></tr>`).join(''):`<tr><td colspan="6" class="fis-muted">Nenhum lançamento. Licitação (jan–ago/26) e previsões entram aqui.</td></tr>`;
+    $f('fis-cron-tab').innerHTML=S.tab.map(t=>`<tr class="${t.faixa===a.faixa?'cur':''}"><td>${t.faixa}ª</td><td class="n">${F(t.limite_sup)}</td><td class="n">${P(t.aliq_nominal)}</td><td class="n">${F(t.deducao)}</td><td class="n">${P((t.limite_sup*t.aliq_nominal-t.deducao)/t.limite_sup)}</td></tr>`).join('');
+  }
+
+  function lancarReceita(){
+    if(!S.sqlOk) return toast('Aplique o SQL do módulo antes.',true);
+    modal({tit:'Lançar receita fora do APP',html:`
+      <div class="fis-grid c2"><div class="fis-field"><label>Competência</label><input class="fis-in mono" id="fm-comp" type="month" value="${compHoje().slice(0,7)}"></div>
+      <div class="fis-field"><label>Canal</label><select class="fis-in" id="fm-canal">${CANAIS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+      <div class="fis-field"><label>Tipo</label><select class="fis-in" id="fm-tipo"><option value="realizado">realizado (entra na RBT12)</option><option value="previsto">previsto (só projeção)</option></select></div>
+      <div class="fis-field"><label>Valor (R$)</label><input class="fis-in mono" id="fm-val" placeholder="0,00"></div></div>
+      <div class="fis-field"><label>Descrição</label><input class="fis-in" id="fm-desc" placeholder="ex.: Contrato SME 049/2026 — entrega parcial"></div>`,
+      onOk:async b=>{ const v=parseBR(b.querySelector('#fm-val').value); if(v==null||v<0) return 'Valor inválido.'; const c=b.querySelector('#fm-comp').value; if(!c) return 'Competência obrigatória.';
+        const {error}=await sb.from('fis_receita_outros').insert({competencia:c+'-01',canal:b.querySelector('#fm-canal').value,tipo:b.querySelector('#fm-tipo').value,valor:v,descricao:b.querySelector('#fm-desc').value||null}); if(error) return error.message; toast('Receita lançada.'); await reload(); }});
+  }
+  async function anularReceita(id){ modal({tit:'Anular lançamento',html:`<div>Anular o lançamento #${id}? Fica no histórico com anulado_em (auditoria).</div>`,okLabel:'Anular',onOk:async()=>{ const {error}=await sb.from('fis_receita_outros').update({anulado_em:new Date().toISOString()}).eq('id',id); if(error) return error.message; toast('Anulado.'); await reload(); }}); }
+
+  /* ---------- Q2: XML NF-e ---------- */
+  function parseNFe(text){
+    const x=new DOMParser().parseFromString(text,'text/xml'); if(x.getElementsByTagName('parsererror').length) throw new Error('XML inválido');
+    const g=(el,tag)=>{ if(!el) return ''; const n=el.getElementsByTagName(tag)[0]; return n?n.textContent.trim():''; };
+    const inf=x.getElementsByTagName('infNFe')[0]; if(!inf) throw new Error('Não é NF-e (infNFe ausente)');
+    const chave=onlyDigits(inf.getAttribute('Id')||''); const ide=x.getElementsByTagName('ide')[0], emit=x.getElementsByTagName('emit')[0], dest=x.getElementsByTagName('dest')[0];
+    const dh=(g(ide,'dhEmi')||g(ide,'dEmi')).slice(0,10);
+    const dets=[...x.getElementsByTagName('det')].map((d,i)=>{ const p=d.getElementsByTagName('prod')[0]; return {n_item:+(d.getAttribute('nItem')||i+1),cprod:g(p,'cProd'),xprod:g(p,'xProd'),ncm:g(p,'NCM'),cfop:g(p,'CFOP'),un:g(p,'uCom'),qtd:+g(p,'qCom'),vunit:+g(p,'vUnCom'),vtotal:+g(p,'vProd')}; });
+    const tot=x.getElementsByTagName('ICMSTot')[0]; const infAdic=g(x,'infCpl')+' '+[...x.getElementsByTagName('xPed')].map(n=>n.textContent).join(' ');
+    const emitC=onlyDigits(g(emit,'CNPJ')), destC=onlyDigits(g(dest,'CNPJ')||g(dest,'CPF'));
+    const finNFe=g(ide,'finNFe'); const cfop0=dets[0]?.cfop||'';
+    const isDev=finNFe==='4'||/^[1256]20[12]$/.test(cfop0);
+    let tipo=null; if(emitC===CNPJ_SELECTA) tipo=isDev?'nfe_devolucao':'nfe_saida'; else if(destC===CNPJ_SELECTA) tipo=isDev?'nfe_devolucao':'nfe_entrada';
+    const mlp=(infAdic.match(/\b(20\d{11,14})\b/)||[])[1]||null;
+    return {chave,modelo:g(ide,'mod'),serie:g(ide,'serie'),numero:g(ide,'nNF'),data_emissao:dh,competencia:dh?dh.slice(0,7)+'-01':null,emitente_cnpj:emitC,emitente_nome:g(emit,'xNome'),emitente_uf:g(emit,'UF'),emitente_ie:g(emit,'IE'),dest_cnpj:destC,valor_total:+g(tot,'vNF')||dets.reduce((a,d)=>a+d.vtotal,0),tipo,itens:dets,ml_pedido_id:mlp};
+  }
+
+  async function onFiles(files){
+    if(!S.sqlOk) return toast('Aplique o SQL do módulo antes de importar.',true);
+    const log=$f('fis-import-log'); const out=[]; let ok=0;
+    for(const f of files){
+      try{ const text=await f.text(); const d=parseNFe(text);
+        if(!d.tipo){ out.push(`✗ ${f.name}: nem emitente nem destinatário é a Selecta (${fmtCnpj(d.emitente_cnpj)} → ${fmtCnpj(d.dest_cnpj)})`); continue; }
+        if(S.docs.some(x=>x.chave===d.chave)){ out.push(`• ${f.name}: chave já registrada (${d.numero})`); continue; }
+        const isEnt=d.tipo==='nfe_entrada'||(d.tipo==='nfe_devolucao'&&d.dest_cnpj===CNPJ_SELECTA);
+        let fornecedor_id=null;
+        if(d.tipo==='nfe_entrada'){ let fo=S.forn.find(x=>x.cnpj===d.emitente_cnpj);
+          if(!fo){ const {data,error}=await sb.from('fis_fornecedor').insert({cnpj:d.emitente_cnpj,razao:d.emitente_nome,ie:d.emitente_ie||null,uf:d.emitente_uf||null,situacao:'pendente'}).select().single(); if(error) throw error; fo=data; S.forn.push(fo); }
+          if(fo.situacao==='bloqueado_recibo'||fo.situacao==='suspenso'){ out.push(`✗ ${f.name}: fornecedor ${esc(fo.razao)} está ${fo.situacao} — NF recusada`); continue; }
+          fornecedor_id=fo.id; }
+        let venda_id=null; if(d.tipo==='nfe_saida'&&d.ml_pedido_id){ const v=S.vendas.find(x=>String(x.ml_pedido_id||'')===d.ml_pedido_id); if(v) venda_id=v.id; }
+        const path=`${d.tipo}/${(d.data_emissao||'0000').slice(0,4)}/${d.chave}.xml`;
+        const up=await sb.storage.from('fis-xml').upload(path,new Blob([text],{type:'text/xml'}),{upsert:false,contentType:'text/xml'});
+        if(up.error&&!/exists|duplicate/i.test(up.error.message)) throw new Error('storage: '+up.error.message);
+        const canal=d.tipo==='nfe_entrada'?'fornecedor':(d.ml_pedido_id?'ml':null);
+        const {data:doc,error}=await sb.from('fis_documento').insert({tipo:d.tipo,chave:d.chave,modelo:d.modelo,serie:d.serie,numero:d.numero,emitente_cnpj:d.emitente_cnpj,emitente_nome:d.emitente_nome,emitente_uf:d.emitente_uf,dest_cnpj:d.dest_cnpj,data_emissao:d.data_emissao||null,competencia:d.competencia,valor_total:d.valor_total,canal,fornecedor_id,venda_id,ml_pedido_id:d.ml_pedido_id,lastro:'regular',origem_registro:'xml',xml_path:path,xml_sha256:await sha256(text)}).select().single();
+        if(error) throw error;
+        const itens=d.itens.map(i=>{ let pc=null; if(isEnt){ const dp=S.depara.find(x=>x.emitente_cnpj===d.emitente_cnpj&&x.cprod===i.cprod); pc=dp?dp.produto_codigo:null; } else { const p=S.produtos.find(p=>String(p.codigo)===String(i.cprod)); pc=p?p.codigo:null; } return {documento_id:doc.id,...i,produto_codigo:pc}; });
+        if(itens.length){ const {error:e2}=await sb.from('fis_documento_item').insert(itens); if(e2) throw e2; }
+        ok++; out.push(`✓ ${d.tipo.replace('nfe_','NF-e ')} nº ${d.numero} — ${fmtCnpj(d.emitente_cnpj)} — ${F(d.valor_total)} — ${d.itens.length} item(ns)${venda_id?' · vinculada ao pedido '+d.ml_pedido_id:''}`);
+      }catch(e){ out.push(`✗ ${f.name}: ${e.message}`); }
+    }
+    log.innerHTML=out.map(esc).join('<br>'); toast(`${ok} documento(s) importado(s).`,ok===0); await reload();
+  }
+
+  function docItens(id){ return S.itens.filter(i=>i.documento_id===id).sort((a,b)=>a.n_item-b.n_item); }
+  function renderDocs(){
+    const filt=$f('fis-doc-filtro').value; const docs=S.docs.filter(d=>!filt||d.tipo===filt);
+    const TT={nfe_entrada:['NF-e entrada','teal'],nfe_saida:['NF-e saída','ok'],nfe_devolucao:['devolução','warn'],di:['DI/DUIMP','teal'],recibo:['recibo','crit'],outro:['outro','']};
+    $f('fis-docs').innerHTML=docs.length?docs.map(d=>{ const it=docItens(d.id); const ger=it.filter(i=>i.mov_gerado).length; const t=TT[d.tipo]||[d.tipo,''];
+      const parte=d.tipo==='nfe_saida'?(d.ml_pedido_id?'ML '+d.ml_pedido_id:esc(d.dest_cnpj||'-')):esc(d.emitente_nome||d.emitente_cnpj||'-');
+      const vinc=d.venda_id?`<span class="fis-tag ok">venda #${d.venda_id}</span>`:(d.tipo==='nfe_saida'?`<span class="fis-tag warn">sem venda</span> <button class="fis-btn xs" onclick="fiscal.vincularVenda(${d.id})">vincular</button>`:(d.fornecedor_id?`<span class="fis-tag">forn #${d.fornecedor_id}</span>`:'-'));
+      const est=it.length?`${ger}/${it.length} ${ger<it.length?`<button class="fis-btn xs p" onclick="fiscal.deparaDoc(${d.id})">→ estoque</button>`:'<span class="fis-tag ok">ok</span>'}`:'<span class="fis-muted">sem itens</span>';
+      return `<tr><td class="mono">${d.data_emissao||'-'}</td><td><span class="fis-tag ${t[1]}">${t[0]}</span></td><td class="mono">${esc(d.numero||'')}${d.serie?'/'+esc(d.serie):''}</td><td>${parte}</td><td class="n">${F(d.valor_total)}</td><td>${vinc}</td><td><span class="fis-tag ${d.lastro==='regular'?'ok':'crit'}">${d.lastro}</span></td><td>${est}</td><td>${d.xml_path?`<button class="fis-btn xs" onclick="fiscal.baixarXml('${d.xml_path}')">xml</button> `:''}<button class="fis-btn xs d" onclick="fiscal.anularDoc(${d.id})">anular</button></td></tr>`; }).join(''):`<tr><td colspan="9" class="fis-muted">Nenhum documento.</td></tr>`;
+    $f('fis-forn').innerHTML=S.forn.length?S.forn.map(f=>`<tr><td class="mono">${fmtCnpj(f.cnpj)}</td><td>${esc(f.razao||'')}</td><td>${esc(f.uf||'')}</td><td><span class="fis-tag ${f.situacao==='qualificado'?'ok':f.situacao==='pendente'?'warn':'crit'}">${f.situacao}</span></td><td><select class="fis-in" style="width:auto;padding:2px 6px" onchange="fiscal.fornSit(${f.id},this.value)"><option value="">mudar…</option><option value="qualificado">qualificado</option><option value="pendente">pendente</option><option value="bloqueado_recibo">bloqueado (recibo)</option><option value="suspenso">suspenso</option></select></td></tr>`).join(''):`<tr><td colspan="5" class="fis-muted">Fornecedores surgem automaticamente na 1ª NF de entrada. Qualifique cada um.</td></tr>`;
+    renderAnomalias();
+  }
+  function anomalias(c){ // c opcional: filtra por competência
+    const a=[]; const vs=S.vendas.filter(v=>vendaTributavel(v)&&v.data_solicitacao&&(!c||comp(v.data_solicitacao)===c)&&['enviado','entregue','a_enviar','pago','aprovado'].includes(String(v.status||'').toLowerCase()));
+    const semNF=vs.filter(v=>!S.docs.some(d=>d.venda_id===v.id&&d.tipo==='nfe_saida')); if(semNF.length) a.push({k:'venda_sem_nf',n:semNF.length,t:`${semNF.length} venda(s) sem NF-e de saída vinculada`,ids:semNF.map(v=>v.id)});
+    const entSem=S.docs.filter(d=>(d.tipo==='nfe_entrada'||d.tipo==='di'||d.tipo==='recibo')&&(!c||d.competencia===c)&&docItens(d.id).some(i=>!i.mov_gerado)); if(entSem.length) a.push({k:'entrada_sem_estoque',n:entSem.length,t:`${entSem.length} documento(s) de entrada com itens não lançados no estoque`});
+    const fp=S.forn.filter(f=>f.situacao==='pendente'); if(fp.length&&!c) a.push({k:'forn_pendente',n:fp.length,t:`${fp.length} fornecedor(es) pendente(s) de qualificação`});
+    const sl=S.saldos.filter(s=>+s.entradas_sem_lastro>0); if(sl.length) a.push({k:'sem_lastro',n:sl.length,t:`${sl.length} produto(s) com entradas sem lastro (${N(sl.reduce((x,s)=>x+ +s.entradas_sem_lastro,0))} un.)`});
+    const neg=S.saldos.filter(s=>+s.saldo<0); if(neg.length) a.push({k:'saldo_neg',n:neg.length,t:`${neg.length} produto(s) com saldo documentado negativo (saída antes da entrada)`});
+    const decl=S.produtos.filter(p=>p.ativo!==false&&(+p.estoque_atual||0)>0&&(+(S.saldos.find(s=>s.produto_codigo===p.codigo)?.saldo||0))<(+p.estoque_atual)); if(decl.length&&!c) a.push({k:'declarado_maior',n:decl.length,t:`${decl.length} produto(s) com estoque declarado maior que o documentado`});
+    const semLanc=S.outros.length===0&&!c; if(semLanc) a.push({k:'sem_outros',n:1,t:'Nenhuma receita de licitação/outros canais lançada — RBT12 pode estar subestimada'});
+    return a;
+  }
+  function renderAnomalias(){ const a=anomalias(); $f('fis-doc-anom').innerHTML=a.length?`<div class="fis-alert ${a.some(x=>['venda_sem_nf','sem_lastro','saldo_neg'].includes(x.k))?'crit':'warn'}"><b>Anomalias abertas (${a.length}):</b><ul>${a.map(x=>`<li>${x.t}</li>`).join('')}</ul></div>`:`<div class="fis-alert ok"><b>Sem anomalias abertas.</b> Cadeia de custódia íntegra.</div>`; }
+
+  function deparaDoc(docId){
+    const d=S.docs.find(x=>x.id===docId); const it=docItens(docId).filter(i=>!i.mov_gerado); if(!it.length) return;
+    const opts=S.produtos.slice().sort((a,b)=>String(a.codigo).localeCompare(String(b.codigo))).map(p=>`<option value="${esc(p.codigo)}">${esc(p.codigo)} — ${esc(p.produto||'')}</option>`).join('');
+    const isEnt=d.tipo!=='nfe_saida';
+    modal({tit:`${isEnt?'Entrada':'Saída'} no estoque — doc ${d.numero||d.id}`,okLabel:'Lançar no estoque',html:`
+      <div class="fis-muted">Vincule cada item ao código do Catálogo. A vinculação fica salva (de-para por fornecedor + código) e será sugerida nas próximas NFs.</div>
+      <div class="fis-field"><label>Lastro deste documento</label><select class="fis-in" id="fd-lastro"><option value="regular" ${d.lastro==='regular'?'selected':''}>regular (NF/DI válida)</option><option value="sem_lastro" ${d.lastro==='sem_lastro'?'selected':''}>sem lastro (recibo/sem documento de origem)</option><option value="em_analise" ${d.lastro==='em_analise'?'selected':''}>em análise (advogado/contador)</option></select></div>
+      <div class="fis-scroll"><table class="fis-t"><thead><tr><th>#</th><th>Item na NF</th><th class="n">Qtd</th><th class="n">Unit.</th><th>Código Selecta</th></tr></thead><tbody>
+      ${it.map(i=>`<tr><td>${i.n_item}</td><td>${esc(i.xprod)}<div class="fis-muted">cProd ${esc(i.cprod)} · NCM ${esc(i.ncm)}</div></td><td class="n">${N(i.qtd)}</td><td class="n">${F(i.vunit)}</td><td><select class="fis-in" data-item="${i.id}"><option value="">— ignorar —</option>${opts}</select></td></tr>`).join('')}</tbody></table></div>`,
+      after:b=>{ it.forEach(i=>{ if(i.produto_codigo) b.querySelector(`select[data-item="${i.id}"]`).value=i.produto_codigo; }); },
+      onOk:async b=>{ const lastro=b.querySelector('#fd-lastro').value; const sels=[...b.querySelectorAll('select[data-item]')]; const movs=[], ups=[], dps=[];
+        for(const s of sels){ const pc=s.value; if(!pc) continue; const i=it.find(x=>x.id===+s.dataset.item); const sign=isEnt?1:-1;
+          movs.push({produto_codigo:pc,tipo:isEnt?(d.tipo==='nfe_devolucao'?'devolucao':'entrada'):'saida_venda',qtd:sign*(+i.qtd),custo_unit:isEnt?+i.vunit:null,documento_id:d.id,documento_item_id:i.id,venda_id:d.venda_id||null,data_mov:d.data_emissao||today(),competencia:d.competencia||compHoje(),lastro:isEnt?lastro:'regular'});
+          ups.push({id:i.id,produto_codigo:pc}); if(isEnt&&d.emitente_cnpj) dps.push({emitente_cnpj:d.emitente_cnpj,cprod:i.cprod||String(i.n_item),produto_codigo:pc,xprod_ref:i.xprod}); }
+        if(!movs.length) return 'Nenhum item vinculado.';
+        const {error}=await sb.from('fis_estoque_mov').insert(movs); if(error) return error.message;
+        for(const u of ups){ await sb.from('fis_documento_item').update({produto_codigo:u.produto_codigo,mov_gerado:true}).eq('id',u.id); }
+        if(dps.length) await sb.from('fis_item_depara').upsert(dps,{onConflict:'emitente_cnpj,cprod'});
+        if(lastro!==d.lastro) await sb.from('fis_documento').update({lastro}).eq('id',d.id);
+        toast(`${movs.length} movimento(s) lançado(s).`); await reload(); }});
+  }
+  function vincularVenda(docId){
+    const d=S.docs.find(x=>x.id===docId); const cands=S.vendas.filter(v=>vendaTributavel(v)&&!S.docs.some(x=>x.venda_id===v.id&&x.tipo==='nfe_saida')).sort((a,b)=>String(b.data_solicitacao).localeCompare(String(a.data_solicitacao))).slice(0,300);
+    modal({tit:`Vincular NF ${d.numero} a uma venda`,okLabel:'Vincular',html:`<div class="fis-field"><label>Venda (sem NF)</label><select class="fis-in" id="fv-venda"><option value="">—</option>${cands.map(v=>`<option value="${v.id}">${v.data_solicitacao} · #${v.id} · ${esc(v.ml_pedido_id||v.canal||'')} · ${esc(v.produto||'')} · ${F(v.receita_bruta)}</option>`).join('')}</select></div><div class="fis-muted">Valor da NF: ${F(d.valor_total)}.</div>`,
+      onOk:async b=>{ const id=+b.querySelector('#fv-venda').value; if(!id) return 'Escolha a venda.'; const v=S.vendas.find(x=>x.id===id); const {error}=await sb.from('fis_documento').update({venda_id:id,ml_pedido_id:v?.ml_pedido_id||d.ml_pedido_id,canal:v?.canal||d.canal||'ml'}).eq('id',docId); if(error) return error.message; toast('Vinculada.'); await reload(); }});
+  }
+  async function fornSit(id,sit){ if(!sit) return; const {error}=await sb.from('fis_fornecedor').update({situacao:sit,atualizado_em:new Date().toISOString()}).eq('id',id); if(error) return toast(error.message,true); toast('Fornecedor atualizado.'); await reload(); }
+  async function baixarXml(path){ const {data,error}=await sb.storage.from('fis-xml').createSignedUrl(path,120); if(error) return toast(error.message,true); window.open(data.signedUrl,'_blank'); }
+  function anularDoc(id){ const movs=S.movs.filter(m=>m.documento_id===id); modal({tit:'Anular documento',okLabel:'Anular',html:`<div>Anular o documento #${id}${movs.length?` e ${movs.length} movimento(s) de estoque gerados por ele`:''}? Tudo fica no histórico (anulado_em).</div>`,onOk:async()=>{ const ts=new Date().toISOString(); if(movs.length){ const {error:e1}=await sb.from('fis_estoque_mov').update({anulado_em:ts}).eq('documento_id',id); if(e1) return e1.message; } const {error}=await sb.from('fis_documento').update({anulado_em:ts,status:'anulado'}).eq('id',id); if(error) return error.message; toast('Anulado.'); await reload(); }}); }
+
+  function registrarManual(){
+    if(!S.sqlOk) return toast('Aplique o SQL do módulo antes.',true);
+    const opts=S.produtos.slice().sort((a,b)=>String(a.codigo).localeCompare(String(b.codigo))).map(p=>`<option value="${esc(p.codigo)}">${esc(p.codigo)} — ${esc(p.produto||'')}</option>`).join('');
+    const linha=()=>`<tr><td><select class="fis-in fm-prod"><option value="">—</option>${opts}</select></td><td><input class="fis-in mono fm-qtd" placeholder="qtd"></td><td><input class="fis-in mono fm-cu" placeholder="custo unit."></td></tr>`;
+    modal({tit:'Registrar documento manual',okLabel:'Registrar',html:`
+      <div class="fis-alert warn"><b>Uso excepcional.</b> Recibo não é documento fiscal: entra marcado <b>sem lastro</b> e aparece em todas as anomalias e fechamentos até decisão do advogado/contador.</div>
+      <div class="fis-grid c2"><div class="fis-field"><label>Tipo</label><select class="fis-in" id="fm-tipo"><option value="recibo">recibo (sem lastro)</option><option value="di">DI/DUIMP (importação própria)</option><option value="outro">outro</option></select></div>
+      <div class="fis-field"><label>Data</label><input class="fis-in mono" id="fm-data" type="date" value="${today()}"></div>
+      <div class="fis-field"><label>CNPJ/CPF da outra parte</label><input class="fis-in mono" id="fm-cnpj"></div>
+      <div class="fis-field"><label>Nome</label><input class="fis-in" id="fm-nome"></div>
+      <div class="fis-field"><label>Número/ref.</label><input class="fis-in mono" id="fm-num"></div>
+      <div class="fis-field"><label>Valor total (R$)</label><input class="fis-in mono" id="fm-val" placeholder="0,00"></div></div>
+      <div class="fis-field"><label>Observação</label><input class="fis-in" id="fm-obs"></div>
+      <div class="fis-field"><label>Itens (entram no estoque com o lastro do documento)</label><table class="fis-t" id="fm-itens"><thead><tr><th>Produto</th><th>Qtd</th><th>Custo unit.</th></tr></thead><tbody>${linha()}${linha()}${linha()}</tbody></table><button type="button" class="fis-btn xs" id="fm-addrow">+ linha</button></div>`,
+      after:b=>{ b.querySelector('#fm-addrow').onclick=()=>b.querySelector('#fm-itens tbody').insertAdjacentHTML('beforeend',linha()); },
+      onOk:async b=>{ const tipo=b.querySelector('#fm-tipo').value; const val=parseBR(b.querySelector('#fm-val').value); const data=b.querySelector('#fm-data').value; if(!data) return 'Data obrigatória.';
+        const rows=[...b.querySelectorAll('#fm-itens tbody tr')].map(r=>({pc:r.querySelector('.fm-prod').value,q:parseBR(r.querySelector('.fm-qtd').value),cu:parseBR(r.querySelector('.fm-cu').value)})).filter(r=>r.pc&&r.q);
+        const lastro=tipo==='recibo'?'sem_lastro':'regular';
+        const {data:doc,error}=await sb.from('fis_documento').insert({tipo,numero:b.querySelector('#fm-num').value||null,emitente_cnpj:onlyDigits(b.querySelector('#fm-cnpj').value)||null,emitente_nome:b.querySelector('#fm-nome').value||null,dest_cnpj:CNPJ_SELECTA,data_emissao:data,competencia:data.slice(0,7)+'-01',valor_total:val,canal:'fornecedor',lastro,origem_registro:'manual',obs:b.querySelector('#fm-obs').value||null}).select().single(); if(error) return error.message;
+        if(rows.length){ const its=rows.map((r,i)=>({documento_id:doc.id,n_item:i+1,cprod:r.pc,xprod:S.produtos.find(p=>p.codigo===r.pc)?.produto||r.pc,qtd:r.q,vunit:r.cu||0,vtotal:(r.cu||0)*r.q,produto_codigo:r.pc,mov_gerado:true})); const {data:itd,error:e2}=await sb.from('fis_documento_item').insert(its).select(); if(e2) return e2.message;
+          const movs=itd.map(i=>({produto_codigo:i.produto_codigo,tipo:'entrada',qtd:+i.qtd,custo_unit:+i.vunit,documento_id:doc.id,documento_item_id:i.id,data_mov:data,competencia:data.slice(0,7)+'-01',lastro,obs:tipo})); const {error:e3}=await sb.from('fis_estoque_mov').insert(movs); if(e3) return e3.message; }
+        toast('Documento manual registrado.'); await reload(); }});
+  }
+
+  /* ---------- Q2: estoque ---------- */
+  function renderEstoque(){
+    const byCod=Object.fromEntries(S.saldos.map(s=>[s.produto_codigo,s])); const ativos=new Set(S.anuncios.filter(a=>String(a.status_ml||'').toLowerCase()==='active').map(a=>a.produto_codigo));
+    const rows=S.produtos.filter(p=>p.ativo!==false||byCod[p.codigo]).map(p=>{ const s=byCod[p.codigo]||{saldo:0,entradas:0,saidas:0,custo_medio:null,entradas_regulares:0,entradas_sem_lastro:0}; const decl=+p.estoque_atual||0; const cm=s.custo_medio!=null?+s.custo_medio:(+p.custo||null); const val=(+s.saldo>0&&cm)?+s.saldo*cm:0; const totE=+s.entradas_regulares+ +s.entradas_sem_lastro; const lastroPct=totE?(+s.entradas_regulares/totE):null; return {p,s,decl,cm,val,lastroPct,anun:ativos.has(p.codigo)}; });
+    const totVal=rows.reduce((a,r)=>a+r.val,0), totDecl=rows.reduce((a,r)=>a+r.decl*(r.cm||0),0), semL=rows.filter(r=>r.lastroPct!=null&&r.lastroPct<1).length, neg=rows.filter(r=>+r.s.saldo<0).length, anunSem=rows.filter(r=>r.anun&&+r.s.saldo<=0).length;
+    const kp=(l,v,h,cls)=>`<div class="fis-kpi ${cls||''}"><div class="l">${l}</div><div class="v">${v}</div><div class="h">${h||''}</div></div>`;
+    $f('fis-est-kpis').innerHTML=kp('Inventário documentado (custo médio)',F(totVal),`${rows.filter(r=>+r.s.saldo>0).length} produto(s) com saldo`,'teal')+kp('Declarado no Catálogo (a custo)',F(totDecl),'estoque_atual × custo — referência, não fato','')+kp('Produtos com entradas sem lastro',semL,'recibo / sem documento',semL?'crit':'ok')+kp('Anúncio ativo sem saldo documentado',anunSem,'regra: ativo no ML = existe no ledger',anunSem?'crit':'ok');
+    const al=[]; if(!S.movs.some(m=>m.tipo==='abertura')) al.push(`<div class="fis-alert warn"><b>Saldo de abertura ainda não lançado.</b> Antes do corte (${CORTE.split('-').reverse().join('/')}) o estoque físico entra como abertura, item a item, com classificação de lastro. Sem isso o ledger não representa a realidade.</div>`); if(neg) al.push(`<div class="fis-alert crit"><b>${neg} produto(s) com saldo negativo</b> — saída lançada antes da entrada documentada.</div>`); $f('fis-est-alertas').innerHTML=al.join('');
+    $f('fis-est').innerHTML=rows.sort((a,b)=>(+b.s.saldo||0)-(+a.s.saldo||0)).map(r=>`<tr><td class="mono">${esc(r.p.codigo)}</td><td>${esc(r.p.produto||'')}</td><td class="n">${N(r.s.entradas)}</td><td class="n">${N(r.s.saidas)}</td><td class="n"><b style="color:${+r.s.saldo<0?'var(--ered)':'inherit'}">${N(r.s.saldo)}</b></td><td class="n ${r.decl>+r.s.saldo?'':''}" style="color:${r.decl>+r.s.saldo?'var(--eamber)':'inherit'}">${N(r.decl)}</td><td class="n">${F(r.cm)}</td><td class="n">${F(r.val)}</td><td>${r.lastroPct==null?'<span class="fis-tag">—</span>':`<span class="fis-tag ${r.lastroPct>=1?'ok':'crit'}">${P(r.lastroPct)} regular</span>`}</td><td>${r.anun?`<span class="fis-tag ${+r.s.saldo>0?'ok':'crit'}">ativo</span>`:''}</td></tr>`).join('')||`<tr><td colspan="10" class="fis-muted">Sem produtos.</td></tr>`;
+    const pn=Object.fromEntries(S.produtos.map(p=>[p.codigo,p.produto])); $f('fis-est-mov').innerHTML=S.movs.slice(0,200).map(m=>`<tr><td class="mono">${m.data_mov}</td><td>${esc(m.produto_codigo)} <span class="fis-muted">${esc(pn[m.produto_codigo]||'')}</span></td><td><span class="fis-tag ${m.qtd>0?'teal':'warn'}">${m.tipo}</span></td><td class="n">${N(m.qtd)}</td><td class="n">${F(m.custo_unit)}</td><td class="fis-muted">${m.documento_id?'doc #'+m.documento_id:''}${m.venda_id?' venda #'+m.venda_id:''}${m.obs?' · '+esc(m.obs):''}</td><td><span class="fis-tag ${m.lastro==='regular'?'ok':'crit'}">${m.lastro}</span></td><td><button class="fis-btn xs d" onclick="fiscal.anularMov(${m.id})">anular</button></td></tr>`).join('')||`<tr><td colspan="8" class="fis-muted">Nenhum movimento.</td></tr>`;
+  }
+  function abrirSaldos(){
+    if(!S.sqlOk) return toast('Aplique o SQL do módulo antes.',true);
+    const ja=new Set(S.movs.filter(m=>m.tipo==='abertura').map(m=>m.produto_codigo)); const cand=S.produtos.filter(p=>p.ativo!==false&&(+p.estoque_atual||0)>0&&!ja.has(p.codigo));
+    if(!cand.length) return toast('Todos os produtos com estoque declarado já têm abertura lançada.');
+    modal({tit:'Saldo de abertura — estoque físico pré-corte',okLabel:'Lançar aberturas',html:`<div class="fis-muted" style="margin-bottom:8px">Conte fisicamente. Qtd e custo vêm do Catálogo como sugestão; corrija. Lastro: <b>regular</b> só se houver NF de entrada/DI para o item (vincule depois em Documentos); caso contrário <b>sem lastro</b>. Data do movimento: ${CORTE.split('-').reverse().join('/')} (dia do corte).</div>
+      <div class="fis-scroll" style="max-height:55vh"><table class="fis-t"><thead><tr><th>Código</th><th>Produto</th><th>Qtd física</th><th>Custo unit.</th><th>Lastro</th></tr></thead><tbody>${cand.map(p=>`<tr data-pc="${esc(p.codigo)}"><td class="mono">${esc(p.codigo)}</td><td>${esc(p.produto||'')}</td><td><input class="fis-in mono ab-q" value="${+p.estoque_atual}"></td><td><input class="fis-in mono ab-c" value="${(+p.custo||0).toFixed(2).replace('.',',')}"></td><td><select class="fis-in ab-l"><option value="sem_lastro">sem lastro</option><option value="regular">regular</option><option value="em_analise">em análise</option></select></td></tr>`).join('')}</tbody></table></div>`,
+      onOk:async b=>{ const movs=[...b.querySelectorAll('tr[data-pc]')].map(r=>({produto_codigo:r.dataset.pc,tipo:'abertura',qtd:parseBR(r.querySelector('.ab-q').value)||0,custo_unit:parseBR(r.querySelector('.ab-c').value)||0,data_mov:CORTE,competencia:CORTE,lastro:r.querySelector('.ab-l').value,obs:'saldo de abertura pré-corte'})).filter(m=>m.qtd>0); if(!movs.length) return 'Nenhuma quantidade > 0.'; const {error}=await sb.from('fis_estoque_mov').insert(movs); if(error) return error.message; toast(`${movs.length} abertura(s) lançada(s).`); await reload(); }});
+  }
+  function ajusteManual(){
+    if(!S.sqlOk) return toast('Aplique o SQL do módulo antes.',true);
+    const opts=S.produtos.slice().sort((a,b)=>String(a.codigo).localeCompare(String(b.codigo))).map(p=>`<option value="${esc(p.codigo)}">${esc(p.codigo)} — ${esc(p.produto||'')}</option>`).join('');
+    modal({tit:'Ajuste de inventário / sinistro',okLabel:'Lançar',html:`<div class="fis-grid c2"><div class="fis-field"><label>Produto</label><select class="fis-in" id="aj-pc">${opts}</select></div><div class="fis-field"><label>Tipo</label><select class="fis-in" id="aj-t"><option value="ajuste">ajuste (contagem)</option><option value="sinistro">sinistro (apreensão/extravio)</option><option value="devolucao">devolução (retorno ao estoque)</option></select></div><div class="fis-field"><label>Qtd (negativa = saída)</label><input class="fis-in mono" id="aj-q" placeholder="-1"></div><div class="fis-field"><label>Data</label><input class="fis-in mono" id="aj-d" type="date" value="${today()}"></div><div class="fis-field"><label>Venda vinculada (id, opcional)</label><input class="fis-in mono" id="aj-v"></div><div class="fis-field"><label>Motivo</label><input class="fis-in" id="aj-o" placeholder="obrigatório"></div></div>`,
+      onOk:async b=>{ const q=parseBR(b.querySelector('#aj-q').value); const o=b.querySelector('#aj-o').value.trim(); if(!q) return 'Quantidade inválida.'; if(!o) return 'Motivo obrigatório (auditoria).'; const d=b.querySelector('#aj-d').value; const v=+b.querySelector('#aj-v').value||null; const {error}=await sb.from('fis_estoque_mov').insert({produto_codigo:b.querySelector('#aj-pc').value,tipo:b.querySelector('#aj-t').value,qtd:q,data_mov:d,competencia:d.slice(0,7)+'-01',venda_id:v,lastro:'regular',obs:o}); if(error) return error.message; toast('Lançado.'); await reload(); }});
+  }
+  function anularMov(id){ modal({tit:'Anular movimento',okLabel:'Anular',html:`<div>Anular o movimento #${id}? Permanece no histórico.</div>`,onOk:async()=>{ const {error}=await sb.from('fis_estoque_mov').update({anulado_em:new Date().toISOString()}).eq('id',id); if(error) return error.message; if(S.movs.find(m=>m.id===id)?.documento_item_id){ await sb.from('fis_documento_item').update({mov_gerado:false}).eq('id',S.movs.find(m=>m.id===id).documento_item_id); } toast('Anulado.'); await reload(); }}); }
+
+  /* ---------- Q3: fechamento ---------- */
+  function calcFech(c){
+    const r=rbt12(c), a=aliq(r); const recML=receitaML(c), recOut=receitaOutros(c), recT=recML+recOut; const das=recT*a.efetiva;
+    const vs=S.vendas.filter(v=>comp(v.data_solicitacao||'')===c); const vt=vs.filter(vendaTributavel); const canc=vs.length-vt.length; const sin=vs.filter(v=>v.ocorrencia).length;
+    const docs=S.docs.filter(d=>d.competencia===c); const ent=docs.filter(d=>d.tipo==='nfe_entrada'||d.tipo==='di'||d.tipo==='recibo'); const sai=docs.filter(d=>d.tipo==='nfe_saida'); const dev=docs.filter(d=>d.tipo==='nfe_devolucao');
+    const inv=S.saldos.reduce((x,s)=>x+(+s.saldo>0&&s.custo_medio?+s.saldo*+s.custo_medio:0),0); const inv_sl=S.saldos.reduce((x,s)=>x+(+s.entradas_sem_lastro||0),0);
+    const desp=S.despOp.filter(d=>comp(d.data||'')===c).reduce((x,d)=>x+(+d.valor||0),0);
+    const an=anomalias(c); const cmv=vt.reduce((x,v)=>x+(+v.custo_total||0),0);
+    return {c,rbt12:r,a,recML,recOut,recT,das,vendas:vt.length,canc,sin,entradas:ent.length,entradasVal:ent.reduce((x,d)=>x+(+d.valor_total||0),0),saidas:sai.length,saidasVal:sai.reduce((x,d)=>x+(+d.valor_total||0),0),dev:dev.length,inv,inv_sl,desp,cmv,anom:an,fech:S.fech.find(f=>f.competencia===c)};
+  }
+  function renderFech(){
+    if(!$f('fis-fech-comp').options.length) fillCompSelect('fis-fech-comp',addM(compHoje(),-1));
+    const c=$f('fis-fech-comp').value; const x=calcFech(c);
+    const kp=(l,v,h,cls)=>`<div class="fis-kpi ${cls||''}"><div class="l">${l}</div><div class="v">${v}</div><div class="h">${h||''}</div></div>`;
+    $f('fis-fech-kpis').innerHTML=kp('Receita bruta tributável',F(x.recT),`ML ${F(x.recML)} · outros ${F(x.recOut)}`,'teal')+kp('Alíquota efetiva',`${x.a.faixa}ª · ${P(x.a.efetiva)}`,`RBT12 ${F(x.rbt12)}`,'')+kp('DAS esperado',F(x.das),x.fech?.das_real!=null?`real ${F(x.fech.das_real)} · Δ ${F(+x.fech.das_real-x.das)}`:'aguardando DAS do contador',x.fech?.das_real!=null&&Math.abs(+x.fech.das_real-x.das)>Math.max(50,x.das*0.02)?'crit':'')+kp('Status',x.fech?x.fech.status.replace('_',' '):'aberto',x.fech?`fechado ${String(x.fech.fechado_em).slice(0,16).replace('T',' ')}`:'',x.fech?(x.fech.status==='fechado'?'ok':'warn'):'');
+    $f('fis-fech-ressalvas').innerHTML=x.anom.length?`<div class="fis-alert ${x.anom.some(y=>['venda_sem_nf','sem_lastro','saldo_neg'].includes(y.k))?'crit':'warn'}"><b>Ressalvas da competência (${x.anom.length}):</b><ul>${x.anom.map(y=>`<li>${y.t}</li>`).join('')}</ul></div>`:`<div class="fis-alert ok"><b>Sem ressalvas.</b></div>`;
+    const tr=(l,v)=>`<tr><td>${l}</td><td class="n">${v}</td></tr>`;
+    $f('fis-fech-tab').innerHTML=tr('Vendas tributáveis',x.vendas)+tr('Canceladas / devolvidas',x.canc)+tr('Com ocorrência (sinistro)',x.sin)+tr('NF-e saída registradas',`${x.saidas} · ${F(x.saidasVal)}`)+tr('NF-e entrada / DI / recibo',`${x.entradas} · ${F(x.entradasVal)}`)+tr('Devoluções',x.dev)+tr('CMV das vendas (custo_total)',F(x.cmv))+tr('Despesas operacionais',F(x.desp))+tr('Inventário documentado (custo médio)',F(x.inv))+tr('Unidades sem lastro no ledger',N(x.inv_sl));
+    $f('fis-fech-btn').textContent=x.anom.length?'Fechar com ressalvas':'Fechar competência'; $f('fis-fech-btn').disabled=!!x.fech&&x.fech.status!=='reaberto';
+    $f('fis-env-btn').disabled=!x.fech; $f('fis-fech-status').innerHTML=x.fech?`Snapshot #${x.fech.id} · ${x.fech.ressalvas.length} ressalva(s)${x.fech.enviado_contador_em?` · <b style="color:var(--eemerald)">enviado ao contador em ${String(x.fech.enviado_contador_em).slice(0,10)}</b>`:' · <b style="color:var(--eamber)">não enviado</b>'} · <button class="fis-btn xs" onclick="fiscal.reabrir(${x.fech.id})">reabrir</button>`:'Competência ainda não fechada.';
+    $f('fis-das-real').value=x.fech?.das_real!=null?(+x.fech.das_real).toFixed(2).replace('.',','):'';
+  }
+  async function fechar(){
+    if(!S.sqlOk) return toast('Aplique o SQL do módulo antes.',true);
+    const c=$f('fis-fech-comp').value; const x=calcFech(c); if(c>=compHoje()) return toast('Só se fecha competência encerrada.',true);
+    const snap={...x,fech:undefined,a:x.a,anom:undefined}; const row={competencia:c,status:x.anom.length?'fechado_ressalvas':'fechado',rbt12:x.rbt12,faixa:x.a.faixa,aliq_efetiva:x.a.efetiva,receita_ml:x.recML,receita_outros:x.recOut,receita_total:x.recT,das_esperado:x.das,inventario_valor:x.inv,ressalvas:x.anom,snapshot:snap,fechado_em:new Date().toISOString()};
+    const {error}=x.fech?await sb.from('fis_fechamento').update(row).eq('id',x.fech.id):await sb.from('fis_fechamento').insert(row); if(error) return toast(error.message,true); toast(`Competência ${lbl(c)} fechada${x.anom.length?' com ressalvas':''}.`); await reload();
+  }
+  async function reabrir(id){ modal({tit:'Reabrir competência',okLabel:'Reabrir',html:'<div>Reabrir mantém o snapshot anterior na auditoria. Um novo fechamento sobrescreve os números.</div>',onOk:async()=>{ const {error}=await sb.from('fis_fechamento').update({status:'reaberto'}).eq('id',id); if(error) return error.message; await reload(); }}); }
+  async function salvarDasReal(){ const c=$f('fis-fech-comp').value; const f=S.fech.find(x=>x.competencia===c); if(!f) return toast('Feche a competência antes de conciliar.',true); const v=parseBR($f('fis-das-real').value); if(v==null) return toast('Valor inválido.',true); const {error}=await sb.from('fis_fechamento').update({das_real:v}).eq('id',f.id); if(error) return toast(error.message,true); toast('DAS real gravado.'); await reload(); }
+  async function marcarEnviado(){ const c=$f('fis-fech-comp').value; const f=S.fech.find(x=>x.competencia===c); if(!f) return; const {error}=await sb.from('fis_fechamento').update({enviado_contador_em:new Date().toISOString()}).eq('id',f.id); if(error) return toast(error.message,true); toast('Marcado como enviado.'); await reload(); }
+
+  function csv(rows,cols){ const e=v=>{ v=v==null?'':String(v); return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }; return cols.join(';')+'\n'+rows.map(r=>cols.map(k=>e(r[k])).join(';')).join('\n'); }
+  async function gerarPacote(){
+    if(!window.JSZip) return toast('JSZip não carregou (CDN). Recarregue a página.',true);
+    const c=$f('fis-fech-comp').value; const x=calcFech(c); const zip=new JSZip(); const base=`selecta_fiscal_${c.slice(0,7)}`;
+    const vs=S.vendas.filter(v=>comp(v.data_solicitacao||'')===c).map(v=>({...v,nf_chave:S.docs.find(d=>d.venda_id===v.id&&d.tipo==='nfe_saida')?.chave||''}));
+    zip.file(`${base}/vendas.csv`,csv(vs,['id','canal','ml_pedido_id','data_solicitacao','status','ocorrencia','uf','produto_codigo','produto','quantidade','receita_bruta','custo_total','imposto_valor','nf_chave']));
+    const docs=S.docs.filter(d=>d.competencia===c); zip.file(`${base}/documentos.csv`,csv(docs,['id','tipo','chave','numero','serie','data_emissao','emitente_cnpj','emitente_nome','emitente_uf','dest_cnpj','valor_total','canal','venda_id','ml_pedido_id','lastro','origem_registro','xml_path']));
+    zip.file(`${base}/documento_itens.csv`,csv(S.itens.filter(i=>docs.some(d=>d.id===i.documento_id)),['documento_id','n_item','cprod','xprod','ncm','cfop','qtd','un','vunit','vtotal','produto_codigo']));
+    zip.file(`${base}/estoque_movimentos.csv`,csv(S.movs.filter(m=>m.competencia===c),['id','data_mov','produto_codigo','tipo','qtd','custo_unit','documento_id','venda_id','lastro','obs']));
+    const pn=Object.fromEntries(S.produtos.map(p=>[p.codigo,p.produto])); zip.file(`${base}/inventario.csv`,csv(S.saldos.map(s=>({...s,produto:pn[s.produto_codigo]||'',valor:(+s.saldo>0&&s.custo_medio?+s.saldo*+s.custo_medio:0).toFixed(2)})),['produto_codigo','produto','entradas','saidas','saldo','custo_medio','valor','entradas_regulares','entradas_sem_lastro']));
+    zip.file(`${base}/receita_outros.csv`,csv(S.outros.filter(o=>o.competencia===c),['id','competencia','canal','tipo','valor','descricao']));
+    zip.file(`${base}/despesas_op.csv`,csv(S.despOp.filter(d=>comp(d.data||'')===c),['id','data','descricao','valor']));
+    zip.file(`${base}/fechamento.json`,JSON.stringify({competencia:c,gerado_em:new Date().toISOString(),build:'2026-08-22-A',rbt12:x.rbt12,faixa:x.a.faixa,aliq_nominal:x.a.nominal,deducao:x.a.deducao,aliq_efetiva:x.a.efetiva,receita_ml:x.recML,receita_outros:x.recOut,receita_total:x.recT,das_esperado:x.das,vendas:x.vendas,canceladas:x.canc,sinistros:x.sin,nf_saida:x.saidas,nf_entrada:x.entradas,devolucoes:x.dev,cmv:x.cmv,despesas_op:x.desp,inventario_valor:x.inv,unidades_sem_lastro:x.inv_sl,ressalvas:x.anom,status:x.fech?.status||'aberto'},null,2));
+    // PDF resumo
+    try{ const {jsPDF}=window.jspdf; const doc=new jsPDF(); doc.setFontSize(14); doc.text(`Selecta Solution · Fechamento fiscal ${lbl(c)}`,14,16); doc.setFontSize(9); doc.text(`CNPJ ${fmtCnpj(CNPJ_SELECTA)} · Simples Nacional Anexo I · gerado ${new Date().toLocaleString('pt-BR')} · status ${x.fech?.status||'aberto'}`,14,22);
+      doc.autoTable({startY:28,head:[['Indicador','Valor']],body:[['RBT12 (12 meses anteriores)',F(x.rbt12)],['Faixa / nominal / dedução',`${x.a.faixa}ª / ${P(x.a.nominal)} / ${F(x.a.deducao)}`],['Alíquota efetiva',P(x.a.efetiva)],['Receita bruta ML',F(x.recML)],['Receita outros canais',F(x.recOut)],['Receita bruta total',F(x.recT)],['DAS esperado',F(x.das)],['Vendas tributáveis / canceladas / sinistros',`${x.vendas} / ${x.canc} / ${x.sin}`],['NF-e saída / entrada / devolução',`${x.saidas} / ${x.entradas} / ${x.dev}`],['CMV das vendas',F(x.cmv)],['Despesas operacionais',F(x.desp)],['Inventário documentado',F(x.inv)],['Unidades sem lastro',N(x.inv_sl)]],styles:{fontSize:8}});
+      if(x.anom.length) doc.autoTable({startY:doc.lastAutoTable.finalY+6,head:[['Ressalvas']],body:x.anom.map(a=>[a.t]),styles:{fontSize:8},headStyles:{fillColor:[180,60,60]}});
+      zip.file(`${base}/fechamento.pdf`,doc.output('arraybuffer')); }catch(e){ console.warn('pdf',e); }
+    // XMLs
+    let nx=0; for(const d of docs.filter(d=>d.xml_path)){ try{ const {data,error}=await sb.storage.from('fis-xml').download(d.xml_path); if(!error&&data){ zip.file(`${base}/xml/${d.tipo}/${d.chave}.xml`,await data.arrayBuffer()); nx++; } }catch(_e){} }
+    const blob=await zip.generateAsync({type:'blob'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${base}.zip`; document.body.appendChild(a); a.click(); a.remove(); toast(`Pacote gerado: ${docs.length} doc(s), ${nx} XML(s).`);
+  }
+
+  /* ---------- navegação ---------- */
+  function bind(){ if(S.bound) return; S.bound=true;
+    document.querySelectorAll('#fis-nav .fis-pane-btn').forEach(b=>b.addEventListener('click',()=>showPane(b.dataset.fpane)));
+    const inp=$f('fis-file'); inp.addEventListener('change',()=>{ onFiles([...inp.files]); inp.value=''; });
+    const dz=$f('fis-drop'); ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('over');})); ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('over');})); dz.addEventListener('drop',e=>onFiles([...e.dataTransfer.files].filter(f=>/\.xml$/i.test(f.name))));
+  }
+  function showPane(p){ S.pane=p; document.querySelectorAll('#fis-nav .fis-pane-btn').forEach(b=>b.classList.toggle('active',b.dataset.fpane===p)); document.querySelectorAll('#tab-fiscal .fis-pane').forEach(x=>x.classList.toggle('active',x.id==='fis-pane-'+p)); renderAll(); }
+  function renderAll(){ if(!S.loaded) return; try{ renderCron(); renderDocs(); renderEstoque(); renderFech(); }catch(e){ console.error('fiscal render',e); toast('Erro ao renderizar: '+e.message,true); } }
+  async function reload(){ await loadBase(); renderAll(); }
+  async function onEnter(){ bind(); if(!S.loaded) await loadBase(); showPane(S.pane); }
+
+  return {onEnter,reload,renderCron,renderDocs,renderFech,lancarReceita,anularReceita,deparaDoc,vincularVenda,fornSit,baixarXml,anularDoc,registrarManual,abrirSaldos,ajusteManual,anularMov,fechar,reabrir,salvarDasReal,marcarEnviado,gerarPacote,_S:S};
+})();
+
 </script>
 
 </body>
