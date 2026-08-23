@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-23-A | selecta-banco-preco | NUCLEO FINANCEIRO UNICO (doutrina Igor 22-23/08: "a matematica pesada acontece SO no Termometro; Painel e Por mes apenas refletem"): (1) ecomFinanceiro ganha o MOTOR — FIXOS (imposto 4%, colchao 6%, fixos 3.050, taxas/dia-base dos credores: mudam por SQL/BUILD, tela so simula), fonte() (UMA leitura do banco p/ todas as superficies, cache 4s anti-fetch-duplo, force apos gravacao), calcMes(d,mkey) (balancete puro de um mes: receitas, taxas, custo, imposto, juros, despesas op, perdas por tipo, colchao, lucro operacional, LUCRO REAL, margem) e capitalBase(d). (2) CAUSA do Painel!=Termometro (3a reincidencia) ERA colchao_valor FORA do SELECT do Relatorios — colP somava 0. Morta POR CONSTRUCAO: Painel nao calcula mais nada, consome o objeto do nucleo (agg() e capital() locais REMOVIDOS; jurosP/despP/colP duplicados REMOVIDOS). (3) POR MES = espelho: calcMes por mes; coluna Lucro vira LUCRO REAL (liquido de perdas+juros+despOp, +colchao — mesma linha grande do Termometro); Faturado INTEGRAL preservado (21-F); TOTAL na mesma regua; junho segue listado (registro, sem relevancia — Igor). (4) JUROS por competencia: lancamento do ledger no mes VENCE; sem lancamento e dia-base vencido, saldo x taxa entra em QUALQUER mes — desde que o credor exista no ledger ate o fim do mes (mes pre-ledger nao e inventado; julho carece de lancamento manual retroativo, valor so o Igor tem). (5) Corte de mes UNIFICADO em UTC (era local no Termometro x UTC no Painel — divergiam na virada); receita com fallback preco x qtd UNIFICADA. (6) Degradacao VISIVEL: falha de leitura de ledger/despesas/recuperavel imprime aviso ambar no Termometro (antes: zero silencioso). Zero SQL; ids e wiring intactos. | base: 2026-08-22-A -->
 <!-- BUILD 2026-08-22-A | selecta-banco-preco | MODULO FISCAL v0.1 — NASCIMENTO (Igor 22/08, debate de 4 turnos fechado): nova aba FISCAL (#tab-fiscal, CSS escopado, modal proprio #fis-modal DENTRO da aba — licao 21-E) com 4 paineis. Q1 CRONOMETRO: RBT12 = janela movel dos 12 meses ANTERIORES (mes corrente fora da propria base), receita tributavel = ecom_vendas.receita_bruta (exclui cancelado/devolvido; competencia = data_solicitacao) + fis_receita_outros realizado (licitacao/shopee/amazon/tiktok); tabela Anexo I PARAMETRIZADA em fis_param_simples (fallback local identico); efetiva=(RBT12*nominal-deducao)/RBT12; projecao 12m (ML=media movel 3m, outros=previstos), acumulado ano-calendario vs sublimite 3,6M e teto 4,8M com mes de cruzamento; DIVERGENCIA provisao 4% x efetiva SO MEDIDA — imposto_valor das vendas NAO e reescrito nesta versao (decisao Igor: alterar o financeiro depois, com seguranca). Q2 DOCUMENTOS: import XML NF-e (parser DOMParser; tipo pelo CNPJ 46.908.715/0001-48 emitente=saida/destinatario=entrada; finNFe 4 ou CFOP x201/x202 = devolucao); XML guardado no bucket privado fis-xml (guarda propria — hoje os XMLs vivem so no faturador do ML); fornecedor auto-criado como PENDENTE na 1a NF; situacao bloqueado_recibo/suspenso RECUSA a NF; saida vinculada a ecom_vendas por ml_pedido_id achado em infCpl/xPed, senao fila vincular; de-para fornecedor+cProd -> codigo Selecta persistido (fis_item_depara); documento manual (DI/recibo) nasce SEM LASTRO. Q2 ESTOQUE: ledger fis_estoque_mov (abertura/entrada/saida_venda/devolucao/sinistro/ajuste), view fis_vw_estoque_saldo (custo medio ponderado das entradas vivas, entradas regulares x sem lastro); estoque_atual do Catalogo vira DECLARADO (referencia), saldo documentado e o fato; saldo de abertura pre-corte (data 01/09/2026) item a item com classificacao de lastro; anuncio ativo (status_ml=active) sem saldo documentado = anomalia. Q3 FECHAMENTO: snapshot imutavel em fis_fechamento (fechado | fechado_ressalvas | reaberto), ressalvas = anomalias da competencia (venda sem NF, entrada sem estoque, sem lastro, saldo negativo...); conciliacao DAS esperado x DAS real do contador; PACOTE ZIP (JSZip via cdnjs): vendas/documentos/itens/movimentos/inventario/receita_outros/despesas_op em CSV + fechamento.json + fechamento.pdf (jsPDF autotable) + XMLs do mes; marcar enviado_contador_em. DOUTRINA: DELETE fisicamente proibido por trigger em todas as tabelas de fatos (anulado_em), toda fis_* com trigger de auditoria em fis_auditoria (antes/depois/quem), RLS so authenticated, bucket privado. SQL entregue junto (fiscal_v0.1.sql); sem ele a aba exibe aviso e degrada para leitura parcial. Q4 (plano de saida do Simples) NAO construido — e painel sobre Q1, depois. | base: 2026-08-21-I -->
 <!-- BUILD 2026-08-21-I | selecta-banco-preco | SINISTRO CANCELADO PELO ML PERMANECE (forense Igor 21/08, noite): as 13 apreensoes NUNCA sairam do banco — o job ml-orders-rastreio-17h (atualizado_em 20:01:09 em massa) gravou status=cancelado nos pedidos que o ML cancelou/reembolsou pos-apreensao, e a doutrina antiga 'cancelado = fora de tudo' ESCONDIA as linhas (13->4 na tela, Compras do Mes encolhendo — violava a regra do Igor de que compras nao muda). A ocorrencia manual foi RESPEITADA pelo sync o tempo todo. DOUTRINA NOVA em 6 pontos (termometro base, colP do Painel, agg, capital, Por mes, TOTAL): cancelado SEM ocorrencia = cancelamento comum, fora de tudo (inalterado); cancelado COM ocorrencia = SINISTRO — permanece nas perdas do mes, no custo dos fornecedores (Compras do Mes volta a ser imutavel) e no Por mes. Nenhum SQL de restauracao necessario: nao havia nada perdido. Pendente (proximo passo, decisao Igor): trigger de protecao da ocorrencia contra UPDATEs futuros + revisao dos cancelados SEM ocorrencia de agosto (candidatos a apreensao nao marcada). | base: 2026-08-21-H (mesma sessao) -->
 <!-- BUILD 2026-08-21-H | selecta-banco-preco | PAINEL = LUCRO REAL DO TERMOMETRO, AGORA EXATO (Igor 21/08, 3a cobranca): a incoerencia estrutural era o COLCHAO. Termometro: lucReal = (luc - perdas - juros - despOp) + colchao (decisao 21-B/D, colchao volta abaixo do lucro). Painel (21-G) descontava juros e despOp mas NAO somava o colchao de volta — ficava lucReal - colchao (em agosto, - R$ 8.159,95). 21-H calcula colP (colchao das vendas fechadas SEM ocorrencia, mesma regua do mesV do Termometro) e faz lucLiq = luc - perdas - juros - despOp + colchao. Regra de perdas ja era identica (fallback custo+taxas p/ apreensao). Agora Painel == Termometro ao centavo. | base: 2026-08-21-G (mesma sessao) -->
@@ -5204,86 +5205,118 @@ const ecomFinanceiro={
     if(r.error){ alert('Erro ao lançar: '+r.error.message+'\n(juro_pago exige o ledger v2 — CHECK ampliado)'); return; }
     this.termometro();
   },
+  // ============================================================================
+  // NÚCLEO FINANCEIRO ÚNICO — BUILD 2026-08-23-A (doutrina Igor 22-23/08):
+  // toda a matemática do dinheiro acontece AQUI. Termômetro renderiza o núcleo;
+  // Painel e Por mês são ESPELHOS (consomem calcMes/capitalBase, zero conta própria).
+  // Competência = mês da VENDA (data_solicitacao, corte UTC = mesma régua das
+  // colunas geradas do banco). Parâmetros FIXOS: mudam por SQL/BUILD, nunca na tela.
+  // ============================================================================
+  FIXOS:{ IMPOSTO:0.04, COLCHAO:0.06, CUSTOS_FIXOS_MES:3050,
+    TAXA_CREDOR:{credor_1:0.10,credor_2:0.05}, DIA_BASE:{credor_1:5,credor_2:20} },
+  PERDA_OC:['apreendido','extraviado','roubado','avariado'],
+  mesKey(){ return new Date().toISOString().slice(0,7); },
+  mesNomeK(mkey){ const nm=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']; const p=String(mkey).split('-'); return nm[(+p[1])-1]+'/'+p[0]; },
+  // fonte(): UMA leitura do banco para todas as superfícies. Cache curto (4s) evita
+  // fetch duplo no mesmo clique de aba; force=true (após qualquer gravação) fura o cache.
+  _fonteCache:{t:0,d:null},
+  async fonte(force){
+    const now=Date.now();
+    if(!force && this._fonteCache.d && (now-this._fonteCache.t)<4000) return this._fonteCache.d;
+    const rv=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,uf,status,data_solicitacao,data_entrega,data_liberacao_mp,quantidade,preco_venda,receita_bruta,comissao_valor,tarifa_fixa_valor,frete_valor,taxas_ml_total,valor_recebido_ml,custo_total,colchao_valor,imposto_valor,resultado_liquido,margem_pct,ocorrencia,prejuizo_valor');
+    if(rv.error) throw rv.error;
+    const vendasAll=rv.data||[];
+    const vendas=vendasAll.filter(v=>!(v.status==='cancelado'&&!v.ocorrencia)); // 21-I: cancelado SEM ocorrência = fora; COM ocorrência = sinistro, permanece
+    let ledger=null;  try{ const r=await sb.from('ecom_vw_capital_saldo').select('*'); if(!r.error) ledger=r.data||[]; }catch(_e){}
+    let movs=null;    try{ const r=await sb.from('ecom_capital_mov').select('credor,tipo,valor,data_mov'); if(!r.error) movs=r.data||[]; }catch(_e){}
+    let despesas=null;try{ const r=await sb.from('ecom_despesa_op').select('id,data,descricao,valor').is('anulado_em',null).order('data'); if(!r.error) despesas=r.data||[]; }catch(_e){}
+    let recupItens=null; try{ const r=await sb.from('ecom_recuperavel_item').select('id,descricao,valor').is('baixado_em',null).order('id'); if(!r.error) recupItens=r.data||[]; }catch(_e){}
+    const d={vendasAll,vendas,ledger,movs,despesas,recupItens};
+    this._fonteCache={t:now,d};
+    return d;
+  },
+  // calcMes(d,mkey): o balancete de UM mês, fechado num objeto. Puro (sem fetch, sem DOM).
+  calcMes(d,mkey){
+    const isPerda=v=>this.PERDA_OC.indexOf(v.ocorrencia)>=0;
+    const isOc=v=>isPerda(v)||v.ocorrencia==='devolvido'||v.ocorrencia==='devolvido_reintegrado';
+    const rb_=v=>v.receita_bruta!=null?+v.receita_bruta:((+v.preco_venda||0)*(+v.quantidade||1));
+    const mesAll=d.vendas.filter(v=>v.data_solicitacao&&v.data_solicitacao.slice(0,7)===mkey);
+    const mesOc=mesAll.filter(isOc), mesV=mesAll.filter(v=>!isOc(v));
+    let perdas=0,perdasPend=0,ocDev=0,ocApr=0,ocOut=0,devV=0,aprV=0;
+    mesOc.forEach(v=>{ if(v.ocorrencia==='apreendido'){ ocApr++; const pj=(v.prejuizo_valor!=null)?+v.prejuizo_valor:((+v.custo_total||0)+(+v.taxas_ml_total||0)); aprV+=pj; perdas+=pj; }
+      else if(isPerda(v)){ ocOut++; if(v.prejuizo_valor!=null) perdas+=+v.prejuizo_valor; else perdasPend++; }
+      else { ocDev++; if(v.ocorrencia==='devolvido') devV+=+v.custo_total||0; if(v.prejuizo_valor!=null) perdas+=+v.prejuizo_valor; else perdasPend++; } });
+    let rec=0,recF=0,tax=0,cus=0,col=0,imp=0,luc=0,n=0,nF=0;
+    mesV.forEach(v=>{ n++; const rb=rb_(v); rec+=rb;
+      if(v.resultado_liquido!=null){ nF++; recF+=rb;
+        tax+=(+v.comissao_valor||0)+(+v.tarifa_fixa_valor||0)+(+v.frete_valor||0);
+        cus+=+v.custo_total||0; col+=+v.colchao_valor||0;
+        imp+=(v.imposto_valor!=null?+v.imposto_valor:Math.round(rb*100*this.FIXOS.IMPOSTO)/100);
+        luc+=+v.resultado_liquido; } });
+    let cusMes=0,recInt=0; mesAll.forEach(v=>{ cusMes+=(+v.custo_total||0); recInt+=rb_(v); }); // 20-G: compras não se movem · 21-F: faturado INTEGRAL
+    // JUROS (doutrina 23/08): lançamento do ledger no mês VENCE; credor sem lançamento com
+    // dia-base vencido entra saldo x taxa sozinho — em QUALQUER mês (não só o corrente),
+    // desde que o credor JÁ EXISTIA no ledger até o fim daquele mês (mês pré-ledger não é inventado).
+    let jurosMes=0,jurosAuto=0; const lanc={};
+    (d.movs||[]).forEach(m=>{ if((m.tipo==='juro'||m.tipo==='juro_pago')&&String(m.data_mov||'').slice(0,7)===mkey){ jurosMes+=(+m.valor||0); lanc[m.credor]=true; } });
+    if(d.ledger){ const hojeK=this.mesKey(), diaHoje=new Date().getDate(), fimMes=mkey+'-31';
+      d.ledger.forEach(c=>{ const s=+c.saldo_devedor||0; if(s<=0||lanc[c.credor]) return;
+        const existia=(d.movs||[]).some(m=>m.credor===c.credor&&String(m.data_mov||'').slice(0,10)<=fimMes);
+        if(!existia) return;
+        const db=(this.FIXOS.DIA_BASE[c.credor]!=null)?this.FIXOS.DIA_BASE[c.credor]:5;
+        const vencido=(mkey<hojeK)||(mkey===hojeK&&diaHoje>=db);
+        if(vencido){ const tx=(this.FIXOS.TAXA_CREDOR[c.credor]!=null)?this.FIXOS.TAXA_CREDOR[c.credor]:0.10; jurosMes+=s*tx; jurosAuto+=s*tx; } }); }
+    let despOpMes=0,despOpItens=null;
+    if(d.despesas){ despOpItens=d.despesas.filter(x=>String(x.data||'').slice(0,7)===mkey); despOpMes=despOpItens.reduce((s,x)=>s+(+x.valor||0),0); }
+    const lucOp=luc-perdas-jurosMes-despOpMes;      // 21-D/E: perdas, juros e despesas op debitam
+    const lucReal=lucOp+col;                        // 21-D: LUCRO REAL = operacional + colchão
+    const margem=recF>0?(luc/recF*100):null;        // margem OPERACIONAL (sem sinistro)
+    const despTot=tax+cusMes+imp+perdas+jurosMes+despOpMes; // colchão FORA (21-B)
+    return {mkey,n,nF,nPend:n-nF,nInt:mesAll.length,rec,recInt,recF,tax,cusMes,imp,col,luc,
+      perdas,perdasPend,ocDev,ocApr,ocOut,devQ:ocDev,devV,aprQ:ocApr,aprV,
+      jurosMes,jurosAuto,despOpMes,despOpItens,lucOp,lucReal,margem,despTot,mesOc,mesV};
+  },
+  // capitalBase(d): capital da operação INTEIRA (19-A/B: critério liberação MP; perda fora do preso; devolvido a custo até reintegrar)
+  capitalBase(d){ const hoje=new Date().toISOString(); let preso=0,recMP=0,devCusto=0;
+    d.vendas.forEach(v=>{ if(v.ocorrencia && v.ocorrencia!=='retido_doc' && v.ocorrencia!=='outro'){
+        if(v.ocorrencia==='devolvido'){ preso+=+v.custo_total||0; devCusto+=+v.custo_total||0; } return; }
+      const lib=v.data_liberacao_mp && v.data_liberacao_mp<=hoje;
+      if(!lib){ preso+=+v.custo_total||0; if(v.valor_recebido_ml!=null) recMP+=+v.valor_recebido_ml; } });
+    return {preso,recMP,devCusto};
+  },
+  // ===== TERMÔMETRO · balancete do mês — renderiza o NÚCLEO (23-A) =====
   async termometro(){
     const box=this._g('fn-termometro'); if(!box) return;
-    const lbl=this._g('fn-termo-mes'); if(lbl) lbl.textContent=this.mesNome();
     try{
-      const r=await sb.from('ecom_vendas').select('id,status,data_solicitacao,data_entrega,data_liberacao_mp,quantidade,preco_venda,receita_bruta,comissao_valor,tarifa_fixa_valor,frete_valor,taxas_ml_total,valor_recebido_ml,custo_total,colchao_valor,imposto_valor,resultado_liquido,ocorrencia,prejuizo_valor');
-      if(r.error) throw r.error;
-      const all=(r.data||[]).filter(v=>!(v.status==='cancelado'&&!v.ocorrencia)); // BUILD 2026-08-21-I: cancelado SEM ocorrencia = fora; COM ocorrencia (apreensao que o ML cancelou/reembolsou) = SINISTRO, permanece nas perdas e no custo
-      const now=new Date(); const mkey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-      const mesAll=all.filter(v=>v.data_solicitacao && v.data_solicitacao.slice(0,7)===mkey);
-      // BUILD 2026-08-19-B: familia PERDA = apreendido + extraviado/roubado/avariado; devolvido* segue como devolucao
-      const PERDA=v=>v.ocorrencia==='apreendido'||v.ocorrencia==='extraviado'||v.ocorrencia==='roubado'||v.ocorrencia==='avariado';
-      const isOc=v=>PERDA(v)||v.ocorrencia==='devolvido'||v.ocorrencia==='devolvido_reintegrado';
-      const mesOc=mesAll.filter(isOc), mesV=mesAll.filter(v=>!isOc(v));
-      let perdas=0,perdasPend=0,ocDev=0,ocApr=0,ocOut=0;
-      mesOc.forEach(v=>{ if(v.ocorrencia==='apreendido'){ ocApr++;
-          perdas+=(v.prejuizo_valor!=null)?+v.prejuizo_valor:((+v.custo_total||0)+(+v.taxas_ml_total||0)); }
-        else if(PERDA(v)){ ocOut++; if(v.prejuizo_valor!=null) perdas+=+v.prejuizo_valor; else perdasPend++; }
-        else { ocDev++; if(v.prejuizo_valor!=null) perdas+=+v.prejuizo_valor; else perdasPend++; } });
-      let rec=0,recF=0,tax=0,cus=0,col=0,imp=0,luc=0,n=0,nF=0;
-      mesV.forEach(v=>{ n++; const rb=v.receita_bruta!=null?+v.receita_bruta:((+v.preco_venda||0)*(+v.quantidade||1)); rec+=rb;
-        if(v.resultado_liquido!=null){ nF++; recF+=rb;
-          tax+=(+v.comissao_valor||0)+(+v.tarifa_fixa_valor||0)+(+v.frete_valor||0);
-          cus+=+v.custo_total||0; col+=+v.colchao_valor||0;
-          imp+=(v.imposto_valor!=null?+v.imposto_valor:Math.round(rb*4)/100);
-          luc+=+v.resultado_liquido; } });
-      // BUILD 2026-08-20-G: compras do mes = TODAS as vendas (nao se move ao fechar margens)
-      let cusMes=0; mesAll.forEach(v=>{ cusMes+=(+v.custo_total||0); });
-      // BUILD 2026-08-19-B: retido_doc e 'outro' = venda viva para o capital; familia PERDA fora do preso; devolvido a custo
-      const hojeIso=new Date().toISOString(); let preso=0,recMP=0;
-      all.forEach(v=>{ if(v.ocorrencia && v.ocorrencia!=='retido_doc' && v.ocorrencia!=='outro'){
-          if(v.ocorrencia==='devolvido') preso+=+v.custo_total||0; return; }
-        const lib=v.data_liberacao_mp && v.data_liberacao_mp<=hojeIso;
-        if(!lib){ preso+=+v.custo_total||0; if(v.valor_recebido_ml!=null) recMP+=+v.valor_recebido_ml; } });
-      // mediana de dias entrega -> liberacao MP (so vendas ja liberadas com as duas datas; mediana nao deixa atipico distorcer)
+      const d=await this.fonte(true);              // pós-gravação sempre fresco (fura o cache)
+      const mkey=this.mesKey();
+      const lbl=this._g('fn-termo-mes'); if(lbl) lbl.textContent=this.mesNomeK(mkey);
+      const c=this.calcMes(d,mkey), cap=this.capitalBase(d);
+      const {n,nF,rec,recF,tax,cusMes,imp,col,perdas,perdasPend,ocDev,ocApr,ocOut,jurosMes,jurosAuto,despOpMes,despOpItens,lucOp,lucReal,margem,despTot,mesOc}=c;
+      const pend=c.nPend, despOp=(d.despesas===null)?null:despOpItens;
+      const {preso,recMP,devCusto}=cap;
+      const itensExt=d.recupItens||[], extSum=itensExt.reduce((s2,i)=>s2+(+i.valor||0),0);
+      const ledger=d.ledger, luc=c.luc;
+      const all=d.vendas, hojeIso=new Date().toISOString(), now=new Date();
+      const TAXA_CREDOR=this.FIXOS.TAXA_CREDOR, CUSTOS_FIXOS_MES=this.FIXOS.CUSTOS_FIXOS_MES;
+      // medianas informativas (base inteira, sem ocorrência, já liberadas)
       const dias=all.filter(v=>!v.ocorrencia&&v.data_entrega&&v.data_liberacao_mp&&v.data_liberacao_mp<=hojeIso)
-        .map(v=>(new Date(v.data_liberacao_mp)-new Date(v.data_entrega))/86400000).filter(d=>d>=0).sort((a,b)=>a-b);
+        .map(v=>(new Date(v.data_liberacao_mp)-new Date(v.data_entrega))/86400000).filter(x=>x>=0).sort((a,b)=>a-b);
       const medLib=dias.length?(dias.length%2?dias[(dias.length-1)/2]:(dias[dias.length/2-1]+dias[dias.length/2])/2):null;
-      // BUILD 2026-08-20-A: INVESTIDORES — ledger de credores + recuperavel + descoberto + custo de capital
-      const TAXA_CREDOR={credor_1:0.10,credor_2:0.05}; // taxas por credor
-      const CUSTOS_FIXOS_MES=3050; // fixos mensais (Igor 21/08): Aluguel Foz 2.500 + Claude 550; viagens virao por lancamento (ecom_despesa_op, SQL pendente)
-      let ledger=null; try{ const rl=await sb.from('ecom_vw_capital_saldo').select('*'); if(!rl.error) ledger=rl.data||[]; }catch(_e){}
-      // BUILD 2026-08-20-D: juros do mes (juro capitalizado + juro pago) viram despesa do balancete; amortizacao NAO
-      // BUILD 2026-08-21-C: juro INCORRIDO automatico (doutrina Igor 21/08 — "juro e base e real"):
-      // despesa = lancamentos do ledger (juro/juro_pago) do mes + para credor SEM lancamento no mes
-      // com dia-base ja vencido, saldo x taxa entra sozinho (so no mes corrente; nada e gravado no banco).
-      const DIA_BASE={credor_1:5,credor_2:20};
-      let jurosMes=0,jurosAuto=0; const lancCredorMes={};
-      try{ const rm=await sb.from('ecom_capital_mov').select('credor,tipo,valor,data_mov');
-        if(!rm.error) (rm.data||[]).forEach(m=>{ if((m.tipo==='juro'||m.tipo==='juro_pago')&&String(m.data_mov||'').slice(0,7)===mkey){ jurosMes+=(+m.valor||0); lancCredorMes[m.credor]=true; } }); }catch(_e){}
-      if(ledger&&mkey===new Date().toISOString().slice(0,7)){ const diaHoje=new Date().getDate();
-        ledger.forEach(c=>{ const s=+c.saldo_devedor||0; if(s<=0||lancCredorMes[c.credor]) return;
-          const db=(DIA_BASE[c.credor]!=null)?DIA_BASE[c.credor]:5;
-          if(diaHoje>=db){ const tx=(TAXA_CREDOR[c.credor]!=null)?TAXA_CREDOR[c.credor]:0.10; jurosMes+=s*tx; jurosAuto+=s*tx; } }); }
-      let devCusto=0; all.forEach(v=>{ if(v.ocorrencia==='devolvido') devCusto+=(+v.custo_total||0); }); // itens de devolucao retornando, a custo
-      // BUILD 2026-08-20-H: itens POR FORA que compoem o capital a recuperar (tabela ecom_recuperavel_item)
-      let itensExt=[]; try{ const ri=await sb.from('ecom_recuperavel_item').select('id,descricao,valor').is('baixado_em',null).order('id');
-        if(!ri.error) itensExt=ri.data||[]; }catch(_e){}
-      const extSum=itensExt.reduce((s2,i)=>s2+(+i.valor||0),0);
-      // BUILD 2026-08-21-E: despesas operacionais lançadas (ecom_despesa_op; anulado_em preserva histórico)
-      let despOp=null,despOpMes=0;
-      try{ const rd=await sb.from('ecom_despesa_op').select('id,data,descricao,valor').is('anulado_em',null).order('data');
-        if(!rd.error){ despOp=(rd.data||[]).filter(x=>String(x.data||'').slice(0,7)===mkey); despOpMes=despOp.reduce((s2,x)=>s2+(+x.valor||0),0); } }catch(_e){}
-      // mediana venda->liberacao (ciclo cheio de capital; so vendas sem ocorrencia ja liberadas)
-      const dCic=all.filter(v=>!v.ocorrencia&&v.data_solicitacao&&v.data_liberacao_mp&&v.data_liberacao_mp<=hojeIso)
-        .map(v=>(new Date(v.data_liberacao_mp)-new Date(v.data_solicitacao))/86400000).filter(d=>d>=0).sort((a,b)=>a-b);
-      const medCic=dCic.length?(dCic.length%2?dCic[(dCic.length-1)/2]:(dCic[dCic.length/2-1]+dCic[dCic.length/2])/2):null;
-      const mp=recF-tax, margem=recF>0?(luc/recF*100):null, F=this.fmt, F0=this.fmt0;
+      // degradação VISÍVEL (23-A): fonte parcial nunca cala — número subestimado se declara
+      const degr=[]; if(d.movs===null) degr.push('ledger de juros'); if(d.despesas===null) degr.push('despesas operacionais'); if(d.recupItens===null) degr.push('itens a recuperar');
+      const degrHtml=degr.length?'<div style="padding:7px 13px;background:#241c08;font-size:11px;color:var(--eamber)">\u26a0 Fonte parcial nesta leitura: '+degr.join(' \u00b7 ')+' indispon\u00edvel \u2014 valores podem estar subestimados. Recarregue.</div>':'';
+      const mp=recF-tax, F=this.fmt, F0=this.fmt0;
       const line=(k,v2,bg,kc)=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:'+(bg||'var(--epanel)')+'"><span style="font-size:12.5px'+(kc?';color:'+kc:'')+'">'+k+'</span><span style="font-family:var(--emono);font-size:12.5px;white-space:nowrap">'+v2+'</span></div>';
       // BUILD 2026-08-19-A: lucro real do mes = OPERACIONAL - PERDAS (item 3 do Painel)
       // BUILD 2026-08-20-D: juros dos credores debitam o lucro real (custo operacional por decisao Igor 20/08)
       // BUILD 2026-08-21-D (Igor 21/08): RESULTADO em 4 linhas — Lucro operacional (Receitas x Despesas,
       // colchao deduzido por venda) -> (+) Colchao -> LUCRO REAL DO MES = operacional + colchao -> Margem media
-      const lucOp=luc-perdas-jurosMes-despOpMes; // BUILD 2026-08-21-E: despesas operacionais debitam o resultado
-      const lucReal=lucOp+col;
       const tot='<div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:#1a2740"><span style="font-weight:700">LUCRO REAL DO MÊS</span><span style="font-family:var(--emono);font-size:19px;font-weight:700;color:'+(nF===0&&!mesOc.length?'var(--emuted2)':(lucReal>=0?'var(--eemerald)':'var(--ered)'))+'">'+(nF===0&&!mesOc.length?'—':'R$ '+F(lucReal))+'</span></div>'; // BUILD 2026-08-21-D: = operacional + colchao
       const pend=n-nF;
       const aviso=pend>0?'<div style="font-size:11px;color:var(--eamber);margin-top:8px">⚠ '+pend+' venda(s) do mês sem margem fechada — custos e lucro acumulados ainda parciais.</div>':'';
       // BUILD 2026-08-03-B: cálculo da projeção "próxima semana" removido junto com o bloco (morreu nos dois lugares)
       // BUILD 2026-08-20-B: Termometro v3 = mini balancete mensal (estrutura Igor 20/08; conteudo adicional a ditar)
-      const despTot=tax+cusMes+imp+perdas+jurosMes+despOpMes; // colchao FORA (21-B); despesas operacionais DENTRO (21-E)
       const sec=(t,bg,c)=>'<div style="padding:7px 13px;background:'+bg+';font-size:10.5px;letter-spacing:1px;color:'+c+';font-weight:600">'+t+'</div>';
       // BUILD 2026-08-20-C: invHtml montado APOS line/F/F0/margem (correcao TDZ)
       let invHtml='', descT=null;
@@ -5341,6 +5374,7 @@ const ecomFinanceiro={
         +line('MP libera após entrega',medLib==null?'— (sem venda liberada medida)':'~'+Math.round(medLib)+' dia(s) · mediana')
         +(descT!=null?(descT>0?line('Descoberto','<span style="color:var(--ered);font-weight:700">R$ '+F(descT)+'</span>','#2a0d0d','var(--ered)'):line('Coberto','<span style="color:var(--eteal);font-weight:700">R$ '+F(-descT)+'</span>','#08231f','var(--eteal)')):'')
         +invHtml
+        +degrHtml
         +'</div>'+aviso
         +(perdasPend>0?'<div style="font-size:11px;color:var(--ered);margin-top:6px">\u26d4 '+perdasPend+' ocorr\u00eancia(s) do m\u00eas sem preju\u00edzo apurado — abra o Editar do Hist\u00f3rico e feche o valor l\u00edquido.</div>':'');
       // BUILD 2026-08-03-B: projeção "Próxima semana" removida também daqui (decisão Igor 03/08 — morre nos dois lugares)
@@ -5439,68 +5473,20 @@ const ecomRelatorios={
   _g:id=>document.getElementById(id),
   fmt:v=>(v==null||isNaN(v))?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
   fmt0:v=>(v==null||isNaN(v))?'—':Math.round(v).toLocaleString('pt-BR'),
+  // BUILD 2026-08-23-A: Painel = ESPELHO do núcleo (ecomFinanceiro.calcMes/capitalBase).
+  // Zero conta própria — mata a linhagem de bugs 21-G/21-H/colchão-fora-do-SELECT por construção.
+  // agg() e capital() locais REMOVIDOS (a matemática vive só no Termômetro).
   async load(){
-    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,uf,quantidade,preco_venda,status,data_solicitacao,data_entrega,receita_bruta,valor_recebido_ml,custo_total,taxas_ml_total,resultado_liquido,margem_pct,ocorrencia,prejuizo_valor,data_liberacao_mp');
-      if(r.error) throw r.error; this.data=r.data||[]; this.loaded=true;
-      // BUILD 2026-08-03-B: projeção removida; Visão geral passa a ser SÓ o mês corrente
-      const mesCor=new Date().toISOString().slice(0,7);
-      const doMes=this.data.filter(v=>v.data_solicitacao&&v.data_solicitacao.slice(0,7)===mesCor);
-      const nm=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-      const tit=this._g('rl-kpis-titulo'); if(tit) tit.textContent='Visão geral · '+nm[new Date().getMonth()]+'/'+new Date().getFullYear();
-      // BUILD 2026-08-19-A: agregados sao do mes; CAPITAL (preso + a receber MP) e da base inteira — venda velha nao-liberada conta
-      // BUILD 2026-08-21-G: Lucro real do Painel = MESMA regua do Termometro (debita juros incorridos + despesas op)
-      const mkeyP=mesCor; const TX={credor_1:0.10,credor_2:0.05}, DB={credor_1:5,credor_2:20};
-      let jurosP=0; try{ const rl=await sb.from('ecom_vw_capital_saldo').select('*');
-        if(!rl.error){ const lanc={};
-          try{ const rm=await sb.from('ecom_capital_mov').select('credor,tipo,valor,data_mov');
-            if(!rm.error) (rm.data||[]).forEach(m=>{ if((m.tipo==='juro'||m.tipo==='juro_pago')&&String(m.data_mov||'').slice(0,7)===mkeyP){ jurosP+=(+m.valor||0); lanc[m.credor]=true; } }); }catch(_e){}
-          const diaH=new Date().getDate();
-          (rl.data||[]).forEach(c=>{ const s=+c.saldo_devedor||0; if(s<=0||lanc[c.credor]) return; if(diaH>=(DB[c.credor]||5)) jurosP+=s*(TX[c.credor]!=null?TX[c.credor]:0.10); }); } }catch(_e){}
-      let despP=0; try{ const rd=await sb.from('ecom_despesa_op').select('data,valor').is('anulado_em',null);
-        if(!rd.error) (rd.data||[]).forEach(x=>{ if(String(x.data||'').slice(0,7)===mkeyP) despP+=(+x.valor||0); }); }catch(_e){}
-      // BUILD 2026-08-21-H: colchao do mes (mesma regua do Termometro: vendas fechadas SEM ocorrencia) — faltava no Painel
-      let colP=0; doMes.forEach(v=>{ if(v.status==='cancelado'&&!v.ocorrencia) return; // 21-I
-        const oc=v.ocorrencia; if(oc&&oc!=='retido_doc'&&oc!=='outro') return;
-        if(v.resultado_liquido!=null) colP+=(+v.colchao_valor||0); });
-      // Termometro: lucReal = (luc - perdas - juros - despOp) + colchao. Painel espelha exatamente.
-      const aggMes=this.agg(doMes); aggMes.lucLiq=aggMes.lucLiq-jurosP-despP+colP;
-      this.renderKpis(Object.assign(aggMes,this.capital(this.data)),false); this.renderMensal(); this._g('rl-query-result').innerHTML='';
+    try{
+      const d=await ecomFinanceiro.fonte();
+      this.data=d.vendasAll; this.loaded=true;                       // consulta gerencial segue com a base crua
+      const mkey=ecomFinanceiro.mesKey();
+      const tit=this._g('rl-kpis-titulo'); if(tit) tit.textContent='Vis\u00e3o geral \u00b7 '+ecomFinanceiro.mesNomeK(mkey);
+      const c=ecomFinanceiro.calcMes(d,mkey), cap=ecomFinanceiro.capitalBase(d);
+      this.renderKpis({fat:c.rec,lucLiq:c.lucReal,margem:c.margem,devQ:c.devQ,devV:c.devV,custo:c.cusMes,
+        presoCG:cap.preso,recMP:cap.recMP,n:c.n,nPend:c.nPend,prejPend:c.perdasPend,aprQ:c.aprQ,aprV:c.aprV},false);
+      this.renderMensal(d); this._g('rl-query-result').innerHTML='';
     }catch(e){ this._g('rl-kpis').innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
-  },
-  // BUILD 2026-08-19-A: agg v2 — realidade do capital (itens 1-8 do Painel, decisao Igor 19/08).
-  // custo = TODAS as compras (ocorrencia nao debita) · lucLiq = lucro vivo - perdas · margem = OPERACIONAL (sem sinistro)
-  // devolvido a CUSTO preso · devolvido_reintegrado fora do preso · apreendido a PREJUIZO (fallback custo+taxas se nao apurado)
-  agg(vendas){ let fat=0,luc=0,perdas=0,prejPend=0,fatComp=0,custo=0,n=0,nComp=0,nPend=0,devQ=0,devV=0,aprQ=0,aprV=0;
-    vendas.forEach(v=>{ if(v.status==='cancelado'&&!v.ocorrencia) return; // BUILD 2026-08-21-I: sinistro cancelado pelo ML continua no circuito
-      custo+=+v.custo_total||0;
-      // BUILD 2026-08-19-B: familia PERDA = apreendido + extraviado/roubado/avariado (fora dos agregados, prejuizo debita)
-      const isPerda=v.ocorrencia==='apreendido'||v.ocorrencia==='extraviado'||v.ocorrencia==='roubado'||v.ocorrencia==='avariado';
-      if(isPerda||v.ocorrencia==='devolvido'||v.ocorrencia==='devolvido_reintegrado'){
-        if(v.ocorrencia==='apreendido'){
-          const pj=(v.prejuizo_valor!=null)?+v.prejuizo_valor:((+v.custo_total||0)+(+v.taxas_ml_total||0));
-          aprQ++; aprV+=pj; perdas+=pj;
-        } else if(isPerda){
-          if(v.prejuizo_valor!=null) perdas+=+v.prejuizo_valor; else prejPend++;
-        } else {
-          devQ++; if(v.ocorrencia==='devolvido') devV+=+v.custo_total||0;
-          if(v.prejuizo_valor!=null) perdas+=+v.prejuizo_valor; else prejPend++;
-        }
-        return; }
-      n++; fat+=+v.receita_bruta||0;
-      if(v.resultado_liquido!=null){ luc+=+v.resultado_liquido; fatComp+=+v.receita_bruta||0; nComp++; } else nPend++;
-    });
-    return {fat,luc,lucLiq:luc-perdas,perdas,prejPend,custo,n,nComp,nPend,devQ,devV,aprQ,aprV,margem:fatComp?luc/fatComp*100:null};
-  },
-  // BUILD 2026-08-19-B: retido_doc e 'outro' = venda viva para fins de capital (custo preso + recMP ate liberar).
-  // Familia PERDA (apreendido/extraviado/roubado/avariado) FORA do preso — migrou para prejuizo. Devolvido a custo ate reintegrar.
-  capital(vendas){ const hoje=new Date().toISOString(); let presoCG=0,recMP=0;
-    vendas.forEach(v=>{ if(v.status==='cancelado'&&!v.ocorrencia) return; // 21-I
-      if(v.ocorrencia && v.ocorrencia!=='retido_doc' && v.ocorrencia!=='outro'){
-        if(v.ocorrencia==='devolvido') presoCG+=+v.custo_total||0; return; }
-      const liberado=v.data_liberacao_mp && v.data_liberacao_mp<=hoje;
-      if(!liberado){ presoCG+=+v.custo_total||0; if(v.valor_recebido_ml!=null) recMP+=+v.valor_recebido_ml; }
-    });
-    return {presoCG,recMP};
   },
   filtered(){ const de=this._g('rl-de').value, ate=this._g('rl-ate').value, prod=(this._g('rl-prod').value||'').toLowerCase(), uf=(this._g('rl-uf').value||'').toUpperCase(), st=this._g('rl-status').value;
     return this.data.filter(v=>{ const d=v.data_solicitacao?v.data_solicitacao.slice(0,10):'';
@@ -5535,7 +5521,7 @@ const ecomRelatorios={
     const prejP=a.prejPend>0?'<div style="font-size:11px;color:var(--ered);margin-top:6px">\u26d4 '+a.prejPend+' ocorr\u00eancia(s) sem preju\u00edzo apurado — feche o valor no Editar do Hist\u00f3rico (zero tamb\u00e9m \u00e9 valor).</div>':'';
     return '<div class="rp-idxrow">'
       +'<div class="rp-idx"><div class="l">Faturamento</div><div class="v">R$ '+F(a.fat)+'</div></div>'
-      +'<div class="rp-idx'+(a.lucLiq>=0?' good':' bad')+'"><div class="l">Lucro real (líquido)</div><div class="v">R$ '+F(a.lucLiq)+'</div></div>'
+      +'<div class="rp-idx'+(a.lucLiq>=0?' good':' bad')+'"><div class="l">Lucro real do mês</div><div class="v">R$ '+F(a.lucLiq)+'</div></div>'
       +'<div class="rp-idx"><div class="l">Margem ponderada (operacional)</div><div class="v">'+(a.margem==null?'—':F(a.margem)+'%')+'</div></div>'
       +'<div class="rp-idx'+(a.devQ?' bad':'')+'"><div class="l">Devoluções (custo preso)</div><div class="v">'+a.devQ+' · R$ '+F(a.devV)+'</div></div>'
       +'<div class="rp-idx"><div class="l">Compras do mês (fornecedores)</div><div class="v">R$ '+F(a.custo)+'</div></div>'
@@ -5546,27 +5532,26 @@ const ecomRelatorios={
       +'</div>'+pend+prejP;
   },
   renderKpis(a,isQuery){ (isQuery?this._g('rl-query-result'):this._g('rl-kpis')).innerHTML=this.kpiHtml(a); },
-  renderMensal(){ const box=this._g('rl-mensal'); const meses={};
-    // BUILD 2026-08-21-F: SUPERA a doutrina 18-B — vendas com ocorrencia VOLTAM ao Por mes.
-    // Faturado = o que realmente faturou (fato historico, bate com o painel ML); a ocorrencia
-    // aparece na coluna PERDAS do proprio mes, e o Lucro ja e liquido delas. Antes, cada
-    // apreensao marcada ENCOLHIA o mes retroativamente — era isso que parecia "desatualizado".
-    this.data.forEach(v=>{ if((v.status==='cancelado'&&!v.ocorrencia)||!v.data_solicitacao) return; const m=v.data_solicitacao.slice(0,7); (meses[m]=meses[m]||[]).push(v); }); // 21-I
+  renderMensal(d){ const box=this._g('rl-mensal'); if(!box) return;
+    // BUILD 2026-08-23-A: Por m\u00eas = ESPELHO do n\u00facleo, m\u00eas a m\u00eas (calcMes por compet\u00eancia da venda).
+    // 21-F preservado: Faturado INTEGRAL (n\u00e3o se move ao marcar ocorr\u00eancia); Lucro = LUCRO REAL do m\u00eas
+    // (mesma linha grande do Term\u00f4metro: liquido de perdas, juros e despesas op, + colch\u00e3o).
+    const meses={}; d.vendas.forEach(v=>{ if(!v.data_solicitacao) return; const m=v.data_solicitacao.slice(0,7); (meses[m]=meses[m]||[]).push(v); });
     const keys=Object.keys(meses).sort().reverse();
     if(!keys.length){ box.innerHTML='<div class="ph">sem vendas ainda</div>'; return; }
-    const ord=keys.slice().reverse(), aggMap={}; ord.forEach(m=>aggMap[m]=this.agg(meses[m]));
+    const ord=keys.slice().reverse(); const cMap={}; ord.forEach(m=>cMap[m]=ecomFinanceiro.calcMes(d,m));
     const nm=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-    const fatInt={}; ord.forEach(m=>{ fatInt[m]=meses[m].reduce((s,v)=>s+(+v.receita_bruta||0),0); }); // faturado INTEGRAL (todas as vendas do mes)
-    const rows=keys.map(m=>{ const a=aggMap[m]; const idx=ord.indexOf(m); const ant=idx>0?aggMap[ord[idx-1]]:null;
-      let vt='—'; if(ant&&fatInt[ord[idx-1]]>0){ const d=(fatInt[m]-fatInt[ord[idx-1]])/fatInt[ord[idx-1]]*100; vt='<span style="color:'+(d>=0?'var(--eemerald)':'var(--ered)')+'">'+(d>=0?'+':'')+d.toFixed(1)+'%</span>'; }
+    const rows=keys.map(m=>{ const c=cMap[m]; const idx=ord.indexOf(m); const ant=idx>0?cMap[ord[idx-1]]:null;
+      let vt='\u2014'; if(ant&&ant.recInt>0){ const dd=(c.recInt-ant.recInt)/ant.recInt*100; vt='<span style="color:'+(dd>=0?'var(--eemerald)':'var(--ered)')+'">'+(dd>=0?'+':'')+dd.toFixed(1)+'%</span>'; }
       const p=m.split('-'); const nome=nm[(+p[1])-1]+'/'+p[0];
-      return '<tr><td style="font-weight:500">'+nome+'</td><td class="mono">R$ '+this.fmt(fatInt[m])+'</td><td class="mono" style="color:'+(a.perdas>0?'var(--ered)':'var(--emuted)')+'">'+(a.perdas>0?('– R$ '+this.fmt(a.perdas)):'—')+'</td><td class="mono" style="color:'+(a.lucLiq>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(a.lucLiq)+'</td><td class="mono">'+(a.margem==null?'—':this.fmt(a.margem)+'%')+'</td><td class="mono">'+meses[m].length+'</td><td class="mono">'+vt+'</td></tr>';
+      return '<tr><td style="font-weight:500">'+nome+'</td><td class="mono">R$ '+this.fmt(c.recInt)+'</td><td class="mono" style="color:'+(c.perdas>0?'var(--ered)':'var(--emuted)')+'">'+(c.perdas>0?('\u2013 R$ '+this.fmt(c.perdas)):'\u2014')+'</td><td class="mono" style="color:'+(c.lucReal>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(c.lucReal)+'</td><td class="mono">'+(c.margem==null?'\u2014':this.fmt(c.margem)+'%')+'</td><td class="mono">'+c.nInt+'</td><td class="mono">'+vt+'</td></tr>';
     }).join('');
-    // BUILD 2026-08-03-B: linha TOTAL — soma real da operação; margem RECALCULADA sobre o total (média de % mente)
-    const tot=this.agg(this.data.filter(v=>!(v.status==='cancelado'&&!v.ocorrencia))); // 21-I
-    const fatTot=ord.reduce((s,m)=>s+fatInt[m],0), nTot=ord.reduce((s,m)=>s+meses[m].length,0);
-    const totRow='<tr style="border-top:2px solid var(--eborder);background:var(--epanel2)"><td style="font-weight:700">TOTAL</td><td class="mono" style="font-weight:700">R$ '+this.fmt(fatTot)+'</td><td class="mono" style="font-weight:700;color:'+(tot.perdas>0?'var(--ered)':'var(--emuted)')+'">'+(tot.perdas>0?('– R$ '+this.fmt(tot.perdas)):'—')+'</td><td class="mono" style="font-weight:700;color:'+(tot.lucLiq>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(tot.lucLiq)+'</td><td class="mono" style="font-weight:700">'+(tot.margem==null?'—':this.fmt(tot.margem)+'%')+'</td><td class="mono" style="font-weight:700">'+nTot+'</td><td class="mono">—</td></tr>';
-    box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab"><thead><tr><th>Mês</th><th>Faturado</th><th>Perdas</th><th>Lucro</th><th>Margem</th><th>Vendas</th><th>vs mês ant.</th></tr></thead><tbody>'+rows+totRow+'</tbody></table></div>';
+    // TOTAL: somas reais; margem RECALCULADA (lucro vivo total / receita fechada total \u2014 m\u00e9dia de % mente)
+    let fatTot=0,perdasTot=0,lucRealTot=0,nTot=0,lucT=0,recFT=0;
+    ord.forEach(m=>{ const c=cMap[m]; fatTot+=c.recInt; perdasTot+=c.perdas; lucRealTot+=c.lucReal; nTot+=c.nInt; lucT+=c.luc; recFT+=c.recF; });
+    const margTot=recFT>0?(lucT/recFT*100):null;
+    const totRow='<tr style="border-top:2px solid var(--eborder);background:var(--epanel2)"><td style="font-weight:700">TOTAL</td><td class="mono" style="font-weight:700">R$ '+this.fmt(fatTot)+'</td><td class="mono" style="font-weight:700;color:'+(perdasTot>0?'var(--ered)':'var(--emuted)')+'">'+(perdasTot>0?('\u2013 R$ '+this.fmt(perdasTot)):'\u2014')+'</td><td class="mono" style="font-weight:700;color:'+(lucRealTot>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(lucRealTot)+'</td><td class="mono" style="font-weight:700">'+(margTot==null?'\u2014':this.fmt(margTot)+'%')+'</td><td class="mono" style="font-weight:700">'+nTot+'</td><td class="mono">\u2014</td></tr>';
+    box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab"><thead><tr><th>M\u00eas</th><th>Faturado</th><th>Perdas</th><th>Lucro real</th><th>Margem</th><th>Vendas</th><th>vs m\u00eas ant.</th></tr></thead><tbody>'+rows+totRow+'</tbody></table></div>';
   }
 };
 // ===== E-COMMERCE · Alvo (sortimento + ponte importação + anúncios) =====
