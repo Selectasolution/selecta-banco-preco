@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <!-- ============================================================================
-PORTAL DO INVESTIDOR · v2.4 · 2026-08-24 (v2.3 + ordens Igor):
+PORTAL DO INVESTIDOR · v2.5 · 2026-08-24 (v2.4 + EXCLUIR):
+Excluir ao lado do Editar em cada lancamento "em validacao" — confirmacao em
+2 cliques; registro vira 'rejeitado' (trilha em obs, nunca DELETE); o dia
+reabre e os pedidos VOLTAM ao quadro imediatamente. Validado = imutavel.
 (1) EDITAR ao lado de cada transferencia "em validacao" — input inline, salva
 via Edge v1.4; valor anterior preservado em obs; VALIDADA = IMUTAVEL (Edge
 recusa). (2) Ao gravar, apaga so os pedidos: quadrante permanece com "Sem
@@ -125,6 +128,8 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
   .edt{background:none;border:1px solid var(--linha);color:var(--cinza);font:500 10.5px var(--corpo);
        border-radius:6px;padding:1px 9px;cursor:pointer}
   .edt:hover{color:var(--verde);border-color:var(--verde)}
+  .edt.exc:hover{color:var(--alerta);border-color:var(--alerta)}
+  .edt.arm{color:#fff;background:var(--alerta);border-color:var(--alerta)}
   .edt-in{width:96px;padding:4px 7px;font:500 13px var(--mono);background:var(--painel2);
        border:1px solid var(--linha);border-radius:6px;color:var(--tinta);text-align:right}
   .simrow{display:flex;gap:8px;margin-top:7px}
@@ -266,7 +271,7 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
     // extrato
     const decl = (dados.transferencias||[]).filter(t=>t.status==='declarado').map(t =>
       '<div class="mov"><div><div class="t">Transferência registrada<span class="pill">em validação</span></div>' +
-      '<div class="d">'+DATA(t.data)+' · <button class="edt" data-edit="'+t.id+'" data-valor="'+t.valor+'">editar</button></div></div>' +
+      '<div class="d">'+DATA(t.data)+' · <button class="edt" data-edit="'+t.id+'" data-valor="'+t.valor+'">editar</button> <button class="edt exc" data-del="'+t.id+'">excluir</button></div></div>' +
       '<div class="v mais" id="fv-'+t.id+'">+ R$ '+BRL(t.valor)+'</div></div>').join('');
     $('extrato').innerHTML = decl + dados.extrato.map(m => {
       const cls = (m.tipo==='juro_pago') ? 'rec' : (m.tipo==='amortizacao') ? 'menos' : 'mais';
@@ -337,6 +342,25 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
       cel.innerHTML = '<input class="edt-in" id="ei-'+id+'" value="'+BRL(atual)+'" inputmode="decimal"> ' +
                       '<button class="edt" data-save="'+id+'">ok</button>';
       $('ei-'+id).focus(); $('ei-'+id).select();
+      return;
+    }
+    const bd = e.target.closest('[data-del]');
+    if(bd){
+      // confirmacao em 2 cliques: 1º arma (vira "confirmar?"), 2º executa
+      if(!bd.classList.contains('arm')){
+        bd.classList.add('arm'); bd.textContent = 'confirmar?';
+        setTimeout(()=>{ bd.classList.remove('arm'); bd.textContent='excluir'; }, 4000);
+        return;
+      }
+      bd.disabled = true;
+      try{
+        const r = await fetch(ENDPOINT, { method:'POST',
+          headers:{ 'x-access-code': CODE, 'content-type':'application/json' },
+          body: JSON.stringify({ acao:'excluir', id: bd.dataset.del }) });
+        const j = await r.json();
+        if(!r.ok) throw new Error(j.erro || ('Falha ('+r.status+')'));
+        await entrar(CODE, true);   // dia reabre: pedidos voltam ao quadro
+      }catch(err){ alert(err.message); await entrar(CODE, true); }
       return;
     }
     const bs = e.target.closest('[data-save]');
