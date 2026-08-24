@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- ============================================================================
-PORTAL DO INVESTIDOR · v2.2 · 2026-08-24 (doutrina do valor-por-dia):
+PORTAL DO INVESTIDOR · v2.2.1 · 2026-08-24 (marca de volta ao header do painel, 58px — veto Igor a v2.1; doutrina do valor-por-dia):
 Pendencias FIFO: cada dia com compras (ecom_vendas, canceladas fora) fica
 VISIVEL ate o GRAVA do investidor; o quadro ativo e sempre o dia mais antigo
 (rotulo estampa a data); os demais listados como "aguardando". Fonte UNICA:
@@ -64,6 +64,7 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
 
   /* ---------- acesso ---------- */
   #acesso{margin-top:12vh;text-align:center}
+  .selo-h img{width:auto;height:58px}
   #acesso .selo{margin:0 auto 22px}
   #acesso h1{font:650 24px var(--disp);margin-bottom:6px}
   #acesso p{color:var(--cinza);margin-bottom:22px}
@@ -162,6 +163,7 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
   <!-- ============ PAINEL ============ -->
   <section id="painel">
     <header>
+      <div class="selo selo-h"><img src="selecta-solution-logo.png" alt="Selecta Solution"></div>
       <div class="hgrp">
         <small>Selecta Solution</small>
         <h1>Conta do Investidor</h1>
