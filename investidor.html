@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <!-- ============================================================================
-PORTAL DO INVESTIDOR · v2.5 · 2026-08-24 (v2.4 + EXCLUIR):
+PORTAL DO INVESTIDOR · v2.6 · 2026-08-24 (v2.5 + destaque):
+Total da reposicao pendente em CAIXA de destaque no padrao do app (#08231f,
+teal 24px mono negritado, borda teal suave — mesmo padrao dos totalizadores
+do Termometro). Base v2.5:
 Excluir ao lado do Editar em cada lancamento "em validacao" — confirmacao em
 2 cliques; registro vira 'rejeitado' (trilha em obs, nunca DELETE); o dia
 reabre e os pedidos VOLTAM ao quadro imediatamente. Validado = imutavel.
@@ -95,9 +98,11 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
         padding:15px 16px 13px;text-align:left}
   .hero .rot{font:600 10.5px var(--corpo);letter-spacing:.14em;text-transform:uppercase;
         color:var(--cinza)}
-  .dtot{margin-top:6px;font:600 19px var(--mono);color:var(--verde);
+  .dtot{margin-top:10px;padding:12px 15px;border-radius:9px;background:#08231f;
+        border:1px solid rgba(45,212,191,.28)}
+  #d-total{display:block;font:700 24px/1.15 var(--mono);color:var(--verde);
         font-variant-numeric:tabular-nums}
-  .dtot span{font:400 12px var(--mono);color:var(--cinza);margin-left:8px;font-weight:400}
+  #d-sub{display:block;margin-top:3px;font:600 12px var(--mono);color:var(--tinta)}
 
   .grade{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
   .card{border:1px solid var(--linha);border-radius:11px;background:var(--painel);padding:14px 15px}
