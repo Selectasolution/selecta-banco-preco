@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+PORTAL DO INVESTIDOR · v1.0 · 2026-08-23 · Selecta Solution
+Página pública SEM dados embutidos: tudo vem da Edge Function investidor-portal,
+protegida por código de acesso. O investidor NUNCA toca o banco nem o app interno.
+Doutrina: pro-rata diário base 30 · dia-base 20 · taxa 5% a.m. · aporte rende do
+dia seguinte. O contador vivo anima a fração do dia corrente sobre o rendimento
+do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
+============================================================================ -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Selecta · Conta do Investidor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --papel:#F5F3EC; --tinta:#16241D; --verde:#1D6A4C; --verde-suave:#E7F0E9;
+    --ouro:#A8873D; --cinza:#66716B; --alerta:#A6432E; --linha:rgba(22,36,29,.14);
+    --disp:'Fraunces',serif; --corpo:'Archivo',sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--papel);color:var(--tinta);font:15px/1.55 var(--corpo);
+       -webkit-font-smoothing:antialiased;min-height:100vh}
+  .wrap{max-width:560px;margin:0 auto;padding:26px 18px 70px}
+  a{color:var(--verde)}
+
+  /* ---------- cabeçalho / selo ---------- */
+  header{display:flex;align-items:center;gap:14px;padding-bottom:18px;
+         border-bottom:2px solid var(--tinta);margin-bottom:22px}
+  .selo{width:46px;height:46px;border:2px solid var(--tinta);border-radius:50%;
+        display:flex;align-items:center;justify-content:center;flex:none;
+        font:650 15px var(--disp);letter-spacing:.5px}
+  .hgrp small{display:block;font:600 10.5px var(--corpo);letter-spacing:.18em;
+              text-transform:uppercase;color:var(--verde)}
+  .hgrp h1{font:650 21px/1.15 var(--disp)}
+
+  /* ---------- acesso ---------- */
+  #acesso{margin-top:12vh;text-align:center}
+  #acesso .selo{margin:0 auto 18px;width:58px;height:58px;font-size:19px}
+  #acesso h1{font:650 24px var(--disp);margin-bottom:6px}
+  #acesso p{color:var(--cinza);margin-bottom:22px}
+  #acesso input{width:100%;max-width:300px;padding:13px 16px;font:500 17px var(--mono);
+        text-align:center;letter-spacing:.15em;border:1.5px solid var(--tinta);
+        border-radius:8px;background:#fff;color:var(--tinta)}
+  #acesso input:focus{outline:3px solid var(--verde-suave);border-color:var(--verde)}
+  .btn{display:inline-block;margin-top:14px;padding:12px 34px;font:600 15px var(--corpo);
+       color:#fff;background:var(--verde);border:none;border-radius:8px;cursor:pointer}
+  .btn:hover{background:#15563C}
+  .btn[disabled]{opacity:.55;cursor:wait}
+  .lembrar{display:flex;gap:8px;justify-content:center;align-items:center;
+           margin-top:14px;font-size:13px;color:var(--cinza)}
+  .erro{margin-top:14px;color:var(--alerta);font-weight:500;min-height:20px}
+
+  /* ---------- painel ---------- */
+  #painel{display:none;animation:surge .5s ease}
+  @keyframes surge{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+
+  .hero{border:1.5px solid var(--tinta);border-radius:14px;background:#FDFCF8;
+        padding:22px 20px 18px;text-align:center;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:6px;border:1px solid var(--linha);
+        border-radius:9px;pointer-events:none}
+  .hero .rot{font:600 11px var(--corpo);letter-spacing:.16em;text-transform:uppercase;
+        color:var(--verde)}
+  .contador{font:650 44px/1.05 var(--disp);font-variant-numeric:tabular-nums;
+        margin:10px 0 2px;color:var(--tinta)}
+  .contador .sub{font:500 20px var(--mono);color:var(--ouro);vertical-align:14px;margin-left:2px}
+  .hero .dia{font:500 14px var(--mono);color:var(--verde)}
+  .hero .nota{font-size:11.5px;color:var(--cinza);margin-top:10px}
+  .atraso{color:var(--alerta);font-weight:600}
+
+  .grade{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  .card{border:1px solid var(--linha);border-radius:11px;background:#FDFCF8;padding:14px 15px}
+  .card small{display:block;font:600 10.5px var(--corpo);letter-spacing:.14em;
+        text-transform:uppercase;color:var(--cinza);margin-bottom:5px}
+  .card b{font:600 17.5px var(--mono);font-variant-numeric:tabular-nums}
+  .card .vd{color:var(--verde)}
+
+  h2{font:650 17px var(--disp);margin:30px 0 12px;padding-bottom:8px;
+     border-bottom:1px solid var(--linha)}
+
+  /* ---------- simulador ---------- */
+  .sim{border:1px solid var(--linha);border-radius:11px;background:var(--verde-suave);padding:16px}
+  .sim label{font:600 12px var(--corpo);letter-spacing:.05em;color:var(--tinta)}
+  .simrow{display:flex;gap:10px;margin-top:8px}
+  .sim input{flex:1;min-width:0;padding:11px 13px;font:500 16px var(--mono);
+        border:1.5px solid var(--tinta);border-radius:8px;background:#fff}
+  .sim .btn{margin-top:0;padding:11px 20px}
+  .simres{margin-top:14px;display:none}
+  .simres table{width:100%;border-collapse:collapse}
+  .simres td{padding:7px 2px;border-top:1px dashed rgba(22,36,29,.25);font-size:14px}
+  .simres td:last-child{text-align:right;font:600 15px var(--mono);
+        font-variant-numeric:tabular-nums;color:var(--verde)}
+
+  /* ---------- extrato ---------- */
+  .ext{border:1px solid var(--linha);border-radius:11px;background:#FDFCF8;overflow:hidden}
+  .mov{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+       padding:12px 15px;border-top:1px solid var(--linha)}
+  .mov:first-child{border-top:none}
+  .mov .t{font-weight:500}
+  .mov .d{font:400 12px var(--mono);color:var(--cinza)}
+  .mov .v{font:600 15px var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .v.mais{color:var(--verde)} .v.rec{color:var(--ouro)} .v.menos{color:var(--cinza)}
+
+  footer{margin-top:34px;padding-top:14px;border-top:2px solid var(--tinta);
+         font-size:12px;color:var(--cinza)}
+  footer b{color:var(--tinta)}
+  .sair{background:none;border:none;color:var(--cinza);font:500 12px var(--corpo);
+        text-decoration:underline;cursor:pointer;margin-top:12px}
+
+  @media (prefers-reduced-motion: reduce){ #painel{animation:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ TELA DE ACESSO ============ -->
+  <section id="acesso">
+    <div class="selo">SS</div>
+    <h1>Conta do Investidor</h1>
+    <p>Selecta Solution · acesso restrito</p>
+    <input id="codigo" type="password" inputmode="numeric" autocomplete="off"
+           placeholder="código de acesso" aria-label="Código de acesso">
+    <div class="lembrar">
+      <input type="checkbox" id="lembrar"><label for="lembrar">manter conectado neste aparelho</label>
+    </div>
+    <div><button class="btn" id="entrar">Entrar</button></div>
+    <div class="erro" id="msg-erro" role="alert"></div>
+  </section>
+
+  <!-- ============ PAINEL ============ -->
+  <section id="painel">
+    <header>
+      <div class="selo">SS</div>
+      <div class="hgrp">
+        <small>Selecta Solution</small>
+        <h1>Conta do Investidor</h1>
+      </div>
+    </header>
+
+    <div class="hero">
+      <div class="rot">Juros acumulados neste ciclo</div>
+      <div class="contador">R$ <span id="c-int">0,00</span><span class="sub" id="c-frac"></span></div>
+      <div class="dia">+ R$ <span id="c-dia">0,00</span> por dia</div>
+      <div class="nota" id="c-nota"></div>
+    </div>
+
+    <div class="grade">
+      <div class="card"><small>Capital investido</small><b id="k-cap">—</b></div>
+      <div class="card"><small>Próximo pagamento</small><b id="k-venc">—</b></div>
+      <div class="card"><small>Previsto no pagamento</small><b class="vd" id="k-proj">—</b></div>
+      <div class="card"><small>Juros já recebidos</small><b class="vd" id="k-rec">—</b></div>
+    </div>
+
+    <h2>Simular novo aporte</h2>
+    <div class="sim">
+      <label for="sim-v">Quanto você quer aportar?</label>
+      <div class="simrow">
+        <input id="sim-v" type="text" inputmode="decimal" placeholder="ex.: 99.000,00">
+        <button class="btn" id="sim-go">Calcular</button>
+      </div>
+      <div class="simres" id="sim-res">
+        <table>
+          <tr><td>Rende por dia</td><td id="s-dia">—</td></tr>
+          <tr><td id="s-venc-rot">Até o próximo pagamento</td><td id="s-venc">—</td></tr>
+          <tr><td>Por mês completo</td><td id="s-mes">—</td></tr>
+          <tr><td>Em 12 meses</td><td id="s-ano">—</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <h2>Extrato da conta</h2>
+    <div class="ext" id="extrato"></div>
+
+    <footer>
+      <b>Regras da conta:</b> juros de <b id="f-taxa">5%</b> ao mês, calculados por dia
+      (base 30), sobre o capital do dia anterior. Aportes começam a render no dia seguinte
+      à entrada. Pagamento todo dia <b id="f-dia">20</b>. Valores calculados automaticamente
+      a partir do registro de movimentos — nada é lançado à mão.
+      <div id="f-gerado" style="margin-top:6px"></div>
+      <button class="sair" id="sair">Sair desta conta</button>
+    </footer>
+  </section>
+</div>
+
+<script>
+(() => {
+  const ENDPOINT = 'https://odamfhflldygdfrnnjzu.supabase.co/functions/v1/investidor-portal';
+  const LS_KEY = 'selecta_inv_code';
+  const $ = id => document.getElementById(id);
+  const BRL = v => (+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const DATA = s => { const [y,m,d]=s.split('-'); return d+'/'+m+'/'+y; };
+  const ROT = {saldo_inicial:'Aporte inicial', aporte:'Aporte', juro_pago:'Juros recebidos',
+               juro:'Juros capitalizados', amortizacao:'Devolução de capital', ajuste:'Ajuste'};
+
+  let dados = null, timer = null;
+
+  // ---------- acesso ----------
+  async function entrar(codigo, silencioso){
+    const btn = $('entrar'); btn.disabled = true; $('msg-erro').textContent = '';
+    try{
+      const r = await fetch(ENDPOINT, { headers: { 'x-access-code': codigo } });
+      const j = await r.json();
+      if(!r.ok){ throw new Error(j.erro || ('Falha ('+r.status+')')); }
+      dados = j;
+      if($('lembrar').checked) localStorage.setItem(LS_KEY, codigo);
+      render();
+    }catch(e){
+      localStorage.removeItem(LS_KEY);
+      if(!silencioso) $('msg-erro').textContent = e.message === 'Failed to fetch'
+        ? 'Sem conexão com o servidor. Tente novamente.' : e.message;
+    }finally{ btn.disabled = false; }
+  }
+  $('entrar').addEventListener('click', () => entrar($('codigo').value.trim(), false));
+  $('codigo').addEventListener('keydown', e => { if(e.key==='Enter') entrar($('codigo').value.trim(), false); });
+  $('sair').addEventListener('click', () => { localStorage.removeItem(LS_KEY); location.reload(); });
+  const salvo = localStorage.getItem(LS_KEY);
+  if(salvo){ $('lembrar').checked = true; $('codigo').value = salvo; entrar(salvo, true); }
+
+  // ---------- painel ----------
+  function render(){
+    const c = dados.conta, ci = dados.ciclo;
+    $('acesso').style.display = 'none'; $('painel').style.display = 'block';
+
+    $('k-cap').textContent  = 'R$ ' + BRL(c.capital_atual);
+    $('k-venc').textContent = DATA(ci.proximo_pagamento);
+    $('k-proj').textContent = 'R$ ' + BRL(ci.projecao_no_vencimento);
+    $('k-rec').textContent  = 'R$ ' + BRL(c.juros_ja_recebidos);
+    $('c-dia').textContent  = BRL(ci.rendimento_por_dia_hoje);
+    $('f-taxa').textContent = (c.taxa_mes*100).toLocaleString('pt-BR') + '%';
+    $('f-dia').textContent  = c.dia_base;
+    $('f-gerado').textContent = 'Posição gerada em ' +
+      new Date(dados.gerado_em).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}) + ' (horário de Brasília).';
+    $('c-nota').innerHTML = ci.atrasado
+      ? '<span class="atraso">Pagamento do ciclo em aberto desde ' + DATA(ci.proximo_pagamento) + '.</span>'
+      : ci.dias_fechados + ' dia(s) fechado(s) desde ' + DATA(ci.ancora) +
+        ' · o dia de hoje fecha à meia-noite';
+
+    // contador vivo: fechado + fração do dia corrente sobre rendimento_hoje
+    const reduz = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const tick = () => {
+      const agora = new Date();
+      const sp = new Date(agora.toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}));
+      const frac = (sp.getHours()*3600 + sp.getMinutes()*60 + sp.getSeconds() + sp.getMilliseconds()/1000)/86400;
+      const vivo = ci.acumulado_fechado + ci.rendimento_hoje * frac;
+      const int2 = Math.floor(vivo*100)/100;
+      $('c-int').textContent  = BRL(int2);
+      $('c-frac').textContent = String(Math.floor(vivo*10000)%100).padStart(2,'0');
+    };
+    tick();
+    if(timer) clearInterval(timer);
+    if(!reduz) timer = setInterval(tick, 120);
+
+    // extrato
+    $('extrato').innerHTML = dados.extrato.map(m => {
+      const cls = (m.tipo==='juro_pago') ? 'rec' : (m.tipo==='amortizacao') ? 'menos' : 'mais';
+      const sin = (m.tipo==='amortizacao') ? '−' : (m.tipo==='juro_pago') ? '' : '+';
+      return '<div class="mov"><div><div class="t">'+(ROT[m.tipo]||m.tipo)+'</div>' +
+             '<div class="d">'+DATA(m.data)+(m.descricao?' · '+m.descricao:'')+'</div></div>' +
+             '<div class="v '+cls+'">'+sin+' R$ '+BRL(m.valor)+'</div></div>';
+    }).join('') || '<div class="mov">Nenhum movimento ainda.</div>';
+  }
+
+  // ---------- simulador ----------
+  function parseBR(s){
+    s = String(s||'').replace(/\s|R\$/g,'');
+    if(s.includes(',')) s = s.replace(/\./g,'').replace(',','.');
+    const v = parseFloat(s); return isFinite(v) && v>0 ? v : null;
+  }
+  $('sim-go').addEventListener('click', () => {
+    const v = parseBR($('sim-v').value);
+    if(!v || !dados){ $('sim-res').style.display='none'; return; }
+    const c = dados.conta, ci = dados.ciclo;
+    const dia = v * c.taxa_mes / c.base_dias;
+    // aporte HOJE rende do dia seguinte até o vencimento (inclusive)
+    const hoje = new Date(dados.gerado_em.slice(0,10)+'T00:00:00Z');
+    const venc = new Date(ci.proximo_pagamento+'T00:00:00Z');
+    const dias = Math.max(0, Math.round((venc - hoje)/86400000));
+    $('s-dia').textContent  = 'R$ ' + BRL(dia);
+    $('s-venc-rot').textContent = 'Até o pagamento de ' + DATA(ci.proximo_pagamento) + ' ('+dias+' dias)';
+    $('s-venc').textContent = 'R$ ' + BRL(dia*dias);
+    $('s-mes').textContent  = 'R$ ' + BRL(v*c.taxa_mes);
+    $('s-ano').textContent  = 'R$ ' + BRL(v*c.taxa_mes*12);
+    $('sim-res').style.display = 'block';
+  });
+  $('sim-v').addEventListener('keydown', e => { if(e.key==='Enter') $('sim-go').click(); });
+})();
+</script>
+</body>
+</html>
