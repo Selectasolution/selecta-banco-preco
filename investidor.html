@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <!-- ============================================================================
-PORTAL DO INVESTIDOR · v2.6 · 2026-08-24 (v2.5 + destaque):
+PORTAL DO INVESTIDOR · v2.7 · 2026-08-24 (v2.6 + confirmacao induzida):
+Campo do Gravar ja nasce PREENCHIDO com o somatorio da reposicao pendente —
+o gesto do investidor e so confirmar (modelo de compromisso). Ajuste manual
+segue possivel (ciencia); divergencia continua flagrada na validacao. Base:
 Total da reposicao pendente em CAIXA de destaque no padrao do app (#08231f,
 teal 24px mono negritado, borda teal suave — mesmo padrao dos totalizadores
 do Termometro). Base v2.5:
@@ -193,7 +196,7 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
       <div class="rot">A transferir &mdash; reposi&ccedil;&atilde;o pendente</div>
       <div class="dtot"><span id="d-total">R$ 0,00</span><span id="d-sub"></span></div>
       <div class="peds" id="d-peds"></div>
-      <label class="d-rot" for="d-v" id="d-lbl">Confirme a transfer&ecirc;ncia &mdash; digite o valor</label>
+      <label class="d-rot" for="d-v" id="d-lbl">Confirme a transfer&ecirc;ncia do valor acima</label>
       <div class="simrow">
         <input id="d-v" type="text" inputmode="decimal" placeholder="0,00">
         <button class="btn" id="d-go">Gravar</button>
@@ -311,6 +314,8 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
       return;
     }
     $('d-total').textContent = 'R$ ' + BRL(p.total);
+    // ordem Igor 24/08: campo ja nasce com o somatorio — o gesto e so confirmar
+    if(!$('d-v').value) $('d-v').value = BRL(p.total);
     $('d-sub').textContent = '· ' + p.pedidos.length + ' pedido' + (p.pedidos.length===1?'':'s') +
       (p.sem_custo>0 ? ' · *'+p.sem_custo+' sem custo no sistema' : '');
     $('d-peds').innerHTML = p.pedidos.map(x =>
