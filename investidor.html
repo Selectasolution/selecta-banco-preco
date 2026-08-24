@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <!-- ============================================================================
-PORTAL DO INVESTIDOR · v1.0 · 2026-08-23 · Selecta Solution
+PORTAL DO INVESTIDOR · v2.0 · 2026-08-24 · Selecta Solution
+V2 (ordens Igor 24/08): (1) CONTADOR VIVO REMOVIDO — juros do ciclo = card estatico
+(so dia fechado). (2) SIMULADOR REMOVIDO (nada de "quanto voce quer" — modelo de
+COMPROMISSO, sem opcao de negativa). (3) Bloco A TRANSFERIR HOJE: total oficial da
+ecom_vw_compras_dia + pedidos no formato do app; o investidor DIGITA o valor
+(ciencia) e GRAVA (data/hora no servidor); o bloco some da tela e o extrato ganha
+"Transferencia registrada · em validacao". So a VALIDACAO DO IGOR NO APP vira
+aporte no ledger e passa a render no dia seguinte (dupla confirmacao inegociavel).
+Requer: tabela ecom_inv_funding + Edge investidor-portal v1.1 (GET campo dia+
+transferencias; POST grava). FRONT DEFENSIVO: sem esses campos na resposta, o
+bloco fica oculto e o resto opera como v1.0 (numeros validados 24/08).
+RESTYLE 24/08 (ordem Igor): identidade oficial do app selecta-banco-preco —
+fundo #0b1220, paineis #131c2e/#0f1726, verde-agua #2dd4bf/#34d399, ambar
+#f59e0b, bordas #2a3650, fontes de sistema + ui-monospace, logo oficial do
+repo (selecta-solution-logo.png, arquivo como enviado). ZERO mudanca de
+logica/matematica/gate — validados em producao 24/08 (10.000/500/16,67/20-09).
 Página pública SEM dados embutidos: tudo vem da Edge Function investidor-portal,
 protegida por código de acesso. O investidor NUNCA toca o banco nem o app interno.
 Doutrina: pro-rata diário base 30 · dia-base 20 · taxa 5% a.m. · aporte rende do
@@ -13,13 +28,13 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Selecta · Conta do Investidor</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --papel:#F5F3EC; --tinta:#16241D; --verde:#1D6A4C; --verde-suave:#E7F0E9;
-    --ouro:#A8873D; --cinza:#66716B; --alerta:#A6432E; --linha:rgba(22,36,29,.14);
-    --disp:'Fraunces',serif; --corpo:'Archivo',sans-serif; --mono:'IBM Plex Mono',monospace;
+    --papel:#0b1220; --tinta:#e6edf7; --verde:#2dd4bf; --verde-suave:rgba(45,212,191,.10);
+    --ouro:#f59e0b; --cinza:#8a99b4; --alerta:#ef4444; --linha:#2a3650;
+    --painel:#131c2e; --painel2:#0f1726; --vivo:#34d399;
+    --disp:system-ui,-apple-system,'Segoe UI',sans-serif; --corpo:system-ui,-apple-system,'Segoe UI',sans-serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--papel);color:var(--tinta);font:15px/1.55 var(--corpo);
@@ -29,10 +44,10 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
 
   /* ---------- cabeçalho / selo ---------- */
   header{display:flex;align-items:center;gap:14px;padding-bottom:18px;
-         border-bottom:2px solid var(--tinta);margin-bottom:22px}
-  .selo{width:46px;height:46px;border:2px solid var(--tinta);border-radius:50%;
-        display:flex;align-items:center;justify-content:center;flex:none;
-        font:650 15px var(--disp);letter-spacing:.5px}
+         border-bottom:1px solid var(--linha);margin-bottom:22px}
+  .selo{width:46px;height:46px;border-radius:10px;overflow:hidden;flex:none;
+        display:flex;align-items:center;justify-content:center;background:var(--painel)}
+  .selo img{width:100%;height:100%;object-fit:contain;display:block}
   .hgrp small{display:block;font:600 10.5px var(--corpo);letter-spacing:.18em;
               text-transform:uppercase;color:var(--verde)}
   .hgrp h1{font:650 21px/1.15 var(--disp)}
@@ -43,12 +58,12 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
   #acesso h1{font:650 24px var(--disp);margin-bottom:6px}
   #acesso p{color:var(--cinza);margin-bottom:22px}
   #acesso input{width:100%;max-width:300px;padding:13px 16px;font:500 17px var(--mono);
-        text-align:center;letter-spacing:.15em;border:1.5px solid var(--tinta);
-        border-radius:8px;background:#fff;color:var(--tinta)}
+        text-align:center;letter-spacing:.15em;border:1.5px solid var(--linha);
+        border-radius:8px;background:var(--painel2);color:var(--tinta)}
   #acesso input:focus{outline:3px solid var(--verde-suave);border-color:var(--verde)}
   .btn{display:inline-block;margin-top:14px;padding:12px 34px;font:600 15px var(--corpo);
-       color:#fff;background:var(--verde);border:none;border-radius:8px;cursor:pointer}
-  .btn:hover{background:#15563C}
+       color:#04211c;background:var(--verde);border:none;border-radius:8px;cursor:pointer}
+  .btn:hover{background:#14b8a6}
   .btn[disabled]{opacity:.55;cursor:wait}
   .lembrar{display:flex;gap:8px;justify-content:center;align-items:center;
            margin-top:14px;font-size:13px;color:var(--cinza)}
@@ -58,7 +73,7 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
   #painel{display:none;animation:surge .5s ease}
   @keyframes surge{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
 
-  .hero{border:1.5px solid var(--tinta);border-radius:14px;background:#FDFCF8;
+  .hero{border:1px solid var(--linha);border-radius:14px;background:var(--painel);
         padding:22px 20px 18px;text-align:center;position:relative;overflow:hidden}
   .hero::before{content:"";position:absolute;inset:6px;border:1px solid var(--linha);
         border-radius:9px;pointer-events:none}
@@ -66,13 +81,13 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
         color:var(--verde)}
   .contador{font:650 44px/1.05 var(--disp);font-variant-numeric:tabular-nums;
         margin:10px 0 2px;color:var(--tinta)}
-  .contador .sub{font:500 20px var(--mono);color:var(--ouro);vertical-align:14px;margin-left:2px}
+  .contador .sub{font:500 20px var(--mono);color:var(--vivo);vertical-align:14px;margin-left:2px}
   .hero .dia{font:500 14px var(--mono);color:var(--verde)}
   .hero .nota{font-size:11.5px;color:var(--cinza);margin-top:10px}
   .atraso{color:var(--alerta);font-weight:600}
 
   .grade{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-  .card{border:1px solid var(--linha);border-radius:11px;background:#FDFCF8;padding:14px 15px}
+  .card{border:1px solid var(--linha);border-radius:11px;background:var(--painel);padding:14px 15px}
   .card small{display:block;font:600 10.5px var(--corpo);letter-spacing:.14em;
         text-transform:uppercase;color:var(--cinza);margin-bottom:5px}
   .card b{font:600 17.5px var(--mono);font-variant-numeric:tabular-nums}
@@ -81,21 +96,30 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
   h2{font:650 17px var(--disp);margin:30px 0 12px;padding-bottom:8px;
      border-bottom:1px solid var(--linha)}
 
-  /* ---------- simulador ---------- */
-  .sim{border:1px solid var(--linha);border-radius:11px;background:var(--verde-suave);padding:16px}
+  /* ---------- transferencia do dia ---------- */
+  .peds{margin:14px 0 4px;text-align:left}
+  .ped{padding:9px 2px;border-top:1px dashed rgba(230,237,247,.18)}
+  .ped:first-child{border-top:none}
+  .ped .p{font-weight:600;font-size:14px}
+  .ped .i{font:400 12px var(--mono);color:var(--cinza)}
+  .ped .i b{color:var(--verde);font-weight:600}
+  .d-rot{display:block;margin-top:12px;font:600 12px var(--corpo);letter-spacing:.05em;color:var(--tinta);text-align:left}
+  .cnota{font-size:11.5px;color:var(--cinza);margin-top:10px}
+  .pill{display:inline-block;font:600 10px var(--corpo);letter-spacing:.08em;text-transform:uppercase;
+        color:var(--ouro);border:1px solid var(--ouro);border-radius:99px;padding:1px 8px;margin-left:6px;vertical-align:1px}
   .sim label{font:600 12px var(--corpo);letter-spacing:.05em;color:var(--tinta)}
   .simrow{display:flex;gap:10px;margin-top:8px}
   .sim input{flex:1;min-width:0;padding:11px 13px;font:500 16px var(--mono);
-        border:1.5px solid var(--tinta);border-radius:8px;background:#fff}
+        border:1.5px solid var(--linha);border-radius:8px;background:var(--painel2);color:var(--tinta)}
   .sim .btn{margin-top:0;padding:11px 20px}
   .simres{margin-top:14px;display:none}
   .simres table{width:100%;border-collapse:collapse}
-  .simres td{padding:7px 2px;border-top:1px dashed rgba(22,36,29,.25);font-size:14px}
+  .simres td{padding:7px 2px;border-top:1px dashed rgba(230,237,247,.22);font-size:14px}
   .simres td:last-child{text-align:right;font:600 15px var(--mono);
         font-variant-numeric:tabular-nums;color:var(--verde)}
 
   /* ---------- extrato ---------- */
-  .ext{border:1px solid var(--linha);border-radius:11px;background:#FDFCF8;overflow:hidden}
+  .ext{border:1px solid var(--linha);border-radius:11px;background:var(--painel);overflow:hidden}
   .mov{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
        padding:12px 15px;border-top:1px solid var(--linha)}
   .mov:first-child{border-top:none}
@@ -104,7 +128,7 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
   .mov .v{font:600 15px var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
   .v.mais{color:var(--verde)} .v.rec{color:var(--ouro)} .v.menos{color:var(--cinza)}
 
-  footer{margin-top:34px;padding-top:14px;border-top:2px solid var(--tinta);
+  footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--linha);
          font-size:12px;color:var(--cinza)}
   footer b{color:var(--tinta)}
   .sair{background:none;border:none;color:var(--cinza);font:500 12px var(--corpo);
@@ -118,7 +142,7 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
 
   <!-- ============ TELA DE ACESSO ============ -->
   <section id="acesso">
-    <div class="selo">SS</div>
+    <div class="selo"><img src="selecta-solution-logo.png" alt="Selecta Solution"></div>
     <h1>Conta do Investidor</h1>
     <p>Selecta Solution · acesso restrito</p>
     <input id="codigo" type="password" inputmode="numeric" autocomplete="off"
@@ -133,18 +157,24 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
   <!-- ============ PAINEL ============ -->
   <section id="painel">
     <header>
-      <div class="selo">SS</div>
+      <div class="selo"><img src="selecta-solution-logo.png" alt="Selecta Solution"></div>
       <div class="hgrp">
         <small>Selecta Solution</small>
         <h1>Conta do Investidor</h1>
       </div>
     </header>
 
-    <div class="hero">
-      <div class="rot">Juros acumulados neste ciclo</div>
-      <div class="contador">R$ <span id="c-int">0,00</span><span class="sub" id="c-frac"></span></div>
-      <div class="dia">+ R$ <span id="c-dia">0,00</span> por dia</div>
-      <div class="nota" id="c-nota"></div>
+    <div class="hero" id="dia-box" style="display:none">
+      <div class="rot">A transferir hoje</div>
+      <div class="contador">R$ <span id="d-total">0,00</span></div>
+      <div class="nota" id="d-sub"></div>
+      <div class="peds" id="d-peds"></div>
+      <label class="d-rot" for="d-v">Confirme a transfer&ecirc;ncia do dia &mdash; digite o valor</label>
+      <div class="simrow">
+        <input id="d-v" type="text" inputmode="decimal" placeholder="0,00">
+        <button class="btn" id="d-go">Gravar</button>
+      </div>
+      <div class="erro" id="d-msg" role="alert"></div>
     </div>
 
     <div class="grade">
@@ -152,26 +182,12 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
       <div class="card"><small>Próximo pagamento</small><b id="k-venc">—</b></div>
       <div class="card"><small>Previsto no pagamento</small><b class="vd" id="k-proj">—</b></div>
       <div class="card"><small>Juros já recebidos</small><b class="vd" id="k-rec">—</b></div>
+      <div class="card"><small>Juros neste ciclo</small><b class="vd" id="k-ciclo">—</b></div>
+      <div class="card"><small>Ritmo diário</small><b id="k-dia">—</b></div>
     </div>
+    <div class="cnota" id="c-nota"></div>
 
-    <h2>Simular novo aporte</h2>
-    <div class="sim">
-      <label for="sim-v">Quanto você quer aportar?</label>
-      <div class="simrow">
-        <input id="sim-v" type="text" inputmode="decimal" placeholder="ex.: 99.000,00">
-        <button class="btn" id="sim-go">Calcular</button>
-      </div>
-      <div class="simres" id="sim-res">
-        <table>
-          <tr><td>Rende por dia</td><td id="s-dia">—</td></tr>
-          <tr><td id="s-venc-rot">Até o próximo pagamento</td><td id="s-venc">—</td></tr>
-          <tr><td>Por mês completo</td><td id="s-mes">—</td></tr>
-          <tr><td>Em 12 meses</td><td id="s-ano">—</td></tr>
-        </table>
-      </div>
-    </div>
-
-    <h2>Extrato da conta</h2>
+        <h2>Extrato da conta</h2>
     <div class="ext" id="extrato"></div>
 
     <footer>
@@ -195,7 +211,7 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
   const ROT = {saldo_inicial:'Aporte inicial', aporte:'Aporte', juro_pago:'Juros recebidos',
                juro:'Juros capitalizados', amortizacao:'Devolução de capital', ajuste:'Ajuste'};
 
-  let dados = null, timer = null;
+  let dados = null, CODE = null;
 
   // ---------- acesso ----------
   async function entrar(codigo, silencioso){
@@ -204,7 +220,7 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
       const r = await fetch(ENDPOINT, { headers: { 'x-access-code': codigo } });
       const j = await r.json();
       if(!r.ok){ throw new Error(j.erro || ('Falha ('+r.status+')')); }
-      dados = j;
+      dados = j; CODE = codigo;
       if($('lembrar').checked) localStorage.setItem(LS_KEY, codigo);
       render();
     }catch(e){
@@ -228,33 +244,25 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
     $('k-venc').textContent = DATA(ci.proximo_pagamento);
     $('k-proj').textContent = 'R$ ' + BRL(ci.projecao_no_vencimento);
     $('k-rec').textContent  = 'R$ ' + BRL(c.juros_ja_recebidos);
-    $('c-dia').textContent  = BRL(ci.rendimento_por_dia_hoje);
+    $('k-dia').textContent  = 'R$ ' + BRL(ci.rendimento_por_dia_hoje) + '/dia';
+    $('k-ciclo').textContent = 'R$ ' + BRL(ci.acumulado_fechado);
     $('f-taxa').textContent = (c.taxa_mes*100).toLocaleString('pt-BR') + '%';
     $('f-dia').textContent  = c.dia_base;
     $('f-gerado').textContent = 'Posição gerada em ' +
       new Date(dados.gerado_em).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}) + ' (horário de Brasília).';
     $('c-nota').innerHTML = ci.atrasado
       ? '<span class="atraso">Pagamento do ciclo em aberto desde ' + DATA(ci.proximo_pagamento) + '.</span>'
-      : ci.dias_fechados + ' dia(s) fechado(s) desde ' + DATA(ci.ancora) +
-        ' · o dia de hoje fecha à meia-noite';
+      : 'Juros do ciclo: ' + ci.dias_fechados + ' dia(s) fechado(s) desde ' + DATA(ci.ancora) +
+        ' · o dia corrente entra à meia-noite';
+    renderDia(dados.dia);
 
-    // contador vivo: fechado + fração do dia corrente sobre rendimento_hoje
-    const reduz = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const tick = () => {
-      const agora = new Date();
-      const sp = new Date(agora.toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}));
-      const frac = (sp.getHours()*3600 + sp.getMinutes()*60 + sp.getSeconds() + sp.getMilliseconds()/1000)/86400;
-      const vivo = ci.acumulado_fechado + ci.rendimento_hoje * frac;
-      const int2 = Math.floor(vivo*100)/100;
-      $('c-int').textContent  = BRL(int2);
-      $('c-frac').textContent = String(Math.floor(vivo*10000)%100).padStart(2,'0');
-    };
-    tick();
-    if(timer) clearInterval(timer);
-    if(!reduz) timer = setInterval(tick, 120);
 
     // extrato
-    $('extrato').innerHTML = dados.extrato.map(m => {
+    const decl = (dados.transferencias||[]).filter(t=>t.status==='declarado').map(t =>
+      '<div class="mov"><div><div class="t">Transferência registrada<span class="pill">em validação</span></div>' +
+      '<div class="d">'+DATA(t.data)+'</div></div>' +
+      '<div class="v mais">+ R$ '+BRL(t.valor)+'</div></div>').join('');
+    $('extrato').innerHTML = decl + dados.extrato.map(m => {
       const cls = (m.tipo==='juro_pago') ? 'rec' : (m.tipo==='amortizacao') ? 'menos' : 'mais';
       const sin = (m.tipo==='amortizacao') ? '−' : (m.tipo==='juro_pago') ? '' : '+';
       return '<div class="mov"><div><div class="t">'+(ROT[m.tipo]||m.tipo)+'</div>' +
@@ -269,23 +277,34 @@ do dia (rendimento_hoje); o valor CONTÁBIL é sempre o fechado por dia inteiro.
     if(s.includes(',')) s = s.replace(/\./g,'').replace(',','.');
     const v = parseFloat(s); return isFinite(v) && v>0 ? v : null;
   }
-  $('sim-go').addEventListener('click', () => {
-    const v = parseBR($('sim-v').value);
-    if(!v || !dados){ $('sim-res').style.display='none'; return; }
-    const c = dados.conta, ci = dados.ciclo;
-    const dia = v * c.taxa_mes / c.base_dias;
-    // aporte HOJE rende do dia seguinte até o vencimento (inclusive)
-    const hoje = new Date(dados.gerado_em.slice(0,10)+'T00:00:00Z');
-    const venc = new Date(ci.proximo_pagamento+'T00:00:00Z');
-    const dias = Math.max(0, Math.round((venc - hoje)/86400000));
-    $('s-dia').textContent  = 'R$ ' + BRL(dia);
-    $('s-venc-rot').textContent = 'Até o pagamento de ' + DATA(ci.proximo_pagamento) + ' ('+dias+' dias)';
-    $('s-venc').textContent = 'R$ ' + BRL(dia*dias);
-    $('s-mes').textContent  = 'R$ ' + BRL(v*c.taxa_mes);
-    $('s-ano').textContent  = 'R$ ' + BRL(v*c.taxa_mes*12);
-    $('sim-res').style.display = 'block';
-  });
-  $('sim-v').addEventListener('keydown', e => { if(e.key==='Enter') $('sim-go').click(); });
+  // ---------- transferencia do dia (compromisso; sem opcao de negativa) ----------
+  function renderDia(d){
+    const box = $('dia-box');
+    if(!d || d.ja_declarado || !(+d.total_sistema > 0)){ box.style.display='none'; return; }
+    $('d-total').textContent = BRL(d.total_sistema);
+    $('d-sub').textContent = d.pedidos.length + ' pedido' + (d.pedidos.length===1?'':'s') +
+      ' · ' + DATA(d.data) + (d.pedidos_sem_custo>0 ? ' · *'+d.pedidos_sem_custo+' sem custo no sistema' : '');
+    $('d-peds').innerHTML = d.pedidos.map(p =>
+      '<div class="ped"><div class="p">'+p.produto+'</div>' +
+      '<div class="i">#'+p.pedido+' · <b>R$ '+BRL(p.valor)+'</b></div></div>').join('');
+    box.style.display='block';
+  }
+  async function gravar(){
+    const v = parseBR($('d-v').value);
+    if(!v){ $('d-msg').textContent = 'Digite o valor a transferir.'; return; }
+    const btn = $('d-go'); btn.disabled = true; $('d-msg').textContent = '';
+    try{
+      const r = await fetch(ENDPOINT, { method:'POST',
+        headers:{ 'x-access-code': CODE, 'content-type':'application/json' },
+        body: JSON.stringify({ valor: v }) });
+      const j = await r.json();
+      if(!r.ok) throw new Error(j.erro || ('Falha ('+r.status+')'));
+      await entrar(CODE, true);   // re-render: bloco some da tela; extrato ganha a linha
+    }catch(e){ $('d-msg').textContent = e.message; }
+    finally{ btn.disabled = false; }
+  }
+  $('d-go').addEventListener('click', gravar);
+  $('d-v').addEventListener('keydown', e => { if(e.key==='Enter') gravar(); });
 })();
 </script>
 </body>
