@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <!-- ============================================================================
-PORTAL DO INVESTIDOR · v2.2.1 · 2026-08-24 (marca de volta ao header do painel, 58px — veto Igor a v2.1; doutrina do valor-por-dia):
-Pendencias FIFO: cada dia com compras (ecom_vendas, canceladas fora) fica
-VISIVEL ate o GRAVA do investidor; o quadro ativo e sempre o dia mais antigo
-(rotulo estampa a data); os demais listados como "aguardando". Fonte UNICA:
-mesma query para valor e pedidos — a view de envio foi abandonada (fazia o
-valor rolar com a fila de embarque). Requer Edge v1.2. Base v2.1:
+PORTAL DO INVESTIDOR · v2.4 · 2026-08-24 (v2.3 + ordens Igor):
+(1) EDITAR ao lado de cada transferencia "em validacao" — input inline, salva
+via Edge v1.4; valor anterior preservado em obs; VALIDADA = IMUTAVEL (Edge
+recusa). (2) Ao gravar, apaga so os pedidos: quadrante permanece com "Sem
+valores pendentes" (+ aviso "registrada · em validacao"). Base v2.3:
+Compromisso = POOL de pedidos nao comprados (a_enviar), que ACUMULA dia apos
+dia ate o aporte confirmar -> compra -> embarque. MESMO numero do quadro
+"Compras do dia" do app (equivalencia provada ao centavo). Cada pedido exibe a
+data. GRAVA registra a transferencia do dia (1/dia; extrato "em validacao");
+o pool so esvazia pela operacao real. Requer Edge v1.3. Marca no header 58px.
 (1) Cards "Juros neste ciclo"/"Ritmo diario" e nota do ciclo REMOVIDOS (4 cards
 originais). (2) Marca SO na tela de acesso, grande e legivel (300px; marca
 horizontal nao reduz p/ header sem virar borrao — header = tipografia limpa,
@@ -118,6 +122,11 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
   .d-rot{display:block;margin-top:12px;font:600 11px var(--corpo);letter-spacing:.05em;color:var(--emutedx,#8a99b4)}
   .pill{display:inline-block;font:600 10px var(--corpo);letter-spacing:.08em;text-transform:uppercase;
         color:var(--ouro);border:1px solid var(--ouro);border-radius:99px;padding:1px 8px;margin-left:6px;vertical-align:1px}
+  .edt{background:none;border:1px solid var(--linha);color:var(--cinza);font:500 10.5px var(--corpo);
+       border-radius:6px;padding:1px 9px;cursor:pointer}
+  .edt:hover{color:var(--verde);border-color:var(--verde)}
+  .edt-in{width:96px;padding:4px 7px;font:500 13px var(--mono);background:var(--painel2);
+       border:1px solid var(--linha);border-radius:6px;color:var(--tinta);text-align:right}
   .simrow{display:flex;gap:8px;margin-top:7px}
   .simrow input{flex:1;min-width:0;padding:9px 12px;font:500 14px var(--mono);
         border:1px solid var(--linha);border-radius:8px;background:var(--painel2);color:var(--tinta)}
@@ -171,7 +180,7 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
     </header>
 
     <div class="hero" id="dia-box" style="display:none">
-      <div class="rot">A transferir hoje</div>
+      <div class="rot">A transferir &mdash; reposi&ccedil;&atilde;o pendente</div>
       <div class="dtot"><span id="d-total">R$ 0,00</span><span id="d-sub"></span></div>
       <div class="peds" id="d-peds"></div>
       <label class="d-rot" for="d-v" id="d-lbl">Confirme a transfer&ecirc;ncia &mdash; digite o valor</label>
@@ -251,14 +260,14 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
     $('f-dia').textContent  = c.dia_base;
     $('f-gerado').textContent = 'Posição gerada em ' +
       new Date(dados.gerado_em).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}) + ' (horário de Brasília).';
-    renderPend(dados.pendencias);
+    renderPool(dados.pool);
 
 
     // extrato
     const decl = (dados.transferencias||[]).filter(t=>t.status==='declarado').map(t =>
       '<div class="mov"><div><div class="t">Transferência registrada<span class="pill">em validação</span></div>' +
-      '<div class="d">'+DATA(t.data)+'</div></div>' +
-      '<div class="v mais">+ R$ '+BRL(t.valor)+'</div></div>').join('');
+      '<div class="d">'+DATA(t.data)+' · <button class="edt" data-edit="'+t.id+'" data-valor="'+t.valor+'">editar</button></div></div>' +
+      '<div class="v mais" id="fv-'+t.id+'">+ R$ '+BRL(t.valor)+'</div></div>').join('');
     $('extrato').innerHTML = decl + dados.extrato.map(m => {
       const cls = (m.tipo==='juro_pago') ? 'rec' : (m.tipo==='amortizacao') ? 'menos' : 'mais';
       const sin = (m.tipo==='amortizacao') ? '−' : (m.tipo==='juro_pago') ? '' : '+';
@@ -274,44 +283,79 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
     if(s.includes(',')) s = s.replace(/\./g,'').replace(',','.');
     const v = parseFloat(s); return isFinite(v) && v>0 ? v : null;
   }
-  // ---------- transferencias pendentes (compromisso; FIFO; sem opcao de negativa) --
-  let ATIVA = null;   // dia pendente mais antigo (o unico confirmavel da vez)
-  function renderPend(arr){
+  // ---------- pool de reposicao (doutrina v3: fila a_enviar acumula ate o aporte) --
+  function renderPool(p){
     const box = $('dia-box');
-    if(!Array.isArray(arr) || !arr.length){ ATIVA = null; box.style.display='none'; return; }
-    const a = arr[0];                      // FIFO: mais antigo primeiro (Edge ja ordena)
-    ATIVA = a.data;
-    $('d-total').textContent = 'R$ ' + BRL(a.valor);
-    $('d-sub').textContent = '· ' + a.pedidos.length + ' pedido' + (a.pedidos.length===1?'':'s') +
-      ' · ' + DATA(a.data) + (a.sem_custo>0 ? ' · *'+a.sem_custo+' sem custo no sistema' : '');
-    $('d-peds').innerHTML = a.pedidos.map(p =>
-      '<div class="ped"><div><div class="p">'+p.produto+'</div>' +
-      '<div class="i">#'+p.pedido+'</div></div>' +
-      '<div class="i"><b style="color:var(--verde)">R$ '+BRL(p.valor)+'</b></div></div>').join('');
-    $('d-lbl').textContent = 'Confirme a transferência de ' + DATA(a.data) + ' — digite o valor';
-    const resto = arr.slice(1);
-    $('d-outras').innerHTML = !resto.length ? '' :
-      '<div class="outros-rot">Próximas pendências</div>' + resto.map(p =>
-        '<div class="pendrow"><span>'+DATA(p.data)+' · '+p.pedidos.length+' pedido'+(p.pedidos.length===1?'':'s')+'</span>' +
-        '<span><b>R$ '+BRL(p.valor)+'</b> · aguardando</span></div>').join('');
+    if(!p){ box.style.display='none'; return; }
+    const limpo = !!p.ja_registrado_hoje || !(+p.total > 0);
+    if(limpo){
+      // ordem Igor 24/08: ao gravar, apaga so os pedidos; quadrante fica com a mensagem
+      $('d-total').textContent = '';
+      $('d-sub').textContent = '';
+      $('d-peds').innerHTML = '<div class="outros-rot" style="margin-top:8px">Sem valores pendentes</div>' +
+        (p.ja_registrado_hoje ? '<div class="outros-rot" style="color:var(--ouro);margin-top:6px">Transfer&ecirc;ncia de hoje registrada &middot; em valida&ccedil;&atilde;o</div>' : '');
+      $('d-lbl').style.display = 'none';
+      $('d-v').parentElement.style.display = 'none';
+      $('d-outras').innerHTML = '';
+      box.style.display='block';
+      return;
+    }
+    $('d-total').textContent = 'R$ ' + BRL(p.total);
+    $('d-sub').textContent = '· ' + p.pedidos.length + ' pedido' + (p.pedidos.length===1?'':'s') +
+      (p.sem_custo>0 ? ' · *'+p.sem_custo+' sem custo no sistema' : '');
+    $('d-peds').innerHTML = p.pedidos.map(x =>
+      '<div class="ped"><div><div class="p">'+x.produto+'</div>' +
+      '<div class="i">#'+x.pedido+' · '+DATA(x.data)+'</div></div>' +
+      '<div class="i"><b style="color:var(--verde)">R$ '+BRL(x.valor)+'</b></div></div>').join('');
+    $('d-lbl').style.display = 'block';
+    $('d-v').parentElement.style.display = 'flex';
+    $('d-outras').innerHTML = '';
     box.style.display='block';
   }
   async function gravar(){
     const v = parseBR($('d-v').value);
     if(!v){ $('d-msg').textContent = 'Digite o valor a transferir.'; return; }
-    if(!ATIVA){ $('d-msg').textContent = 'Nenhuma pendência ativa.'; return; }
     const btn = $('d-go'); btn.disabled = true; $('d-msg').textContent = '';
     try{
       const r = await fetch(ENDPOINT, { method:'POST',
         headers:{ 'x-access-code': CODE, 'content-type':'application/json' },
-        body: JSON.stringify({ valor: v, data: ATIVA }) });
+        body: JSON.stringify({ valor: v }) });
       const j = await r.json();
       if(!r.ok) throw new Error(j.erro || ('Falha ('+r.status+')'));
       $('d-v').value = '';
-      await entrar(CODE, true);   // re-render: dia sai da lista; extrato ganha a linha; proxima pendencia assume
+      await entrar(CODE, true);   // re-render: input trava ate amanha; extrato ganha a linha
     }catch(e){ $('d-msg').textContent = e.message; }
     finally{ btn.disabled = false; }
   }
+  // ---------- editar lancamento em validacao (ordem Igor 24/08) ----------
+  // Regra: so status 'declarado'; apos validacao a Edge recusa (imutavel).
+  $('extrato').addEventListener('click', async e => {
+    const be = e.target.closest('[data-edit]');
+    if(be){
+      const id = be.dataset.edit, atual = +be.dataset.valor;
+      const cel = $('fv-'+id); if(!cel) return;
+      cel.innerHTML = '<input class="edt-in" id="ei-'+id+'" value="'+BRL(atual)+'" inputmode="decimal"> ' +
+                      '<button class="edt" data-save="'+id+'">ok</button>';
+      $('ei-'+id).focus(); $('ei-'+id).select();
+      return;
+    }
+    const bs = e.target.closest('[data-save]');
+    if(bs){
+      const id = bs.dataset.save;
+      const v = parseBR($('ei-'+id).value);
+      if(!v){ $('ei-'+id).style.borderColor = 'var(--alerta)'; return; }
+      bs.disabled = true;
+      try{
+        const r = await fetch(ENDPOINT, { method:'POST',
+          headers:{ 'x-access-code': CODE, 'content-type':'application/json' },
+          body: JSON.stringify({ acao:'editar', id, valor: v }) });
+        const j = await r.json();
+        if(!r.ok) throw new Error(j.erro || ('Falha ('+r.status+')'));
+        await entrar(CODE, true);
+      }catch(err){ alert(err.message); await entrar(CODE, true); }
+    }
+  });
+
   $('d-go').addEventListener('click', gravar);
   $('d-v').addEventListener('keydown', e => { if(e.key==='Enter') gravar(); });
 })();
