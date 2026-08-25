@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-25-G | selecta-banco-preco | CREDOR_3 + MULTI-CREDOR NO FUNDING (decisoes Igor 25/08 sobre 25-F): (1) FIXOS: credor_3 = 5% a.m., dia-base 30, LIQUIDACAO em SALDO (juro do ciclo nao sai do caixa: amortiza o saldo a amortizar do credor). (2) capPagar: para credor com LIQUIDACAO saldo chama ecom_fn_liquidar_juro_saldo (RPC) = juro_pago no ledger + amortizacao em ecom_credor_saldo_mov, UMA transacao; demais credores inalterados. (3) invValidar recebe o credor da linha (ecom_inv_funding.credor) — acaba o credor_2 fixo; confirm mostra o credor; lista "a validar" e historico exibem o credor. (4) Termometro: linha do credor_3 mostra "amortiza saldo"; bloco SALDO A AMORTIZAR (view ecom_vw_credor_saldo) aparece para credor com liquidacao saldo mesmo antes do 1o aporte; aviso de capitalizacao cita c3 dia 30. Requer 04-credor3-saldo.sql + Edge investidor-portal v2.0. Matematica do nucleo INTOCADA (juro_pago continua = juro liquidado, entra como custo do mes por competencia). Base: 2026-08-25-F -->
 <!-- BUILD 2026-08-25-F | selecta-banco-preco | CELULAR — CORRECAO DA FILA + ICONE (prints Igor 25/08 sobre 25-E): (1) CAUSA das linhas sobrepostas: o bloco de CSS celular (id mobile-css) estava no head, e os estilos do e-commerce ficam em blocos de estilo DENTRO do body — mesma especificidade, ordem posterior, venciam. Bloco movido para o FIM do body, com !important onde o template usa estilo inline. Cartao da fila em 4 andares: numero+produto / pedido-sku-data-valor / rastreio / status+semaforo+ocorrencia-ou-postado (botao a direita). (2) ICONES regenerados: emblema SS recortado do logo, realcado (brilho/contraste/saturacao) sobre navy com halo esmeralda — o wordmark inteiro sumia no icone. Mesmos nomes de arquivo (icon-192/512, apple-touch-icon); no iPhone e preciso remover e adicionar de novo para trocar o icone. Zero mudanca de logica, zero SQL. | base: 2026-08-25-E -->
 <!-- BUILD 2026-08-25-E | selecta-banco-preco | CELULAR + PWA + CORRECOES (ordem Igor 25/08): (1) CAUSA DO "\n\n \n" NO TOPO: tres carimbos BUILD antigos (24-B, 24-A->23-B, 21-E->21-D) foram colados com a sequencia literal barra-n entre o fim de um comentario e o inicio do seguinte, em vez de quebra de linha real; esse texto fica FORA de comentario, antes do DOCTYPE, e o navegador o joga no topo do body. Corrigido: quebra real nos 3 pontos. (2) PWA: manifest.json (standalone, navy #0b1220, icones 192/512 gerados do logo sobre navy), apple-touch-icon.png 180, meta theme-color + apple-mobile-web-app-*, viewport-fit=cover com safe-area no header em modo standalone, sw.js MINIMO registrado no fim do body (sem cache; so para instalabilidade). (3) CSS celular (<=640px) em <style id="mobile-css"> no head: header com nav rolavel e e-mail oculto; sub-abas do e-commerce rolaveis; fila Vendas em CARTAO (produto em linha propria, meta menor, controles em linha com alvo de toque 40px, select de ocorrencia sem min-width fixo, botao postado a direita); formulario Lancar venda empilhado; faixa Compras do dia com botao PDF em largura total. Zero mudanca de logica. (4) pdfCompra: em tela de toque, abre a folha nativa de compartilhar com o PDF anexado (navigator.share + canShare); se o usuario cancelar ou o navegador nao suportar, cai no download de sempre. (5) lucide fixado em 0.577.0 (estava @latest, que hoje resolve para 1.34.0 — major diferente do usado no desenvolvimento). Zero SQL. | base: 2026-08-25-D -->
 <!-- BUILD 2026-08-25-D | selecta-banco-preco | PDF COMPRA — MARCA ESCURA (correcao Igor 25/08 sobre 25-C: "a marca da gente e escura"): pagina inteira navy #0b1220 (mesma da UI), logo no escuro como no header do site (52x22mm), titulo ORCAMENTO claro 13pt a direita + data em teal, filete esmeralda; tabela como painel #111a2e sobre o navy, cabecalho teal em caixa alta, texto claro, separadores #1f2a40, QTD em teal negrito; rodape discreto com pagina. Fundo/cabecalho/rodape repetidos por pagina (willDrawPage, existe na autotable 3.8.0 carregada). Conteudo inalterado. Zero SQL. | base: 2026-08-25-C -->
@@ -5268,18 +5269,25 @@ const ecomFinanceiro={
     const valor=bruto.indexOf(',')>=0?parseFloat(bruto.replace(/\./g,'').replace(',','.')):parseFloat(bruto);
     if(!credor||!(valor>0)){ alert('Informe o valor pago (>0).'); return; }
     const hoje=new Date().toISOString().slice(0,10);
+    // BUILD 2026-08-25-G: credor com LIQUIDACAO em saldo -> RPC (juro_pago + amortizacao na mesma transacao)
+    if(this.FIXOS.LIQUIDACAO&&this.FIXOS.LIQUIDACAO[credor]==='saldo'){
+      if(!confirm('Liquidar JURO em SALDO?\n\n'+credor+' · R$ '+this.fmt(valor)+' em '+hoje+'\n→ juro_pago no ledger (não capitaliza · custo do mês)\n→ AMORTIZA o saldo a amortizar do credor no mesmo valor\n(sem saída de caixa)')) return;
+      const rr=await sb.rpc('ecom_fn_liquidar_juro_saldo',{p_credor:credor,p_valor:valor,p_data:hoje,p_descricao:'Juro liquidado em saldo via Termômetro'});
+      if(rr.error){ alert('Erro ao liquidar: '+rr.error.message+'\n(exige 04-credor3-saldo.sql)'); return; }
+      this._fonteCache=null; this.termometro(); return;
+    }
     if(!confirm('Lançar JURO PAGO?\n\n'+credor+' · R$ '+this.fmt(valor)+' em '+hoje+'\n(não capitaliza · entra como despesa do mês)')) return;
     const r=await sb.from('ecom_capital_mov').insert({credor,tipo:'juro_pago',valor,data_mov:hoje,descricao:'Juro pago via Termômetro'});
     if(r.error){ alert('Erro ao lançar: '+r.error.message+'\n(juro_pago exige o ledger v2 — CHECK ampliado)'); return; }
     this.termometro();
   },
   // BUILD 2026-08-24-A: dupla confirmacao — o carimbo do Igor vira aporte no ledger
-  async invValidar(id,valor,dref){
-    valor=+valor;
+  async invValidar(id,valor,dref,credor){
+    valor=+valor; credor=credor||'credor_2'; /* BUILD 2026-08-25-G: credor vem da linha */
     if(!id||!(valor>0)) return;
     const hoje=new Date().toISOString().slice(0,10);
-    if(!confirm('VALIDAR transferência do investidor?\n\n'+dref+' · R$ '+this.fmt(valor)+'\n\n→ lança APORTE no ledger (credor_2, '+hoje+', rende a partir de amanhã)\n→ marca o registro como confirmado (IMUTÁVEL a partir daí)')) return;
-    const a=await sb.from('ecom_capital_mov').insert({credor:'credor_2',tipo:'aporte',valor,data_mov:hoje,descricao:'Aporte confirmado — transferência de '+dref+' (portal)'});
+    if(!confirm('VALIDAR transferência do investidor?\n\n'+credor+' · '+dref+' · R$ '+this.fmt(valor)+'\n\n→ lança APORTE no ledger ('+credor+', '+hoje+', rende a partir de amanhã)\n→ marca o registro como confirmado (IMUTÁVEL a partir daí)')) return;
+    const a=await sb.from('ecom_capital_mov').insert({credor,tipo:'aporte',valor,data_mov:hoje,descricao:'Aporte confirmado — transferência de '+dref+' (portal)'});
     if(a.error){ alert('Erro ao lançar aporte: '+a.error.message); return; }
     const u=await sb.from('ecom_inv_funding').update({status:'confirmado',confirmado_em:new Date().toISOString()}).eq('id',id).eq('status','declarado');
     if(u.error){ alert('APORTE LANÇADO, mas falhou o carimbo: '+u.error.message+'\nMarcar confirmado via SQL antes de validar de novo (risco de duplicar).'); }
@@ -5300,7 +5308,8 @@ const ecomFinanceiro={
   // colunas geradas do banco). Parâmetros FIXOS: mudam por SQL/BUILD, nunca na tela.
   // ============================================================================
   FIXOS:{ IMPOSTO:0.04, COLCHAO:0.06, CUSTOS_FIXOS_MES:3050,
-    TAXA_CREDOR:{credor_1:0.10,credor_2:0.05}, DIA_BASE:{credor_1:5,credor_2:20} },
+    TAXA_CREDOR:{credor_1:0.10,credor_2:0.05,credor_3:0.05}, DIA_BASE:{credor_1:5,credor_2:20,credor_3:30},
+    LIQUIDACAO:{credor_3:'saldo'} /* BUILD 2026-08-25-G: juro do credor_3 amortiza saldo, nao sai do caixa */ },
   PERDA_OC:['apreendido','extraviado','roubado','avariado'],
   mesKey(){ return new Date().toISOString().slice(0,7); },
   mesNomeK(mkey){ const nm=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']; const p=String(mkey).split('-'); return nm[(+p[1])-1]+'/'+p[0]; },
@@ -5319,9 +5328,11 @@ const ecomFinanceiro={
     let despesas=null;try{ const r=await sb.from('ecom_despesa_op').select('id,data,descricao,valor').is('anulado_em',null).order('data'); if(!r.error) despesas=r.data||[]; }catch(_e){}
     let recupItens=null; try{ const r=await sb.from('ecom_recuperavel_item').select('id,descricao,valor').is('baixado_em',null).order('id'); if(!r.error) recupItens=r.data||[]; }catch(_e){}
     // BUILD 2026-08-24-A: transferencias do investidor aguardando validacao (portal)
-    try{ const r=await sb.from('ecom_inv_funding').select('id,data_ref,valor_sistema,valor_declarado,status,declarado_em,obs').eq('status','declarado').order('declarado_em'); this._invFunding=(!r.error&&r.data)||[]; }catch(_e){ this._invFunding=[]; }
+    try{ const r=await sb.from('ecom_inv_funding').select('id,credor,data_ref,valor_sistema,valor_declarado,status,declarado_em,obs').eq('status','declarado').order('declarado_em'); this._invFunding=(!r.error&&r.data)||[]; }catch(_e){ this._invFunding=[]; }
     // BUILD 2026-08-24-B: historico de validacoes (confirmadas/rejeitadas) do credor_2
-    try{ const r=await sb.from('ecom_inv_funding').select('data_ref,valor_declarado,status,confirmado_em').in('status',['confirmado','rejeitado']).order('confirmado_em',{ascending:false}).limit(8); this._invHist=(!r.error&&r.data)||[]; }catch(_e){ this._invHist=[]; }
+    try{ const r=await sb.from('ecom_inv_funding').select('credor,data_ref,valor_declarado,status,confirmado_em').in('status',['confirmado','rejeitado']).order('confirmado_em',{ascending:false}).limit(8); this._invHist=(!r.error&&r.data)||[]; }catch(_e){ this._invHist=[]; }
+    // BUILD 2026-08-25-G: saldo a amortizar por credor (liquidacao em saldo)
+    try{ const r=await sb.from('ecom_vw_credor_saldo').select('credor,saldo_inicial,ajustes,amortizado,saldo_atual,ultima_amortizacao,abertura'); this._credSaldo=(!r.error&&r.data)||[]; }catch(_e){ this._credSaldo=[]; }
     const d={vendasAll,vendas,ledger,movs,despesas,recupItens};
     this._fonteCache={t:now,d};
     return d;
@@ -5422,29 +5433,34 @@ const ecomFinanceiro={
           const jM=s*tx;
           const venc=anc?(()=>{const d=new Date(anc+'T00:00:00');d.setMonth(d.getMonth()+1);return d;})():null;
           credL.push('<div style="display:flex;justify-content:space-between;gap:8px;padding:9px 13px;background:var(--epanel);flex-wrap:wrap;align-items:center">'
-            +'<span style="font-size:12.5px">'+c.credor+' · '+(tx*100).toFixed(0)+'% · saldo <b style="font-family:var(--emono)">R$ '+F(s)+'</b></span>'
+            +'<span style="font-size:12.5px">'+c.credor+' · '+(tx*100).toFixed(0)+'%'+((this.FIXOS.LIQUIDACAO&&this.FIXOS.LIQUIDACAO[c.credor]==='saldo')?' · <span style="color:var(--eteal)">amortiza saldo</span>':'')+' · saldo <b style="font-family:var(--emono)">R$ '+F(s)+'</b></span>'
             +'<span style="font-size:12px;color:var(--eamber);font-family:var(--emono)">juros R$ '+F(jM)+'</span>'
             +'<span style="font-size:12px">vence <b>'+(venc?venc.toLocaleDateString('pt-BR'):'—')+'</b></span>'
-            +'<span style="display:flex;gap:6px;align-items:center"><input id="cap-pago-'+c.credor+'" class="vinput" type="text" inputmode="decimal" placeholder="valor pago R$" style="width:118px;padding:5px 8px;font-size:12px"><button class="vbtn sm" style="padding:5px 10px;font-size:12px" data-cappagar="'+c.credor+'">Lançar</button></span>'
+            +'<span style="display:flex;gap:6px;align-items:center"><input id="cap-pago-'+c.credor+'" class="vinput" type="text" inputmode="decimal" placeholder="'+((this.FIXOS.LIQUIDACAO&&this.FIXOS.LIQUIDACAO[c.credor]==='saldo')?'juro a amortizar R$':'valor pago R$')+'" style="width:118px;padding:5px 8px;font-size:12px"><button class="vbtn sm" style="padding:5px 10px;font-size:12px" data-cappagar="'+c.credor+'">Lançar</button></span>'
             +'</div>'); });
         const recup=recMP+devCusto+extSum, desc=devo-recup; descT=desc;
         const vendaMin=(margem!=null&&margem>0)?(juroMes+CUSTOS_FIXOS_MES)/(margem/100):null;
         invHtml='<div style="padding:7px 13px;background:var(--epanel2);font-size:10.5px;letter-spacing:1px;color:var(--emuted)">INVESTIDORES · capital de terceiros</div>'
           +credL.join('')
+          /* BUILD 2026-08-25-G: saldo a amortizar (credor com liquidacao em saldo) — aparece mesmo antes do 1o aporte */
+          +((this._credSaldo||[]).map(cs=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 13px;background:var(--epanel2);flex-wrap:wrap;align-items:center">'
+              +'<span style="font-size:12px;color:var(--emuted)">'+cs.credor+' · SALDO A AMORTIZAR</span>'
+              +'<span style="font-size:12px;font-family:var(--emono)">abertura R$ '+F((+cs.saldo_inicial||0)+(+cs.ajustes||0))+' · amortizado <span style="color:var(--eteal)">R$ '+F(+cs.amortizado||0)+'</span> · atual <b>R$ '+F(+cs.saldo_atual||0)+'</b></span>'
+              +'</div>').join(''))
           +line('CREDORES','R$ '+F(devo),'#2a0d0d','var(--ered)')
           +line('Venda mínima custo',vendaMin!=null?('R$ '+F0(vendaMin)+'/mês'):'—','#241c08','var(--eamber)')
-          +(capAtraso?'<div style="padding:7px 13px;background:#241c08;font-size:11px;color:var(--eamber)">⚠ Capitalização atrasada (&gt;32d sem lançamento de juro) — lançar movimento tipo \'juro\' no dia-base (c1 dia 05 · c2 dia 20).</div>':'')
+          +(capAtraso?'<div style="padding:7px 13px;background:#241c08;font-size:11px;color:var(--eamber)">⚠ Capitalização atrasada (&gt;32d sem lançamento de juro) — lançar movimento tipo \'juro\' no dia-base (c1 dia 05 · c2 dia 20 · c3 dia 30).</div>':'')
           /* BUILD 2026-08-24-A: transferencias do portal aguardando o carimbo do Igor */
           +(((this._invFunding||[]).length)?('<div style="padding:7px 13px;background:#241c08;font-size:10.5px;letter-spacing:1px;color:var(--eamber)">TRANSFERÊNCIAS DO INVESTIDOR · a validar</div>'
             +this._invFunding.map(t=>{ const dv=+t.valor_declarado||0, vs=(t.valor_sistema==null?null:+t.valor_sistema);
               const divg=(vs!=null&&Math.round(dv*100)!==Math.round(vs*100));
               return '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 13px;background:var(--epanel)">'
-                +'<span style="font-size:12px">'+String(t.data_ref).slice(8,10)+'/'+String(t.data_ref).slice(5,7)+' · declarado <b style="font-family:var(--emono)">R$ '+F(dv)+'</b>'
+                +'<span style="font-size:12px"><span style="color:var(--emuted)">'+(t.credor||'credor_2')+'</span> · '+String(t.data_ref).slice(8,10)+'/'+String(t.data_ref).slice(5,7)+' · declarado <b style="font-family:var(--emono)">R$ '+F(dv)+'</b>'
                 +(vs!=null?' <span style="color:var(--emuted);font-size:11px">(sistema R$ '+F(vs)+')</span>':'')
                 +(divg?' <span style="color:var(--eamber);font-size:11px">⚠ divergente</span>':'')
                 +(String(t.obs||'').indexOf('editado')>=0?' <span style="color:var(--emuted);font-size:10.5px">· editado</span>':'')
                 +'</span><span style="display:flex;gap:6px;flex:none">'
-                +'<button class="vbtn sm" style="padding:4px 10px;font-size:12px" data-invval="'+t.id+'" data-v="'+dv+'" data-d="'+t.data_ref+'">Validar</button>'
+                +'<button class="vbtn sm" style="padding:4px 10px;font-size:12px" data-invval="'+t.id+'" data-v="'+dv+'" data-d="'+t.data_ref+'" data-c="'+(t.credor||'credor_2')+'">Validar</button>'
                 +'<button class="vbtn sm" style="padding:4px 10px;font-size:12px" data-invrej="'+t.id+'" data-d="'+t.data_ref+'">Rejeitar</button>'
                 +'</span></div>'; }).join('')):'')
           /* BUILD 2026-08-24-B: historico de validacoes dentro do bloco do credor_2 */
@@ -5452,7 +5468,7 @@ const ecomFinanceiro={
             +this._invHist.map(h=>{ const ok=(h.status==='confirmado');
               const dd=s=>s?String(s).slice(8,10)+'/'+String(s).slice(5,7):'—';
               return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 13px;background:var(--epanel)">'
-                +'<span style="font-size:11.5px;color:var(--emuted)">'+dd(h.data_ref)+' · <b style="font-family:var(--emono);color:var(--etxt)">R$ '+F(+h.valor_declarado||0)+'</b></span>'
+                +'<span style="font-size:11.5px;color:var(--emuted)">'+(h.credor||'credor_2')+' · '+dd(h.data_ref)+' · <b style="font-family:var(--emono);color:var(--etxt)">R$ '+F(+h.valor_declarado||0)+'</b></span>'
                 +'<span style="font-size:11px;font-family:var(--emono);color:'+(ok?'var(--eteal)':'var(--ered)')+'">'+(ok?'validada':'rejeitada')+' '+dd(h.confirmado_em)+'</span>'
                 +'</div>'; }).join('')):'')
           +'';
@@ -5493,7 +5509,7 @@ const ecomFinanceiro={
       if(!box._capWired){ box._capWired=true; const self=this;
         box.addEventListener('click',e=>{
           const p=e.target.closest('[data-cappagar]'); if(p){ self.capPagar(p.getAttribute('data-cappagar')); return; }
-          const iv=e.target.closest('[data-invval]'); if(iv){ self.invValidar(iv.getAttribute('data-invval'), iv.getAttribute('data-v'), iv.getAttribute('data-d')); return; }
+          const iv=e.target.closest('[data-invval]'); if(iv){ self.invValidar(iv.getAttribute('data-invval'), iv.getAttribute('data-v'), iv.getAttribute('data-d'), iv.getAttribute('data-c')); return; }
           const ir=e.target.closest('[data-invrej]'); if(ir){ self.invRejeitar(ir.getAttribute('data-invrej'), ir.getAttribute('data-d')); return; }
           if(e.target.closest('[data-recupadd]')){ self.recupAdd(); return; }
           const b2=e.target.closest('[data-recupbaixar]'); if(b2){ self.recupBaixar(+b2.getAttribute('data-recupbaixar')); return; }
