@@ -1,5 +1,13 @@
 <!DOCTYPE html>
 <!-- ============================================================================
+PORTAL DO INVESTIDOR · v2.8 · 2026-08-25 (v2.7 + SALDO A AMORTIZAR · multi-credor):
+Mesmo arquivo, mesmo endereco para todos os credores — o codigo de acesso diz
+quem entrou (Edge investidor-portal v2.0). Novo bloco "Saldo a amortizar"
+aparece SO quando a Edge devolve `divida` (credor com liquidacao em saldo):
+saldo de abertura, amortizado ate hoje, saldo atual e movimentos. Rotulos
+mudam nesse modo: "Juros amortizados" no card, no extrato e no rodape. Para
+credor sem `divida` NADA muda (Dr. Igor ve a v2.7 identica). Zero mudanca de
+matematica. Base v2.7:
 PORTAL DO INVESTIDOR · v2.7 · 2026-08-24 (v2.6 + confirmacao induzida):
 Campo do Gravar ja nasce PREENCHIDO com o somatorio da reposicao pendente —
 o gesto do investidor e so confirmar (modelo de compromisso). Ajuste manual
@@ -108,6 +116,17 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
   #d-sub{display:block;margin-top:3px;font:600 12px var(--mono);color:var(--tinta)}
 
   .grade{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  /* v2.8 — saldo a amortizar (so liquidacao em saldo) */
+  #div-box{display:none;margin-top:14px}
+  #div-box .dtot{margin-top:8px}
+  #div-box .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  #div-box .dgrid div{padding:9px 11px;border:1px solid var(--linha);border-radius:8px;background:var(--painel2)}
+  #div-box .dgrid small{display:block;font:600 10px var(--corpo);letter-spacing:.14em;text-transform:uppercase;color:var(--cinza);margin-bottom:3px}
+  #div-box .dgrid b{font:600 15px var(--mono);font-variant-numeric:tabular-nums}
+  #div-box .dmov{margin-top:10px;font-size:12.5px;color:var(--cinza)}
+  #div-box .dmov div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--linha)}
+  #div-box .dmov b{font:600 12.5px var(--mono);color:var(--tinta)}
+  #div-box .dmov .am{color:var(--verde)}
   .card{border:1px solid var(--linha);border-radius:11px;background:var(--painel);padding:14px 15px}
   .card small{display:block;font:600 10.5px var(--corpo);letter-spacing:.14em;
         text-transform:uppercase;color:var(--cinza);margin-bottom:5px}
@@ -209,7 +228,17 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
       <div class="card"><small>Capital investido</small><b id="k-cap">—</b></div>
       <div class="card"><small>Próximo pagamento</small><b id="k-venc">—</b></div>
       <div class="card"><small>Previsto no pagamento</small><b class="vd" id="k-proj">—</b></div>
-      <div class="card"><small>Juros já recebidos</small><b class="vd" id="k-rec">—</b></div>
+      <div class="card"><small id="k-rec-rot">Juros já recebidos</small><b class="vd" id="k-rec">—</b></div>
+    </div>
+
+    <div class="hero" id="div-box">
+      <div class="rot">Saldo a amortizar</div>
+      <div class="dtot"><span id="dv-atual">R$ 0,00</span><span id="dv-sub"></span></div>
+      <div class="dgrid">
+        <div><small>Saldo de abertura</small><b id="dv-ini">—</b></div>
+        <div><small>Amortizado até hoje</small><b class="am" id="dv-amort" style="color:var(--verde)">—</b></div>
+      </div>
+      <div class="dmov" id="dv-mov"></div>
     </div>
 
         <h2>Extrato da conta</h2>
@@ -218,7 +247,7 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
     <footer>
       <b>Regras da conta:</b> juros de <b id="f-taxa">5%</b> ao mês, calculados por dia
       (base 30), sobre o capital do dia anterior. Aportes começam a render no dia seguinte
-      à entrada. Pagamento todo dia <b id="f-dia">20</b>. Valores calculados automaticamente
+      à entrada. <span id="f-pag">Pagamento todo dia <b id="f-dia">20</b>.</span> Valores calculados automaticamente
       a partir do registro de movimentos — nada é lançado à mão.
       <div id="f-gerado" style="margin-top:6px"></div>
       <button class="sair" id="sair">Sair desta conta</button>
@@ -269,8 +298,15 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
     $('k-venc').textContent = DATA(ci.proximo_pagamento);
     $('k-proj').textContent = 'R$ ' + BRL(ci.projecao_no_vencimento);
     $('k-rec').textContent  = 'R$ ' + BRL(c.juros_ja_recebidos);
+    // v2.8 — modo saldo: rotulos e bloco proprio; sem `divida` nada muda
+    const modoSaldo = !!dados.divida;
+    ROT.juro_pago = modoSaldo ? 'Juros amortizados' : 'Juros recebidos';
+    $('k-rec-rot').textContent = modoSaldo ? 'Juros amortizados' : 'Juros já recebidos';
+    $('f-pag').innerHTML = modoSaldo
+      ? 'Juro do ciclo fechado todo dia <b id="f-dia">' + c.dia_base + '</b> e amortizado do saldo, sem pagamento em dinheiro.'
+      : 'Pagamento todo dia <b id="f-dia">' + c.dia_base + '</b>.';
+    renderDivida(dados.divida);
     $('f-taxa').textContent = (c.taxa_mes*100).toLocaleString('pt-BR') + '%';
-    $('f-dia').textContent  = c.dia_base;
     $('f-gerado').textContent = 'Posição gerada em ' +
       new Date(dados.gerado_em).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}) + ' (horário de Brasília).';
     renderPool(dados.pool);
@@ -295,6 +331,21 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
     s = String(s||'').replace(/\s|R\$/g,'');
     if(s.includes(',')) s = s.replace(/\./g,'').replace(',','.');
     const v = parseFloat(s); return isFinite(v) && v>0 ? v : null;
+  }
+  // ---------- v2.8: saldo a amortizar ----------
+  function renderDivida(d){
+    const box = $('div-box');
+    if(!d){ box.style.display = 'none'; return; }
+    $('dv-atual').textContent = 'R$ ' + BRL(d.saldo_atual);
+    $('dv-sub').textContent = d.abertura ? 'posição desde ' + DATA(d.abertura) : '';
+    $('dv-ini').textContent = 'R$ ' + BRL((+d.saldo_inicial||0) + (+d.ajustes||0));
+    $('dv-amort').textContent = 'R$ ' + BRL(d.amortizado);
+    const movs = (d.movimentos||[]).filter(m => m.tipo !== 'saldo_inicial');
+    $('dv-mov').innerHTML = movs.length
+      ? movs.map(m => '<div><span>' + DATA(m.data) + (m.descricao ? ' · ' + m.descricao : '') + '</span>' +
+          '<b class="' + (m.tipo==='amortizacao' ? 'am' : '') + '">' + (m.tipo==='amortizacao' ? '− ' : '+ ') + 'R$ ' + BRL(m.valor) + '</b></div>').join('')
+      : '<div><span>Nenhuma amortização ainda.</span></div>';
+    box.style.display = 'block';
   }
   // ---------- pool de reposicao (doutrina v3: fila a_enviar acumula ate o aporte) --
   function renderPool(p){
