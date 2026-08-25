@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-25-F | selecta-banco-preco | CELULAR — CORRECAO DA FILA + ICONE (prints Igor 25/08 sobre 25-E): (1) CAUSA das linhas sobrepostas: o bloco de CSS celular (id mobile-css) estava no head, e os estilos do e-commerce ficam em blocos de estilo DENTRO do body — mesma especificidade, ordem posterior, venciam. Bloco movido para o FIM do body, com !important onde o template usa estilo inline. Cartao da fila em 4 andares: numero+produto / pedido-sku-data-valor / rastreio / status+semaforo+ocorrencia-ou-postado (botao a direita). (2) ICONES regenerados: emblema SS recortado do logo, realcado (brilho/contraste/saturacao) sobre navy com halo esmeralda — o wordmark inteiro sumia no icone. Mesmos nomes de arquivo (icon-192/512, apple-touch-icon); no iPhone e preciso remover e adicionar de novo para trocar o icone. Zero mudanca de logica, zero SQL. | base: 2026-08-25-E -->
 <!-- BUILD 2026-08-25-E | selecta-banco-preco | CELULAR + PWA + CORRECOES (ordem Igor 25/08): (1) CAUSA DO "\n\n \n" NO TOPO: tres carimbos BUILD antigos (24-B, 24-A->23-B, 21-E->21-D) foram colados com a sequencia literal barra-n entre o fim de um comentario e o inicio do seguinte, em vez de quebra de linha real; esse texto fica FORA de comentario, antes do DOCTYPE, e o navegador o joga no topo do body. Corrigido: quebra real nos 3 pontos. (2) PWA: manifest.json (standalone, navy #0b1220, icones 192/512 gerados do logo sobre navy), apple-touch-icon.png 180, meta theme-color + apple-mobile-web-app-*, viewport-fit=cover com safe-area no header em modo standalone, sw.js MINIMO registrado no fim do body (sem cache; so para instalabilidade). (3) CSS celular (<=640px) em <style id="mobile-css"> no head: header com nav rolavel e e-mail oculto; sub-abas do e-commerce rolaveis; fila Vendas em CARTAO (produto em linha propria, meta menor, controles em linha com alvo de toque 40px, select de ocorrencia sem min-width fixo, botao postado a direita); formulario Lancar venda empilhado; faixa Compras do dia com botao PDF em largura total. Zero mudanca de logica. (4) pdfCompra: em tela de toque, abre a folha nativa de compartilhar com o PDF anexado (navigator.share + canShare); se o usuario cancelar ou o navegador nao suportar, cai no download de sempre. (5) lucide fixado em 0.577.0 (estava @latest, que hoje resolve para 1.34.0 — major diferente do usado no desenvolvimento). Zero SQL. | base: 2026-08-25-D -->
 <!-- BUILD 2026-08-25-D | selecta-banco-preco | PDF COMPRA — MARCA ESCURA (correcao Igor 25/08 sobre 25-C: "a marca da gente e escura"): pagina inteira navy #0b1220 (mesma da UI), logo no escuro como no header do site (52x22mm), titulo ORCAMENTO claro 13pt a direita + data em teal, filete esmeralda; tabela como painel #111a2e sobre o navy, cabecalho teal em caixa alta, texto claro, separadores #1f2a40, QTD em teal negrito; rodape discreto com pagina. Fundo/cabecalho/rodape repetidos por pagina (willDrawPage, existe na autotable 3.8.0 carregada). Conteudo inalterado. Zero SQL. | base: 2026-08-25-C -->
 <!-- BUILD 2026-08-25-C | selecta-banco-preco | PDF COMPRA — LAYOUT (correcoes Igor 25/08 sobre 25-B): titulo vira "ORCAMENTO" (13pt, discreto, a direita); cabecalho em fundo branco com o logo em tamanho de cabecalho na cor padrao (verde metalico/cromado) e filete teal; linha orientativa REMOVIDA; tabela theme plain (sem zebra), cabecalho em caixa alta cinza com filete teal, linhas separadas por filete claro, QTD em negrito; rodape com "Selecta Solution" e numero de pagina; faixa/rodape repetidos em toda pagina (didDrawPage). Arquivo orcamento_compra_AAAA-MM-DD.pdf. Conteudo (descricao completa + quantidade, sem preco/total/pedido/comprador) inalterado. Zero SQL. | base: 2026-08-25-B -->
@@ -193,43 +194,6 @@
   }
 </style>
 <script src="https://unpkg.com/lucide@0.577.0/dist/umd/lucide.js"></script>
-<style id="mobile-css">
-/* BUILD 2026-08-25-E — camada celular. So layout; nenhuma regra de negocio. */
-@media (display-mode: standalone){
-  header.sticky{padding-top:env(safe-area-inset-top)}
-  body{padding-bottom:env(safe-area-inset-bottom)}
-}
-@media (max-width:640px){
-  header .max-w-screen-2xl{flex-wrap:nowrap;gap:8px;padding-left:10px;padding-right:10px}
-  header .max-w-screen-2xl > div:first-child{flex:1 1 auto;min-width:0;gap:10px;flex-wrap:nowrap}
-  header img{height:26px}
-  header nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:2px;min-width:0}
-  header nav::-webkit-scrollbar{display:none}
-  header nav .tab-btn{white-space:nowrap;padding:8px 10px;font-size:13px}
-  #user-email{display:none}
-  #tab-ecommerce{padding:10px 10px 24px}
-  #tab-ecommerce .ecom-subnav{overflow-x:auto;scrollbar-width:none;margin-bottom:12px}
-  #tab-ecommerce .ecom-subnav::-webkit-scrollbar{display:none}
-  #tab-ecommerce .ecom-subtab{padding:10px 12px;font-size:13px}
-  #tab-ecommerce .ecard{padding:12px}
-  #fn-compras-dia{font-size:14px}
-  #vd-pdf-compra{flex:1 1 100%;min-height:42px;font-size:14px}
-  /* fila Vendas: linha vira cartao */
-  #tab-ecommerce .vli{flex-wrap:wrap;gap:8px 10px;padding:12px 0;align-items:center!important}
-  #tab-ecommerce .vli .vmain{flex:1 1 100%;gap:4px 8px!important}
-  #tab-ecommerce .vli .vmain .vp{flex:1 1 calc(100% - 28px);font-size:15px;line-height:1.3}
-  #tab-ecommerce .vli .vmain .vm{font-size:11.5px;line-height:1.5}
-  #tab-ecommerce .vli .vpill{font-size:11.5px}
-  #tab-ecommerce .vli select{min-width:0!important;flex:1 1 auto;min-height:40px;font-size:14px}
-  #tab-ecommerce .vli .vbtn.sm{min-height:40px;padding:8px 14px;font-size:13.5px}
-  #tab-ecommerce .vli > div[style*="display:flex"]{margin-left:auto}
-  /* formulario Lancar venda empilhado */
-  #tab-ecommerce .vlinha .efield{width:100%!important}
-  #tab-ecommerce .vrow3{grid-template-columns:1fr}
-  #tab-ecommerce .vd-messel{flex-wrap:wrap}
-  #tab-ecommerce .vinput{min-height:42px;font-size:15px}
-}
-</style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen">
 
@@ -9444,6 +9408,47 @@ window.fiscal = (function(){
 
 </script>
 
+<style id="mobile-css">
+/* BUILD 2026-08-25-F — camada celular. Fica no FIM do body de proposito: os estilos do e-commerce vivem em <style> dentro do body
+   e venciam o bloco anterior (mesma especificidade, ordem posterior). !important onde ha estilo inline no template. So layout. */
+@media (display-mode: standalone){
+  header.sticky{padding-top:env(safe-area-inset-top)}
+  body{padding-bottom:env(safe-area-inset-bottom)}
+}
+@media (max-width:640px){
+  header .max-w-screen-2xl{flex-wrap:nowrap;gap:8px;padding-left:10px;padding-right:10px}
+  header .max-w-screen-2xl > div:first-child{flex:1 1 auto;min-width:0;gap:10px;flex-wrap:nowrap}
+  header img{height:26px}
+  header nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:2px;min-width:0}
+  header nav::-webkit-scrollbar{display:none}
+  header nav .tab-btn{white-space:nowrap;padding:8px 10px;font-size:13px}
+  #user-email{display:none}
+  #tab-ecommerce{padding:10px 10px 24px}
+  #tab-ecommerce .ecom-subnav{overflow-x:auto;scrollbar-width:none;margin-bottom:12px}
+  #tab-ecommerce .ecom-subnav::-webkit-scrollbar{display:none}
+  #tab-ecommerce .ecom-subtab{padding:10px 12px;font-size:13px}
+  #tab-ecommerce .ecard{padding:12px}
+  #fn-compras-dia{font-size:14px}
+  #vd-pdf-compra{flex:1 1 100%;min-height:42px;font-size:14px}
+  /* ---- fila Vendas: cada venda vira um cartao ----
+     andar 1: numero + produto | andar 2: pedido/sku/data/valor | andar 3: rastreio | andar 4: status + semaforo + ocorrencia/postado */
+  #tab-ecommerce .vli{display:flex!important;flex-wrap:wrap!important;gap:8px!important;padding:12px 0!important;align-items:center!important}
+  #tab-ecommerce .vli .vmain{flex:1 1 100%!important;display:flex!important;flex-wrap:wrap!important;gap:3px 8px!important;align-items:baseline!important;min-width:0!important}
+  #tab-ecommerce .vli .vmain > .vm.mono:first-child{flex:0 0 auto!important;font-size:12px!important}
+  #tab-ecommerce .vli .vmain > .vp{flex:1 1 0!important;min-width:60%!important;font-size:15.5px!important;line-height:1.3!important;margin:0!important;white-space:normal!important}
+  #tab-ecommerce .vli .vmain > .vm:not(:first-child){flex:1 1 100%!important;font-size:11.5px!important;line-height:1.55!important;white-space:normal!important;word-break:break-word}
+  #tab-ecommerce .vli .vmain > .vm[style*="inline-flex"]{display:flex!important;gap:6px!important}
+  #tab-ecommerce .vli > .vpill{flex:0 0 auto!important;font-size:11.5px!important;padding:4px 10px!important}
+  #tab-ecommerce .vli > select{flex:1 1 auto!important;min-width:0!important;width:auto!important;min-height:40px!important;font-size:14px!important;padding:6px 10px!important}
+  #tab-ecommerce .vli > div[style*="display:flex"]{margin-left:auto!important}
+  #tab-ecommerce .vli .vbtn.sm{min-height:40px!important;padding:8px 16px!important;font-size:13.5px!important}
+  /* formulario Lancar venda empilhado */
+  #tab-ecommerce .vlinha .efield{width:100%!important}
+  #tab-ecommerce .vrow3{grid-template-columns:1fr!important}
+  #tab-ecommerce .vd-messel{flex-wrap:wrap!important}
+  #tab-ecommerce .vinput{min-height:42px!important;font-size:15px!important}
+}
+</style>
 <script>/* BUILD 2026-08-25-E: instalabilidade (sem cache) */if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js",{scope:"./"}).catch(()=>{});});}</script>
 </body>
 </html>
