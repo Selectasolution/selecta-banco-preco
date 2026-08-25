@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <!-- ============================================================================
+PORTAL DO INVESTIDOR · v2.9 · 2026-08-25 (v2.8 + PRIVACIDADE DO POOL · ordem Igor 25/08):
+(1) Lista de pedidos SEM nome de produto: so numero do pedido, data e valor de custo.
+A Edge v2.1 ja nao envia `produto` no GET (o dado nao sai do servidor; o front
+nao renderiza mesmo que venha). (2) Caixa "Saldo a amortizar" mostra SO o valor,
+24px mono teal, sem legenda de data (print Igor 25/08). Base v2.8:
 PORTAL DO INVESTIDOR · v2.8 · 2026-08-25 (v2.7 + SALDO A AMORTIZAR · multi-credor):
 Mesmo arquivo, mesmo endereco para todos os credores — o codigo de acesso diz
 quem entrou (Edge investidor-portal v2.0). Novo bloco "Saldo a amortizar"
@@ -119,6 +124,7 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
   /* v2.8 — saldo a amortizar (so liquidacao em saldo) */
   #div-box{display:none;margin-top:14px}
   #div-box .dtot{margin-top:8px}
+  #dv-atual{display:block;font:700 24px/1.15 var(--mono);color:var(--verde);font-variant-numeric:tabular-nums}
   #div-box .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
   #div-box .dgrid div{padding:9px 11px;border:1px solid var(--linha);border-radius:8px;background:var(--painel2)}
   #div-box .dgrid small{display:block;font:600 10px var(--corpo);letter-spacing:.14em;text-transform:uppercase;color:var(--cinza);margin-bottom:3px}
@@ -233,7 +239,7 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
 
     <div class="hero" id="div-box">
       <div class="rot">Saldo a amortizar</div>
-      <div class="dtot"><span id="dv-atual">R$ 0,00</span><span id="dv-sub"></span></div>
+      <div class="dtot"><span id="dv-atual">R$ 0,00</span></div>
       <div class="dgrid">
         <div><small>Saldo de abertura</small><b id="dv-ini">—</b></div>
         <div><small>Amortizado até hoje</small><b class="am" id="dv-amort" style="color:var(--verde)">—</b></div>
@@ -337,7 +343,6 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
     const box = $('div-box');
     if(!d){ box.style.display = 'none'; return; }
     $('dv-atual').textContent = 'R$ ' + BRL(d.saldo_atual);
-    $('dv-sub').textContent = d.abertura ? 'posição desde ' + DATA(d.abertura) : '';
     $('dv-ini').textContent = 'R$ ' + BRL((+d.saldo_inicial||0) + (+d.ajustes||0));
     $('dv-amort').textContent = 'R$ ' + BRL(d.amortizado);
     const movs = (d.movimentos||[]).filter(m => m.tipo !== 'saldo_inicial');
@@ -370,8 +375,8 @@ dia seguinte. Sem contador animado (removido por ordem 24/08): todo valor exibid
     $('d-sub').textContent = '· ' + p.pedidos.length + ' pedido' + (p.pedidos.length===1?'':'s') +
       (p.sem_custo>0 ? ' · *'+p.sem_custo+' sem custo no sistema' : '');
     $('d-peds').innerHTML = p.pedidos.map(x =>
-      '<div class="ped"><div><div class="p">'+x.produto+'</div>' +
-      '<div class="i">#'+x.pedido+' · '+DATA(x.data)+'</div></div>' +
+      '<div class="ped"><div><div class="p">Pedido #'+x.pedido+'</div>' +
+      '<div class="i">'+DATA(x.data)+'</div></div>' +
       '<div class="i"><b style="color:var(--verde)">R$ '+BRL(x.valor)+'</b></div></div>').join('');
     $('d-lbl').style.display = 'block';
     $('d-v').parentElement.style.display = 'flex';
