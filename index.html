@@ -1,3 +1,6 @@
+<!-- BUILD 2026-08-25-D | selecta-banco-preco | PDF COMPRA — MARCA ESCURA (correcao Igor 25/08 sobre 25-C: "a marca da gente e escura"): pagina inteira navy #0b1220 (mesma da UI), logo no escuro como no header do site (52x22mm), titulo ORCAMENTO claro 13pt a direita + data em teal, filete esmeralda; tabela como painel #111a2e sobre o navy, cabecalho teal em caixa alta, texto claro, separadores #1f2a40, QTD em teal negrito; rodape discreto com pagina. Fundo/cabecalho/rodape repetidos por pagina (willDrawPage, existe na autotable 3.8.0 carregada). Conteudo inalterado. Zero SQL. | base: 2026-08-25-C -->
+<!-- BUILD 2026-08-25-C | selecta-banco-preco | PDF COMPRA — LAYOUT (correcoes Igor 25/08 sobre 25-B): titulo vira "ORCAMENTO" (13pt, discreto, a direita); cabecalho em fundo branco com o logo em tamanho de cabecalho na cor padrao (verde metalico/cromado) e filete teal; linha orientativa REMOVIDA; tabela theme plain (sem zebra), cabecalho em caixa alta cinza com filete teal, linhas separadas por filete claro, QTD em negrito; rodape com "Selecta Solution" e numero de pagina; faixa/rodape repetidos em toda pagina (didDrawPage). Arquivo orcamento_compra_AAAA-MM-DD.pdf. Conteudo (descricao completa + quantidade, sem preco/total/pedido/comprador) inalterado. Zero SQL. | base: 2026-08-25-B -->
+<!-- BUILD 2026-08-25-B | selecta-banco-preco | PDF COMPRA NO PADRAO DA EMPRESA (correcoes Igor 25/08 sobre 25-A): (1) botao #vd-pdf-compra sai do cabecalho de Lancadas e passa para a FAIXA "Compras do dia" (ecard vira flex, botao a direita; fn-compras-dia intocado); (2) PDF segue o padrao do ORCAMENTO: logo selecta-solution-logo.png (fetch same-origin -> dataURL, cache em _logoB64; se falhar, PDF sai sem logo), titulo LISTA DE COMPRA, linha verde, data, tabela #/Descricao/Qtd, rodape "Solicitado via SELECTA"; (3) DESCRICAO COMPLETA: pdfCompra busca ecom_produtos (codigo,produto,interface,marca,modelo,capacidade) para os codigos da fila e monta o nome canonico [produto interface marca modelo capacidade] (mesma regra do catNome); fallback [produto marca modelo] da propria venda; SEM_CADASTRO usa o titulo ML; (4) load() da fila passa a selecionar marca,modelo (colunas ja gravadas pela ml-orders); (5) linha de total REMOVIDA. Sem preco, sem pedido, sem comprador. Zero SQL. | base: 2026-08-25-A -->
 <!-- BUILD 2026-08-25-A | selecta-banco-preco | LISTA DE COMPRA EM PDF (ordem Igor 25/08): na aba Vendas, cabecalho da fila Lancadas ganha botao "PDF compra" (#vd-pdf-compra). Gera PDF para o FORNECEDOR com SOMENTE descricao + quantidade dos itens ainda A_ENVIAR (sem ocorrencia), agrupados por produto (chave produto_codigo||produto) com soma de quantidade. SEM preco, SEM pedido, SEM comprador. Fonte: this.itens ja carregado pelo load() (zero fetch novo, zero SQL). jsPDF+autoTable ja presentes. Arquivo lista-compra-AAAA-MM-DD.pdf. Enviado nao entra (ja postado = ja comprado). Zero mudanca de matematica. | base: 2026-08-24-B -->
 <!-- BUILD 2026-08-24-B | selecta-banco-preco | HISTORICO DE VALIDACOES (ordem Igor 24/08): dentro do bloco INVESTIDORES, apos "a validar", secao "HISTORICO · validacoes do investidor" — ultimas 8 transferencias confirmadas/rejeitadas (data · valor · veredito com data do carimbo; validada=teal, rejeitada=vermelho). Fonte: fetch adicional em ecom_inv_funding status in (confirmado,rejeitado) order confirmado_em desc limit 8 (this._invHist). Zero mudanca de matematica. | base: 2026-08-24-A (mesma sessao) -->\n<!-- BUILD 2026-08-24-A | selecta-banco-preco | VALIDACAO DAS TRANSFERENCIAS DO INVESTIDOR (GO Igor 24/08): bloco "TRANSFERENCIAS DO INVESTIDOR · a validar" dentro de INVESTIDORES no Termometro — lista ecom_inv_funding status=declarado (data · valor declarado · valor sistema · flag divergente · flag editado) com botoes Validar (confirm -> INSERT aporte credor_2 no ledger data hoje descricao "Aporte confirmado — transferencia de <data> (portal)" -> UPDATE status=confirmado; se o UPDATE falhar apos o INSERT, alerta manda marcar via SQL antes de revalidar) e Rejeitar (confirm -> status=rejeitado; dia REABRE no portal; nada se apaga). Delegacao padrao da casa (data-invval/data-invrej no listener existente). Fonte: fetch adicional em ecom_inv_funding no load (this._invFunding; cache _fonteCache anulado apos acao). Zero mudanca em calcMes/matematica. Companheiros: Edge investidor-portal v1.5 + portal v2.5. | base: 2026-08-23-B (arquivo de producao conferido na sessao 24/08) -->\n<!-- BUILD 2026-08-23-B | selecta-banco-preco | HOTFIX PARSE: SyntaxError 'pend' has already been declared (linha 5316) DERRUBAVA O SCRIPT INTEIRO no load — app abria mas nenhuma chamada ao banco saía ("o banco não entrou", Igor 23/08 noite). CAUSA: merge do 23-A manteve a linha legada `const pend=n-nF` alem da nova `const pend=c.nPend` (motor) no MESMO escopo de termometro(). CONSERTO: linha legada removida; pend do motor (c.nPend) e a fonte unica do aviso de margens pendentes (nPend===n-nF por construcao do calcMes — zero mudanca de valor). Nenhuma outra alteracao; diff = 1 linha. Licao p/ processo: node --check passou nos 2 scripts em 23-A porque a checagem rodou ANTES da montagem final do arquivo — nova regra: checar sintaxe NO ARQUIVO ENTREGUE, nunca no fragmento. | base: 2026-08-23-A -->
 <!-- BUILD 2026-08-23-A | selecta-banco-preco | NUCLEO FINANCEIRO UNICO (doutrina Igor 22-23/08: "a matematica pesada acontece SO no Termometro; Painel e Por mes apenas refletem"): (1) ecomFinanceiro ganha o MOTOR — FIXOS (imposto 4%, colchao 6%, fixos 3.050, taxas/dia-base dos credores: mudam por SQL/BUILD, tela so simula), fonte() (UMA leitura do banco p/ todas as superficies, cache 4s anti-fetch-duplo, force apos gravacao), calcMes(d,mkey) (balancete puro de um mes: receitas, taxas, custo, imposto, juros, despesas op, perdas por tipo, colchao, lucro operacional, LUCRO REAL, margem) e capitalBase(d). (2) CAUSA do Painel!=Termometro (3a reincidencia) ERA colchao_valor FORA do SELECT do Relatorios — colP somava 0. Morta POR CONSTRUCAO: Painel nao calcula mais nada, consome o objeto do nucleo (agg() e capital() locais REMOVIDOS; jurosP/despP/colP duplicados REMOVIDOS). (3) POR MES = espelho: calcMes por mes; coluna Lucro vira LUCRO REAL (liquido de perdas+juros+despOp, +colchao — mesma linha grande do Termometro); Faturado INTEGRAL preservado (21-F); TOTAL na mesma regua; junho segue listado (registro, sem relevancia — Igor). (4) JUROS por competencia: lancamento do ledger no mes VENCE; sem lancamento e dia-base vencido, saldo x taxa entra em QUALQUER mes — desde que o credor exista no ledger ate o fim do mes (mes pre-ledger nao e inventado; julho carece de lancamento manual retroativo, valor so o Igor tem). (5) Corte de mes UNIFICADO em UTC (era local no Termometro x UTC no Painel — divergiam na virada); receita com fallback preco x qtd UNIFICADA. (6) Degradacao VISIVEL: falha de leitura de ledger/despesas/recuperavel imprime aviso ambar no Termometro (antes: zero silencioso). Zero SQL; ids e wiring intactos. | base: 2026-08-22-A -->
@@ -1898,8 +1901,9 @@
     <!-- ===== SUBPASTA: VENDAS ===== -->
     <div id="ecom-sub-vendas" class="ecom-subpanel" style="display:none">
       <!-- BUILD 2026-08-21-D: Compras do dia + Pedidos a fechar migraram do Painel (Igor 21/08) — o quadro de fechamento (fn-form) mora no fn-list; a fila lista mas nao fecha margem, por isso o bloco veio junto em vez de morrer -->
-      <div class="ecard" style="margin-bottom:14px;padding:12px 16px">
-        <div id="fn-compras-dia" style="font-size:15px"><span class="ph">carregando…</span></div>
+      <div class="ecard" style="margin-bottom:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><!-- BUILD 2026-08-25-B: faixa vira flex para abrigar o botao de PDF -->
+        <div id="fn-compras-dia" style="font-size:15px;flex:1;min-width:0"><span class="ph">carregando…</span></div>
+        <button class="vbtn sm" id="vd-pdf-compra" title="PDF para o fornecedor: descrição completa + quantidade dos itens a enviar (sem preço)">📄 PDF compra</button>
       </div>
       <div class="ecard" style="margin-bottom:14px">
         <h3>Pedidos a fechar</h3>
@@ -1963,7 +1967,6 @@
           <span class="vd-mes" id="vd-mes-label" style="display:none">—</span>
           <button id="vd-mes-next" title="mês seguinte" style="display:none">▶</button>
           <span class="vd-mestot" id="vd-mes-tot"></span>
-          <button class="vbtn sm" id="vd-pdf-compra" title="PDF para o fornecedor: descrição + quantidade dos itens a enviar (sem preço)">📄 PDF compra</button><!-- BUILD 2026-08-25-A -->
         </div>
         <div id="vd-list"><div class="ph">carregando…</div></div>
       </div>
@@ -4956,7 +4959,7 @@ const ecomVendas={
   // Cancelado/perda: consultaveis na Consulta gerencial (Relatorios > Historico).
   async load(){ const box=this._g('vd-list');
     try{ const r=await sb.from('ecom_vendas')
-        .select('id,ml_pedido_id,produto,produto_codigo,preco_venda,quantidade,status,data_solicitacao,prazo_postagem,envio_substatus,envio_atualizado_em,codigo_rastreio,ocorrencia,ocorrencia_em,custo_total,taxas_ml_total,prejuizo_valor')
+        .select('id,ml_pedido_id,produto,marca,modelo,produto_codigo,preco_venda,quantidade,status,data_solicitacao,prazo_postagem,envio_substatus,envio_atualizado_em,codigo_rastreio,ocorrencia,ocorrencia_em,custo_total,taxas_ml_total,prejuizo_valor')
         .in('status',['a_enviar','enviado'])
         .order('data_solicitacao',{ascending:false});
       if(r.error) throw r.error;
@@ -5044,28 +5047,50 @@ const ecomVendas={
         +'</div><span class="vpill '+st[0]+'">'+st[1]+'</span>'+sem+selOc+btnPost+'</div></div>';
     }).join('');
   },
-  // BUILD 2026-08-25-A: LISTA DE COMPRA para o fornecedor — so descricao + quantidade dos itens A_ENVIAR (sem ocorrencia).
-  // Le this.itens (ja carregado). Agrupa por produto_codigo||produto e soma quantidade. Sem preco, sem pedido, sem comprador.
-  pdfCompra(){
+  // BUILD 2026-08-25-B: LISTA DE COMPRA para o fornecedor, no padrao do ORCAMENTO (logo, titulo, linha verde, data, tabela, rodape).
+  // Itens A_ENVIAR sem ocorrencia, descricao COMPLETA (nome canonico do catalogo), agrupados por produto com soma de quantidade.
+  // Sem preco, sem pedido, sem comprador, sem total. Zero SQL: uma leitura em ecom_produtos + fetch same-origin do logo.
+  _logoB64:null,
+  async _logo(){ if(this._logoB64!==null) return this._logoB64||null;
+    try{ const r=await fetch('selecta-solution-logo.png'); if(!r.ok) throw new Error(r.status); const b=await r.blob();
+      this._logoB64=await new Promise((ok,ko)=>{ const fr=new FileReader(); fr.onload=()=>ok(fr.result); fr.onerror=ko; fr.readAsDataURL(b); });
+    }catch(e){ this._logoB64=''; }
+    return this._logoB64||null;
+  },
+  async pdfCompra(){
     if(!window.jspdf||!window.jspdf.jsPDF||typeof (new window.jspdf.jsPDF()).autoTable!=='function'){ alert('Biblioteca de PDF ainda carregando. Tente novamente em alguns segundos.'); return; }
     const base=(this.itens||[]).filter(v=>v.status==='a_enviar'&&!v.ocorrencia);
     if(!base.length){ alert('Nenhum item a enviar na fila \u2014 nada a comprar.'); return; }
+    // descricao completa: nome canonico do catalogo (mesma regra do catNome); fallback = campos da propria venda; SEM_CADASTRO = titulo ML
+    const cat={}; const cods=[...new Set(base.map(v=>v.produto_codigo).filter(Boolean))];
+    if(cods.length){ try{ const r=await sb.from('ecom_produtos').select('codigo,produto,interface,marca,modelo,capacidade').in('codigo',cods);
+      if(!r.error) (r.data||[]).forEach(p=>{ if(p.codigo) cat[p.codigo]=[p.produto,p.interface,p.marca,p.modelo,p.capacidade].filter(Boolean).join(' '); }); }catch(e){} }
+    const nome=v=>(v.produto_codigo&&cat[v.produto_codigo])||[v.produto,v.marca,v.modelo].filter(Boolean).join(' ')||'(sem descri\u00e7\u00e3o)';
     const g=new Map();
     base.forEach(v=>{ const k=(v.produto_codigo||'')+'|'+(v.produto||''); const q=Math.max(1,Math.round(+v.quantidade||1));
-      if(!g.has(k)) g.set(k,{desc:v.produto||'(sem descri\u00e7\u00e3o)',qtd:0,ped:0}); const o=g.get(k); o.qtd+=q; o.ped+=1; });
+      if(!g.has(k)) g.set(k,{desc:nome(v),qtd:0}); g.get(k).qtd+=q; });
     const rows=[...g.values()].sort((a,b)=>a.desc.localeCompare(b.desc,'pt-BR'));
-    const unid=rows.reduce((s,r)=>s+r.qtd,0);
     const hoje=new Date(); const dataPT=hoje.toLocaleDateString('pt-BR'); const dataFile=hoje.toISOString().slice(0,10);
-    const { jsPDF }=window.jspdf; const doc=new jsPDF();
-    doc.setFontSize(15); doc.text('Selecta Solution \u00b7 Lista de compra',14,16);
-    doc.setFontSize(10); doc.setTextColor(90); doc.text('Emitida em '+dataPT+' \u00b7 '+rows.length+(rows.length===1?' item':' itens')+' \u00b7 '+unid+' unidade'+(unid===1?'':'s'),14,23);
-    doc.setTextColor(0);
-    doc.autoTable({startY:29,head:[['#','Descri\u00e7\u00e3o','Qtd']],body:rows.map((r,i)=>[String(i+1),r.desc,String(r.qtd)]),
-      theme:'striped',headStyles:{fillColor:[16,185,129]},styles:{fontSize:10,cellPadding:3},
-      columnStyles:{0:{cellWidth:10,halign:'right'},2:{cellWidth:18,halign:'right',fontStyle:'bold'}}});
-    const y=(doc.lastAutoTable&&doc.lastAutoTable.finalY?doc.lastAutoTable.finalY:29)+8;
-    doc.setFontSize(9); doc.setTextColor(120); doc.text('Total: '+unid+' unidade'+(unid===1?'':'s')+' em '+rows.length+(rows.length===1?' item':' itens')+'.',14,y);
-    doc.save('lista-compra-'+dataFile+'.pdf');
+    const { jsPDF }=window.jspdf; const doc=new jsPDF(); const W=doc.internal.pageSize.width, H=doc.internal.pageSize.height;
+    // BUILD 2026-08-25-D: documento ESCURO, identico ao app — pagina navy #0b1220, painel #111a2e, texto claro, acentos esmeralda/teal, logo no escuro como no header do site
+    const NAVY=[11,18,32], PANEL=[17,26,46], LINE=[31,42,64], TXT=[232,236,243], MUTED=[136,148,168], TEAL=[45,212,191], EMER=[16,185,129];
+    const fundo=()=>{ doc.setFillColor(...NAVY); doc.rect(0,0,W,H,'F');
+      const logo=this._logoB64||null; if(logo){ try{ doc.addImage(logo,'PNG',14,9,52,22); }catch(e){} }
+      doc.setTextColor(...TXT); doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text('OR\u00c7AMENTO',W-14,18,{align:'right'});
+      doc.setTextColor(...TEAL); doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.text(dataPT,W-14,24,{align:'right'});
+      doc.setDrawColor(...EMER); doc.setLineWidth(0.8); doc.line(14,36,W-14,36);
+      doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(14,H-14,W-14,H-14);
+      doc.setFontSize(8); doc.setTextColor(...MUTED); doc.text('Selecta Solution',14,H-9); doc.text('p\u00e1gina '+doc.internal.getNumberOfPages(),W-14,H-9,{align:'right'}); };
+    await this._logo(); fundo();
+    doc.autoTable({startY:44,head:[['#','DESCRI\u00c7\u00c3O','QTD']],body:rows.map((r,i)=>[String(i+1),r.desc,String(r.qtd)]),
+      theme:'plain',margin:{top:44,left:14,right:14,bottom:20},
+      styles:{font:'helvetica',fontSize:10.5,cellPadding:{top:3.8,bottom:3.8,left:3,right:3},textColor:TXT,fillColor:PANEL,overflow:'linebreak'},
+      headStyles:{fontSize:8,fontStyle:'bold',textColor:TEAL,fillColor:NAVY,cellPadding:{top:2,bottom:2.5,left:3,right:3}},
+      columnStyles:{0:{cellWidth:12,halign:'center',textColor:MUTED},1:{cellWidth:'auto'},2:{cellWidth:20,halign:'center',fontStyle:'bold',fontSize:11.5,textColor:TEAL}},
+      willDrawPage:d=>{ if(d.pageNumber>1) fundo(); },
+      // separador desenhado na ULTIMA coluna, no TOPO da linha (as celulas ja estao pintadas; desenhar embaixo seria coberto pelo painel da linha seguinte)
+      didDrawCell:d=>{ if(d.column.index!==2||d.section!=='body'||d.row.index===0) return; const y=d.cell.y; doc.setDrawColor(...LINE); doc.setLineWidth(0.25); doc.line(14,y,W-14,y); }});
+    doc.save('orcamento_compra_'+dataFile+'.pdf');
   },
   // "postado" abre confirmação inline: data/hora da postagem (prefill agora) — confirmar PARA o cronômetro
   openPostar(id){
