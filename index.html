@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-25-I | selecta-banco-preco | CONTROLE DE ANUNCIOS (Alexia): SO HISTORICO, E ELE ACUSA A DIVERGENCIA APP x ML (Igor 25/08, sobre 25-H): (1) botao/caixa "Sugestao" REMOVIDOS do cartao do anuncio — toggleSug fica no codigo mas nada mais o chama. (2) "Historico (N)" vira o unico link, maior (13px, negrito): VERMELHO quando o preco publicado no ML (ultimo snapshot ecom_mercado_snapshot) difere do registrado no app (ecom_anuncios.preco), com a mensagem "publicado R$ X / app R$ Y" ao lado; VERDE quando confere; neutro quando nao ha snapshot ou preco. (3) dentro do historico aberto, faixa no topo com a mesma leitura (vermelha/verde, com data do snapshot); linhas do historico maiores (12.5px) para leitura. (4) _autoSugestaoDivergencia DESLIGADA: a divergencia deixa de gerar sugestao automatica em ecom_resultado_anuncio (o historico ja informa). Nada muda na Analise Comercial (Igor) — proximo passo. Base: 2026-08-25-H -->
 <!-- BUILD 2026-08-25-H | selecta-banco-preco | PEDIDOS A FECHAR: SKU + DESCRICAO DE COMPRA · COMPRAS DO DIA: LUCRO PREVISTO (Igor 25/08, sobre 25-G): (1) fila "Pedidos a fechar" (fn-list) mostra o SKU (produto_codigo) ao lado do MLB e uma 3a linha "compra: <descricao canonica do catalogo>" — mesma regra do PDF compra (ecom_produtos: produto+interface+marca+modelo+capacidade; fallback campos da venda); sem SKU = aviso ambar. (2) faixa "Compras do dia" ganha "lucro previsto R$ X" = soma do LUCRO REAL de cada pedido a_enviar pela MESMA formula do quadro de fechamento (receita - taxas ML - custo - colchao 6% - imposto 4%); pedidos sem comissao ou custo NAO entram na soma e sao contados como "sem fechamento". load() agora aguarda comprasDia() antes de loadList() (a soma e anexada a faixa). Base: 2026-08-25-G -->
 <!-- BUILD 2026-08-25-G | selecta-banco-preco | CREDOR_3 + MULTI-CREDOR NO FUNDING (decisoes Igor 25/08 sobre 25-F): (1) FIXOS: credor_3 = 5% a.m., dia-base 30, LIQUIDACAO em SALDO (juro do ciclo nao sai do caixa: amortiza o saldo a amortizar do credor). (2) capPagar: para credor com LIQUIDACAO saldo chama ecom_fn_liquidar_juro_saldo (RPC) = juro_pago no ledger + amortizacao em ecom_credor_saldo_mov, UMA transacao; demais credores inalterados. (3) invValidar recebe o credor da linha (ecom_inv_funding.credor) — acaba o credor_2 fixo; confirm mostra o credor; lista "a validar" e historico exibem o credor. (4) Termometro: linha do credor_3 mostra "amortiza saldo"; bloco SALDO A AMORTIZAR (view ecom_vw_credor_saldo) aparece para credor com liquidacao saldo mesmo antes do 1o aporte; aviso de capitalizacao cita c3 dia 30. Requer 04-credor3-saldo.sql + Edge investidor-portal v2.0. Matematica do nucleo INTOCADA (juro_pago continua = juro liquidado, entra como custo do mes por competencia). Base: 2026-08-25-F -->
 <!-- BUILD 2026-08-25-F | selecta-banco-preco | CELULAR — CORRECAO DA FILA + ICONE (prints Igor 25/08 sobre 25-E): (1) CAUSA das linhas sobrepostas: o bloco de CSS celular (id mobile-css) estava no head, e os estilos do e-commerce ficam em blocos de estilo DENTRO do body — mesma especificidade, ordem posterior, venciam. Bloco movido para o FIM do body, com !important onde o template usa estilo inline. Cartao da fila em 4 andares: numero+produto / pedido-sku-data-valor / rastreio / status+semaforo+ocorrencia-ou-postado (botao a direita). (2) ICONES regenerados: emblema SS recortado do logo, realcado (brilho/contraste/saturacao) sobre navy com halo esmeralda — o wordmark inteiro sumia no icone. Mesmos nomes de arquivo (icon-192/512, apple-touch-icon); no iPhone e preciso remover e adicionar de novo para trocar o icone. Zero mudanca de logica, zero SQL. | base: 2026-08-25-E -->
@@ -722,6 +723,18 @@
     #tab-catalogo .al-sug:hover{filter:brightness(1.15)}
     #tab-catalogo .al-histlink{background:none;border:0;color:var(--emuted2);font-size:11.5px;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit}
     #tab-catalogo .al-histlink:hover{color:var(--etxt)}
+    /* BUILD 2026-08-25-I: historico e o unico link; cor = leitura rapida app x ML */
+#tab-catalogo .al-histlink{font-size:13px;font-weight:700;color:var(--etxt)}
+#tab-catalogo .al-histlink.ok{color:var(--eemerald)}
+#tab-catalogo .al-histlink.div{color:#f87171}
+#tab-catalogo .al-histnote{font-size:12px;margin-left:8px;font-family:var(--emono);font-variant-numeric:tabular-nums}
+#tab-catalogo .al-histnote.ok{color:var(--eemerald)}
+#tab-catalogo .al-histnote.div{color:#f87171;font-weight:600}
+#tab-catalogo .al-histbanner{padding:8px 12px;border-radius:7px;margin-bottom:8px;font-size:13px;font-weight:600}
+#tab-catalogo .al-histbanner.ok{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
+#tab-catalogo .al-histbanner.div{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.4)}
+#tab-catalogo .al-histbanner.na{background:rgba(138,153,180,.10);color:var(--emuted);border:1px solid var(--eborder);font-weight:500}
+#tab-catalogo .al-histbanner b{font-family:var(--emono);font-variant-numeric:tabular-nums}
     #tab-catalogo .al-sugbox{background:var(--epanel2);border:1px solid var(--eborder);border-left-width:4px;border-radius:8px;padding:10px 14px;position:relative}
     #tab-catalogo .al-sugbox.o{border-left-color:#6ee7b7;background:linear-gradient(90deg,rgba(16,185,129,.08),var(--epanel2) 30%)}
     #tab-catalogo .al-sugbox.a{border-left-color:#fcd34d;background:linear-gradient(90deg,rgba(245,158,11,.08),var(--epanel2) 30%)}
@@ -731,16 +744,16 @@
     #tab-catalogo .al-sugh{font-size:13.5px;color:var(--etxt);margin-bottom:6px;font-weight:600}
     #tab-catalogo .al-sugp{font-size:13px;color:var(--etxt);line-height:1.6}
     #tab-catalogo .al-sugmeta{font-size:10px;color:var(--emuted2);margin-top:8px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
-    #tab-catalogo .al-histli{display:flex;gap:10px;align-items:center;font-size:11px;padding:5px 0;border-top:1px solid var(--eborder)}
+    #tab-catalogo .al-histli{display:flex;gap:10px;align-items:center;font-size:12.5px;padding:7px 0;border-top:1px solid var(--eborder)}
     #tab-catalogo .al-histli:first-of-type{border-top:0}
-    #tab-catalogo .al-histdt{color:var(--emuted2);font-family:var(--emono);font-variant-numeric:tabular-nums;min-width:80px;font-size:10.5px}
+    #tab-catalogo .al-histdt{color:var(--emuted);font-family:var(--emono);font-variant-numeric:tabular-nums;min-width:96px;font-size:12px}
     #tab-catalogo .al-histtag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.02em}
     #tab-catalogo .al-histtag.o{background:rgba(16,185,129,.15);color:#6ee7b7}
     #tab-catalogo .al-histtag.a{background:rgba(245,158,11,.15);color:#fcd34d}
     #tab-catalogo .al-histtag.c{background:rgba(239,68,68,.15);color:#fca5a5}
     #tab-catalogo .al-histtag.n{background:rgba(138,153,180,.15);color:var(--emuted2)}
     #tab-catalogo .al-histtag.b{background:rgba(56,189,248,.15);color:#7dd3fc}
-    #tab-catalogo .al-histmeta{color:var(--emuted2);font-size:10.5px;flex:1}
+    #tab-catalogo .al-histmeta{color:var(--etxt);font-size:12.5px;flex:1}
     #tab-catalogo .al-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;margin:0 -14px 10px;background:rgba(16,185,129,.07);border-radius:10px;flex-wrap:wrap}
     #tab-catalogo .al-header-l{display:flex;flex-direction:row;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
     #tab-catalogo .al-htitle{font-size:13px;font-weight:800;color:#06231a;margin:0;padding:8px 14px;border-radius:9px;background:linear-gradient(135deg,var(--eemerald),var(--eteal));letter-spacing:-.01em;text-transform:none;box-shadow:0 3px 10px -4px rgba(16,185,129,.35)}
@@ -1819,6 +1832,18 @@
     #tab-ecommerce .al-sug:hover{filter:brightness(1.15)}
     #tab-ecommerce .al-histlink{background:none;border:0;color:var(--emuted2);font-size:11.5px;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit}
     #tab-ecommerce .al-histlink:hover{color:var(--etxt)}
+    /* BUILD 2026-08-25-I: historico e o unico link; cor = leitura rapida app x ML */
+#tab-ecommerce .al-histlink{font-size:13px;font-weight:700;color:var(--etxt)}
+#tab-ecommerce .al-histlink.ok{color:var(--eemerald)}
+#tab-ecommerce .al-histlink.div{color:#f87171}
+#tab-ecommerce .al-histnote{font-size:12px;margin-left:8px;font-family:var(--emono);font-variant-numeric:tabular-nums}
+#tab-ecommerce .al-histnote.ok{color:var(--eemerald)}
+#tab-ecommerce .al-histnote.div{color:#f87171;font-weight:600}
+#tab-ecommerce .al-histbanner{padding:8px 12px;border-radius:7px;margin-bottom:8px;font-size:13px;font-weight:600}
+#tab-ecommerce .al-histbanner.ok{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
+#tab-ecommerce .al-histbanner.div{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.4)}
+#tab-ecommerce .al-histbanner.na{background:rgba(138,153,180,.10);color:var(--emuted);border:1px solid var(--eborder);font-weight:500}
+#tab-ecommerce .al-histbanner b{font-family:var(--emono);font-variant-numeric:tabular-nums}
     #tab-ecommerce .al-sugbox{background:var(--epanel2);border:1px solid var(--eborder);border-left-width:4px;border-radius:8px;padding:10px 14px;position:relative}
     #tab-ecommerce .al-sugbox.o{border-left-color:#6ee7b7;background:linear-gradient(90deg,rgba(16,185,129,.08),var(--epanel2) 30%)}
     #tab-ecommerce .al-sugbox.a{border-left-color:#fcd34d;background:linear-gradient(90deg,rgba(245,158,11,.08),var(--epanel2) 30%)}
@@ -1828,16 +1853,16 @@
     #tab-ecommerce .al-sugh{font-size:13.5px;color:var(--etxt);margin-bottom:6px;font-weight:600}
     #tab-ecommerce .al-sugp{font-size:13px;color:var(--etxt);line-height:1.6}
     #tab-ecommerce .al-sugmeta{font-size:10px;color:var(--emuted2);margin-top:8px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
-    #tab-ecommerce .al-histli{display:flex;gap:10px;align-items:center;font-size:11px;padding:5px 0;border-top:1px solid var(--eborder)}
+    #tab-ecommerce .al-histli{display:flex;gap:10px;align-items:center;font-size:12.5px;padding:7px 0;border-top:1px solid var(--eborder)}
     #tab-ecommerce .al-histli:first-of-type{border-top:0}
-    #tab-ecommerce .al-histdt{color:var(--emuted2);font-family:var(--emono);font-variant-numeric:tabular-nums;min-width:80px;font-size:10.5px}
+    #tab-ecommerce .al-histdt{color:var(--emuted);font-family:var(--emono);font-variant-numeric:tabular-nums;min-width:96px;font-size:12px}
     #tab-ecommerce .al-histtag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.02em}
     #tab-ecommerce .al-histtag.o{background:rgba(16,185,129,.15);color:#6ee7b7}
     #tab-ecommerce .al-histtag.a{background:rgba(245,158,11,.15);color:#fcd34d}
     #tab-ecommerce .al-histtag.c{background:rgba(239,68,68,.15);color:#fca5a5}
     #tab-ecommerce .al-histtag.n{background:rgba(138,153,180,.15);color:var(--emuted2)}
     #tab-ecommerce .al-histtag.b{background:rgba(56,189,248,.15);color:#7dd3fc}
-    #tab-ecommerce .al-histmeta{color:var(--emuted2);font-size:10.5px;flex:1}
+    #tab-ecommerce .al-histmeta{color:var(--etxt);font-size:12.5px;flex:1}
     #tab-ecommerce .al-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;margin:0 -14px 10px;background:rgba(16,185,129,.07);border-radius:10px;flex-wrap:wrap}
     #tab-ecommerce .al-header-l{display:flex;flex-direction:row;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
     #tab-ecommerce .al-htitle{font-size:13px;font-weight:800;color:#06231a;margin:0;padding:8px 14px;border-radius:9px;background:linear-gradient(135deg,var(--eemerald),var(--eteal));letter-spacing:-.01em;text-transform:none;box-shadow:0 3px 10px -4px rgba(16,185,129,.35)}
@@ -2171,7 +2196,7 @@
           </div>
           <div style="display:flex;align-items:center;gap:8px">
             <span id="al-anuncios-count" class="al-hcount"></span>
-            <button class="vbtn sm" id="al-anuncios-refresh" title="Puxar as últimas alterações da Alexia e atualizar as sugestões (azul = ação registrada após a estratégia)">🔄 Atualizar</button>
+            <button class="vbtn sm" id="al-anuncios-refresh" title="Puxar as últimas alterações da Alexia e reler o preço publicado no ML (histórico vermelho = diverge do app; verde = confere)">🔄 Atualizar</button>
           </div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin:4px 0 12px;flex-wrap:wrap">
@@ -5758,6 +5783,7 @@ const ecomAlvo={
   // para a Alexia (histórico datado no Controle) com DE-DUP: se a última sugestão do MLB já é a mesma
   // (mesma ação + mesmo preço publicado), NÃO grava de novo — evita histórico inútil.
   async _autoSugestaoDivergencia(){
+    return; // BUILD 2026-08-25-I: DESLIGADA (Igor 25/08) — a divergencia app x ML e lida pelo Historico (vermelho/verde); nao grava mais sugestao automatica
     try{
       if(!(this.loteAtualMlbs instanceof Set)) return; // snapshot ilegível: verificação cega, não inventa
       const hoje=new Date().toISOString().slice(0,10);
@@ -5949,10 +5975,12 @@ const ecomAlvo={
         if(tAlt && (!tAna || new Date(tAlt) > new Date(tAna))) sugCls='b';
         else sugCls = res.cls || 'n';
       }
-      const sugTxt = res ? 'Sugestão' : 'Sugestão';
-      const sugBtn = '<button data-alsug="'+esc(an.anuncio_mlb||'')+'" data-anid="'+an.id+'" class="al-sug '+sugCls+'"'+(res?'':' title="Nenhuma análise importada"')+'>'+sugTxt+'</button>';
+      // BUILD 2026-08-25-I: sem botao Sugestao — o Historico e o unico link e sua cor le app x ML
       const hist=(an.anuncio_mlb && this.altHist && this.altHist[an.anuncio_mlb])?this.altHist[an.anuncio_mlb]:[];
-      const histLink = an.anuncio_mlb?'<button data-alhist="'+esc(an.anuncio_mlb)+'" class="al-histlink" title="Alterações salvas neste anúncio (data + motivo)">Histórico ('+hist.length+')</button>':'';
+      const dv=this.divergencia(an); const fR=x=>'R$ '+(+x).toFixed(2).replace('.',',');
+      const lnkCls=an.pausado?'':(dv.estado==='div'?' div':(dv.estado==='ok'?' ok':''));
+      const note=an.pausado?'':(dv.estado==='div'?'<span class="al-histnote div">publicado '+fR(dv.pub)+' ≠ app '+fR(dv.reg)+'</span>':(dv.estado==='ok'?'<span class="al-histnote ok">publicado = app '+fR(dv.pub)+'</span>':''));
+      const histLink = an.anuncio_mlb?'<span style="display:flex;align-items:center;flex-wrap:wrap"><button data-alhist="'+esc(an.anuncio_mlb)+'" class="al-histlink'+lnkCls+'" title="'+(dv.estado==='div'?'Preço publicado no ML diverge do registrado no app':(dv.estado==='ok'?'Preço publicado confere com o app':'Sem leitura do preço publicado'))+'">Histórico ('+hist.length+')</button>'+note+'</span>':'';
       return '<div class="vli" style="align-items:flex-start'+(an.pausado?';opacity:.55;filter:grayscale(1)':'')+'">'
         +'<div style="font-weight:700;color:var(--emuted2);min-width:18px;text-align:right;font-size:12.5px">'+(i+1)+'</div>'
         +'<div class="vmain">'
@@ -5962,8 +5990,6 @@ const ecomAlvo={
           +(an.pausado?('<span class="al-info" style="color:var(--emuted);border:1px solid var(--eborder);border-radius:6px;padding:0 6px;font-weight:700;letter-spacing:.05em" title="Fora da análise até reativar">PAUSADO'+(an.pausado_em?(' · '+new Date(an.pausado_em).toLocaleDateString('pt-BR')):'')+'</span>'):('<span class="al-info '+infoClass+'">'+diasTxt+' · '+vendas+' venda(s)</span>'))
         +'</div>'
         +'<div class="al-actions">'
-          +sugBtn
-          +'<div data-alsugbox="'+an.id+'" style="display:none;margin-top:6px;width:100%;max-width:640px"></div>'
           +histLink
           +'<div data-alhistbox="'+esc(an.anuncio_mlb||'')+'" style="display:none;margin-top:6px;width:100%;max-width:640px"></div>'
         +'</div>'
@@ -5976,6 +6002,12 @@ const ecomAlvo={
     const nPaus=lista.filter(r=>r.an.pausado).length, nAtvC=lista.length-nPaus;
     if(cnt) cnt.textContent = (_flt ? listaF.length+' de '+lista.length : nAtvC+' anúncio'+(nAtvC===1?'':'s')+' ativo'+(nAtvC===1?'':'s')+(nPaus?(' · '+nPaus+' pausado'+(nPaus===1?'':'s')):''));
   },
+  // BUILD 2026-08-25-I: leitura app x ML de UM anuncio. pub = preco do ultimo snapshot do ML; reg = ecom_anuncios.preco.
+  // estado: 'div' (diferem), 'ok' (iguais ao centavo), 'na' (sem snapshot ou sem preco — nao se inventa cor)
+  divergencia(an){ const out={estado:'na',pub:null,reg:null,quando:this.snapQuando||null};
+    if(!an||!an.anuncio_mlb) return out; const k=this._normMlb(an.anuncio_mlb); const sn=this.snapAtual?this.snapAtual[k]:null;
+    if(!sn||sn.preco==null||an.preco==null) return out; const pub=+sn.preco, reg=+an.preco; if(isNaN(pub)||isNaN(reg)) return out;
+    out.pub=Math.round(pub*100)/100; out.reg=Math.round(reg*100)/100; out.estado=Math.abs(pub-reg)<0.005?'ok':'div'; return out; },
   toggleSug(anid, mlb){
     const box=document.querySelector('[data-alsugbox="'+anid+'"]'); if(!box) return;
     if(box.style.display!=='none'){ box.style.display='none'; box.innerHTML=''; return; }
@@ -6286,8 +6318,15 @@ const ecomAlvo={
     const hist=(this.altHist&&this.altHist[mlb])||[];
     const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const fmtDt=iso=>{ if(!iso) return '—'; try{ return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return String(iso).slice(0,16); } };
+    // BUILD 2026-08-25-I: faixa de leitura rapida app x ML no topo do historico
+    const anB=(this.anuncios||[]).find(a=>a.anuncio_mlb===mlb)||null; const dv=this.divergencia(anB); const fR=x=>'R$ '+(+x).toFixed(2).replace('.',',');
+    const banner = dv.estado==='div'
+      ? '<div class="al-histbanner div">DIVERGÊNCIA · publicado no ML <b>'+fR(dv.pub)+'</b> · registrado no app <b>'+fR(dv.reg)+'</b>'+(dv.quando?' <span style="font-weight:400;opacity:.8">(leitura do ML em '+esc(dv.quando)+')</span>':'')+'</div>'
+      : (dv.estado==='ok'
+        ? '<div class="al-histbanner ok">Preço publicado confere com o app · <b>'+fR(dv.pub)+'</b>'+(dv.quando?' <span style="font-weight:400;opacity:.8">(leitura do ML em '+esc(dv.quando)+')</span>':'')+'</div>'
+        : '<div class="al-histbanner na">Sem leitura do preço publicado no ML para este anúncio (snapshot ausente ou sem preço registrado).</div>');
     if(!hist.length){
-      box.innerHTML='<div class="al-sugbox n"><div class="al-sugmeta">Histórico de Alterações</div><div class="al-sugp faint">Nenhuma alteração registrada ainda para este anúncio.</div></div>';
+      box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações</div><div class="al-sugp faint">Nenhuma alteração registrada ainda para este anúncio.</div></div>';
     } else {
       const linhas=hist.map(h=>{
         const dt=fmtDt(h.criado_em);
@@ -6296,7 +6335,7 @@ const ecomAlvo={
         const mot=h.motivo?esc(h.motivo):'<span style="color:var(--emuted2)">sem motivo registrado</span>';
         return '<div class="al-histli"><span class="al-histdt">'+esc(dt)+'</span><span class="al-histtag b">'+esc(tag)+'</span><span class="al-histmeta" style="font-size:12px;color:var(--etxt)">'+mot+delta+'</span></div>';
       }).join('');
-      box.innerHTML='<div class="al-sugbox n"><div class="al-sugmeta">Histórico de Alterações · '+hist.length+'</div>'+linhas+'</div>';
+      box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações · '+hist.length+'</div>'+linhas+'</div>';
     }
     box.style.display='';
   },
