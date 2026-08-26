@@ -1,3 +1,5 @@
+<!-- BUILD 2026-08-26-D | selecta-banco-preco | CONTROLE: "N dias no ar · N venda(s)" sai da linha do cartao e passa a morar DENTRO do historico, na primeira linha logo apos o rotulo "Historico de Alteracoes" (Igor 26/08). Mesma cor do semaforo (novo/ok/med/crit) que tinha no cartao. PAUSADO continua no cartao. Acumula o 26-C (nao publicado). Base: 2026-08-26-C -->
+<!-- BUILD 2026-08-26-C | selecta-banco-preco | VARREDURA VIGILANTE (decisao Igor 26/08 sobre 26-B): o ml-market v4.3 NAO corrige mais preco/promocao no app — so informa. O vermelho do Historico passa a ler o ESTADO ATUAL gravado pela ultima varredura (ecom_sync_run.resumo.divergentes = [{mlb,tipo,ml,app}]): vermelho enquanto o anuncio estiver na lista, verde na primeira varredura depois da correcao pelo Editar. Faixa dentro do historico: "DIVERGENTE DO ML" com valor no ML x valor no app por item (preco/promocao) e a instrucao "corrija pelo Editar". Requer ml-market v4.3. Base: 2026-08-26-B -->
 <!-- BUILD 2026-08-26-B | selecta-banco-preco | CONTROLE: botoes do cartao na MESMA LINHA, ordem Editar / Pausar (ou Reativar) / Remover, mesma largura (estetica, Igor 26/08). Base: 2026-08-26-A -->
 <!-- BUILD 2026-08-26-A | selecta-banco-preco | HISTORICO: REGUA SIMPLES app x ML (correcao Igor 26/08 sobre 25-M): sai TUDO que envolvia registro da Alexia — linhas "ML" no historico, "sem registro", botao "Registrar motivo" (registrarML fica no codigo sem handler). Regra unica: VERMELHO = na ULTIMA conferencia (ecom_sync_run mais recente) a varredura precisou corrigir este anuncio (evento PRECO/PROMOCAO/STATUS com o lote dessa execucao); VERDE = a ultima conferencia nao tocou nele; neutro = sem conferencia ou ultima com erro. Atualiza sozinho a cada varredura (30 min) ou no botao Atualizar. Faixa dentro do historico: vermelha lista o que foi corrigido (valores + hora); verde "Confere com o ML". Historico = so as alteracoes dela. Base: 2026-08-25-M -->
 <!-- BUILD 2026-08-25-M | selecta-banco-preco | HISTORICO = ML REPRODUZIDO NO APP (decisao Igor 25/08 sobre 25-L; corrige o vermelho falso do 25-I, ex.: RTR-0016 promocao 446,40 vs preco 469,90): A regra do vermelho/verde deixa de comparar snapshot x preco do app (media idade do snapshot, e ignorava que o preco valido e o da promocao) e passa a ler ecom_sync_log: o ml-market (modo sync) ja copia ML -> app e registra cada mudanca feita no ML como evento PRECO/PROMOCAO/STATUS. VERMELHO = existe evento do ML posterior ao ultimo registro da Alexia no historico daquele anuncio (mudou no ML sem registro); VERDE = nao existe; neutro = sem conferencia ainda. Dentro do historico: faixa com o(s) evento(s) sem registro + botao "Registrar motivo" (grava ecom_anuncio_alteracao com os valores do evento e motivo "[ML] ..."), e as linhas do ML entram no historico com etiqueta ML (ambar). Cabecalho: "ultima conferencia: hh:mm" vem de ecom_sync_run (batimento da Edge ml-market v4.2; sem batimento ainda, mostra o ultimo snapshot). Botao Atualizar dispara ml-market?modo=sync na hora (JWT da sessao) e recarrega. Requer 06-sync-30min.sql + ml-market v4.2. Base: 2026-08-25-L -->
@@ -5792,13 +5794,13 @@ const ecomAlvo={
     try{ const sl=await sb.from('ecom_sync_log').select('anuncio_mlb,tipo,campo,valor_antigo,valor_novo,detectado_em,corrigido,observacao').in('tipo',['PRECO','PROMOCAO','STATUS']).order('detectado_em',{ascending:false}).limit(3000);
       if(!sl.error){ (sl.data||[]).forEach(l=>{ const k=this._normMlb(l.anuncio_mlb); if(!k) return; (this.syncHist[k]=this.syncHist[k]||[]).push(l); }); }
     }catch(e){ console.warn('syncHist:',e.message); }
-    this.syncLote=null; this.syncOk=null;
-    try{ const sr=await sb.from('ecom_sync_run').select('executado_em,modo,ok,erro,lote').order('executado_em',{ascending:false}).limit(1);
-      if(!sr.error&&sr.data&&sr.data[0]){ this.syncQuandoIso=sr.data[0].executado_em; this.syncQuando=new Date(sr.data[0].executado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); this.syncOk=sr.data[0].ok!==false; this.syncLote=sr.data[0].lote||null; }
+    this.syncOk=null; this.syncDiv={};
+    try{ const sr=await sb.from('ecom_sync_run').select('executado_em,modo,ok,erro,resumo').order('executado_em',{ascending:false}).limit(1);
+      if(!sr.error&&sr.data&&sr.data[0]){ const r0=sr.data[0]; this.syncQuandoIso=r0.executado_em; this.syncQuando=new Date(r0.executado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); this.syncOk=r0.ok!==false;
+        // BUILD 2026-08-26-C: estado atual gravado pela varredura (v4.3): resumo.divergentes (sync) ou resumo.sync.divergentes (full)
+        const rs=r0.resumo||{}; const dv=Array.isArray(rs.divergentes)?rs.divergentes:(rs.sync&&Array.isArray(rs.sync.divergentes)?rs.sync.divergentes:[]);
+        dv.forEach(d=>{ const k=this._normMlb(d.mlb); if(k) (this.syncDiv[k]=this.syncDiv[k]||[]).push(d); }); }
     }catch(e){ console.warn('syncRun:',e.message); }
-    // BUILD 2026-08-26-A: so os eventos da ULTIMA conferencia interessam (lote da execucao mais recente)
-    if(this.syncLote){ try{ const se=await sb.from('ecom_sync_log').select('anuncio_mlb,tipo,valor_antigo,valor_novo,detectado_em').eq('lote',this.syncLote).in('tipo',['PRECO','PROMOCAO','STATUS']);
-        this.syncUlt={}; if(!se.error) (se.data||[]).forEach(l=>{ const k=this._normMlb(l.anuncio_mlb); if(k) (this.syncUlt[k]=this.syncUlt[k]||[]).push(l); }); }catch(e){ this.syncUlt={}; } } else this.syncUlt={};
   },
   // BUILD -M · verificação AUTOMÁTICA registro × publicado. Divergência gera sugestão 'CORRIGIR REGISTRO'
   // para a Alexia (histórico datado no Controle) com DE-DUP: se a última sugestão do MLB já é a mesma
@@ -5987,6 +5989,7 @@ const ecomAlvo={
     box.innerHTML=listaF.map((row,i)=>{ const an=row.an, dias=row.dias, vendas=row.vendas;
       const diasTxt = dias==null?'sem data':(dias<0?'agendado':dias+' dias no ar');
       const infoClass=infoCls(dias,vendas);
+      if(an.anuncio_mlb){ this._cardInfo=this._cardInfo||{}; this._cardInfo[an.anuncio_mlb]={txt:diasTxt+' · '+vendas+' venda(s)',cls:infoClass}; } // BUILD 2026-08-26-D: vive no historico
       // Sugestão: cinza se não há análise importada; cor do cls se há.
       const res = an.anuncio_mlb ? this.resultados[an.anuncio_mlb] : null;
       // Máquina de estados da cor da Sugestão:
@@ -6013,7 +6016,7 @@ const ecomAlvo={
         +'<div class="al-line">'
           +'<span class="al-code">'+esc(an.produto_codigo)+'</span>'
           +'<span class="al-title">'+esc(an.titulo)+'</span>'
-          +(an.pausado?('<span class="al-info" style="color:var(--emuted);border:1px solid var(--eborder);border-radius:6px;padding:0 6px;font-weight:700;letter-spacing:.05em" title="Fora da análise até reativar">PAUSADO'+(an.pausado_em?(' · '+new Date(an.pausado_em).toLocaleDateString('pt-BR')):'')+'</span>'):('<span class="al-info '+infoClass+'">'+diasTxt+' · '+vendas+' venda(s)</span>'))
+          +(an.pausado?('<span class="al-info" style="color:var(--emuted);border:1px solid var(--eborder);border-radius:6px;padding:0 6px;font-weight:700;letter-spacing:.05em" title="Fora da análise até reativar">PAUSADO'+(an.pausado_em?(' · '+new Date(an.pausado_em).toLocaleDateString('pt-BR')):'')+'</span>'):'')
         +'</div>'
         +'<div class="al-actions">'
           +histLink
@@ -6032,12 +6035,12 @@ const ecomAlvo={
   },
   // BUILD 2026-08-25-I: leitura app x ML de UM anuncio. pub = preco do ultimo snapshot do ML; reg = ecom_anuncios.preco.
   // estado: 'div' (diferem), 'ok' (iguais ao centavo), 'na' (sem snapshot ou sem preco — nao se inventa cor)
-  // BUILD 2026-08-26-A: divergencia = na ULTIMA conferencia a varredura precisou corrigir este anuncio (app estava diferente do ML).
-  // estado: 'div' (corrigido na ultima conferencia) · 'ok' (ultima conferencia nao tocou nele) · 'na' (sem conferencia valida)
-  divergencia(an){ const out={estado:'na',corrigidos:[]};
+  // BUILD 2026-08-26-C: divergencia = o anuncio esta na lista de divergentes da ULTIMA varredura (estado atual app x ML).
+  // estado: 'div' (preco/promocao diferem do ML agora) · 'ok' (iguais) · 'na' (sem varredura valida)
+  divergencia(an){ const out={estado:'na',itens:[]};
     if(!an||!an.anuncio_mlb) return out; if(!this.syncQuando||this.syncOk===false) return out;
-    const k=this._normMlb(an.anuncio_mlb); out.corrigidos=(this.syncUlt&&this.syncUlt[k])||[];
-    out.estado=out.corrigidos.length?'div':'ok'; return out; },
+    const k=this._normMlb(an.anuncio_mlb); out.itens=(this.syncDiv&&this.syncDiv[k])||[];
+    out.estado=out.itens.length?'div':'ok'; return out; },
   toggleSug(anid, mlb){
     const box=document.querySelector('[data-alsugbox="'+anid+'"]'); if(!box) return;
     if(box.style.display!=='none'){ box.style.display='none'; box.innerHTML=''; return; }
@@ -6364,15 +6367,19 @@ const ecomAlvo={
     // BUILD 2026-08-26-A: faixa = o que a ULTIMA conferencia corrigiu neste anuncio; historico = so as alteracoes dela
     const anB=(this.anuncios||[]).find(a=>a.anuncio_mlb===mlb)||null; const dv=this.divergencia(anB);
     const fR=x=>(x==null||x===''||isNaN(+x))?'—':('R$ '+(+x).toFixed(2).replace('.',','));
-    const evTxt=e=>{ const t=String(e.tipo||''); if(t==='PRECO') return 'preço '+fR(e.valor_antigo)+' → '+fR(e.valor_novo); if(t==='PROMOCAO') return 'promoção '+fR(e.valor_antigo)+' → '+fR(e.valor_novo); return 'status '+esc(String(e.valor_novo||'')); };
+    const itTxt=d=>{ const t=String(d.tipo||''); const rot=t==='PRECO'?'preço':(t==='PROMOCAO'?'promoção':t.toLowerCase()); return rot+': no ML <b>'+fR(d.ml)+'</b> · no app <b>'+fR(d.app)+'</b>'; };
     const banner = dv.estado==='div'
-      ? '<div class="al-histbanner div">DIVERGENTE DO ML NA ÚLTIMA CONFERÊNCIA · app corrigido'
-        +dv.corrigidos.map(e=>'<div style="font-weight:500;margin-top:3px">'+evTxt(e)+' <span style="font-weight:400;opacity:.8">('+esc(fmtDt(e.detectado_em))+')</span></div>').join('')+'</div>'
+      ? '<div class="al-histbanner div">DIVERGENTE DO ML'
+        +dv.itens.map(d=>'<div style="font-weight:500;margin-top:3px">'+itTxt(d)+'</div>').join('')
+        +'<div style="font-weight:400;opacity:.85;margin-top:5px">corrija pelo Editar — a margem é conferida na hora</div></div>'
       : (dv.estado==='ok'
         ? '<div class="al-histbanner ok">Confere com o ML</div>'
         : '<div class="al-histbanner na">Sem conferência válida com o ML ainda.</div>');
+    // BUILD 2026-08-26-D: dias no ar · vendas — primeira linha do historico
+    const ci=(this._cardInfo&&this._cardInfo[mlb])||null;
+    const infoLinha=ci?'<div class="al-histli" style="border-top:0;padding-top:2px"><span class="al-info '+ci.cls+'" style="font-size:12.5px">'+esc(ci.txt)+'</span></div>':'';
     if(!hist.length){
-      box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações</div><div class="al-sugp faint">Nenhuma alteração registrada ainda para este anúncio.</div></div>';
+      box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações</div>'+infoLinha+'<div class="al-sugp faint">Nenhuma alteração registrada ainda para este anúncio.</div></div>';
     } else {
       const linhas=hist.map(h=>{
         const dt=fmtDt(h.criado_em);
@@ -6381,7 +6388,7 @@ const ecomAlvo={
         const mot=h.motivo?esc(h.motivo):'<span style="color:var(--emuted2)">sem motivo registrado</span>';
         return '<div class="al-histli"><span class="al-histdt">'+esc(dt)+'</span><span class="al-histtag b">'+esc(tag)+'</span><span class="al-histmeta" style="font-size:12px;color:var(--etxt)">'+mot+delta+'</span></div>';
       }).join('');
-      box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações · '+hist.length+'</div>'+linhas+'</div>';
+      box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações · '+hist.length+'</div>'+infoLinha+linhas+'</div>';
     }
     box.style.display='';
   },
