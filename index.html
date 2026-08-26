@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-25-H | selecta-banco-preco | PEDIDOS A FECHAR: SKU + DESCRICAO DE COMPRA · COMPRAS DO DIA: LUCRO PREVISTO (Igor 25/08, sobre 25-G): (1) fila "Pedidos a fechar" (fn-list) mostra o SKU (produto_codigo) ao lado do MLB e uma 3a linha "compra: <descricao canonica do catalogo>" — mesma regra do PDF compra (ecom_produtos: produto+interface+marca+modelo+capacidade; fallback campos da venda); sem SKU = aviso ambar. (2) faixa "Compras do dia" ganha "lucro previsto R$ X" = soma do LUCRO REAL de cada pedido a_enviar pela MESMA formula do quadro de fechamento (receita - taxas ML - custo - colchao 6% - imposto 4%); pedidos sem comissao ou custo NAO entram na soma e sao contados como "sem fechamento". load() agora aguarda comprasDia() antes de loadList() (a soma e anexada a faixa). Base: 2026-08-25-G -->
 <!-- BUILD 2026-08-25-G | selecta-banco-preco | CREDOR_3 + MULTI-CREDOR NO FUNDING (decisoes Igor 25/08 sobre 25-F): (1) FIXOS: credor_3 = 5% a.m., dia-base 30, LIQUIDACAO em SALDO (juro do ciclo nao sai do caixa: amortiza o saldo a amortizar do credor). (2) capPagar: para credor com LIQUIDACAO saldo chama ecom_fn_liquidar_juro_saldo (RPC) = juro_pago no ledger + amortizacao em ecom_credor_saldo_mov, UMA transacao; demais credores inalterados. (3) invValidar recebe o credor da linha (ecom_inv_funding.credor) — acaba o credor_2 fixo; confirm mostra o credor; lista "a validar" e historico exibem o credor. (4) Termometro: linha do credor_3 mostra "amortiza saldo"; bloco SALDO A AMORTIZAR (view ecom_vw_credor_saldo) aparece para credor com liquidacao saldo mesmo antes do 1o aporte; aviso de capitalizacao cita c3 dia 30. Requer 04-credor3-saldo.sql + Edge investidor-portal v2.0. Matematica do nucleo INTOCADA (juro_pago continua = juro liquidado, entra como custo do mes por competencia). Base: 2026-08-25-F -->
 <!-- BUILD 2026-08-25-F | selecta-banco-preco | CELULAR — CORRECAO DA FILA + ICONE (prints Igor 25/08 sobre 25-E): (1) CAUSA das linhas sobrepostas: o bloco de CSS celular (id mobile-css) estava no head, e os estilos do e-commerce ficam em blocos de estilo DENTRO do body — mesma especificidade, ordem posterior, venciam. Bloco movido para o FIM do body, com !important onde o template usa estilo inline. Cartao da fila em 4 andares: numero+produto / pedido-sku-data-valor / rastreio / status+semaforo+ocorrencia-ou-postado (botao a direita). (2) ICONES regenerados: emblema SS recortado do logo, realcado (brilho/contraste/saturacao) sobre navy com halo esmeralda — o wordmark inteiro sumia no icone. Mesmos nomes de arquivo (icon-192/512, apple-touch-icon); no iPhone e preciso remover e adicionar de novo para trocar o icone. Zero mudanca de logica, zero SQL. | base: 2026-08-25-E -->
 <!-- BUILD 2026-08-25-E | selecta-banco-preco | CELULAR + PWA + CORRECOES (ordem Igor 25/08): (1) CAUSA DO "\n\n \n" NO TOPO: tres carimbos BUILD antigos (24-B, 24-A->23-B, 21-E->21-D) foram colados com a sequencia literal barra-n entre o fim de um comentario e o inicio do seguinte, em vez de quebra de linha real; esse texto fica FORA de comentario, antes do DOCTYPE, e o navegador o joga no topo do body. Corrigido: quebra real nos 3 pontos. (2) PWA: manifest.json (standalone, navy #0b1220, icones 192/512 gerados do logo sobre navy), apple-touch-icon.png 180, meta theme-color + apple-mobile-web-app-*, viewport-fit=cover com safe-area no header em modo standalone, sw.js MINIMO registrado no fim do body (sem cache; so para instalabilidade). (3) CSS celular (<=640px) em <style id="mobile-css"> no head: header com nav rolavel e e-mail oculto; sub-abas do e-commerce rolaveis; fila Vendas em CARTAO (produto em linha propria, meta menor, controles em linha com alvo de toque 40px, select de ocorrencia sem min-width fixo, botao postado a direita); formulario Lancar venda empilhado; faixa Compras do dia com botao PDF em largura total. Zero mudanca de logica. (4) pdfCompra: em tela de toque, abre a folha nativa de compartilhar com o PDF anexado (navigator.share + canShare); se o usuario cancelar ou o navegador nao suportar, cai no download de sempre. (5) lucide fixado em 0.577.0 (estava @latest, que hoje resolve para 1.34.0 — major diferente do usado no desenvolvimento). Zero SQL. | base: 2026-08-25-D -->
@@ -5141,7 +5142,7 @@ const ecomFinanceiro={
     if(f) f.style.display='none';
     document.querySelectorAll('#fn-list .vli.fn-open').forEach(el=>el.classList.remove('fn-open'));
   },
-  async load(){ this.cur=null; this.comprasDia(); await this.loadList(); this.termometro(); },
+  async load(){ this.cur=null; await this.comprasDia(); await this.loadList(); this.termometro(); }, // BUILD 2026-08-25-H: aguarda a faixa antes da lista (lucro previsto e anexado nela)
   // BUILD 2026-08-17-A: quadrante de leitura rapida — capital do dia (ecom_vw_compras_dia, somente leitura)
   async comprasDia(){ const box=this._g('fn-compras-dia'); if(!box) return;
     try{ const r=await sb.from('ecom_vw_compras_dia').select('pedidos,custo_compra_total,pedidos_sem_custo');
@@ -5153,14 +5154,34 @@ const ecomFinanceiro={
     }catch(e){ box.innerHTML='<span style="color:var(--ered)">erro: '+e.message+'</span>'; }
   },
   async loadList(){ const box=this._g('fn-list');
-    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,preco_venda,quantidade,comissao_valor,custo_unitario').eq('status','a_enviar').order('data_solicitacao',{ascending:false});
-      if(r.error) throw r.error; this.renderList(r.data||[]);
+    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,marca,modelo,preco_venda,quantidade,comissao_valor,tarifa_fixa_valor,frete_valor,frete_onus,custo_unitario').eq('status','a_enviar').order('data_solicitacao',{ascending:false});
+      if(r.error) throw r.error; const itens=r.data||[];
+      // BUILD 2026-08-25-H: descricao canonica do catalogo (mesma regra do pdfCompra) para leitura/cotacao
+      this._cat={}; const cods=[...new Set(itens.map(v=>v.produto_codigo).filter(Boolean))];
+      if(cods.length){ try{ const q=await sb.from('ecom_produtos').select('codigo,produto,interface,marca,modelo,capacidade').in('codigo',cods);
+        if(!q.error) (q.data||[]).forEach(p=>{ if(p.codigo) this._cat[p.codigo]=[p.produto,p.interface,p.marca,p.modelo,p.capacidade].filter(Boolean).join(' '); }); }catch(_e){} }
+      this.renderList(itens); this.lucroDia(itens);
     }catch(e){ this.parkForm(); box.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
   },
+  // BUILD 2026-08-25-H: lucro real de UM pedido — copia fiel do recalc() (receita - taxas ML - custo - colchao 6% - imposto 4%); null se faltar comissao ou custo
+  lucroPedido(v){ const com=v.comissao_valor!=null?Number(v.comissao_valor):null, cus=v.custo_unitario!=null?Number(v.custo_unitario):null; if(com==null||cus==null||isNaN(com)||isNaN(cus)) return null;
+    const P=Number(v.preco_venda)||0, Q=Number(v.quantidade)||1, tar=Number(v.tarifa_fixa_valor)||0, fre=((v.frete_onus||'vendedor')==='vendedor')?(Number(v.frete_valor)||0):0;
+    const r2=x=>Math.round(x*100)/100; const rec=P*Q, tax=com+tar+fre, cusT=cus*Q, imp=r2(rec*0.04), colch=r2(rec*0.06);
+    return r2(rec-tax-cusT-colch-imp); },
+  // BUILD 2026-08-25-H: soma do lucro real dos pedidos a_enviar, anexada a faixa Compras do dia
+  lucroDia(itens){ const box=this._g('fn-compras-dia'); if(!box) return; const old=box.querySelector('#fn-lucro-dia'); if(old) old.remove();
+    let soma=0, n=0, pend=0; (itens||[]).forEach(v=>{ const l=this.lucroPedido(v); if(l==null){ pend++; return; } soma+=l; n++; });
+    if(!n&&!pend) return; const sp=document.createElement('span'); sp.id='fn-lucro-dia';
+    sp.innerHTML=' · lucro previsto <span class="mono" style="color:'+(soma>=0?'var(--eemerald)':'var(--ered)')+';font-size:18px;font-weight:600">R$ '+this.fmt(soma)+'</span>'+(pend>0?' <span style="color:var(--eamber);font-size:12px">* '+pend+' sem fechamento (fora da soma)</span>':'');
+    box.appendChild(sp); },
   renderList(itens){ this.parkForm(); const box=this._g('fn-list');
     if(!itens.length){ box.innerHTML='<div class="ph">sem pedidos a fechar</div>'; return; }
+    const cat=this._cat||{};
     box.innerHTML=itens.map(v=>{ const ok=v.comissao_valor!=null&&v.custo_unitario!=null;
-      return '<div data-fwrap="'+v.id+'"><div class="vli" style="cursor:pointer" data-fid="'+v.id+'"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · R$ '+this.fmt(v.preco_venda)+'</div></div><span class="vpill '+(ok?'ok':'warn')+'">'+(ok?'completo':'pendente')+'</span></div></div>';
+      // BUILD 2026-08-25-H: SKU ao lado do MLB + descricao canonica de compra
+      const sku=v.produto_codigo?'<span style="color:var(--eteal)">'+v.produto_codigo+'</span>':'<span style="color:var(--eamber)">sem SKU</span>';
+      const desc=(v.produto_codigo&&cat[v.produto_codigo])||[v.produto,v.marca,v.modelo].filter(Boolean).join(' ')||'';
+      return '<div data-fwrap="'+v.id+'"><div class="vli" style="cursor:pointer" data-fid="'+v.id+'"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · '+sku+' · R$ '+this.fmt(v.preco_venda)+'</div>'+(desc?'<div class="vm" style="color:var(--emuted);font-size:12px">compra: '+desc+'</div>':'')+'</div><span class="vpill '+(ok?'ok':'warn')+'">'+(ok?'completo':'pendente')+'</span></div></div>';
     }).join('');
   },
   async selecionar(id){
