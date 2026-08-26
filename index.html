@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-26-E | selecta-banco-preco | ANALISE COMERCIAL = LANCAR E OBSERVAR (decisoes Igor 26/08, sobre 26-D): (1) "Parametros comerciais" recolhido (details/summary): so o titulo, clica e abre; campos continuam no DOM (simulador le deles). (2) Quadrante "Comando — Analise Individual" APAGADO; botao "Exportar cenario (.md)" (id ecom-export preservado) migrou para o cabecalho de Anuncios ativos, ao lado do Atualizar. (3) Rodape "integridade" (al-atv-integridade) APAGADO — conferencia app x ML e funcao do Controle. (4) Tabela Anuncios ativos: coluna Nº (enumeracao), sem Tipo, sem Sugestao, sem Analise/JSON; Praticado e Margem intactos (espelho ML). Nova coluna "Historico (N)" = a MESMA caixa da Alexia (dias no ar · vendas, faixa de divergencia, alteracoes dela), aberta na propria linha. (5) Ordem: por ultima alteracao no historico (mais recente primeiro); sem historico vai para o fim. VERDE + topo = alteracao posterior a sua ultima leitura (ecom_anuncio_hist_lido, SQL 07); ao abrir, grava lido e volta ao branco (reordena no proximo Atualizar). (6) Controle: anuncio com ativo=false (encerrado no ML pela varredura) fica esmaecido com etiqueta ENCERRADO NO ML e SAI da contagem de ativos — corrige a diferenca de contagem entre Controle e Analise. toggleHist ganhou escopo (root) para nao confundir as duas telas. Base: 2026-08-26-D -->
 <!-- BUILD 2026-08-26-D | selecta-banco-preco | CONTROLE: "N dias no ar · N venda(s)" sai da linha do cartao e passa a morar DENTRO do historico, na primeira linha logo apos o rotulo "Historico de Alteracoes" (Igor 26/08). Mesma cor do semaforo (novo/ok/med/crit) que tinha no cartao. PAUSADO continua no cartao. Acumula o 26-C (nao publicado). Base: 2026-08-26-C -->
 <!-- BUILD 2026-08-26-C | selecta-banco-preco | VARREDURA VIGILANTE (decisao Igor 26/08 sobre 26-B): o ml-market v4.3 NAO corrige mais preco/promocao no app — so informa. O vermelho do Historico passa a ler o ESTADO ATUAL gravado pela ultima varredura (ecom_sync_run.resumo.divergentes = [{mlb,tipo,ml,app}]): vermelho enquanto o anuncio estiver na lista, verde na primeira varredura depois da correcao pelo Editar. Faixa dentro do historico: "DIVERGENTE DO ML" com valor no ML x valor no app por item (preco/promocao) e a instrucao "corrija pelo Editar". Requer ml-market v4.3. Base: 2026-08-26-B -->
 <!-- BUILD 2026-08-26-B | selecta-banco-preco | CONTROLE: botoes do cartao na MESMA LINHA, ordem Editar / Pausar (ou Reativar) / Remover, mesma largura (estetica, Igor 26/08). Base: 2026-08-26-A -->
@@ -1844,6 +1845,10 @@
 #tab-ecommerce .al-histlink{font-size:13px;font-weight:700;color:var(--etxt)}
 #tab-ecommerce .al-histlink.ok{color:var(--eemerald)}
 #tab-ecommerce .al-histlink.div{color:#f87171}
+    /* BUILD 2026-08-26-E: Analise Comercial — nao-lido em verde; divergencia (vermelho) prevalece */
+    #tab-ecommerce .al-histlink.atv{font-size:12.5px}
+    #tab-ecommerce .al-histlink.atv.novo{color:var(--eemerald)}
+    #tab-ecommerce .al-histlink.atv.div{color:#f87171}
 #tab-ecommerce .al-histnote{font-size:12px;margin-left:8px;font-family:var(--emono);font-variant-numeric:tabular-nums}
 #tab-ecommerce .al-histnote.ok{color:var(--eemerald)}
 #tab-ecommerce .al-histnote.div{color:#f87171;font-weight:600}
@@ -2125,16 +2130,17 @@
       </div>
       <!-- BUILD 2026-08-08-J: Parametros comerciais MOVIDOS da sub-aba propria (extinta) p/ dentro da Analise Comercial, junto ao Cadastro de anuncio — simulacao de acoes comerciais com os parametros a mao -->
     <!-- PARÂMETROS -->
-    <div class="ecard">
-      <h3>Parâmetros comerciais</h3>
-      <div class="param-grid">
+    <div class="ecard"><!-- BUILD 2026-08-26-E: recolhido -->
+      <details id="ecom-param-details">
+      <summary style="cursor:pointer;list-style:none;user-select:none"><h3 style="display:inline;margin:0">Parâmetros comerciais <span style="font-weight:400;font-size:11px;color:var(--emuted2)">· clique para abrir</span></h3></summary>
+      <div class="param-grid" style="margin-top:12px">
         <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Clássico (fallback) · % da venda</label><div class="field-row"><input class="num" id="ecom-com-classico" type="number" step="0.5" value="13"><span class="unit">%</span></div></div>
         <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Premium (fallback) · % da venda</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
         <div class="efield"><label>Imposto (regime) · % da venda</label><div class="field-row"><input class="num" id="ecom-imp" type="number" step="0.5" value="4"><span class="unit">%</span></div></div>
         <div class="efield"><label>Outros custos · % da venda</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
         <div class="efield"><label>Colchão · % da venda</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="6"><span class="unit">%</span></div></div>
       </div>
-
+      </details>
     </div>
 
     <!-- BUILD 2026-08-08-K: barra Modalidade removida (pedido Igor). Toggle Flex/Full FORA da tela — modalidade fixa no estado default flex; botao Exportar cenario realocado p/ o card Comando, ao lado do Copiar comando. -->
@@ -2168,6 +2174,7 @@
           <h3 style="margin:0;color:var(--eemerald)">Anúncios ativos — matemática ML</h3>
           <span class="vmsg" id="al-atv-count" style="margin:0"></span><span class="vmsg" id="al-atv-live" style="margin:0;color:var(--emuted2);font-size:11px"></span>
           <button class="vbtn sm" id="al-atv-refresh" style="margin-left:auto">↻ Atualizar</button>
+          <button class="vbtn sm" id="ecom-export" title="Exporta o cenário atual (parâmetros, produtos, matriz e vereditos) em .md">⬇ Exportar cenário (.md)</button><!-- BUILD 2026-08-26-E: veio do quadrante Comando -->
         </div>
         <div id="al-atv-list"><div class="ph">Carregando anúncios…</div></div>
       </div>
@@ -2178,21 +2185,6 @@
 
 
 
-      <div class="ecard" style="margin-top:14px;padding:10px 13px;border-style:dashed">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <h3 style="font-size:12.5px;margin:0">📋 Comando — Análise Individual <span class="faint" style="font-weight:400;font-size:11px">v2.0 · 1 anúncio por chat</span></h3>
-          <button class="vbtn sm" id="al-cmd-copy">📋 Copiar comando</button>
-          <button class="vbtn sm" id="ecom-export" title="Exporta o cenário atual (parâmetros, produtos, matriz e vereditos) em .md para análise de mercado/marca">⬇ Exportar cenário (.md)</button><!-- BUILD 2026-08-08-K -->
-          <span class="vmsg" id="al-cmd-msg" style="margin:0"></span>
-        </div>
-        <p class="hint" style="font-size:11.5px;color:var(--emuted2);margin:6px 0 0">Colar no chat junto com o quadro do anúncio no painel ML. O retorno é UM JSON — importe na linha do anúncio, acima.</p>
-
-        <details style="margin-top:8px">
-          <summary style="cursor:pointer;color:var(--emuted2);font-size:11.5px;user-select:none">ver o texto do comando</summary>
-          <textarea id="al-cmd-text" readonly style="width:100%;min-height:300px;margin-top:8px;background:var(--epanel2);color:var(--etxt);border:1px solid var(--eborder);border-radius:10px;padding:14px;font:12.5px/1.55 ui-monospace,Menlo,Consolas,monospace;resize:vertical" spellcheck="false"></textarea>
-        </details>
-      </div>
-      <div id="al-atv-integridade" style="margin-top:14px"></div><!-- BUILD 2026-08-08-K: painel ZUMBI-2 / divergencia publicado x registro no rodape -->
       </div><!-- /alsub-analise -->
 
       <div id="alsub-controle" class="alsub" style="display:none">
@@ -5794,6 +5786,9 @@ const ecomAlvo={
     try{ const sl=await sb.from('ecom_sync_log').select('anuncio_mlb,tipo,campo,valor_antigo,valor_novo,detectado_em,corrigido,observacao').in('tipo',['PRECO','PROMOCAO','STATUS']).order('detectado_em',{ascending:false}).limit(3000);
       if(!sl.error){ (sl.data||[]).forEach(l=>{ const k=this._normMlb(l.anuncio_mlb); if(!k) return; (this.syncHist[k]=this.syncHist[k]||[]).push(l); }); }
     }catch(e){ console.warn('syncHist:',e.message); }
+    // BUILD 2026-08-26-E: marcador de leitura do historico (Analise Comercial)
+    this.histLido={};
+    try{ const hl=await sb.from('ecom_anuncio_hist_lido').select('mlb,lido_em'); if(!hl.error) (hl.data||[]).forEach(x=>{ if(x.mlb) this.histLido[x.mlb]=x.lido_em; }); }catch(e){ console.warn('histLido:',e.message); }
     this.syncOk=null; this.syncDiv={};
     try{ const sr=await sb.from('ecom_sync_run').select('executado_em,modo,ok,erro,resumo').order('executado_em',{ascending:false}).limit(1);
       if(!sr.error&&sr.data&&sr.data[0]){ const r0=sr.data[0]; this.syncQuandoIso=r0.executado_em; this.syncQuando=new Date(r0.executado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); this.syncOk=r0.ok!==false;
@@ -5971,7 +5966,9 @@ const ecomAlvo={
       const pub=new Date(String(an.data_publicacao||'').slice(0,10)+'T00:00:00');
       const vendas=this.vendas.filter(v=>v.produto_codigo===an.produto_codigo && v.data_solicitacao && new Date(v.data_solicitacao)>=pub).length;
       return {an,dias,vendas}; });
-    lista.sort((a,b)=> ((a.an.pausado?1:0)-(b.an.pausado?1:0)) || (b.vendas-a.vendas) || ((b.dias==null?-1:b.dias)-(a.dias==null?-1:a.dias)) );
+    // BUILD 2026-08-26-E: encerrado no ML (ativo=false) vai depois dos pausados e fora da contagem
+    const enc=a=>(a.ativo===false?2:(a.pausado?1:0));
+    lista.sort((a,b)=> (enc(a.an)-enc(b.an)) || (b.vendas-a.vendas) || ((b.dias==null?-1:b.dias)-(a.dias==null?-1:a.dias)) );
     const _flt=(this.anunciosFiltro||'').trim().toLowerCase();
     const listaF=_flt?lista.filter(r=>String(r.an.produto_codigo||'').toLowerCase().includes(_flt)):lista;
     const _bmsg=this._g('al-anuncios-busca-msg');
@@ -6010,12 +6007,14 @@ const ecomAlvo={
       const lnkCls=an.pausado?'':(dv.estado==='div'?' div':(dv.estado==='ok'?' ok':''));
       // BUILD 2026-08-25-J: nada fora da caixa — so a cor do link
       const histLink = an.anuncio_mlb?'<button data-alhist="'+esc(an.anuncio_mlb)+'" class="al-histlink'+lnkCls+'" title="'+(dv.estado==='div'?'Preço publicado no ML diverge do registrado no app':(dv.estado==='ok'?'Preço publicado confere com o app':'Sem leitura do preço publicado'))+'">Histórico ('+hist.length+')</button>':'';
-      return '<div class="vli" style="align-items:flex-start'+(an.pausado?';opacity:.55;filter:grayscale(1)':'')+'">'
+      const encerrado=(an.ativo===false);
+      return '<div class="vli" style="align-items:flex-start'+((an.pausado||encerrado)?';opacity:.55;filter:grayscale(1)':'')+'">'
         +'<div style="font-weight:700;color:var(--emuted2);min-width:18px;text-align:right;font-size:12.5px">'+(i+1)+'</div>'
         +'<div class="vmain">'
         +'<div class="al-line">'
           +'<span class="al-code">'+esc(an.produto_codigo)+'</span>'
           +'<span class="al-title">'+esc(an.titulo)+'</span>'
+          +(encerrado?'<span class="al-info" style="color:#fca5a5;border:1px solid rgba(239,68,68,.4);border-radius:6px;padding:0 6px;font-weight:700;letter-spacing:.05em" title="A varredura encontrou este anúncio encerrado/indisponível no ML">ENCERRADO NO ML</span>':'')
           +(an.pausado?('<span class="al-info" style="color:var(--emuted);border:1px solid var(--eborder);border-radius:6px;padding:0 6px;font-weight:700;letter-spacing:.05em" title="Fora da análise até reativar">PAUSADO'+(an.pausado_em?(' · '+new Date(an.pausado_em).toLocaleDateString('pt-BR')):'')+'</span>'):'')
         +'</div>'
         +'<div class="al-actions">'
@@ -6030,8 +6029,8 @@ const ecomAlvo={
     }).join('');
     const sq=this._g('al-snap-quando'); if(sq) sq.textContent=this.syncQuando?('última conferência: '+this.syncQuando+(this.syncOk===false?' · com erro':'')):(this.snapQuando?('último snapshot: '+this.snapQuando):'sem conferência'); // BUILD 2026-08-25-M
     const cnt=this._g('al-anuncios-count');
-    const nPaus=lista.filter(r=>r.an.pausado).length, nAtvC=lista.length-nPaus;
-    if(cnt) cnt.textContent = (_flt ? listaF.length+' de '+lista.length : nAtvC+' anúncio'+(nAtvC===1?'':'s')+' ativo'+(nAtvC===1?'':'s')+(nPaus?(' · '+nPaus+' pausado'+(nPaus===1?'':'s')):''));
+    const nEnc=lista.filter(r=>r.an.ativo===false).length, nPaus=lista.filter(r=>r.an.pausado&&r.an.ativo!==false).length, nAtvC=lista.length-nPaus-nEnc; // BUILD 2026-08-26-E
+    if(cnt) cnt.textContent = (_flt ? listaF.length+' de '+lista.length : nAtvC+' anúncio'+(nAtvC===1?'':'s')+' ativo'+(nAtvC===1?'':'s')+(nPaus?(' · '+nPaus+' pausado'+(nPaus===1?'':'s')):'')+(nEnc?(' · '+nEnc+' encerrado'+(nEnc===1?'':'s')+' no ML'):''));
   },
   // BUILD 2026-08-25-I: leitura app x ML de UM anuncio. pub = preco do ultimo snapshot do ML; reg = ecom_anuncios.preco.
   // estado: 'div' (diferem), 'ok' (iguais ao centavo), 'na' (sem snapshot ou sem preco — nao se inventa cor)
@@ -6357,7 +6356,14 @@ const ecomAlvo={
   async conferirAgora(){ const ss=await sb.auth.getSession(); const tk=ss&&ss.data&&ss.data.session?ss.data.session.access_token:null; if(!tk) throw new Error('sem sessão');
     const r=await fetch(CONFIG.SUPABASE_URL+'/functions/v1/ml-market?modo=sync&gravar=1',{method:'POST',headers:{'Authorization':'Bearer '+tk,'apikey':CONFIG.SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:'{}'});
     const j=await r.json().catch(()=>({})); if(!r.ok||j.ok===false) throw new Error(j.error||('HTTP '+r.status)); return j; },
-  toggleHist(mlb){ const box=document.querySelector('[data-alhistbox="'+mlb+'"]'); if(!box) return;
+  // BUILD 2026-08-26-E: info (dias no ar · vendas) por anuncio — usado pelo Controle e pela Analise
+  _infoAnuncio(an){ const hoje0=new Date(); hoje0.setHours(0,0,0,0);
+    const p=String(an.data_publicacao||'').slice(0,10).split('-').map(Number); const dias=(p.length<3||!p[0])?null:Math.round((hoje0-new Date(p[0],p[1]-1,p[2]))/864e5);
+    const pub=new Date(String(an.data_publicacao||'').slice(0,10)+'T00:00:00');
+    const vendas=(this.vendas||[]).filter(v=>v.produto_codigo===an.produto_codigo && v.data_solicitacao && new Date(v.data_solicitacao)>=pub).length;
+    const cls=(dias==null||dias<7)?'novo':(dias<0?'med':(vendas===0?'crit':(vendas/Math.max(dias,1)<0.1?'med':'ok')));
+    return {txt:(dias==null?'sem data':(dias<0?'agendado':dias+' dias no ar'))+' · '+vendas+' venda(s)',cls}; },
+  toggleHist(mlb,root){ const box=(root||document).querySelector('[data-alhistbox="'+mlb+'"]'); if(!box) return;
     // Histórico do CONTROLE = alterações da Alexia (ecom_anuncio_alteracao): data + motivo + o que mudou.
     // Pedido da Alexia (08/07): ela lembra do que FEZ, não do que foi sugerido. Estratégias ficam na Mesa.
     if(box.style.display!=='none'){ box.style.display='none'; box.innerHTML=''; return; }
@@ -6376,7 +6382,7 @@ const ecomAlvo={
         ? '<div class="al-histbanner ok">Confere com o ML</div>'
         : '<div class="al-histbanner na">Sem conferência válida com o ML ainda.</div>');
     // BUILD 2026-08-26-D: dias no ar · vendas — primeira linha do historico
-    const ci=(this._cardInfo&&this._cardInfo[mlb])||null;
+    const ci=(this._cardInfo&&this._cardInfo[mlb])||(anB?this._infoAnuncio(anB):null);
     const infoLinha=ci?'<div class="al-histli" style="border-top:0;padding-top:2px"><span class="al-info '+ci.cls+'" style="font-size:12.5px">'+esc(ci.txt)+'</span></div>':'';
     if(!hist.length){
       box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações</div>'+infoLinha+'<div class="al-sugp faint">Nenhuma alteração registrada ainda para este anúncio.</div></div>';
@@ -6518,9 +6524,13 @@ const ecomAlvo={
     const ea=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const fR=v=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
     const clsCor={o:'var(--eemerald)',a:'var(--eamber)',c:'var(--ered)'};
-    const ativos=anns.filter(a=>!a.pausado).sort((a,b)=>((+b.id||0)-(+a.id||0))); // mais recente no topo (BUILD 31-B)
-    const paus=anns.filter(a=>a.pausado).sort((a,b)=>((+b.id||0)-(+a.id||0)));
-    const linha=(an,dim)=>{
+    // BUILD 2026-08-26-E: ordem por ultima alteracao no historico; nao-lido em verde e no topo
+    const ultHist=a=>{ const h=(this.altHist&&this.altHist[a.anuncio_mlb])||[]; let t=0; h.forEach(x=>{ const v=new Date(x.criado_em).getTime(); if(isFinite(v)&&v>t) t=v; }); return t; };
+    const naoLido=a=>{ const t=ultHist(a); if(!t) return false; const l=this.histLido?this.histLido[a.anuncio_mlb]:null; return !l || t>new Date(l).getTime(); };
+    const ordem=(a,b)=>((naoLido(b)?1:0)-(naoLido(a)?1:0)) || (ultHist(b)-ultHist(a)) || ((+b.id||0)-(+a.id||0));
+    const ativos=anns.filter(a=>!a.pausado).sort(ordem);
+    const paus=anns.filter(a=>a.pausado).sort(ordem);
+    const linha=(an,dim,n)=>{
       const cod=String(an.produto_codigo||'').trim().toUpperCase();
       const prod=prodMap[cod]||null;
       const mlb=String(an.anuncio_mlb||''); const mlbN=this._normMlb(mlb);
@@ -6537,57 +6547,53 @@ const ecomAlvo={
       const margCell=(marg==null)
         ? '<span style="color:var(--emuted2)" title="'+ea((r&&r.reason)||(prod?'sem preço':'produto inativo/órfão no catálogo'))+'">—</span>'
         : '<span style="color:'+mCor+';font-weight:700">'+marg.toFixed(1)+'%</span>';
-      const sug=(this.resultados&&this.resultados[mlbN])?this.resultados[mlbN]:null;
-      let l1='',l2='',c1='var(--emuted2)';
-      if(sug){ c1=clsCor[sug.cls]||'var(--emuted)'; l1=sug.acao||sug.veredito||sug.texto||''; l2=sug.diagnostico||''; }
-      else if(!prod){ c1='var(--ered)'; l1='produto inativo/órfão no catálogo'; l2='verificar cadastro'; }
-      const sugFull=ea((l1?l1:'')+(l2?' · '+l2:''));
-      const sugCell=l1
-        ? '<span style="color:'+c1+';font-weight:600">'+ea(l1)+'</span>'+(l2?'<span style="color:var(--emuted2)"> · '+ea(l2)+'</span>':'')
-        : '<span style="color:var(--emuted2)">—</span>';
-      const tipoTag=(an.tipo_anuncio==='premium'?'P':'C')+(temPromo?('/'+((an.tipo_promocao==='premium')?'P':'C')):'');
+      const hist=(this.altHist&&this.altHist[mlb])||[]; const dv=this.divergencia(an);
+      const nl=naoLido(an);
+      const cls=(dv.estado==='div'?' div':'')+(nl?' novo':'');
+      const histCell=mlb?'<button data-atvhist="'+ea(mlb)+'" class="al-histlink atv'+cls+'" title="'+(nl?'movimentado desde a sua última leitura':'')+'">Histórico ('+hist.length+')</button>':'<span style="color:var(--emuted2)">—</span>';
       return '<tr'+(dim?' style="opacity:.55"':'')+'>'
+        +'<td style="padding:4px 4px 4px 6px;font-family:var(--emono);color:var(--emuted2);text-align:right">'+n+'</td>'
         +'<td style="padding:4px 8px 4px 6px;font-family:var(--emono);color:var(--eteal);font-weight:700;white-space:nowrap">'+ea(cod||'—')+'</td>'
         +'<td style="padding:4px 8px;font-family:var(--emono);color:var(--emuted);white-space:nowrap">'+ea(mlb)+'</td>'
         +'<td style="padding:4px 10px 4px 6px;color:var(--etxt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+ea(an.titulo||'')+'">'+ea(an.titulo||'')+(dim?' <span style="font-size:9px;color:var(--emuted2);font-weight:700">PAUSADO</span>':'')+'</td>'
-        +'<td style="padding:4px 8px;text-align:center;font-family:var(--emono);color:var(--emuted2);font-size:11px" title="tipo cheio'+(temPromo?'/promo':'')+'">'+tipoTag+'</td>'
         +'<td style="padding:4px 8px;text-align:right;font-family:var(--emono);font-variant-numeric:tabular-nums">'+precoCell+'</td>'
         +'<td style="padding:4px 8px;text-align:right;font-family:var(--emono);font-variant-numeric:tabular-nums">'+margCell+'</td>'
-        +'<td style="padding:4px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+sugFull+'">'+sugCell+'</td>'
-        +'<td style="padding:4px 6px;text-align:center"><button class="vbtn sm" data-atvtg="'+ea(mlbN)+'" style="padding:2px 8px;font-size:10.5px">JSON</button></td>'
+        +'<td style="padding:4px 8px;white-space:nowrap">'+histCell+'</td>'
         +'</tr>'
-        +'<tr data-atvrow="'+ea(mlbN)+'" style="display:none"><td colspan="8" style="padding:6px 8px 10px;background:var(--epanel3);border-radius:8px">'
-        +'<textarea id="atv-ta-'+ea(mlbN)+'" spellcheck="false" style="width:100%;min-height:80px;background:var(--epanel2);color:var(--etxt);border:1px solid var(--eborder);border-radius:8px;padding:10px;font:11.5px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical" placeholder=\'JSON individual deste anúncio (comando v2.0) — o mlb do JSON deve ser '+ea(mlbN)+'\'></textarea>'
-        +'<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><button class="vbtn sm" data-atvimp="'+ea(mlbN)+'">Importar análise deste anúncio</button><span class="vmsg" id="atv-msg-'+ea(mlbN)+'"></span></div>'
-        +'</td></tr>';
+        +'<tr data-atvhrow="'+ea(mlb)+'" style="display:none"><td colspan="7" style="padding:4px 8px 10px"><div data-alhistbox="'+ea(mlb)+'" style="display:none;max-width:720px"></div></td></tr>';
     };
     const thead='<tr style="color:var(--emuted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap">'
-      +'<td style="padding:2px 8px 2px 6px">Nº cod</td><td style="padding:2px 8px">MLB</td><td style="padding:2px 10px 2px 6px">Produto</td>'
-      +'<td style="padding:2px 8px;text-align:center" title="C=Clássico · P=Premium · cheio/promo">Tipo</td>'
+      +'<td style="padding:2px 4px 2px 6px;text-align:right">Nº</td><td style="padding:2px 8px 2px 6px">Cod</td><td style="padding:2px 8px">MLB</td><td style="padding:2px 10px 2px 6px">Produto</td>'
       +'<td style="padding:2px 8px;text-align:right" title="Preço em vigor no ML: promoção quando ativa, senão o cheio (cheio no tooltip)">Praticado</td>'
       +'<td style="padding:2px 8px;text-align:right" title="Margem espelho ML no preço praticado (sem colchão). ≥10 verde · 0–10 âmbar · ≤0 vermelho">Margem</td>'
-      +'<td style="padding:2px 8px">Sugestão</td><td style="padding:2px 6px;text-align:center">Análise</td></tr>';
+      +'<td style="padding:2px 8px" title="Verde = movimentado desde a sua última leitura · vermelho = divergente do ML na última varredura">Histórico</td></tr>';
     const tabela=rows=>'<table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed">'
-      +'<colgroup><col style="width:82px"><col style="width:98px"><col style="width:280px"><col style="width:44px"><col style="width:104px"><col style="width:64px"><col><col style="width:64px"></colgroup>'
+      +'<colgroup><col style="width:34px"><col style="width:82px"><col style="width:98px"><col><col style="width:104px"><col style="width:64px"><col style="width:120px"></colgroup>'
       +thead+rows.join('')+'</table>';
     let html='<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px;border-left:3px solid var(--eemerald);padding-left:8px">'
       +'<span style="font-size:13.5px;font-weight:700;color:var(--eemerald)">Ativos no ML</span>'
-      +'<span style="font-size:12px;color:var(--emuted)">preço praticado · margem espelho ML</span></div>';
-    html+=ativos.length?tabela(ativos.map(a=>linha(a,false))):'<div class="ph">nenhum anúncio ativo registrado</div>';
+      +'<span style="font-size:12px;color:var(--emuted)">preço praticado · margem espelho ML · ordem = última movimentação</span></div>';
+    html+=ativos.length?tabela(ativos.map((a,i)=>linha(a,false,i+1))):'<div class="ph">nenhum anúncio ativo registrado</div>';
     if(paus.length){
       html+='<div style="display:flex;align-items:baseline;gap:8px;margin:16px 0 5px;border-left:3px solid var(--eborder);padding-left:8px">'
         +'<span style="font-size:13.5px;font-weight:700;color:var(--emuted)">Pausados</span></div>'
-        +tabela(paus.map(a=>linha(a,true)));
+        +tabela(paus.map((a,i)=>linha(a,true,i+1)));
     }
     list.innerHTML=html;
     if(cnt) cnt.textContent=ativos.length+' ativo(s) · '+paus.length+' pausado(s)';
     if(!list._b){ list._b=true; list.addEventListener('click',e=>{
-      const t=e.target.closest('[data-atvtg]');
-      if(t){ const row=list.querySelector('[data-atvrow="'+t.getAttribute('data-atvtg')+'"]'); if(row) row.style.display=(row.style.display==='none'?'':'none'); return; }
-      const b=e.target.closest('[data-atvimp]'); if(b) this.importarIndividual(b.getAttribute('data-atvimp'));
+      const h=e.target.closest('[data-atvhist]'); if(!h) return;
+      const mlb=h.getAttribute('data-atvhist'); const row=list.querySelector('[data-atvhrow="'+mlb+'"]');
+      if(row) row.style.display=(row.style.display==='none'?'':'none');
+      this.toggleHist(mlb,list);
+      if(h.classList.contains('novo')){ h.classList.remove('novo'); this.marcarLido(mlb); }
     }); }
-    this.renderIntegridade(anns,prodMap,integ);
   },
+  // BUILD 2026-08-26-E: grava a leitura (banco, vale em todos os aparelhos)
+  async marcarLido(mlb){ const agora=new Date().toISOString(); this.histLido=this.histLido||{}; this.histLido[mlb]=agora;
+    const por=(typeof state!=='undefined'&&state.user&&state.user.email)||null;
+    try{ const r=await sb.from('ecom_anuncio_hist_lido').upsert({mlb,lido_em:agora,por},{onConflict:'mlb'}); if(r.error) console.warn('marcarLido:',r.error.message); }catch(e){ console.warn('marcarLido:',e.message); } },
+
   async renderIntegridade(anns,prodMap,el){
     if(!el) return;
     el.innerHTML='<div class="atv-integ n">verificando integridade contra o último lote…</div>';
