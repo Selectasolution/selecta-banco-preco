@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-25-M | selecta-banco-preco | HISTORICO = ML REPRODUZIDO NO APP (decisao Igor 25/08 sobre 25-L; corrige o vermelho falso do 25-I, ex.: RTR-0016 promocao 446,40 vs preco 469,90): A regra do vermelho/verde deixa de comparar snapshot x preco do app (media idade do snapshot, e ignorava que o preco valido e o da promocao) e passa a ler ecom_sync_log: o ml-market (modo sync) ja copia ML -> app e registra cada mudanca feita no ML como evento PRECO/PROMOCAO/STATUS. VERMELHO = existe evento do ML posterior ao ultimo registro da Alexia no historico daquele anuncio (mudou no ML sem registro); VERDE = nao existe; neutro = sem conferencia ainda. Dentro do historico: faixa com o(s) evento(s) sem registro + botao "Registrar motivo" (grava ecom_anuncio_alteracao com os valores do evento e motivo "[ML] ..."), e as linhas do ML entram no historico com etiqueta ML (ambar). Cabecalho: "ultima conferencia: hh:mm" vem de ecom_sync_run (batimento da Edge ml-market v4.2; sem batimento ainda, mostra o ultimo snapshot). Botao Atualizar dispara ml-market?modo=sync na hora (JWT da sessao) e recarrega. Requer 06-sync-30min.sql + ml-market v4.2. Base: 2026-08-25-L -->
 <!-- BUILD 2026-08-25-L | selecta-banco-preco | CONTROLE: HORA DA LEITURA DO ML SAI DA CAIXA DO HISTORICO E VAI PARA O CABECALHO (correcao Igor 25/08 sobre 25-K): a faixa vermelha/verde dentro do historico continua (publicado x app), mas SEM o "(leitura do ML em ...)"; a data/hora do ultimo snapshot aparece uma vez so, abaixo do botao Atualizar (#al-snap-quando), discreta. Base: 2026-08-25-K -->
 <!-- BUILD 2026-08-25-K | selecta-banco-preco | RADAR PREPARADO PARA SNAPSHOT A CADA 30 MIN (decisao Igor 25/08 sobre 25-J): o Radar comparava o lote atual com o lote imediatamente anterior (desenho de 2 capturas/dia). Com captura a cada 30 min isso viraria "o que mudou nos ultimos 30 min" e o limit(900) cobriria poucas horas. Agora: (1) le a lista de lotes (distintos, ate 400) e escolhe como ANTERIOR o lote mais recente com pelo menos 9h de distancia do atual (mesma semantica de meio dia de antes; fallback = lote imediatamente anterior se nao houver); (2) busca as linhas SO desses dois lotes (sem limit cego). Regras do radar intocadas. Base: 2026-08-25-J -->
 <!-- BUILD 2026-08-25-J | selecta-banco-preco | CONTROLE: NADA FORA DA CAIXA DO HISTORICO (correcao Igor 25/08 sobre 25-I): a nota "publicado R$ X / app R$ Y" ao lado do link Historico SAI; no cartao so a COR do link (vermelho = diverge, verde = confere, neutro = sem leitura) chama a atencao; a leitura completa continua na faixa dentro do historico aberto. Base: 2026-08-25-I -->
@@ -5784,6 +5785,14 @@ const ecomAlvo={
     try{ const ua=await sb.from('ecom_anuncio_alteracao').select('mlb,criado_em,campo,preco_anterior,preco_novo,motivo').order('criado_em',{ascending:false});
       if(!ua.error){ (ua.data||[]).forEach(a=>{ if(!a.mlb) return; if(!this.ultAlteracao[a.mlb]) this.ultAlteracao[a.mlb]=a.criado_em; (this.altHist[a.mlb]=this.altHist[a.mlb]||[]).push(a); }); }
     }catch(e){ console.warn('ultAlteracao:',e.message); }
+    // BUILD 2026-08-25-M: eventos do ML (ecom_sync_log) por MLB + ultima conferencia (ecom_sync_run)
+    this.syncHist={}; this.syncQuando=null; this.syncQuandoIso=null;
+    try{ const sl=await sb.from('ecom_sync_log').select('anuncio_mlb,tipo,campo,valor_antigo,valor_novo,detectado_em,corrigido,observacao').in('tipo',['PRECO','PROMOCAO','STATUS']).order('detectado_em',{ascending:false}).limit(3000);
+      if(!sl.error){ (sl.data||[]).forEach(l=>{ const k=this._normMlb(l.anuncio_mlb); if(!k) return; (this.syncHist[k]=this.syncHist[k]||[]).push(l); }); }
+    }catch(e){ console.warn('syncHist:',e.message); }
+    try{ const sr=await sb.from('ecom_sync_run').select('executado_em,modo,ok,erro').order('executado_em',{ascending:false}).limit(1);
+      if(!sr.error&&sr.data&&sr.data[0]){ this.syncQuandoIso=sr.data[0].executado_em; this.syncQuando=new Date(sr.data[0].executado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); this.syncOk=sr.data[0].ok!==false; }
+    }catch(e){ console.warn('syncRun:',e.message); }
   },
   // BUILD -M · verificação AUTOMÁTICA registro × publicado. Divergência gera sugestão 'CORRIGIR REGISTRO'
   // para a Alexia (histórico datado no Controle) com DE-DUP: se a última sugestão do MLB já é a mesma
@@ -6009,17 +6018,24 @@ const ecomAlvo={
         +'<div style="display:flex;flex-direction:column;gap:5px"><button class="vbtn sm" data-aledit="'+an.id+'">editar</button>'+(an.pausado?('<button class="vbtn sm" data-alpause="'+an.id+'" data-alpausev="0" style="background:rgba(52,211,153,.14);color:var(--eemerald)">Reativar</button>'):('<button class="vbtn sm" data-alpause="'+an.id+'" data-alpausev="1" style="background:var(--epanel3);color:var(--eamber)">Pausar</button>'))+'<button class="vbtn sm" data-aldel="'+an.id+'" style="background:var(--epanel3);color:var(--emuted)">remover</button></div>'
         +'</div>';
     }).join('');
-    const sq=this._g('al-snap-quando'); if(sq) sq.textContent=this.snapQuando?('leitura do ML: '+this.snapQuando):'sem leitura do ML'; // BUILD 2026-08-25-L
+    const sq=this._g('al-snap-quando'); if(sq) sq.textContent=this.syncQuando?('última conferência: '+this.syncQuando+(this.syncOk===false?' · com erro':'')):(this.snapQuando?('último snapshot: '+this.snapQuando):'sem conferência'); // BUILD 2026-08-25-M
     const cnt=this._g('al-anuncios-count');
     const nPaus=lista.filter(r=>r.an.pausado).length, nAtvC=lista.length-nPaus;
     if(cnt) cnt.textContent = (_flt ? listaF.length+' de '+lista.length : nAtvC+' anúncio'+(nAtvC===1?'':'s')+' ativo'+(nAtvC===1?'':'s')+(nPaus?(' · '+nPaus+' pausado'+(nPaus===1?'':'s')):''));
   },
   // BUILD 2026-08-25-I: leitura app x ML de UM anuncio. pub = preco do ultimo snapshot do ML; reg = ecom_anuncios.preco.
   // estado: 'div' (diferem), 'ok' (iguais ao centavo), 'na' (sem snapshot ou sem preco — nao se inventa cor)
-  divergencia(an){ const out={estado:'na',pub:null,reg:null,quando:this.snapQuando||null};
-    if(!an||!an.anuncio_mlb) return out; const k=this._normMlb(an.anuncio_mlb); const sn=this.snapAtual?this.snapAtual[k]:null;
-    if(!sn||sn.preco==null||an.preco==null) return out; const pub=+sn.preco, reg=+an.preco; if(isNaN(pub)||isNaN(reg)) return out;
-    out.pub=Math.round(pub*100)/100; out.reg=Math.round(reg*100)/100; out.estado=Math.abs(pub-reg)<0.005?'ok':'div'; return out; },
+  // BUILD 2026-08-25-M: divergencia = mudanca feita no ML SEM registro no historico da Alexia.
+  // Fonte: eventos PRECO/PROMOCAO/STATUS do ecom_sync_log (o sync ja copiou ML -> app). Um evento e 'sem registro'
+  // quando e posterior ao ultimo registro em ecom_anuncio_alteracao daquele MLB (ou quando nao ha registro nenhum).
+  // estado: 'div' (ha evento sem registro) · 'ok' (nao ha) · 'na' (nunca houve conferencia)
+  divergencia(an){ const out={estado:'na',pendentes:[],ultReg:null};
+    if(!an||!an.anuncio_mlb) return out; const k=this._normMlb(an.anuncio_mlb);
+    const ev=(this.syncHist&&this.syncHist[k])||[]; const alts=(this.altHist&&this.altHist[an.anuncio_mlb])||(this.altHist&&this.altHist[k])||[];
+    let ultReg=null; alts.forEach(a=>{ const t=new Date(a.criado_em).getTime(); if(isFinite(t)&&(ultReg==null||t>ultReg)) ultReg=t; }); out.ultReg=ultReg;
+    out.pendentes=ev.filter(e=>{ const t=new Date(e.detectado_em).getTime(); return isFinite(t)&&(ultReg==null||t>ultReg); });
+    if(!this.syncQuando&&!ev.length) return out;
+    out.estado=out.pendentes.length?'div':'ok'; return out; },
   toggleSug(anid, mlb){
     const box=document.querySelector('[data-alsugbox="'+anid+'"]'); if(!box) return;
     if(box.style.display!=='none'){ box.style.display='none'; box.innerHTML=''; return; }
@@ -6323,6 +6339,19 @@ const ecomAlvo={
       this.load();
     }catch(e){ if(msg){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; } }
   },
+  // BUILD 2026-08-25-M: registra no historico os eventos do ML sem registro (um registro por evento, mesmo motivo)
+  async registrarML(mlb){ const an=(this.anuncios||[]).find(a=>a.anuncio_mlb===mlb)||null; const dv=this.divergencia(an);
+    if(!dv.pendentes.length){ alert('Nada a registrar para este anúncio.'); return; }
+    const motivo=prompt('Motivo da alteração feita no ML ('+dv.pendentes.length+' evento(s)):',''); if(motivo==null) return; const m=String(motivo).trim(); if(!m){ alert('Informe o motivo.'); return; }
+    const rows=dv.pendentes.map(e=>{ const t=String(e.tipo||''); const campo=t==='PRECO'?'preco':(t==='PROMOCAO'?'promocao':(/pausado=true/.test(String(e.valor_novo||''))?'pausado':'ativo'));
+      const num=v=>(v==null||v===''||isNaN(+v))?null:+v;
+      return { anuncio_sku:an?(an.produto_codigo||null):null, mlb:mlb, campo:campo, preco_anterior:(t==='STATUS')?null:num(e.valor_antigo), preco_novo:(t==='STATUS')?null:num(e.valor_novo), margem_pior_zona_pct:null, motivo:'[ML] '+m }; });
+    try{ const r=await sb.from('ecom_anuncio_alteracao').insert(rows); if(r.error) throw r.error; await this.load(); const bx=document.querySelector('[data-alhistbox="'+mlb+'"]'); if(bx&&bx.style.display==='none') this.toggleHist(mlb); }
+    catch(e){ alert('Erro ao registrar: '+e.message); } },
+  // BUILD 2026-08-25-M: conferencia na hora — chama ml-market?modo=sync com o JWT da sessao (a Edge exige JWT)
+  async conferirAgora(){ const ss=await sb.auth.getSession(); const tk=ss&&ss.data&&ss.data.session?ss.data.session.access_token:null; if(!tk) throw new Error('sem sessão');
+    const r=await fetch(CONFIG.SUPABASE_URL+'/functions/v1/ml-market?modo=sync&gravar=1',{method:'POST',headers:{'Authorization':'Bearer '+tk,'apikey':CONFIG.SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:'{}'});
+    const j=await r.json().catch(()=>({})); if(!r.ok||j.ok===false) throw new Error(j.error||('HTTP '+r.status)); return j; },
   toggleHist(mlb){ const box=document.querySelector('[data-alhistbox="'+mlb+'"]'); if(!box) return;
     // Histórico do CONTROLE = alterações da Alexia (ecom_anuncio_alteracao): data + motivo + o que mudou.
     // Pedido da Alexia (08/07): ela lembra do que FEZ, não do que foi sugerido. Estratégias ficam na Mesa.
@@ -6330,24 +6359,34 @@ const ecomAlvo={
     const hist=(this.altHist&&this.altHist[mlb])||[];
     const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const fmtDt=iso=>{ if(!iso) return '—'; try{ return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return String(iso).slice(0,16); } };
-    // BUILD 2026-08-25-I: faixa de leitura rapida app x ML no topo do historico
-    const anB=(this.anuncios||[]).find(a=>a.anuncio_mlb===mlb)||null; const dv=this.divergencia(anB); const fR=x=>'R$ '+(+x).toFixed(2).replace('.',',');
+    // BUILD 2026-08-25-M: faixa = eventos do ML sem registro; linhas do ML entram no historico com etiqueta ML
+    const anB=(this.anuncios||[]).find(a=>a.anuncio_mlb===mlb)||null; const dv=this.divergencia(anB);
+    const fR=x=>(x==null||x===''||isNaN(+x))?'—':('R$ '+(+x).toFixed(2).replace('.',','));
+    const evTxt=e=>{ const t=String(e.tipo||''); if(t==='PRECO') return 'preço '+fR(e.valor_antigo)+' → '+fR(e.valor_novo); if(t==='PROMOCAO') return 'promoção '+fR(e.valor_antigo)+' → '+fR(e.valor_novo); return 'status '+esc(String(e.valor_novo||'')); };
     const banner = dv.estado==='div'
-      ? '<div class="al-histbanner div">DIVERGÊNCIA · publicado no ML <b>'+fR(dv.pub)+'</b> · registrado no app <b>'+fR(dv.reg)+'</b></div>'
+      ? '<div class="al-histbanner div">ALTERADO NO ML SEM REGISTRO'
+        +dv.pendentes.slice(0,4).map(e=>'<div style="font-weight:500;margin-top:3px">'+esc(fmtDt(e.detectado_em))+' · '+evTxt(e)+'</div>').join('')
+        +(dv.pendentes.length>4?'<div style="font-weight:400;opacity:.8">+ '+(dv.pendentes.length-4)+' evento(s)</div>':'')
+        +'<div style="margin-top:7px"><button class="vbtn sm" data-alregml="'+esc(mlb)+'" style="font-size:12px">Registrar motivo</button></div></div>'
       : (dv.estado==='ok'
-        ? '<div class="al-histbanner ok">Preço publicado confere com o app · <b>'+fR(dv.pub)+'</b></div>'
-        : '<div class="al-histbanner na">Sem leitura do preço publicado no ML para este anúncio (snapshot ausente ou sem preço registrado).</div>');
-    if(!hist.length){
+        ? '<div class="al-histbanner ok">Histórico confere com o ML</div>'
+        : '<div class="al-histbanner na">Sem conferência com o ML ainda.</div>');
+    const evs=((this.syncHist&&this.syncHist[this._normMlb(mlb)])||[]).map(e=>({ml:true,quando:e.detectado_em,ev:e}));
+    const regs=hist.map(h=>({ml:false,quando:h.criado_em,h}));
+    const todas=regs.concat(evs).sort((a,b)=>new Date(b.quando)-new Date(a.quando));
+    if(!todas.length){
       box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações</div><div class="al-sugp faint">Nenhuma alteração registrada ainda para este anúncio.</div></div>';
     } else {
-      const linhas=hist.map(h=>{
-        const dt=fmtDt(h.criado_em);
+      const linhas=todas.map(x=>{
+        if(x.ml){ const e=x.ev; const semReg=dv.pendentes.indexOf(e)>=0;
+          return '<div class="al-histli"><span class="al-histdt">'+esc(fmtDt(e.detectado_em))+'</span><span class="al-histtag a">ML</span><span class="al-histmeta" style="font-size:12px;color:var(--etxt)">'+evTxt(e)+(semReg?' <span style="color:#f87171;font-weight:600">· sem registro</span>':'')+'</span></div>'; }
+        const h=x.h; const dt=fmtDt(h.criado_em);
         const tag=String(h.campo||'preco').split('+').map(c=>c==='tipo_anuncio'||c==='tipo'?'tipo':(c==='promocao'?'promoção':(c==='abaixo_piso'?'ABAIXO_PISO':'preço'))).join('+');
         const delta=(h.preco_anterior!=null&&h.preco_novo!=null)?' <span style="color:var(--emuted2)">· R$ '+(+h.preco_anterior).toFixed(2).replace('.',',')+' → R$ '+(+h.preco_novo).toFixed(2).replace('.',',')+'</span>':'';
         const mot=h.motivo?esc(h.motivo):'<span style="color:var(--emuted2)">sem motivo registrado</span>';
         return '<div class="al-histli"><span class="al-histdt">'+esc(dt)+'</span><span class="al-histtag b">'+esc(tag)+'</span><span class="al-histmeta" style="font-size:12px;color:var(--etxt)">'+mot+delta+'</span></div>';
       }).join('');
-      box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações · '+hist.length+'</div>'+linhas+'</div>';
+      box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações · '+todas.length+'</div>'+linhas+'</div>';
     }
     box.style.display='';
   },
@@ -7631,6 +7670,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
     const d=e.target.closest('[data-aldel]'); if(d){ ecomAlvo.remover(d.dataset.aldel); return; }
     const ed=e.target.closest('[data-aledit]'); if(ed){ ecomAlvo.editAnuncio(ed.dataset.aledit); return; }
     const pz=e.target.closest('[data-alpause]'); if(pz){ ecomAlvo.pausar(pz.dataset.alpause, pz.dataset.alpausev==='1'); return; }
+    const rg=e.target.closest('[data-alregml]'); if(rg){ ecomAlvo.registrarML(rg.dataset.alregml); return; } // BUILD 2026-08-25-M
     const sv=e.target.closest('[data-alsave]'); if(sv){ ecomAlvo.salvarEdicao(sv.dataset.alsave); return; }
     const cc=e.target.closest('[data-alcancel]'); if(cc){ const id=cc.dataset.alcancel; const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(box){ box.style.display='none'; box.innerHTML=''; box.classList.remove('editing'); } return; }
     const h=e.target.closest('[data-alhist]'); if(h){ ecomAlvo.toggleHist(h.dataset.alhist); return; }
@@ -7639,7 +7679,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const mesa=ecomAlvo._g('al-mesa'); if(mesa) mesa.addEventListener('click',e=>{ const mh=e.target.closest('[data-almesahist]'); if(mh) ecomAlvo.toggleHistEstrategia(mh.dataset.almesahist); });
   const abz=ecomAlvo._g('al-anuncios-busca'); if(abz) abz.addEventListener('input',()=>{ ecomAlvo.anunciosFiltro=abz.value; ecomAlvo.renderAnuncios(); });
   const abzc=ecomAlvo._g('al-anuncios-busca-clear'); if(abzc) abzc.addEventListener('click',()=>{ const i=ecomAlvo._g('al-anuncios-busca'); if(i) i.value=''; ecomAlvo.anunciosFiltro=''; ecomAlvo.renderAnuncios(); if(i) i.focus(); });
-  const arf=ecomAlvo._g('al-anuncios-refresh'); if(arf) arf.addEventListener('click',async()=>{ const prev=arf.textContent; arf.disabled=true; arf.textContent='atualizando\u2026'; try{ await ecomAlvo.load(); arf.textContent='\u2713 atualizado'; }catch(e){ arf.textContent='erro ao atualizar'; } setTimeout(()=>{ arf.disabled=false; arf.textContent=prev; },1400); });
+  const arf=ecomAlvo._g('al-anuncios-refresh'); if(arf) arf.addEventListener('click',async()=>{ const prev=arf.textContent; arf.disabled=true; arf.textContent='conferindo no ML\u2026'; let okSync=true; try{ await ecomAlvo.conferirAgora(); }catch(e){ okSync=false; console.warn('conferirAgora:',e.message); } try{ await ecomAlvo.load(); arf.textContent=okSync?'\u2713 conferido':'\u2713 recarregado (ML indisponível)'; }catch(e){ arf.textContent='erro ao atualizar'; } setTimeout(()=>{ arf.disabled=false; arf.textContent=prev; },1800); }); // BUILD 2026-08-25-M
   const bar=document.getElementById('alsubbar'); if(bar) bar.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
     const tgt=b.dataset.alsub;
     document.querySelectorAll('#ecom-sub-alvo .alsub').forEach(p=>{ p.style.display=(p.id==='alsub-'+tgt)?'':'none'; });
