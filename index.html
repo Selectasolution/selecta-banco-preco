@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-26-H | selecta-banco-preco | AUDITORIA ANALISE x CONTROLE (Igor 26/08 sobre 26-G): botao "Conferir com o Controle" na Analise. Para CADA anuncio recalcula a margem pelo caminho do Editar do Controle (mesmas regras do gate _simAvalGate: produto no catalogo, preco>0, custo NF>0, peso; vigencia: promocao preenchida governa; promocao >= preco = invalida) e compara com a celula da tabela. Resultado na linha abaixo do cabecalho: total · iguais · divergentes (lista codigo/MLB/valores) · sem calculo (com o motivo). Nada e gravado. Base: 2026-08-26-G -->
 <!-- BUILD 2026-08-26-G | selecta-banco-preco | MARGEM DA ANALISE = MARGEM DO CONTROLE (Igor 26/08 sobre 26-F): a coluna Margem da Analise Comercial usava _mlMirror (simulador com o colchao devolvido — e devolvido sobre o CUSTO, base errada desde o 21-A que pos o colchao sobre a venda). Agora chama _simMargem com a mesma reputacao do formulario (ecom.reputacao||verde): o numero e identico ao "Margem Liquida" do Editar. Ex.: RTR-0027 a 589,90 = 18,6% nas duas telas (antes 21,6% vs 18,6%). _mlMirror fica no codigo sem uso. Base: 2026-08-26-F -->
 <!-- BUILD 2026-08-26-F | selecta-banco-preco | CORRECOES Igor 26/08 sobre 26-E: (1) BUG: o Historico do Controle abria a caixa errada — toggleHist sem escopo achava primeiro a caixa da Analise (mesmo MLB, DOM anterior); o handler do Controle agora passa o proprio container (#al-anuncios). (2) "Frete oficial ML" tambem recolhido (details), como Parametros comerciais. (3) Tabela da Analise: largura pelo conteudo (table-layout auto, width auto), Produto sem reticencias e sem corte — Praticado/Margem/Historico colam no nome; rolagem horizontal se faltar espaco. (4) Removidos o subtitulo "preco praticado · margem espelho ML · ordem = ..." e o span "ao vivo" (al-atv-live). Base: 2026-08-26-E -->
 <!-- BUILD 2026-08-26-E | selecta-banco-preco | ANALISE COMERCIAL = LANCAR E OBSERVAR (decisoes Igor 26/08, sobre 26-D): (1) "Parametros comerciais" recolhido (details/summary): so o titulo, clica e abre; campos continuam no DOM (simulador le deles). (2) Quadrante "Comando — Analise Individual" APAGADO; botao "Exportar cenario (.md)" (id ecom-export preservado) migrou para o cabecalho de Anuncios ativos, ao lado do Atualizar. (3) Rodape "integridade" (al-atv-integridade) APAGADO — conferencia app x ML e funcao do Controle. (4) Tabela Anuncios ativos: coluna Nº (enumeracao), sem Tipo, sem Sugestao, sem Analise/JSON; Praticado e Margem intactos (espelho ML). Nova coluna "Historico (N)" = a MESMA caixa da Alexia (dias no ar · vendas, faixa de divergencia, alteracoes dela), aberta na propria linha. (5) Ordem: por ultima alteracao no historico (mais recente primeiro); sem historico vai para o fim. VERDE + topo = alteracao posterior a sua ultima leitura (ecom_anuncio_hist_lido, SQL 07); ao abrir, grava lido e volta ao branco (reordena no proximo Atualizar). (6) Controle: anuncio com ativo=false (encerrado no ML pela varredura) fica esmaecido com etiqueta ENCERRADO NO ML e SAI da contagem de ativos — corrige a diferenca de contagem entre Controle e Analise. toggleHist ganhou escopo (root) para nao confundir as duas telas. Base: 2026-08-26-D -->
@@ -2179,7 +2180,9 @@
           <span class="vmsg" id="al-atv-count" style="margin:0"></span>
           <button class="vbtn sm" id="al-atv-refresh" style="margin-left:auto">↻ Atualizar</button>
           <button class="vbtn sm" id="ecom-export" title="Exporta o cenário atual (parâmetros, produtos, matriz e vereditos) em .md">⬇ Exportar cenário (.md)</button><!-- BUILD 2026-08-26-E: veio do quadrante Comando -->
+          <button class="vbtn sm" id="al-atv-audit" title="Recalcula a margem de cada anúncio pelo caminho do Editar do Controle e compara com esta tabela">✓ Conferir com o Controle</button><!-- BUILD 2026-08-26-H -->
         </div>
+        <div id="al-atv-audit-out" style="display:none;font-size:12px;margin:-4px 0 10px;padding:8px 10px;border:1px solid var(--eborder);border-radius:7px;background:var(--epanel2)"></div>
         <div id="al-atv-list"><div class="ph">Carregando anúncios…</div></div>
       </div>
 
@@ -6532,6 +6535,7 @@ const ecomAlvo={
     const ultHist=a=>{ const h=(this.altHist&&this.altHist[a.anuncio_mlb])||[]; let t=0; h.forEach(x=>{ const v=new Date(x.criado_em).getTime(); if(isFinite(v)&&v>t) t=v; }); return t; };
     const naoLido=a=>{ const t=ultHist(a); if(!t) return false; const l=this.histLido?this.histLido[a.anuncio_mlb]:null; return !l || t>new Date(l).getTime(); };
     const ordem=(a,b)=>((naoLido(b)?1:0)-(naoLido(a)?1:0)) || (ultHist(b)-ultHist(a)) || ((+b.id||0)-(+a.id||0));
+    this._margTabela={}; // BUILD 2026-08-26-H: zera antes de renderizar
     const ativos=anns.filter(a=>!a.pausado).sort(ordem);
     const paus=anns.filter(a=>a.pausado).sort(ordem);
     const linha=(an,dim,n)=>{
@@ -6543,6 +6547,7 @@ const ecomAlvo={
       const tipoPrat=temPromo?(an.tipo_promocao==='premium'?'premium':'classico'):(an.tipo_anuncio==='premium'?'premium':'classico');
       const r=(prod&&praticado!=null)?this._simMargem(prod,praticado,tipoPrat,((typeof ecom!=='undefined'&&ecom.reputacao)||'verde')):null; // BUILD 2026-08-26-G: mesma funcao e reputacao do formulario do Controle
       const marg=(r&&r.ok)?r.pct:null;
+      this._margTabela=this._margTabela||{}; this._margTabela[mlb]={marg:marg,reason:(r&&!r.ok)?r.reason:(prod?null:'produto não encontrado no catálogo')}; // BUILD 2026-08-26-H
       const mCor=(marg==null)?'var(--emuted2)':(marg>=10?'var(--eemerald)':(marg>0?'var(--eamber)':'var(--ered)'));
       const precoCell=(praticado==null)
         ? '<span style="color:var(--emuted2)">—</span>'
@@ -6592,6 +6597,35 @@ const ecomAlvo={
       if(h.classList.contains('novo')){ h.classList.remove('novo'); this.marcarLido(mlb); }
     }); }
   },
+  // BUILD 2026-08-26-H: auditoria — margem pelo caminho do Editar do Controle x celula da tabela da Analise
+  auditarMargens(){ const out=this._g('al-atv-audit-out'); if(!out) return;
+    const anns=(this.anuncios||[]).filter(a=>a.ativo!==false); const rep=((typeof ecom!=='undefined'&&ecom.reputacao)||'verde');
+    const itens=((typeof ecom!=='undefined'&&ecom.itens)||[]);
+    const iguais=[], div=[], semCalc=[];
+    anns.forEach(an=>{ const mlb=String(an.anuncio_mlb||''); const cod=String(an.produto_codigo||'').trim().toUpperCase();
+      // --- caminho do Editar (gate + vigencia) ---
+      const prod=itens.find(p=>String(p.codigo).toUpperCase()===cod)||null; let motivo=null, ctrl=null;
+      const preco=an.preco!=null?+an.preco:NaN; const tipo=(an.tipo_anuncio==='premium')?'premium':'classico';
+      if(!prod) motivo='produto não encontrado no catálogo';
+      else if(isNaN(preco)||preco<=0) motivo='preço não informado';
+      else if(prod.custo==null||isNaN(+prod.custo)||+prod.custo<=0) motivo='custo NF ausente';
+      else if(!(typeof ecom!=='undefined'&&ecom.pesoEfetivoG&&ecom.pesoEfetivoG(prod)!=null)) motivo='peso ausente';
+      else { const promo=an.preco_promocao!=null?+an.preco_promocao:null; const tipoP=(an.tipo_promocao==='premium')?'premium':'classico';
+        if(promo!=null&&(isNaN(promo)||promo<=0)) motivo='promoção inválida';
+        else if(promo!=null&&promo>=preco) motivo='promoção maior ou igual ao preço (Editar recusa)';
+        else { const r=this._simMargem(prod, promo!=null?promo:preco, promo!=null?tipoP:tipo, rep); if(!r.ok) motivo=r.reason||'sem cálculo'; else ctrl=r.pct; } }
+      // --- celula da tabela ---
+      const tab=(this._margTabela&&this._margTabela[mlb])||{marg:null,reason:'não renderizado'};
+      const f=x=>x==null?'—':(+x).toFixed(1)+'%';
+      if(ctrl==null&&tab.marg==null) semCalc.push(cod+' '+mlb+' · '+(motivo||tab.reason||'sem cálculo'));
+      else if(ctrl!=null&&tab.marg!=null&&Math.abs(ctrl-tab.marg)<0.05) iguais.push(mlb);
+      else div.push(cod+' '+mlb+' · Controle '+f(ctrl)+(motivo?' ('+motivo+')':'')+' · Análise '+f(tab.marg)+(tab.reason?' ('+tab.reason+')':''));
+    });
+    const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    out.innerHTML='<b>'+anns.length+'</b> anúncio(s) · <span style="color:var(--eemerald)"><b>'+iguais.length+'</b> iguais</span> · <span style="color:'+(div.length?'#f87171':'var(--emuted)')+'"><b>'+div.length+'</b> divergentes</span> · <span style="color:var(--emuted)"><b>'+semCalc.length+'</b> sem cálculo</span>'
+      +(div.length?'<div style="margin-top:6px;color:#fca5a5">'+div.map(esc).join('<br>')+'</div>':'')
+      +(semCalc.length?'<div style="margin-top:6px;color:var(--emuted)">'+semCalc.map(esc).join('<br>')+'</div>':'');
+    out.style.display='block'; },
   // BUILD 2026-08-26-E: grava a leitura (banco, vale em todos os aparelhos)
   async marcarLido(mlb){ const agora=new Date().toISOString(); this.histLido=this.histLido||{}; this.histLido[mlb]=agora;
     const por=(typeof state!=='undefined'&&state.user&&state.user.email)||null;
@@ -7689,6 +7723,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const mesa=ecomAlvo._g('al-mesa'); if(mesa) mesa.addEventListener('click',e=>{ const mh=e.target.closest('[data-almesahist]'); if(mh) ecomAlvo.toggleHistEstrategia(mh.dataset.almesahist); });
   const abz=ecomAlvo._g('al-anuncios-busca'); if(abz) abz.addEventListener('input',()=>{ ecomAlvo.anunciosFiltro=abz.value; ecomAlvo.renderAnuncios(); });
   const abzc=ecomAlvo._g('al-anuncios-busca-clear'); if(abzc) abzc.addEventListener('click',()=>{ const i=ecomAlvo._g('al-anuncios-busca'); if(i) i.value=''; ecomAlvo.anunciosFiltro=''; ecomAlvo.renderAnuncios(); if(i) i.focus(); });
+  const aud=ecomAlvo._g('al-atv-audit'); if(aud) aud.addEventListener('click',()=>ecomAlvo.auditarMargens()); // BUILD 2026-08-26-H
   const arf=ecomAlvo._g('al-anuncios-refresh'); if(arf) arf.addEventListener('click',async()=>{ const prev=arf.textContent; arf.disabled=true; arf.textContent='conferindo no ML\u2026'; let okSync=true; try{ await ecomAlvo.conferirAgora(); }catch(e){ okSync=false; console.warn('conferirAgora:',e.message); } try{ await ecomAlvo.load(); arf.textContent=okSync?'\u2713 conferido':'\u2713 recarregado (ML indisponível)'; }catch(e){ arf.textContent='erro ao atualizar'; } setTimeout(()=>{ arf.disabled=false; arf.textContent=prev; },1800); }); // BUILD 2026-08-25-M
   const bar=document.getElementById('alsubbar'); if(bar) bar.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
     const tgt=b.dataset.alsub;
