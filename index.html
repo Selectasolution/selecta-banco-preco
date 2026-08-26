@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-26-A | selecta-banco-preco | HISTORICO: REGUA SIMPLES app x ML (correcao Igor 26/08 sobre 25-M): sai TUDO que envolvia registro da Alexia — linhas "ML" no historico, "sem registro", botao "Registrar motivo" (registrarML fica no codigo sem handler). Regra unica: VERMELHO = na ULTIMA conferencia (ecom_sync_run mais recente) a varredura precisou corrigir este anuncio (evento PRECO/PROMOCAO/STATUS com o lote dessa execucao); VERDE = a ultima conferencia nao tocou nele; neutro = sem conferencia ou ultima com erro. Atualiza sozinho a cada varredura (30 min) ou no botao Atualizar. Faixa dentro do historico: vermelha lista o que foi corrigido (valores + hora); verde "Confere com o ML". Historico = so as alteracoes dela. Base: 2026-08-25-M -->
 <!-- BUILD 2026-08-25-M | selecta-banco-preco | HISTORICO = ML REPRODUZIDO NO APP (decisao Igor 25/08 sobre 25-L; corrige o vermelho falso do 25-I, ex.: RTR-0016 promocao 446,40 vs preco 469,90): A regra do vermelho/verde deixa de comparar snapshot x preco do app (media idade do snapshot, e ignorava que o preco valido e o da promocao) e passa a ler ecom_sync_log: o ml-market (modo sync) ja copia ML -> app e registra cada mudanca feita no ML como evento PRECO/PROMOCAO/STATUS. VERMELHO = existe evento do ML posterior ao ultimo registro da Alexia no historico daquele anuncio (mudou no ML sem registro); VERDE = nao existe; neutro = sem conferencia ainda. Dentro do historico: faixa com o(s) evento(s) sem registro + botao "Registrar motivo" (grava ecom_anuncio_alteracao com os valores do evento e motivo "[ML] ..."), e as linhas do ML entram no historico com etiqueta ML (ambar). Cabecalho: "ultima conferencia: hh:mm" vem de ecom_sync_run (batimento da Edge ml-market v4.2; sem batimento ainda, mostra o ultimo snapshot). Botao Atualizar dispara ml-market?modo=sync na hora (JWT da sessao) e recarrega. Requer 06-sync-30min.sql + ml-market v4.2. Base: 2026-08-25-L -->
 <!-- BUILD 2026-08-25-L | selecta-banco-preco | CONTROLE: HORA DA LEITURA DO ML SAI DA CAIXA DO HISTORICO E VAI PARA O CABECALHO (correcao Igor 25/08 sobre 25-K): a faixa vermelha/verde dentro do historico continua (publicado x app), mas SEM o "(leitura do ML em ...)"; a data/hora do ultimo snapshot aparece uma vez so, abaixo do botao Atualizar (#al-snap-quando), discreta. Base: 2026-08-25-K -->
 <!-- BUILD 2026-08-25-K | selecta-banco-preco | RADAR PREPARADO PARA SNAPSHOT A CADA 30 MIN (decisao Igor 25/08 sobre 25-J): o Radar comparava o lote atual com o lote imediatamente anterior (desenho de 2 capturas/dia). Com captura a cada 30 min isso viraria "o que mudou nos ultimos 30 min" e o limit(900) cobriria poucas horas. Agora: (1) le a lista de lotes (distintos, ate 400) e escolhe como ANTERIOR o lote mais recente com pelo menos 9h de distancia do atual (mesma semantica de meio dia de antes; fallback = lote imediatamente anterior se nao houver); (2) busca as linhas SO desses dois lotes (sem limit cego). Regras do radar intocadas. Base: 2026-08-25-J -->
@@ -5790,9 +5791,13 @@ const ecomAlvo={
     try{ const sl=await sb.from('ecom_sync_log').select('anuncio_mlb,tipo,campo,valor_antigo,valor_novo,detectado_em,corrigido,observacao').in('tipo',['PRECO','PROMOCAO','STATUS']).order('detectado_em',{ascending:false}).limit(3000);
       if(!sl.error){ (sl.data||[]).forEach(l=>{ const k=this._normMlb(l.anuncio_mlb); if(!k) return; (this.syncHist[k]=this.syncHist[k]||[]).push(l); }); }
     }catch(e){ console.warn('syncHist:',e.message); }
-    try{ const sr=await sb.from('ecom_sync_run').select('executado_em,modo,ok,erro').order('executado_em',{ascending:false}).limit(1);
-      if(!sr.error&&sr.data&&sr.data[0]){ this.syncQuandoIso=sr.data[0].executado_em; this.syncQuando=new Date(sr.data[0].executado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); this.syncOk=sr.data[0].ok!==false; }
+    this.syncLote=null; this.syncOk=null;
+    try{ const sr=await sb.from('ecom_sync_run').select('executado_em,modo,ok,erro,lote').order('executado_em',{ascending:false}).limit(1);
+      if(!sr.error&&sr.data&&sr.data[0]){ this.syncQuandoIso=sr.data[0].executado_em; this.syncQuando=new Date(sr.data[0].executado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); this.syncOk=sr.data[0].ok!==false; this.syncLote=sr.data[0].lote||null; }
     }catch(e){ console.warn('syncRun:',e.message); }
+    // BUILD 2026-08-26-A: so os eventos da ULTIMA conferencia interessam (lote da execucao mais recente)
+    if(this.syncLote){ try{ const se=await sb.from('ecom_sync_log').select('anuncio_mlb,tipo,valor_antigo,valor_novo,detectado_em').eq('lote',this.syncLote).in('tipo',['PRECO','PROMOCAO','STATUS']);
+        this.syncUlt={}; if(!se.error) (se.data||[]).forEach(l=>{ const k=this._normMlb(l.anuncio_mlb); if(k) (this.syncUlt[k]=this.syncUlt[k]||[]).push(l); }); }catch(e){ this.syncUlt={}; } } else this.syncUlt={};
   },
   // BUILD -M · verificação AUTOMÁTICA registro × publicado. Divergência gera sugestão 'CORRIGIR REGISTRO'
   // para a Alexia (histórico datado no Controle) com DE-DUP: se a última sugestão do MLB já é a mesma
@@ -6025,17 +6030,12 @@ const ecomAlvo={
   },
   // BUILD 2026-08-25-I: leitura app x ML de UM anuncio. pub = preco do ultimo snapshot do ML; reg = ecom_anuncios.preco.
   // estado: 'div' (diferem), 'ok' (iguais ao centavo), 'na' (sem snapshot ou sem preco — nao se inventa cor)
-  // BUILD 2026-08-25-M: divergencia = mudanca feita no ML SEM registro no historico da Alexia.
-  // Fonte: eventos PRECO/PROMOCAO/STATUS do ecom_sync_log (o sync ja copiou ML -> app). Um evento e 'sem registro'
-  // quando e posterior ao ultimo registro em ecom_anuncio_alteracao daquele MLB (ou quando nao ha registro nenhum).
-  // estado: 'div' (ha evento sem registro) · 'ok' (nao ha) · 'na' (nunca houve conferencia)
-  divergencia(an){ const out={estado:'na',pendentes:[],ultReg:null};
-    if(!an||!an.anuncio_mlb) return out; const k=this._normMlb(an.anuncio_mlb);
-    const ev=(this.syncHist&&this.syncHist[k])||[]; const alts=(this.altHist&&this.altHist[an.anuncio_mlb])||(this.altHist&&this.altHist[k])||[];
-    let ultReg=null; alts.forEach(a=>{ const t=new Date(a.criado_em).getTime(); if(isFinite(t)&&(ultReg==null||t>ultReg)) ultReg=t; }); out.ultReg=ultReg;
-    out.pendentes=ev.filter(e=>{ const t=new Date(e.detectado_em).getTime(); return isFinite(t)&&(ultReg==null||t>ultReg); });
-    if(!this.syncQuando&&!ev.length) return out;
-    out.estado=out.pendentes.length?'div':'ok'; return out; },
+  // BUILD 2026-08-26-A: divergencia = na ULTIMA conferencia a varredura precisou corrigir este anuncio (app estava diferente do ML).
+  // estado: 'div' (corrigido na ultima conferencia) · 'ok' (ultima conferencia nao tocou nele) · 'na' (sem conferencia valida)
+  divergencia(an){ const out={estado:'na',corrigidos:[]};
+    if(!an||!an.anuncio_mlb) return out; if(!this.syncQuando||this.syncOk===false) return out;
+    const k=this._normMlb(an.anuncio_mlb); out.corrigidos=(this.syncUlt&&this.syncUlt[k])||[];
+    out.estado=out.corrigidos.length?'div':'ok'; return out; },
   toggleSug(anid, mlb){
     const box=document.querySelector('[data-alsugbox="'+anid+'"]'); if(!box) return;
     if(box.style.display!=='none'){ box.style.display='none'; box.innerHTML=''; return; }
@@ -6359,34 +6359,27 @@ const ecomAlvo={
     const hist=(this.altHist&&this.altHist[mlb])||[];
     const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const fmtDt=iso=>{ if(!iso) return '—'; try{ return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return String(iso).slice(0,16); } };
-    // BUILD 2026-08-25-M: faixa = eventos do ML sem registro; linhas do ML entram no historico com etiqueta ML
+    // BUILD 2026-08-26-A: faixa = o que a ULTIMA conferencia corrigiu neste anuncio; historico = so as alteracoes dela
     const anB=(this.anuncios||[]).find(a=>a.anuncio_mlb===mlb)||null; const dv=this.divergencia(anB);
     const fR=x=>(x==null||x===''||isNaN(+x))?'—':('R$ '+(+x).toFixed(2).replace('.',','));
     const evTxt=e=>{ const t=String(e.tipo||''); if(t==='PRECO') return 'preço '+fR(e.valor_antigo)+' → '+fR(e.valor_novo); if(t==='PROMOCAO') return 'promoção '+fR(e.valor_antigo)+' → '+fR(e.valor_novo); return 'status '+esc(String(e.valor_novo||'')); };
     const banner = dv.estado==='div'
-      ? '<div class="al-histbanner div">ALTERADO NO ML SEM REGISTRO'
-        +dv.pendentes.slice(0,4).map(e=>'<div style="font-weight:500;margin-top:3px">'+esc(fmtDt(e.detectado_em))+' · '+evTxt(e)+'</div>').join('')
-        +(dv.pendentes.length>4?'<div style="font-weight:400;opacity:.8">+ '+(dv.pendentes.length-4)+' evento(s)</div>':'')
-        +'<div style="margin-top:7px"><button class="vbtn sm" data-alregml="'+esc(mlb)+'" style="font-size:12px">Registrar motivo</button></div></div>'
+      ? '<div class="al-histbanner div">DIVERGENTE DO ML NA ÚLTIMA CONFERÊNCIA · app corrigido'
+        +dv.corrigidos.map(e=>'<div style="font-weight:500;margin-top:3px">'+evTxt(e)+' <span style="font-weight:400;opacity:.8">('+esc(fmtDt(e.detectado_em))+')</span></div>').join('')+'</div>'
       : (dv.estado==='ok'
-        ? '<div class="al-histbanner ok">Histórico confere com o ML</div>'
-        : '<div class="al-histbanner na">Sem conferência com o ML ainda.</div>');
-    const evs=((this.syncHist&&this.syncHist[this._normMlb(mlb)])||[]).map(e=>({ml:true,quando:e.detectado_em,ev:e}));
-    const regs=hist.map(h=>({ml:false,quando:h.criado_em,h}));
-    const todas=regs.concat(evs).sort((a,b)=>new Date(b.quando)-new Date(a.quando));
-    if(!todas.length){
+        ? '<div class="al-histbanner ok">Confere com o ML</div>'
+        : '<div class="al-histbanner na">Sem conferência válida com o ML ainda.</div>');
+    if(!hist.length){
       box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações</div><div class="al-sugp faint">Nenhuma alteração registrada ainda para este anúncio.</div></div>';
     } else {
-      const linhas=todas.map(x=>{
-        if(x.ml){ const e=x.ev; const semReg=dv.pendentes.indexOf(e)>=0;
-          return '<div class="al-histli"><span class="al-histdt">'+esc(fmtDt(e.detectado_em))+'</span><span class="al-histtag a">ML</span><span class="al-histmeta" style="font-size:12px;color:var(--etxt)">'+evTxt(e)+(semReg?' <span style="color:#f87171;font-weight:600">· sem registro</span>':'')+'</span></div>'; }
-        const h=x.h; const dt=fmtDt(h.criado_em);
+      const linhas=hist.map(h=>{
+        const dt=fmtDt(h.criado_em);
         const tag=String(h.campo||'preco').split('+').map(c=>c==='tipo_anuncio'||c==='tipo'?'tipo':(c==='promocao'?'promoção':(c==='abaixo_piso'?'ABAIXO_PISO':'preço'))).join('+');
         const delta=(h.preco_anterior!=null&&h.preco_novo!=null)?' <span style="color:var(--emuted2)">· R$ '+(+h.preco_anterior).toFixed(2).replace('.',',')+' → R$ '+(+h.preco_novo).toFixed(2).replace('.',',')+'</span>':'';
         const mot=h.motivo?esc(h.motivo):'<span style="color:var(--emuted2)">sem motivo registrado</span>';
         return '<div class="al-histli"><span class="al-histdt">'+esc(dt)+'</span><span class="al-histtag b">'+esc(tag)+'</span><span class="al-histmeta" style="font-size:12px;color:var(--etxt)">'+mot+delta+'</span></div>';
       }).join('');
-      box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações · '+todas.length+'</div>'+linhas+'</div>';
+      box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações · '+hist.length+'</div>'+linhas+'</div>';
     }
     box.style.display='';
   },
@@ -7670,7 +7663,6 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
     const d=e.target.closest('[data-aldel]'); if(d){ ecomAlvo.remover(d.dataset.aldel); return; }
     const ed=e.target.closest('[data-aledit]'); if(ed){ ecomAlvo.editAnuncio(ed.dataset.aledit); return; }
     const pz=e.target.closest('[data-alpause]'); if(pz){ ecomAlvo.pausar(pz.dataset.alpause, pz.dataset.alpausev==='1'); return; }
-    const rg=e.target.closest('[data-alregml]'); if(rg){ ecomAlvo.registrarML(rg.dataset.alregml); return; } // BUILD 2026-08-25-M
     const sv=e.target.closest('[data-alsave]'); if(sv){ ecomAlvo.salvarEdicao(sv.dataset.alsave); return; }
     const cc=e.target.closest('[data-alcancel]'); if(cc){ const id=cc.dataset.alcancel; const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(box){ box.style.display='none'; box.innerHTML=''; box.classList.remove('editing'); } return; }
     const h=e.target.closest('[data-alhist]'); if(h){ ecomAlvo.toggleHist(h.dataset.alhist); return; }
