@@ -1,3 +1,5 @@
+<!-- BUILD 2026-08-25-L | selecta-banco-preco | CONTROLE: HORA DA LEITURA DO ML SAI DA CAIXA DO HISTORICO E VAI PARA O CABECALHO (correcao Igor 25/08 sobre 25-K): a faixa vermelha/verde dentro do historico continua (publicado x app), mas SEM o "(leitura do ML em ...)"; a data/hora do ultimo snapshot aparece uma vez so, abaixo do botao Atualizar (#al-snap-quando), discreta. Base: 2026-08-25-K -->
+<!-- BUILD 2026-08-25-K | selecta-banco-preco | RADAR PREPARADO PARA SNAPSHOT A CADA 30 MIN (decisao Igor 25/08 sobre 25-J): o Radar comparava o lote atual com o lote imediatamente anterior (desenho de 2 capturas/dia). Com captura a cada 30 min isso viraria "o que mudou nos ultimos 30 min" e o limit(900) cobriria poucas horas. Agora: (1) le a lista de lotes (distintos, ate 400) e escolhe como ANTERIOR o lote mais recente com pelo menos 9h de distancia do atual (mesma semantica de meio dia de antes; fallback = lote imediatamente anterior se nao houver); (2) busca as linhas SO desses dois lotes (sem limit cego). Regras do radar intocadas. Base: 2026-08-25-J -->
 <!-- BUILD 2026-08-25-J | selecta-banco-preco | CONTROLE: NADA FORA DA CAIXA DO HISTORICO (correcao Igor 25/08 sobre 25-I): a nota "publicado R$ X / app R$ Y" ao lado do link Historico SAI; no cartao so a COR do link (vermelho = diverge, verde = confere, neutro = sem leitura) chama a atencao; a leitura completa continua na faixa dentro do historico aberto. Base: 2026-08-25-I -->
 <!-- BUILD 2026-08-25-I | selecta-banco-preco | CONTROLE DE ANUNCIOS (Alexia): SO HISTORICO, E ELE ACUSA A DIVERGENCIA APP x ML (Igor 25/08, sobre 25-H): (1) botao/caixa "Sugestao" REMOVIDOS do cartao do anuncio — toggleSug fica no codigo mas nada mais o chama. (2) "Historico (N)" vira o unico link, maior (13px, negrito): VERMELHO quando o preco publicado no ML (ultimo snapshot ecom_mercado_snapshot) difere do registrado no app (ecom_anuncios.preco), com a mensagem "publicado R$ X / app R$ Y" ao lado; VERDE quando confere; neutro quando nao ha snapshot ou preco. (3) dentro do historico aberto, faixa no topo com a mesma leitura (vermelha/verde, com data do snapshot); linhas do historico maiores (12.5px) para leitura. (4) _autoSugestaoDivergencia DESLIGADA: a divergencia deixa de gerar sugestao automatica em ecom_resultado_anuncio (o historico ja informa). Nada muda na Analise Comercial (Igor) — proximo passo. Base: 2026-08-25-H -->
 <!-- BUILD 2026-08-25-H | selecta-banco-preco | PEDIDOS A FECHAR: SKU + DESCRICAO DE COMPRA · COMPRAS DO DIA: LUCRO PREVISTO (Igor 25/08, sobre 25-G): (1) fila "Pedidos a fechar" (fn-list) mostra o SKU (produto_codigo) ao lado do MLB e uma 3a linha "compra: <descricao canonica do catalogo>" — mesma regra do PDF compra (ecom_produtos: produto+interface+marca+modelo+capacidade; fallback campos da venda); sem SKU = aviso ambar. (2) faixa "Compras do dia" ganha "lucro previsto R$ X" = soma do LUCRO REAL de cada pedido a_enviar pela MESMA formula do quadro de fechamento (receita - taxas ML - custo - colchao 6% - imposto 4%); pedidos sem comissao ou custo NAO entram na soma e sao contados como "sem fechamento". load() agora aguarda comprasDia() antes de loadList() (a soma e anexada a faixa). Base: 2026-08-25-G -->
@@ -2197,7 +2199,10 @@
           </div>
           <div style="display:flex;align-items:center;gap:8px">
             <span id="al-anuncios-count" class="al-hcount"></span>
-            <button class="vbtn sm" id="al-anuncios-refresh" title="Puxar as últimas alterações da Alexia e reler o preço publicado no ML (histórico vermelho = diverge do app; verde = confere)">🔄 Atualizar</button>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+              <button class="vbtn sm" id="al-anuncios-refresh" title="Puxar as últimas alterações da Alexia e reler o preço publicado no ML (histórico vermelho = diverge do app; verde = confere)">🔄 Atualizar</button>
+              <span id="al-snap-quando" style="font-size:10.5px;color:var(--emuted2);font-family:var(--emono);white-space:nowrap"></span>
+            </div>
           </div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin:4px 0 12px;flex-wrap:wrap">
@@ -5821,15 +5826,20 @@ const ecomAlvo={
     // do pacote embute. Falha aqui NÃO é engolida: vira seção "RADAR — MUDO" no
     // pacote, e o comando geral trata radar mudo como parada obrigatória do chat.
     try{
+      // BUILD 2026-08-25-K: lotes distintos primeiro; ANTERIOR = lote mais recente com >= 9h de distancia do atual (meio dia), nao o imediatamente anterior
+      const sl=await sb.from('ecom_mercado_snapshot').select('lote,capturado_em').order('capturado_em',{ascending:false}).limit(400*50);
+      if(sl.error) throw sl.error;
+      const lotes=[]; const vist={};
+      (sl.data||[]).forEach(r=>{ if(r.lote&&!vist[r.lote]){ vist[r.lote]=true; lotes.push({lote:r.lote,quando:r.capturado_em}); } });
+      if(!lotes.length){ this._radarMd='## Radar — MUDO\nSnapshot sem capturas. PARADA OBRIGATORIA: verificar cron do snapshot antes de qualquer analise.\n\n'; return; }
+      const tAt=new Date(lotes[0].quando).getTime(); const H9=9*3600*1000;
+      const antL=lotes.find((l,i)=>i>0 && (tAt-new Date(l.quando).getTime())>=H9) || lotes[1] || null;
+      const atualId=lotes[0].lote, antId=antL?antL.lote:null;
       const snap=await sb.from('ecom_mercado_snapshot')
         .select('lote,capturado_em,anuncio_mlb,produto_codigo,titulo,preco,winner_price,price_to_win,comp_status,visit_share,visitas,status_ml')
-        .order('capturado_em',{ascending:false}).limit(900);
+        .in('lote',antId?[atualId,antId]:[atualId]);
       if(snap.error) throw snap.error;
       const rows=snap.data||[];
-      const lotes=[]; const vist={};
-      rows.forEach(r=>{ if(!vist[r.lote]){ vist[r.lote]=true; lotes.push({lote:r.lote,quando:r.capturado_em}); } });
-      if(!lotes.length){ this._radarMd='## Radar — MUDO\nSnapshot sem capturas. PARADA OBRIGATORIA: verificar cron (04h50/14h50 BRT) antes de qualquer analise.\n\n'; return; }
-      const atualId=lotes[0].lote, antId=lotes[1]?lotes[1].lote:null;
       const atual={}, ant={};
       rows.forEach(r=>{
         if(!r.produto_codigo) return; /* escopo Selecta: paralelos fora */
@@ -5867,7 +5877,7 @@ const ecomAlvo={
       parados.sort((x,y)=>y.visitas-x.visitas);
       const md=[];
       md.push('## Radar — delta entre os 2 últimos lotes');
-      md.push('Lote atual: '+new Date(lotes[0].quando).toLocaleString('pt-BR')+(lotes[1]?' · anterior: '+new Date(lotes[1].quando).toLocaleString('pt-BR'):' · sem lote anterior'));
+      md.push('Lote atual: '+new Date(lotes[0].quando).toLocaleString('pt-BR')+(antL?' · anterior: '+new Date(antL.quando).toLocaleString('pt-BR'):' · sem lote anterior'));
       md.push('KPIs: SKUs '+Object.keys(atual).length+' · movimentaram '+eventos.length+' · fora do piso '+foraPiso+' · zumbis '+zumbis+' · sairam do lote '+sumiram.length);
       md.push('');
       md.push('| Código | MLB | Evento(s) | Nosso | Winner | Visitas | Margem% |');
@@ -5999,6 +6009,7 @@ const ecomAlvo={
         +'<div style="display:flex;flex-direction:column;gap:5px"><button class="vbtn sm" data-aledit="'+an.id+'">editar</button>'+(an.pausado?('<button class="vbtn sm" data-alpause="'+an.id+'" data-alpausev="0" style="background:rgba(52,211,153,.14);color:var(--eemerald)">Reativar</button>'):('<button class="vbtn sm" data-alpause="'+an.id+'" data-alpausev="1" style="background:var(--epanel3);color:var(--eamber)">Pausar</button>'))+'<button class="vbtn sm" data-aldel="'+an.id+'" style="background:var(--epanel3);color:var(--emuted)">remover</button></div>'
         +'</div>';
     }).join('');
+    const sq=this._g('al-snap-quando'); if(sq) sq.textContent=this.snapQuando?('leitura do ML: '+this.snapQuando):'sem leitura do ML'; // BUILD 2026-08-25-L
     const cnt=this._g('al-anuncios-count');
     const nPaus=lista.filter(r=>r.an.pausado).length, nAtvC=lista.length-nPaus;
     if(cnt) cnt.textContent = (_flt ? listaF.length+' de '+lista.length : nAtvC+' anúncio'+(nAtvC===1?'':'s')+' ativo'+(nAtvC===1?'':'s')+(nPaus?(' · '+nPaus+' pausado'+(nPaus===1?'':'s')):''));
@@ -6322,9 +6333,9 @@ const ecomAlvo={
     // BUILD 2026-08-25-I: faixa de leitura rapida app x ML no topo do historico
     const anB=(this.anuncios||[]).find(a=>a.anuncio_mlb===mlb)||null; const dv=this.divergencia(anB); const fR=x=>'R$ '+(+x).toFixed(2).replace('.',',');
     const banner = dv.estado==='div'
-      ? '<div class="al-histbanner div">DIVERGÊNCIA · publicado no ML <b>'+fR(dv.pub)+'</b> · registrado no app <b>'+fR(dv.reg)+'</b>'+(dv.quando?' <span style="font-weight:400;opacity:.8">(leitura do ML em '+esc(dv.quando)+')</span>':'')+'</div>'
+      ? '<div class="al-histbanner div">DIVERGÊNCIA · publicado no ML <b>'+fR(dv.pub)+'</b> · registrado no app <b>'+fR(dv.reg)+'</b></div>'
       : (dv.estado==='ok'
-        ? '<div class="al-histbanner ok">Preço publicado confere com o app · <b>'+fR(dv.pub)+'</b>'+(dv.quando?' <span style="font-weight:400;opacity:.8">(leitura do ML em '+esc(dv.quando)+')</span>':'')+'</div>'
+        ? '<div class="al-histbanner ok">Preço publicado confere com o app · <b>'+fR(dv.pub)+'</b></div>'
         : '<div class="al-histbanner na">Sem leitura do preço publicado no ML para este anúncio (snapshot ausente ou sem preço registrado).</div>');
     if(!hist.length){
       box.innerHTML='<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações</div><div class="al-sugp faint">Nenhuma alteração registrada ainda para este anúncio.</div></div>';
