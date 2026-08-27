@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-26-I | selecta-banco-preco | PROMOCAO HERDA O TIPO DO ANUNCIO + TIPO NA REGUA + BUG DA COLUNA MARGEM (auditoria Igor 27/08 sobre 26-H, caso RTR-0014: ML Premium, promocao avaliada como Classico = 12,9% LIBERADO; em Premium = 8,4% NEGADO; venda real 10,27%): (1) DOUTRINA: no ML nao existe tipo por promocao — promocao herda tipo_anuncio. Editar: select Tipo da linha de promocao SAI (vista "Premium · herda do anuncio", acompanha o Tipo de cima); renderSim, gate, baseline e gravacao usam o tipo do anuncio; tipo_promocao gravado = tipo_anuncio (coluna fica, sem logica propria). Analise e "Conferir com o Controle" idem. (2) REGUA: faixa vermelha aceita item TIPO da varredura (ml-market v4.4 le listing_type_id: gold_pro=Premium, gold_special=Classico) — "tipo de anuncio: no ML Premium · no app Classico · corrija pelo Editar". (3) BUG 26-G/26-H: Analise lia r.pct de _simMargem, que devolve margemPct (fracao) — coluna Margem mostrava "—" e a auditoria dava "sem calculo" em tudo; agora margemPct*100. SQL 08 (tipo_promocao=tipo_anuncio nos 11 divergentes) e ml-market v4.4 acompanham. Base: 2026-08-26-H -->
 <!-- BUILD 2026-08-26-H | selecta-banco-preco | AUDITORIA ANALISE x CONTROLE (Igor 26/08 sobre 26-G): botao "Conferir com o Controle" na Analise. Para CADA anuncio recalcula a margem pelo caminho do Editar do Controle (mesmas regras do gate _simAvalGate: produto no catalogo, preco>0, custo NF>0, peso; vigencia: promocao preenchida governa; promocao >= preco = invalida) e compara com a celula da tabela. Resultado na linha abaixo do cabecalho: total · iguais · divergentes (lista codigo/MLB/valores) · sem calculo (com o motivo). Nada e gravado. Base: 2026-08-26-G -->
 <!-- BUILD 2026-08-26-G | selecta-banco-preco | MARGEM DA ANALISE = MARGEM DO CONTROLE (Igor 26/08 sobre 26-F): a coluna Margem da Analise Comercial usava _mlMirror (simulador com o colchao devolvido — e devolvido sobre o CUSTO, base errada desde o 21-A que pos o colchao sobre a venda). Agora chama _simMargem com a mesma reputacao do formulario (ecom.reputacao||verde): o numero e identico ao "Margem Liquida" do Editar. Ex.: RTR-0027 a 589,90 = 18,6% nas duas telas (antes 21,6% vs 18,6%). _mlMirror fica no codigo sem uso. Base: 2026-08-26-F -->
 <!-- BUILD 2026-08-26-F | selecta-banco-preco | CORRECOES Igor 26/08 sobre 26-E: (1) BUG: o Historico do Controle abria a caixa errada — toggleHist sem escopo achava primeiro a caixa da Analise (mesmo MLB, DOM anterior); o handler do Controle agora passa o proprio container (#al-anuncios). (2) "Frete oficial ML" tambem recolhido (details), como Parametros comerciais. (3) Tabela da Analise: largura pelo conteudo (table-layout auto, width auto), Produto sem reticencias e sem corte — Praticado/Margem/Historico colam no nome; rolagem horizontal se faltar espaco. (4) Removidos o subtitulo "preco praticado · margem espelho ML · ordem = ..." e o span "ao vivo" (al-atv-live). Base: 2026-08-26-E -->
@@ -6101,7 +6102,7 @@ const ecomAlvo={
       +'<div class="efield"><label>Tipo *</label><select class="vinput" data-ef="tipo"><option value="classico"'+(an.tipo_anuncio!=='premium'?' selected':'')+'>Clássico</option><option value="premium"'+(an.tipo_anuncio==='premium'?' selected':'')+'>Premium</option></select></div>'
       +'<div class="efield"><label>Margem Líquida</label><div class="mginline mute" data-mgc><span class="mgi-pct">—</span><span class="mgi-luc">lucro <b>R$ —</b></span><span class="mgi-selo" hidden></span></div></div></div>'
       +'<div class="alm-row"><div class="efield"><label>Produto em promoção</label><input class="vinput mono" data-ef="promo" type="number" step="0.01" value="'+v(an.preco_promocao==null?'':an.preco_promocao)+'" placeholder="vazio = sem promoção"></div>'
-      +'<div class="efield"><label>Tipo *</label><select class="vinput" data-ef="tipop"><option value="classico"'+(an.tipo_promocao!=='premium'?' selected':'')+'>Clássico</option><option value="premium"'+(an.tipo_promocao==='premium'?' selected':'')+'>Premium</option></select></div>'
+      +'<div class="efield"><label>Tipo</label><div class="vinput" data-tipop-view style="color:var(--emuted);display:flex;align-items:center;font-size:12px">'+((an.tipo_anuncio==='premium')?'Premium':'Clássico')+' · herda do anúncio</div></div>'
       +'<div class="efield"><label>Margem Líquida</label><div class="mginline mute" data-mgp><span class="mgi-pct">—</span><span class="mgi-luc">lucro <b>R$ —</b></span><span class="mgi-selo" hidden></span></div></div></div>'
       +'<div class="efield"><label>Motivo da alteração *</label><input class="vinput" data-ef="motivo" placeholder="descreva por que está alterando (obrigatório para gravar)"></div>'
       +'<div data-alsim="'+id+'" style="display:none"></div>'
@@ -6111,14 +6112,13 @@ const ecomAlvo={
     box.style.display='';
     box.classList.add('editing');
     box.querySelectorAll('[data-ef="cod"],[data-ef="preco"],[data-ef="promo"]').forEach(el=>el.addEventListener('input',()=>this.renderSim(id)));
-    box.querySelector('[data-ef="tipo"]').addEventListener('change',()=>this.renderSim(id));
-    box.querySelector('[data-ef="tipop"]').addEventListener('change',()=>this.renderSim(id));
+    box.querySelector('[data-ef="tipo"]').addEventListener('change',()=>{ const tv=box.querySelector('[data-tipop-view]'); if(tv) tv.textContent=(box.querySelector('[data-ef="tipo"]').value==='premium'?'Premium':'Clássico')+' · herda do anúncio'; this.renderSim(id); }); // BUILD 2026-08-26-I: promocao herda o tipo do anuncio
     { const ov=box.querySelector('[data-ef="ovr"]'); if(ov) ov.addEventListener('change',()=>this.renderSim(id)); }
     // BUILD 01/08-A: baseline dos valores gravados + última liberação ABAIXO_PISO (p/ selo de estado)
     { const wrapEl=box.querySelector('[data-alsim="'+id+'"]');
       if(wrapEl){
         wrapEl._baseline={ preco:an.preco!=null?+an.preco:null, tipo:(an.tipo_anuncio==='premium'?'premium':'classico'),
-          promo:an.preco_promocao!=null?+an.preco_promocao:null, tipop:(an.tipo_promocao==='premium'?'premium':'classico') };
+          promo:an.preco_promocao!=null?+an.preco_promocao:null, tipop:(an.tipo_anuncio==='premium'?'premium':'classico') }; // BUILD 2026-08-26-I
         const hh=(this.altHist&&(this.altHist[an.anuncio_mlb]||this.altHist[this._normMlb(an.anuncio_mlb)]))||[];
         const ult=hh[0]||null;
         wrapEl._ovrGravado=(ult&&String(ult.campo||'').indexOf('abaixo_piso')>=0)?{quando:ult.criado_em}:null;
@@ -6218,7 +6218,7 @@ const ecomAlvo={
     // Promoção: parse + validações
     const promoRaw=get('promo').trim();
     const promoVal=promoRaw===''?null:parseFloat(promoRaw);
-    const tipoP=get('tipop');
+    const tipoP=gate.tipo; // BUILD 2026-08-26-I: promocao herda o tipo do anuncio — no ML nao existe tipo por promocao
     let promoErr=null;
     if(promoRaw!=='' && (isNaN(promoVal)||promoVal<=0)) promoErr='promoção inválida';
     else if(promoVal!=null && promoVal>=gate.preco) promoErr='promoção deve ser menor que o preço';
@@ -6298,7 +6298,7 @@ const ecomAlvo={
     const get=f=>{ const el=box.querySelector('[data-ef="'+f+'"]'); return el?el.value:''; };
     const msg=box.querySelector('[data-alemsg="'+id+'"]'); if(msg) msg.className='vmsg';
     const cod=get('cod').trim().toUpperCase(), mlb=this._normMlb(get('mlb')), tit=get('tit').trim(), preco=parseFloat(get('preco')), pub=get('pub'), tipo=get('tipo');
-    const promoRaw=(get('promo')||'').trim(); const promoNovo=promoRaw===''?null:parseFloat(promoRaw); const tipoPromo=get('tipop')||'classico';
+    const promoRaw=(get('promo')||'').trim(); const promoNovo=promoRaw===''?null:parseFloat(promoRaw); const tipoPromo=tipo; // BUILD 2026-08-26-I: tipo_promocao gravado = tipo_anuncio
     if(promoRaw!=='' && (isNaN(promoNovo)||promoNovo<=0)){ if(msg){ msg.className='vmsg err'; msg.textContent='Valor de promoção inválido.'; } return; }
     if(promoNovo!=null && !isNaN(preco) && promoNovo>=preco){ if(msg){ msg.className='vmsg err'; msg.textContent='Promoção deve ser menor que o preço.'; } return; }
     const motivo=get('motivo').trim();
@@ -6380,7 +6380,8 @@ const ecomAlvo={
     // BUILD 2026-08-26-A: faixa = o que a ULTIMA conferencia corrigiu neste anuncio; historico = so as alteracoes dela
     const anB=(this.anuncios||[]).find(a=>a.anuncio_mlb===mlb)||null; const dv=this.divergencia(anB);
     const fR=x=>(x==null||x===''||isNaN(+x))?'—':('R$ '+(+x).toFixed(2).replace('.',','));
-    const itTxt=d=>{ const t=String(d.tipo||''); const rot=t==='PRECO'?'preço':(t==='PROMOCAO'?'promoção':t.toLowerCase()); return rot+': no ML <b>'+fR(d.ml)+'</b> · no app <b>'+fR(d.app)+'</b>'; };
+    const fT=x=>{ const v=String(x==null?'':x).toLowerCase(); return v==='premium'?'Premium':(v==='classico'?'Clássico':(v||'—')); }; // BUILD 2026-08-26-I
+    const itTxt=d=>{ const t=String(d.tipo||''); if(t==='TIPO') return 'tipo de anúncio: no ML <b>'+fT(d.ml)+'</b> · no app <b>'+fT(d.app)+'</b>'; const rot=t==='PRECO'?'preço':(t==='PROMOCAO'?'promoção':t.toLowerCase()); return rot+': no ML <b>'+fR(d.ml)+'</b> · no app <b>'+fR(d.app)+'</b>'; };
     const banner = dv.estado==='div'
       ? '<div class="al-histbanner div">DIVERGENTE DO ML'
         +dv.itens.map(d=>'<div style="font-weight:500;margin-top:3px">'+itTxt(d)+'</div>').join('')
@@ -6544,9 +6545,9 @@ const ecomAlvo={
       const mlb=String(an.anuncio_mlb||''); const mlbN=this._normMlb(mlb);
       const temPromo=an.preco_promocao!=null;
       const praticado=temPromo?+an.preco_promocao:(an.preco!=null?+an.preco:null);
-      const tipoPrat=temPromo?(an.tipo_promocao==='premium'?'premium':'classico'):(an.tipo_anuncio==='premium'?'premium':'classico');
+      const tipoPrat=(an.tipo_anuncio==='premium')?'premium':'classico'; // BUILD 2026-08-26-I: promocao herda o tipo do anuncio
       const r=(prod&&praticado!=null)?this._simMargem(prod,praticado,tipoPrat,((typeof ecom!=='undefined'&&ecom.reputacao)||'verde')):null; // BUILD 2026-08-26-G: mesma funcao e reputacao do formulario do Controle
-      const marg=(r&&r.ok)?r.pct:null;
+      const marg=(r&&r.ok)?r.margemPct*100:null; // BUILD 2026-08-26-I: _simMargem devolve margemPct (fracao); r.pct era do _mlMirror — coluna ficava em "—" desde o 26-G
       this._margTabela=this._margTabela||{}; this._margTabela[mlb]={marg:marg,reason:(r&&!r.ok)?r.reason:(prod?null:'produto não encontrado no catálogo')}; // BUILD 2026-08-26-H
       const mCor=(marg==null)?'var(--emuted2)':(marg>=10?'var(--eemerald)':(marg>0?'var(--eamber)':'var(--ered)'));
       const precoCell=(praticado==null)
@@ -6610,10 +6611,10 @@ const ecomAlvo={
       else if(isNaN(preco)||preco<=0) motivo='preço não informado';
       else if(prod.custo==null||isNaN(+prod.custo)||+prod.custo<=0) motivo='custo NF ausente';
       else if(!(typeof ecom!=='undefined'&&ecom.pesoEfetivoG&&ecom.pesoEfetivoG(prod)!=null)) motivo='peso ausente';
-      else { const promo=an.preco_promocao!=null?+an.preco_promocao:null; const tipoP=(an.tipo_promocao==='premium')?'premium':'classico';
+      else { const promo=an.preco_promocao!=null?+an.preco_promocao:null; const tipoP=tipo; // BUILD 2026-08-26-I: herda
         if(promo!=null&&(isNaN(promo)||promo<=0)) motivo='promoção inválida';
         else if(promo!=null&&promo>=preco) motivo='promoção maior ou igual ao preço (Editar recusa)';
-        else { const r=this._simMargem(prod, promo!=null?promo:preco, promo!=null?tipoP:tipo, rep); if(!r.ok) motivo=r.reason||'sem cálculo'; else ctrl=r.pct; } }
+        else { const r=this._simMargem(prod, promo!=null?promo:preco, promo!=null?tipoP:tipo, rep); if(!r.ok) motivo=r.reason||'sem cálculo'; else ctrl=r.margemPct*100; } } // BUILD 2026-08-26-I: margemPct*100 (r.pct nao existe em _simMargem)
       // --- celula da tabela ---
       const tab=(this._margTabela&&this._margTabela[mlb])||{marg:null,reason:'não renderizado'};
       const f=x=>x==null?'—':(+x).toFixed(1)+'%';
