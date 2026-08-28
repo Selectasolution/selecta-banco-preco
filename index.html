@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-26-N | selecta-banco-preco | CREDITOS PREVISTOS PELO MP, 7 DIAS, VALOR POR DIA (decisao Igor 28/08, sobre 26-M): novo quadrante em Relatorios > Financeiro, no lugar do Por mes: uma linha por dia (hoje + 6), nº de vendas e liquido previsto, dias sem credito zerados, amanha em destaque, total dos 7 dias. Fonte: MESMO d.vendas do Termometro (fonte()), campos data_liberacao_mp (promessa do MP, gravada pela ml-orders v1.3+) e valor_recebido_ml. Criterio de "ainda nao liberado" igual ao capitalBase (data >= hoje, UTC). Notas no rodape: vendas com liberacao alem de 7 dias, vendas SEM DATA (fora da previsao — Consulta 5 achou 31 entregues sem data, R$ 12.210; pendente de investigar a idade delas, porque o capitalBase as trata como NAO liberadas), vendas sem valor. Zero mudanca de matematica do Termometro. Parte B (saldo real da conta MP, Edge mp-conta + Realtime) fica para o 26-O. Base: 2026-08-26-M (md5 8b5bf2897959bba0c2e9b74300a0ab03) -->
 <!-- BUILD 2026-08-26-M | selecta-banco-preco | POR MES NO HISTORICO + PEDIDOS RECOLHIDOS (decisao Igor 28/08, sobre 26-L): (1) quadrante "Por mes (competencia)" sai de Relatorios > Financeiro e entra em Relatorios > Historico, RECOLHIDO (details/summary, mesmo padrao do 26-E), abaixo da Consulta gerencial — Historico passa a ser o lugar das consultas gerenciais (Igor vai reorganizar o modulo depois). Id rl-mensal e renderMensal intocados (espelho de calcMes); a sub-aba Historico agora chama ecomRelatorios.load() junto com ecomHistorico.load() para alimentar o quadro. (2) listagem "Pedidos enviados e entregues" (hs-list) no Historico tambem RECOLHIDA, clique para abrir; id e handlers intocados. Financeiro fica so com Termometro + Investidores. Zero mudanca de matematica. Base: 2026-08-26-L (md5 aa243d3b0d43409126ae2b0e09281d6a) -->
 <!-- BUILD 2026-08-26-L | selecta-banco-preco | HOTFIX PARSE (Igor 28/08: 'nao entra', botao Entrar nao reage): no 26-K, a chave que fechava o bloco else do laco 'Conferir com o Controle' ficou DENTRO do comentario adicionado na mesma linha (} // BUILD 26-K ... } // BUILD 26-I) — SyntaxError no modulo inteiro, login nunca era ligado (mesmo mecanismo do 23-B). O node --check nao pegou; o teste que pegou foi EXECUTAR o arquivo em jsdom com Supabase simulado — passa a ser o teste obrigatorio antes de entregar. Nenhuma outra mudanca. Base: 2026-08-26-K (md5 995c6d3c40257e2670caff09ea7970ba) -->
 <!-- BUILD 2026-08-26-K | selecta-banco-preco | REGUA DE PROMOCAO: ESTORNO DE CAMPANHA ML + ALERTA NA ANALISE COMERCIAL (Igor 28/08, sobre 26-J): mecanismo provado com print do ML (RTR-0009 05/08: tarifa 13% = 21,74, estorno 'reducao por campanha' 8,80, liquida 12,94) — em campanha comercial o ML devolve a parcela dele do desconto como reducao da tarifa. (1) SQL 10: ecom_anuncios.promo_ml_pct (parcela do desconto paga pelo ML, %) + promo_ml_analisado_em; trigger zera ambos quando preco_promocao muda (campanha nova = analise nova). Preenchimento SO por SQL do Igor — sem campo para a Alexia, sem auto-preenchimento (decisao Igor 28/08). (2) _simMargem ganha 5o parametro estorno (R$): margem += estorno; _estornoPromo(an,cheio,promo) = (cheio-promo) x pct/100, valido SO se a promocao avaliada e a gravada e pct nao NULL; NULL = 0 = regua de hoje (conservadora). (3) Editar: linha da promocao usa o estorno do anuncio gravado; popover ganha 'estorno ML (campanha) - R$ X' quando > 0. (4) Analise Comercial (tela do Igor): promocao vigente com promo_ml_pct NULL ganha marca ambar 'campanha' na coluna Margem + contador 'N campanha(s) a analisar' no cabecalho; analisada mostra '↺ N%' discreto. Conferir com o Controle usa o mesmo estorno. Controle (Alexia) INTOCADO. (5) Fila antiga do 26-K: rotulo 'herda do anuncio' removido (so Premium/Classico); lucroPedido usa FIXOS.IMPOSTO/COLCHAO em vez de 0.04/0.06. Termometro/Painel/Por mes/lucro previsto sem mudanca de matematica (ja usam comissao_valor liquida da ml-orders). Base: 2026-08-26-J (md5 0162497208848b813fd0bf816ef36e1b) -->
@@ -2048,6 +2049,10 @@
         <div id="fn-termometro"><div class="ph">carregando…</div></div>
       </div>
       <!-- BUILD 2026-08-26-M: quadrante "Por mes (competencia)" MOVIDO para o Historico (decisao Igor 28/08) -->
+      <div class="ecard" style="margin-top:18px;border-color:var(--eteal)"><!-- BUILD 2026-08-26-N: Conta Mercado Pago — creditos previstos por dia (Parte A). Saldo real entra no 26-O via Edge mp-conta -->
+        <h3>Créditos previstos pelo Mercado Pago · <span style="color:var(--eteal);text-transform:none;letter-spacing:0">próximos 7 dias</span></h3>
+        <div id="fn-creditos"><div class="ph">carregando…</div></div>
+      </div>
       </div><!-- /rlsub-financeiro -->
       <div id="rlsub-historico" style="display:none">
       <div class="ecard" style="margin-bottom:18px"><!-- BUILD 2026-08-17-B: Consulta gerencial movida do Painel (mesmos ids rl-*, mesma logica) -->
@@ -5447,6 +5452,39 @@ const ecomFinanceiro={
       perdas,perdasPend,ocDev,ocApr,ocOut,devQ:ocDev,devV,aprQ:ocApr,aprV,
       jurosMes,jurosAuto,despOpMes,despOpItens,lucOp,lucReal,margem,despTot,mesOc,mesV};
   },
+  // BUILD 2026-08-26-N: creditos previstos pelo MP, dia a dia (Parte A do quadrante Conta MP — decisao Igor 28/08).
+  // Fonte: o MESMO d.vendas do Termometro. Usa data_liberacao_mp (promessa do MP gravada pela ml-orders) e valor_recebido_ml (liquido).
+  // Criterio de "ainda nao liberado" = o mesmo do capitalBase (data > agora, em UTC). Sem data = fora da previsao, contado a parte.
+  creditosPrevistos(d){
+    const agora=new Date(); const hojeK=agora.toISOString().slice(0,10);
+    const dias=[]; for(let i=0;i<7;i++){ const t=new Date(agora.getTime()+i*86400000); dias.push({k:t.toISOString().slice(0,10),n:0,v:0}); }
+    const idx={}; dias.forEach(x=>idx[x.k]=x);
+    let semData=0, semDataV=0, semValor=0, depois=0, depoisV=0;
+    d.vendas.forEach(v=>{
+      if(v.ocorrencia && v.ocorrencia!=='retido_doc' && v.ocorrencia!=='outro') return;
+      if(!['a_enviar','enviado','entregue'].includes(v.status)) return;
+      const val=(v.valor_recebido_ml!=null)?+v.valor_recebido_ml:null;
+      if(!v.data_liberacao_mp){ semData++; if(val!=null) semDataV+=val; return; }
+      const k=String(v.data_liberacao_mp).slice(0,10); if(k<hojeK) return;   // ja liberado (criterio do capitalBase)
+      if(val==null){ semValor++; return; }
+      if(idx[k]){ idx[k].n++; idx[k].v+=val; } else { depois++; depoisV+=val; }
+    });
+    return {dias,hojeK,semData,semDataV,semValor,depois,depoisV,total:dias.reduce((a,x)=>a+x.v,0)};
+  },
+  renderCreditos(d){ const box=this._g('fn-creditos'); if(!box) return;
+    const c=this.creditosPrevistos(d); const F=this.fmt;
+    const wd=['dom','seg','ter','qua','qui','sex','sáb'];
+    const rows=c.dias.map((x,i)=>{ const dt=new Date(x.k+'T12:00:00Z'); const lbl=x.k.slice(8,10)+'/'+x.k.slice(5,7)+' <span style="color:var(--emuted2)">'+wd[dt.getUTCDay()]+'</span>'+(i===0?' <span style="color:var(--emuted2);font-size:10px">hoje</span>':(i===1?' <span style="color:var(--eteal);font-size:10px">amanhã</span>':''));
+      const cor=x.v>0?(i===1?'var(--eteal)':'var(--etext)'):'var(--emuted2)';
+      return '<tr><td style="padding:5px 8px;white-space:nowrap">'+lbl+'</td><td class="mono" style="padding:5px 8px;text-align:right;color:var(--emuted2)">'+(x.n||'—')+'</td><td class="mono" style="padding:5px 8px;text-align:right;font-weight:'+(i===1?'700':'500')+';color:'+cor+'">'+(x.v>0?'R$ '+F(x.v):'—')+'</td></tr>'; }).join('');
+    const tot='<tr style="border-top:2px solid var(--eborder);background:var(--epanel2)"><td style="padding:6px 8px;font-weight:700">7 dias</td><td class="mono" style="padding:6px 8px;text-align:right;color:var(--emuted2)">'+c.dias.reduce((a,x)=>a+x.n,0)+'</td><td class="mono" style="padding:6px 8px;text-align:right;font-weight:700;color:var(--eteal)">R$ '+F(c.total)+'</td></tr>';
+    const notas=[];
+    if(c.depois) notas.push(c.depois+' venda(s) com liberação após 7 dias · R$ '+F(c.depoisV));
+    if(c.semData) notas.push('<span style="color:var(--eamber)">'+c.semData+' venda(s) sem data de liberação · R$ '+F(c.semDataV)+' fora da previsão</span>');
+    if(c.semValor) notas.push('<span style="color:var(--eamber)">'+c.semValor+' venda(s) sem valor líquido</span>');
+    box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab" style="width:100%"><thead><tr><th style="text-align:left;padding:6px 8px">Dia</th><th style="text-align:right;padding:6px 8px">Vendas</th><th style="text-align:right;padding:6px 8px">Líquido previsto</th></tr></thead><tbody>'+rows+tot+'</tbody></table></div>'
+      +'<div style="font-size:11px;color:var(--emuted);margin-top:8px">Data e valor são a promessa do MP por venda (ml-orders); entrega antecipada ou contestação movem a data. Corte de dia em UTC, igual ao Termômetro.'+(notas.length?'<br>'+notas.join(' · '):'')+'</div>';
+  },
   // capitalBase(d): capital da operação INTEIRA (19-A/B: critério liberação MP; perda fora do preso; devolvido a custo até reintegrar)
   capitalBase(d){ const hoje=new Date().toISOString(); let preso=0,recMP=0,devCusto=0;
     d.vendas.forEach(v=>{ if(v.ocorrencia && v.ocorrencia!=='retido_doc' && v.ocorrencia!=='outro'){
@@ -5463,6 +5501,7 @@ const ecomFinanceiro={
       const mkey=this.mesKey();
       const lbl=this._g('fn-termo-mes'); if(lbl) lbl.textContent=this.mesNomeK(mkey);
       const c=this.calcMes(d,mkey), cap=this.capitalBase(d);
+      try{ this.renderCreditos(d); }catch(e){ const cb=this._g('fn-creditos'); if(cb) cb.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; } // BUILD 2026-08-26-N
       const {n,nF,rec,recF,tax,cusMes,imp,col,perdas,perdasPend,ocDev,ocApr,ocOut,jurosMes,jurosAuto,despOpMes,despOpItens,lucOp,lucReal,margem,despTot,mesOc}=c;
       const pend=c.nPend, despOp=(d.despesas===null)?null:despOpItens;
       const {preso,recMP,devCusto}=cap;
