@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-26-M | selecta-banco-preco | POR MES NO HISTORICO + PEDIDOS RECOLHIDOS (decisao Igor 28/08, sobre 26-L): (1) quadrante "Por mes (competencia)" sai de Relatorios > Financeiro e entra em Relatorios > Historico, RECOLHIDO (details/summary, mesmo padrao do 26-E), abaixo da Consulta gerencial — Historico passa a ser o lugar das consultas gerenciais (Igor vai reorganizar o modulo depois). Id rl-mensal e renderMensal intocados (espelho de calcMes); a sub-aba Historico agora chama ecomRelatorios.load() junto com ecomHistorico.load() para alimentar o quadro. (2) listagem "Pedidos enviados e entregues" (hs-list) no Historico tambem RECOLHIDA, clique para abrir; id e handlers intocados. Financeiro fica so com Termometro + Investidores. Zero mudanca de matematica. Base: 2026-08-26-L (md5 aa243d3b0d43409126ae2b0e09281d6a) -->
 <!-- BUILD 2026-08-26-L | selecta-banco-preco | HOTFIX PARSE (Igor 28/08: 'nao entra', botao Entrar nao reage): no 26-K, a chave que fechava o bloco else do laco 'Conferir com o Controle' ficou DENTRO do comentario adicionado na mesma linha (} // BUILD 26-K ... } // BUILD 26-I) — SyntaxError no modulo inteiro, login nunca era ligado (mesmo mecanismo do 23-B). O node --check nao pegou; o teste que pegou foi EXECUTAR o arquivo em jsdom com Supabase simulado — passa a ser o teste obrigatorio antes de entregar. Nenhuma outra mudanca. Base: 2026-08-26-K (md5 995c6d3c40257e2670caff09ea7970ba) -->
 <!-- BUILD 2026-08-26-K | selecta-banco-preco | REGUA DE PROMOCAO: ESTORNO DE CAMPANHA ML + ALERTA NA ANALISE COMERCIAL (Igor 28/08, sobre 26-J): mecanismo provado com print do ML (RTR-0009 05/08: tarifa 13% = 21,74, estorno 'reducao por campanha' 8,80, liquida 12,94) — em campanha comercial o ML devolve a parcela dele do desconto como reducao da tarifa. (1) SQL 10: ecom_anuncios.promo_ml_pct (parcela do desconto paga pelo ML, %) + promo_ml_analisado_em; trigger zera ambos quando preco_promocao muda (campanha nova = analise nova). Preenchimento SO por SQL do Igor — sem campo para a Alexia, sem auto-preenchimento (decisao Igor 28/08). (2) _simMargem ganha 5o parametro estorno (R$): margem += estorno; _estornoPromo(an,cheio,promo) = (cheio-promo) x pct/100, valido SO se a promocao avaliada e a gravada e pct nao NULL; NULL = 0 = regua de hoje (conservadora). (3) Editar: linha da promocao usa o estorno do anuncio gravado; popover ganha 'estorno ML (campanha) - R$ X' quando > 0. (4) Analise Comercial (tela do Igor): promocao vigente com promo_ml_pct NULL ganha marca ambar 'campanha' na coluna Margem + contador 'N campanha(s) a analisar' no cabecalho; analisada mostra '↺ N%' discreto. Conferir com o Controle usa o mesmo estorno. Controle (Alexia) INTOCADO. (5) Fila antiga do 26-K: rotulo 'herda do anuncio' removido (so Premium/Classico); lucroPedido usa FIXOS.IMPOSTO/COLCHAO em vez de 0.04/0.06. Termometro/Painel/Por mes/lucro previsto sem mudanca de matematica (ja usam comissao_valor liquida da ml-orders). Base: 2026-08-26-J (md5 0162497208848b813fd0bf816ef36e1b) -->
 <!-- BUILD 2026-08-26-J | selecta-banco-preco | SEMAFORO SO LE A VARREDURA COMPLETA (bug achado no teste da v4.4, Igor 27/08 sobre 26-I): o Historico lia o ULTIMO ecom_sync_run de qualquer modo. O job 2 (modo=full, 2x/dia) varre 25 anuncios por execucao (limit padrao) e grava divergentes so desses — os outros 28 viravam VERDE FALSO ate o sync das 30 min reescrever (duas janelas de ate 30 min por dia, e o mesmo acontecia em qualquer invocacao manual em modo=full). Agora a consulta filtra modo=sync, que e o unico que pagina TODOS os ativos. O full segue intacto (Radar, ecom_mercado_snapshot) — so deixou de ser fonte do semaforo. Uma linha alterada. Base: 2026-08-26-I -->
@@ -2041,15 +2042,12 @@
       <h3 id="rl-kpis-titulo" style="font-size:12.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Visão geral · mês corrente</h3>
       <div id="rl-kpis"><div class="ph">carregando…</div></div>
       </div><!-- /rlsub-painel -->
-      <div id="rlsub-financeiro" style="display:none"><!-- BUILD 2026-08-17-B: Financeiro = visao mensal (Termometro + Por mes/competencia, movido do Painel) -->
+      <div id="rlsub-financeiro" style="display:none"><!-- BUILD 2026-08-17-B: Financeiro = visao mensal (Termometro; Por mes/competencia foi para o Historico no 26-M) -->
       <div class="ecard" style="border-color:var(--eteal)">
         <h3>Termômetro financeiro · <span id="fn-termo-mes" style="color:var(--eteal);text-transform:none;letter-spacing:0"></span></h3>
         <div id="fn-termometro"><div class="ph">carregando…</div></div>
       </div>
-      <div class="ecard" style="margin-top:18px"><!-- BUILD 2026-08-21-F: Por mes v2 — faturado INTEGRAL + perdas separadas (supera doutrina 18-B de exclusao) -->
-        <h3>Por mês (competência)</h3>
-        <div id="rl-mensal"></div>
-      </div>
+      <!-- BUILD 2026-08-26-M: quadrante "Por mes (competencia)" MOVIDO para o Historico (decisao Igor 28/08) -->
       </div><!-- /rlsub-financeiro -->
       <div id="rlsub-historico" style="display:none">
       <div class="ecard" style="margin-bottom:18px"><!-- BUILD 2026-08-17-B: Consulta gerencial movida do Painel (mesmos ids rl-*, mesma logica) -->
@@ -2066,7 +2064,18 @@
         <button class="vbtn" id="rl-consultar">Consultar</button>
         <div id="rl-query-result" style="margin-top:14px"></div>
       </div>
-      <div id="hs-list"><div class="ph">carregando…</div></div>
+      <div class="ecard" style="margin-bottom:18px"><!-- BUILD 2026-08-26-M: Por mes (competencia) veio do Financeiro; recolhido, clique para abrir. Mesmo id rl-mensal, mesmo renderMensal (espelho de calcMes) -->
+        <details id="rl-mensal-details">
+        <summary style="cursor:pointer;list-style:none;user-select:none"><h3 style="display:inline;margin:0">Por mês (competência) <span style="font-weight:400;font-size:11px;color:var(--emuted2)">· clique para abrir</span></h3></summary>
+        <div id="rl-mensal" style="margin-top:12px"></div>
+        </details>
+      </div>
+      <div class="ecard"><!-- BUILD 2026-08-26-M: listagem de pedidos recolhida (decisao Igor 28/08). Mesmo id hs-list, mesmos handlers -->
+        <details id="hs-list-details">
+        <summary style="cursor:pointer;list-style:none;user-select:none"><h3 style="display:inline;margin:0">Pedidos enviados e entregues <span style="font-weight:400;font-size:11px;color:var(--emuted2)">· clique para abrir</span></h3></summary>
+        <div id="hs-list" style="margin-top:12px"><div class="ph">carregando…</div></div>
+        </details>
+      </div>
       <div id="hs-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:20px">
         <div style="background:var(--epanel);border:1px solid var(--eborder);border-radius:14px;max-width:580px;width:100%;max-height:90vh;overflow:auto;padding:20px">
           <h3 id="hs-mtitle" style="margin-top:0">Editar venda</h3>
@@ -7766,7 +7775,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
     const t=b.dataset.rlsub;
     ['painel','financeiro','historico'].forEach(k=>{ const el=document.getElementById('rlsub-'+k); if(el) el.style.display=(k===t)?'':'none'; });
     if(t==='painel') ecomRelatorios.load(); // BUILD 2026-08-21-D: Painel = resumo do mes; leitura diaria foi para Vendas
-    if(t==='historico') ecomHistorico.load();
+    if(t==='historico'){ ecomHistorico.load(); ecomRelatorios.load(); } // BUILD 2026-08-26-M: Por mes agora mora no Historico — carrega junto
     if(t==='financeiro'){ ecomFinanceiro.load(); ecomRelatorios.load(); } }); // BUILD 2026-08-21-C: Por mes (competencia) recarrega na sub-aba — antes so recarregava ao reentrar em Relatorios (causa raiz do "nao atualiza")
 })();
 (function(){
