@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-26-K | selecta-banco-preco | REGUA DE PROMOCAO: ESTORNO DE CAMPANHA ML + ALERTA NA ANALISE COMERCIAL (Igor 28/08, sobre 26-J): mecanismo provado com print do ML (RTR-0009 05/08: tarifa 13% = 21,74, estorno 'reducao por campanha' 8,80, liquida 12,94) — em campanha comercial o ML devolve a parcela dele do desconto como reducao da tarifa. (1) SQL 10: ecom_anuncios.promo_ml_pct (parcela do desconto paga pelo ML, %) + promo_ml_analisado_em; trigger zera ambos quando preco_promocao muda (campanha nova = analise nova). Preenchimento SO por SQL do Igor — sem campo para a Alexia, sem auto-preenchimento (decisao Igor 28/08). (2) _simMargem ganha 5o parametro estorno (R$): margem += estorno; _estornoPromo(an,cheio,promo) = (cheio-promo) x pct/100, valido SO se a promocao avaliada e a gravada e pct nao NULL; NULL = 0 = regua de hoje (conservadora). (3) Editar: linha da promocao usa o estorno do anuncio gravado; popover ganha 'estorno ML (campanha) - R$ X' quando > 0. (4) Analise Comercial (tela do Igor): promocao vigente com promo_ml_pct NULL ganha marca ambar 'campanha' na coluna Margem + contador 'N campanha(s) a analisar' no cabecalho; analisada mostra '↺ N%' discreto. Conferir com o Controle usa o mesmo estorno. Controle (Alexia) INTOCADO. (5) Fila antiga do 26-K: rotulo 'herda do anuncio' removido (so Premium/Classico); lucroPedido usa FIXOS.IMPOSTO/COLCHAO em vez de 0.04/0.06. Termometro/Painel/Por mes/lucro previsto sem mudanca de matematica (ja usam comissao_valor liquida da ml-orders). Base: 2026-08-26-J (md5 0162497208848b813fd0bf816ef36e1b) -->
 <!-- BUILD 2026-08-26-J | selecta-banco-preco | SEMAFORO SO LE A VARREDURA COMPLETA (bug achado no teste da v4.4, Igor 27/08 sobre 26-I): o Historico lia o ULTIMO ecom_sync_run de qualquer modo. O job 2 (modo=full, 2x/dia) varre 25 anuncios por execucao (limit padrao) e grava divergentes so desses — os outros 28 viravam VERDE FALSO ate o sync das 30 min reescrever (duas janelas de ate 30 min por dia, e o mesmo acontecia em qualquer invocacao manual em modo=full). Agora a consulta filtra modo=sync, que e o unico que pagina TODOS os ativos. O full segue intacto (Radar, ecom_mercado_snapshot) — so deixou de ser fonte do semaforo. Uma linha alterada. Base: 2026-08-26-I -->
 <!-- BUILD 2026-08-26-I | selecta-banco-preco | PROMOCAO HERDA O TIPO DO ANUNCIO + TIPO NA REGUA + BUG DA COLUNA MARGEM (auditoria Igor 27/08 sobre 26-H, caso RTR-0014: ML Premium, promocao avaliada como Classico = 12,9% LIBERADO; em Premium = 8,4% NEGADO; venda real 10,27%): (1) DOUTRINA: no ML nao existe tipo por promocao — promocao herda tipo_anuncio. Editar: select Tipo da linha de promocao SAI (vista "Premium · herda do anuncio", acompanha o Tipo de cima); renderSim, gate, baseline e gravacao usam o tipo do anuncio; tipo_promocao gravado = tipo_anuncio (coluna fica, sem logica propria). Analise e "Conferir com o Controle" idem. (2) REGUA: faixa vermelha aceita item TIPO da varredura (ml-market v4.4 le listing_type_id: gold_pro=Premium, gold_special=Classico) — "tipo de anuncio: no ML Premium · no app Classico · corrija pelo Editar". (3) BUG 26-G/26-H: Analise lia r.pct de _simMargem, que devolve margemPct (fracao) — coluna Margem mostrava "—" e a auditoria dava "sem calculo" em tudo; agora margemPct*100. SQL 08 (tipo_promocao=tipo_anuncio nos 11 divergentes) e ml-market v4.4 acompanham. Base: 2026-08-26-H -->
 <!-- BUILD 2026-08-26-H | selecta-banco-preco | AUDITORIA ANALISE x CONTROLE (Igor 26/08 sobre 26-G): botao "Conferir com o Controle" na Analise. Para CADA anuncio recalcula a margem pelo caminho do Editar do Controle (mesmas regras do gate _simAvalGate: produto no catalogo, preco>0, custo NF>0, peso; vigencia: promocao preenchida governa; promocao >= preco = invalida) e compara com a celula da tabela. Resultado na linha abaixo do cabecalho: total · iguais · divergentes (lista codigo/MLB/valores) · sem calculo (com o motivo). Nada e gravado. Base: 2026-08-26-G -->
@@ -5203,7 +5204,7 @@ const ecomFinanceiro={
   // BUILD 2026-08-25-H: lucro real de UM pedido — copia fiel do recalc() (receita - taxas ML - custo - colchao 6% - imposto 4%); null se faltar comissao ou custo
   lucroPedido(v){ const com=v.comissao_valor!=null?Number(v.comissao_valor):null, cus=v.custo_unitario!=null?Number(v.custo_unitario):null; if(com==null||cus==null||isNaN(com)||isNaN(cus)) return null;
     const P=Number(v.preco_venda)||0, Q=Number(v.quantidade)||1, tar=Number(v.tarifa_fixa_valor)||0, fre=((v.frete_onus||'vendedor')==='vendedor')?(Number(v.frete_valor)||0):0;
-    const r2=x=>Math.round(x*100)/100; const rec=P*Q, tax=com+tar+fre, cusT=cus*Q, imp=r2(rec*0.04), colch=r2(rec*0.06);
+    const r2=x=>Math.round(x*100)/100; const rec=P*Q, tax=com+tar+fre, cusT=cus*Q, imp=r2(rec*this.FIXOS.IMPOSTO), colch=r2(rec*this.FIXOS.COLCHAO); // BUILD 2026-08-26-K: FIXOS em vez de literais
     return r2(rec-tax-cusT-colch-imp); },
   // BUILD 2026-08-25-H: soma do lucro real dos pedidos a_enviar, anexada a faixa Compras do dia
   lucroDia(itens){ const box=this._g('fn-compras-dia'); if(!box) return; const old=box.querySelector('#fn-lucro-dia'); if(old) old.remove();
@@ -6103,7 +6104,7 @@ const ecomAlvo={
       +'<div class="efield"><label>Tipo *</label><select class="vinput" data-ef="tipo"><option value="classico"'+(an.tipo_anuncio!=='premium'?' selected':'')+'>Clássico</option><option value="premium"'+(an.tipo_anuncio==='premium'?' selected':'')+'>Premium</option></select></div>'
       +'<div class="efield"><label>Margem Líquida</label><div class="mginline mute" data-mgc><span class="mgi-pct">—</span><span class="mgi-luc">lucro <b>R$ —</b></span><span class="mgi-selo" hidden></span></div></div></div>'
       +'<div class="alm-row"><div class="efield"><label>Produto em promoção</label><input class="vinput mono" data-ef="promo" type="number" step="0.01" value="'+v(an.preco_promocao==null?'':an.preco_promocao)+'" placeholder="vazio = sem promoção"></div>'
-      +'<div class="efield"><label>Tipo</label><div class="vinput" data-tipop-view style="color:var(--emuted);display:flex;align-items:center;font-size:12px">'+((an.tipo_anuncio==='premium')?'Premium':'Clássico')+' · herda do anúncio</div></div>'
+      +'<div class="efield"><label>Tipo</label><div class="vinput" data-tipop-view style="color:var(--emuted);display:flex;align-items:center;font-size:12px">'+((an.tipo_anuncio==='premium')?'Premium':'Clássico')+'</div></div>' /* BUILD 2026-08-26-K: rotulo neutro (Igor 27/08) */
       +'<div class="efield"><label>Margem Líquida</label><div class="mginline mute" data-mgp><span class="mgi-pct">—</span><span class="mgi-luc">lucro <b>R$ —</b></span><span class="mgi-selo" hidden></span></div></div></div>'
       +'<div class="efield"><label>Motivo da alteração *</label><input class="vinput" data-ef="motivo" placeholder="descreva por que está alterando (obrigatório para gravar)"></div>'
       +'<div data-alsim="'+id+'" style="display:none"></div>'
@@ -6113,7 +6114,7 @@ const ecomAlvo={
     box.style.display='';
     box.classList.add('editing');
     box.querySelectorAll('[data-ef="cod"],[data-ef="preco"],[data-ef="promo"]').forEach(el=>el.addEventListener('input',()=>this.renderSim(id)));
-    box.querySelector('[data-ef="tipo"]').addEventListener('change',()=>{ const tv=box.querySelector('[data-tipop-view]'); if(tv) tv.textContent=(box.querySelector('[data-ef="tipo"]').value==='premium'?'Premium':'Clássico')+' · herda do anúncio'; this.renderSim(id); }); // BUILD 2026-08-26-I: promocao herda o tipo do anuncio
+    box.querySelector('[data-ef="tipo"]').addEventListener('change',()=>{ const tv=box.querySelector('[data-tipop-view]'); if(tv) tv.textContent=(box.querySelector('[data-ef="tipo"]').value==='premium'?'Premium':'Clássico'); this.renderSim(id); }); // BUILD 2026-08-26-I: promocao herda o tipo do anuncio
     { const ov=box.querySelector('[data-ef="ovr"]'); if(ov) ov.addEventListener('change',()=>this.renderSim(id)); }
     // BUILD 01/08-A: baseline dos valores gravados + última liberação ABAIXO_PISO (p/ selo de estado)
     { const wrapEl=box.querySelector('[data-alsim="'+id+'"]');
@@ -6160,8 +6161,17 @@ const ecomAlvo={
       +'<span style="color:'+cor+'">'+F(r.margem)+' líq.</span>'
       +'<span class="faint" style="font-size:11px;color:var(--emuted2)">frete '+F(r.frete)+' · comissão '+(r.comPct*100).toFixed(1).replace('.',',')+'%</span>';
   },
-  _simMargem(prod,preco,tipo,rep){
+  // BUILD 2026-08-26-K: estorno da campanha ML para a promocao VIGENTE do anuncio. So vale se o preco promocional avaliado for o mesmo gravado
+  // (promocao redigitada = campanha nova = promo_ml_pct volta a NULL pelo trigger do SQL 10). NULL = nao analisado = 0.
+  _estornoPromo(an,precoCheio,promoVal){
+    if(!an||an.preco_promocao==null||promoVal==null||an.promo_ml_pct==null) return 0;
+    if(Math.abs(+an.preco_promocao-(+promoVal))>0.005) return 0;
+    const pct=+an.promo_ml_pct; if(!(pct>0)||!(precoCheio>promoVal)) return 0;
+    return Math.round((precoCheio-promoVal)*pct)/100;
+  },
+  _simMargem(prod,preco,tipo,rep,estorno){
     // Espelha ecom.calc usando FRETE_TBL para a reputação escolhida
+    // BUILD 2026-08-26-K: estorno (R$, opcional) = parcela do desconto que o ML devolve em campanha comercial; entra como (+) na margem. Ausente = 0 (regua conservadora)
     const pr={ comC:13, comP:17,
       imp:(typeof ecom!=='undefined'?(ecom._n?ecom._n('ecom-imp'):4):4),
       outros:(typeof ecom!=='undefined'?(ecom._n?ecom._n('ecom-outros'):0):0),
@@ -6178,8 +6188,9 @@ const ecomAlvo={
     const P=+preco;
     const custoML=P*t+fr;
     const custo=+prod.custo; const colchao=P*pr.colchao/100; const custoTotal=custo+colchao; // BUILD 2026-08-21-A: colchão sobre a VENDA
-    const margem=P-custoML-custoTotal;
-    return {ok:true,margem,margemPct:P>0?margem/P:0,comPct,frete:fr};
+    const est=(+estorno>0)?+estorno:0; // BUILD 2026-08-26-K
+    const margem=P-custoML-custoTotal+est;
+    return {ok:true,margem,margemPct:P>0?margem/P:0,comPct,frete:fr,estorno:est};
   },
   renderSim(id){
     const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
@@ -6226,7 +6237,7 @@ const ecomAlvo={
     const rC=this._simMargem(gate.prod, gate.preco, gate.tipo, rep);
     let rP=null;
     if(promoErr) rP={ok:false,reason:promoErr};
-    else if(promoVal!=null) rP=this._simMargem(gate.prod, promoVal, tipoP, rep);
+    else if(promoVal!=null){ const anK=(this.anuncios||[]).find(x=>String(x.id)===String(id)); const estK=this._estornoPromo(anK, gate.preco, promoVal); rP=this._simMargem(gate.prod, promoVal, tipoP, rep, estK); } // BUILD 2026-08-26-K
     // VIGÊNCIA (regra Igor 30/07): promoção preenchida governa; apagada, volta o preço cheio.
     const promoAtiva=(promoVal!=null||promoErr!=null);
     paint('[data-mgc]',rC,!promoAtiva);
@@ -6245,6 +6256,7 @@ const ecomAlvo={
           +'<span class="vig">vigente: '+(promoAtiva?'promoção':'preço cheio')+'</span>'
           +'<span class="nf-k">Custo NF</span><span class="nf-v">R$ '+this._fmtBR(gate.prod.custo)+'</span>'
           +'<span class="k">comissão ('+comOrigem+')</span><span class="vv">'+comPct.toFixed(2)+'%</span>'
+          +((promoAtiva&&efet.estorno>0)?'<span class="k">estorno ML (campanha)</span><span class="vv">\u2212 R$ '+this._fmtBR(efet.estorno)+'</span>':'') // BUILD 2026-08-26-K
           +'<span class="k">imposto</span><span class="vv">'+impPct+'%</span>'
           +'<span class="k">frete</span><span class="vv">R$ '+this._fmtBR(efet.frete)+'</span>'
           +'<span class="k">colchão '+colchaoPct+'% s/ venda</span><span class="vv">R$ '+this._fmtBR((promoAtiva?promoVal:gate.preco)*colchaoPct/100)+'</span>'
@@ -6538,6 +6550,7 @@ const ecomAlvo={
     const naoLido=a=>{ const t=ultHist(a); if(!t) return false; const l=this.histLido?this.histLido[a.anuncio_mlb]:null; return !l || t>new Date(l).getTime(); };
     const ordem=(a,b)=>((naoLido(b)?1:0)-(naoLido(a)?1:0)) || (ultHist(b)-ultHist(a)) || ((+b.id||0)-(+a.id||0));
     this._margTabela={}; // BUILD 2026-08-26-H: zera antes de renderizar
+    let nCamp=0; // BUILD 2026-08-26-K: campanhas a analisar
     const ativos=anns.filter(a=>!a.pausado).sort(ordem);
     const paus=anns.filter(a=>a.pausado).sort(ordem);
     const linha=(an,dim,n)=>{
@@ -6547,7 +6560,10 @@ const ecomAlvo={
       const temPromo=an.preco_promocao!=null;
       const praticado=temPromo?+an.preco_promocao:(an.preco!=null?+an.preco:null);
       const tipoPrat=(an.tipo_anuncio==='premium')?'premium':'classico'; // BUILD 2026-08-26-I: promocao herda o tipo do anuncio
-      const r=(prod&&praticado!=null)?this._simMargem(prod,praticado,tipoPrat,((typeof ecom!=='undefined'&&ecom.reputacao)||'verde')):null; // BUILD 2026-08-26-G: mesma funcao e reputacao do formulario do Controle
+      const estA=temPromo?this._estornoPromo(an, +an.preco, praticado):0; // BUILD 2026-08-26-K
+      const campAnalisar=temPromo && an.promo_ml_pct==null && !dim; // BUILD 2026-08-26-K: promocao vigente sem parcela do ML analisada (Igor via SQL)
+      if(campAnalisar) nCamp++;
+      const r=(prod&&praticado!=null)?this._simMargem(prod,praticado,tipoPrat,((typeof ecom!=='undefined'&&ecom.reputacao)||'verde'),estA):null; // BUILD 2026-08-26-G: mesma funcao e reputacao do formulario do Controle
       const marg=(r&&r.ok)?r.margemPct*100:null; // BUILD 2026-08-26-I: _simMargem devolve margemPct (fracao); r.pct era do _mlMirror — coluna ficava em "—" desde o 26-G
       this._margTabela=this._margTabela||{}; this._margTabela[mlb]={marg:marg,reason:(r&&!r.ok)?r.reason:(prod?null:'produto não encontrado no catálogo')}; // BUILD 2026-08-26-H
       const mCor=(marg==null)?'var(--emuted2)':(marg>=10?'var(--eemerald)':(marg>0?'var(--eamber)':'var(--ered)'));
@@ -6558,6 +6574,8 @@ const ecomAlvo={
       const margCell=(marg==null)
         ? '<span style="color:var(--emuted2)" title="'+ea((r&&r.reason)||(prod?'sem preço':'produto inativo/órfão no catálogo'))+'">—</span>'
         : '<span style="color:'+mCor+';font-weight:700">'+marg.toFixed(1)+'%</span>';
+      const campCell=campAnalisar?' <span style="color:var(--eamber);font-size:10px;font-weight:700;cursor:help" title="Campanha ML sem estorno analisado \u2014 margem conservadora (estorno = 0). Traga a linha da campanha do painel Promo\u00e7\u00f5es do ML para calibrar via SQL.">\u2691 campanha</span>'
+        :((temPromo&&an.promo_ml_pct!=null&&+an.promo_ml_pct>0)?' <span style="color:var(--emuted2);font-size:10px;cursor:help" title="Estorno ML de '+(+an.promo_ml_pct).toFixed(0)+'% do desconto j\u00e1 na margem">\u21ba '+(+an.promo_ml_pct).toFixed(0)+'%</span>':''); // BUILD 2026-08-26-K
       const hist=(this.altHist&&this.altHist[mlb])||[]; const dv=this.divergencia(an);
       const nl=naoLido(an);
       const cls=(dv.estado==='div'?' div':'')+(nl?' novo':'');
@@ -6568,7 +6586,7 @@ const ecomAlvo={
         +'<td style="padding:4px 8px;font-family:var(--emono);color:var(--emuted);white-space:nowrap">'+ea(mlb)+'</td>'
         +'<td style="padding:4px 12px 4px 6px;color:var(--etxt);white-space:nowrap">'+ea(an.titulo||'')+(dim?' <span style="font-size:9px;color:var(--emuted2);font-weight:700">PAUSADO</span>':'')+'</td>'
         +'<td style="padding:4px 8px;text-align:right;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap">'+precoCell+'</td>'
-        +'<td style="padding:4px 8px;text-align:right;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap">'+margCell+'</td>'
+        +'<td style="padding:4px 8px;text-align:right;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap">'+margCell+campCell+'</td>'
         +'<td style="padding:4px 8px;white-space:nowrap">'+histCell+'</td>'
         +'</tr>'
         +'<tr data-atvhrow="'+ea(mlb)+'" style="display:none"><td colspan="7" style="padding:4px 8px 10px"><div data-alhistbox="'+ea(mlb)+'" style="display:none;max-width:720px"></div></td></tr>';
@@ -6590,7 +6608,7 @@ const ecomAlvo={
         +tabela(paus.map((a,i)=>linha(a,true,i+1)));
     }
     list.innerHTML=html;
-    if(cnt) cnt.textContent=ativos.length+' ativo(s) · '+paus.length+' pausado(s)';
+    if(cnt) cnt.innerHTML=ativos.length+' ativo(s) \u00b7 '+paus.length+' pausado(s)'+(nCamp?' \u00b7 <span style="color:var(--eamber);font-weight:700">\u2691 '+nCamp+' campanha'+(nCamp===1?'':'s')+' a analisar</span>':''); // BUILD 2026-08-26-K
     if(!list._b){ list._b=true; list.addEventListener('click',e=>{
       const h=e.target.closest('[data-atvhist]'); if(!h) return;
       const mlb=h.getAttribute('data-atvhist'); const row=list.querySelector('[data-atvhrow="'+mlb+'"]');
@@ -6615,7 +6633,7 @@ const ecomAlvo={
       else { const promo=an.preco_promocao!=null?+an.preco_promocao:null; const tipoP=tipo; // BUILD 2026-08-26-I: herda
         if(promo!=null&&(isNaN(promo)||promo<=0)) motivo='promoção inválida';
         else if(promo!=null&&promo>=preco) motivo='promoção maior ou igual ao preço (Editar recusa)';
-        else { const r=this._simMargem(prod, promo!=null?promo:preco, promo!=null?tipoP:tipo, rep); if(!r.ok) motivo=r.reason||'sem cálculo'; else ctrl=r.margemPct*100; } } // BUILD 2026-08-26-I: margemPct*100 (r.pct nao existe em _simMargem)
+        else { const estC=(promo!=null)?this._estornoPromo(an, preco, promo):0; const r=this._simMargem(prod, promo!=null?promo:preco, promo!=null?tipoP:tipo, rep, estC); if(!r.ok) motivo=r.reason||'sem cálculo'; else ctrl=r.margemPct*100; } // BUILD 2026-08-26-K: estorno igual ao da tabela } // BUILD 2026-08-26-I: margemPct*100 (r.pct nao existe em _simMargem)
       // --- celula da tabela ---
       const tab=(this._margTabela&&this._margTabela[mlb])||{marg:null,reason:'não renderizado'};
       const f=x=>x==null?'—':(+x).toFixed(1)+'%';
