@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-26-Q | selecta-banco-preco | TERMOMETRO COM BLOCOS RECOLHIDOS + TREINO OCULTO (Igor 29/08, sobre 26-O): (1) tres blocos viram details/summary (fold): DESPESAS (resumo = DESPESAS TOTAIS; aberto lista taxas, custo, imposto, juros, despesas operacionais, perdas), CAPITAL · operacao inteira (resumo = Coberto/Descoberto, que era a ultima linha; aberto: preso, a receber MP, devolucoes a custo, mediana de liberacao) e INVESTIDORES (resumo = CREDORES R$ + contador ambar "N a validar" quando ha transferencia do portal pendente; aberto: credores, saldo a amortizar, venda minima, transferencias a validar, historico). Receitas e Resultado sempre abertos. Delegacao de clique do box intocada (botoes dentro do details continuam funcionando). CSS #fold-css. (2) Historico de validacoes ignora linhas com "[treino]" em obs (ecom_inv_funding e append-only por trigger — Igor marcou o treino do credor_3 de 25/08 por UPDATE em vez de DELETE). Zero mudanca de matematica. Base: 2026-08-26-O (md5 9720b5146bc60cec63fc83c116fd1d9f) -->
 <!-- BUILD 2026-08-26-O | selecta-banco-preco | CONTA MERCADO PAGO: SALDO DISPONIVEL + DIA LOCAL NOS CREDITOS (decisoes Igor 29/08, sobre 26-N): (1) quadrante renomeado "Conta Mercado Pago"; nova linha #fn-mp-saldo no topo = ultima linha de ecom_mp_saldo (SQL 13; Edge mp-conta v1.0 em ciclo de 30 min, cron job 12; saldo = linha "total" do relatorio de Liberacoes do MP, provado igual ao "Seu dinheiro disponivel" do painel ML, R$ 2.741,84 em 29/08) com dia/hora da captura em Brasilia; ambar quando a captura tem mais de 75 min. (2) Realtime: canal selecta-live passa a escutar INSERT em ecom_mp_saldo e re-renderiza so a linha do saldo (primeiro canal Realtime do financeiro). (3) Creditos previstos: corte de dia em America/Sao_Paulo (_diaLocal) em vez de UTC — o MP libera em horario local; Termometro/capitalBase INTOCADOS (competencia segue UTC). renderMpSaldo e assincrono e nunca bloqueia o Termometro. Zero mudanca de matematica. Base: 2026-08-26-N (md5 76e28833d4eed83285f530084b713ab4) -->
 <!-- BUILD 2026-08-26-N | selecta-banco-preco | CREDITOS PREVISTOS PELO MP, 7 DIAS, VALOR POR DIA (decisao Igor 28/08, sobre 26-M): novo quadrante em Relatorios > Financeiro, no lugar do Por mes: uma linha por dia (hoje + 6), nº de vendas e liquido previsto, dias sem credito zerados, amanha em destaque, total dos 7 dias. Fonte: MESMO d.vendas do Termometro (fonte()), campos data_liberacao_mp (promessa do MP, gravada pela ml-orders v1.3+) e valor_recebido_ml. Criterio de "ainda nao liberado" igual ao capitalBase (data >= hoje, UTC). Notas no rodape: vendas com liberacao alem de 7 dias, vendas SEM DATA (fora da previsao — Consulta 5 achou 31 entregues sem data, R$ 12.210; pendente de investigar a idade delas, porque o capitalBase as trata como NAO liberadas), vendas sem valor. Zero mudanca de matematica do Termometro. Parte B (saldo real da conta MP, Edge mp-conta + Realtime) fica para o 26-O. Base: 2026-08-26-M (md5 8b5bf2897959bba0c2e9b74300a0ab03) -->
 <!-- BUILD 2026-08-26-M | selecta-banco-preco | POR MES NO HISTORICO + PEDIDOS RECOLHIDOS (decisao Igor 28/08, sobre 26-L): (1) quadrante "Por mes (competencia)" sai de Relatorios > Financeiro e entra em Relatorios > Historico, RECOLHIDO (details/summary, mesmo padrao do 26-E), abaixo da Consulta gerencial — Historico passa a ser o lugar das consultas gerenciais (Igor vai reorganizar o modulo depois). Id rl-mensal e renderMensal intocados (espelho de calcMes); a sub-aba Historico agora chama ecomRelatorios.load() junto com ecomHistorico.load() para alimentar o quadro. (2) listagem "Pedidos enviados e entregues" (hs-list) no Historico tambem RECOLHIDA, clique para abrir; id e handlers intocados. Financeiro fica so com Termometro + Investidores. Zero mudanca de matematica. Base: 2026-08-26-L (md5 aa243d3b0d43409126ae2b0e09281d6a) -->
@@ -5407,7 +5408,7 @@ const ecomFinanceiro={
     // BUILD 2026-08-24-A: transferencias do investidor aguardando validacao (portal)
     try{ const r=await sb.from('ecom_inv_funding').select('id,credor,data_ref,valor_sistema,valor_declarado,status,declarado_em,obs').eq('status','declarado').order('declarado_em'); this._invFunding=(!r.error&&r.data)||[]; }catch(_e){ this._invFunding=[]; }
     // BUILD 2026-08-24-B: historico de validacoes (confirmadas/rejeitadas) do credor_2
-    try{ const r=await sb.from('ecom_inv_funding').select('credor,data_ref,valor_declarado,status,confirmado_em').in('status',['confirmado','rejeitado']).order('confirmado_em',{ascending:false}).limit(8); this._invHist=(!r.error&&r.data)||[]; }catch(_e){ this._invHist=[]; }
+    try{ const r=await sb.from('ecom_inv_funding').select('credor,data_ref,valor_declarado,status,confirmado_em,obs').in('status',['confirmado','rejeitado']).order('confirmado_em',{ascending:false}).limit(12); this._invHist=((!r.error&&r.data)||[]).filter(h=>String(h.obs||'').indexOf('[treino]')<0).slice(0,8); /* BUILD 2026-08-26-Q: linha marcada [treino] nao aparece (tabela e append-only) */ }catch(_e){ this._invHist=[]; }
     // BUILD 2026-08-25-G: saldo a amortizar por credor (liquidacao em saldo)
     try{ const r=await sb.from('ecom_vw_credor_saldo').select('credor,saldo_inicial,ajustes,amortizado,saldo_atual,ultima_amortizacao,abertura'); this._credSaldo=(!r.error&&r.data)||[]; }catch(_e){ this._credSaldo=[]; }
     const d={vendasAll,vendas,ledger,movs,despesas,recupItens};
@@ -5551,6 +5552,9 @@ const ecomFinanceiro={
       // BUILD 2026-08-03-B: cálculo da projeção "próxima semana" removido junto com o bloco (morreu nos dois lugares)
       // BUILD 2026-08-20-B: Termometro v3 = mini balancete mensal (estrutura Igor 20/08; conteudo adicional a ditar)
       const sec=(t,bg,c)=>'<div style="padding:7px 13px;background:'+bg+';font-size:10.5px;letter-spacing:1px;color:'+c+';font-weight:600">'+t+'</div>';
+      // BUILD 2026-08-26-Q: bloco recolhido — o resumo (summary) e a linha que importa; clique abre o detalhe. Sem mudanca de matematica.
+      const fold=(sumHtml,bodyHtml)=>'<details class="fn-fold"><summary>'+sumHtml+'</summary><div class="fn-fold-body">'+bodyHtml+'</div></details>';
+      const sline=(k,v2,bg,kc)=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:'+(bg||'var(--epanel)')+'"><span style="font-size:12.5px'+(kc?';color:'+kc:'')+'"><span class="fn-chev">\u25b6</span> '+k+'</span><span style="font-family:var(--emono);font-size:12.5px;white-space:nowrap">'+v2+'</span></div>';
       // BUILD 2026-08-20-C: invHtml montado APOS line/F/F0/margem (correcao TDZ)
       let invHtml='', descT=null;
       if(ledger===null){
@@ -5572,7 +5576,9 @@ const ecomFinanceiro={
             +'</div>'); });
         const recup=recMP+devCusto+extSum, desc=devo-recup; descT=desc;
         const vendaMin=(margem!=null&&margem>0)?(juroMes+CUSTOS_FIXOS_MES)/(margem/100):null;
-        invHtml='<div style="padding:7px 13px;background:var(--epanel2);font-size:10.5px;letter-spacing:1px;color:var(--emuted)">INVESTIDORES · capital de terceiros</div>'
+        const nVal=(this._invFunding||[]).length; /* BUILD 2026-08-26-Q */
+        const invSum=sline('INVESTIDORES · capital de terceiros'+(nVal?' <span style="color:var(--eamber);font-weight:700">· '+nVal+' a validar</span>':''),'CREDORES R$ '+F(devo),'var(--epanel2)','var(--emuted)');
+        invHtml=''
           +credL.join('')
           /* BUILD 2026-08-25-G: saldo a amortizar (credor com liquidacao em saldo) — aparece mesmo antes do 1o aporte */
           +((this._credSaldo||[]).map(cs=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 13px;background:var(--epanel2);flex-wrap:wrap;align-items:center">'
@@ -5604,6 +5610,7 @@ const ecomFinanceiro={
                 +'<span style="font-size:11px;font-family:var(--emono);color:'+(ok?'var(--eteal)':'var(--ered)')+'">'+(ok?'validada':'rejeitada')+' '+dd(h.confirmado_em)+'</span>'
                 +'</div>'; }).join('')):'')
           +'';
+        invHtml=fold(invSum,invHtml); /* BUILD 2026-08-26-Q: INVESTIDORES recolhido; botoes continuam na delegacao do box */
       }
       box.innerHTML=
         '<div style="border:1px solid var(--eborder);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;gap:1px;background:var(--eborder)">'
@@ -5611,27 +5618,27 @@ const ecomFinanceiro={
         +line('Receita bruta · '+n+' venda(s)','R$ '+F(rec))
         +line('Com margem fechada no Financeiro',nF+' de '+n,'var(--epanel2)')
         +line('= RECEITAS CONSIDERADAS',nF?('R$ '+F(recF)):'—','#08231f','var(--eteal)')
-        +sec('DESPESAS','#2a0d0d','var(--ered)')
-        +line('Taxas do ML',nF?('– R$ '+F(tax)):'—','#241c08','var(--eamber)')
+        +fold(sline('DESPESAS TOTAIS',(nF||mesOc.length)?('\u2013 R$ '+F(despTot)):'—','#2a0d0d','var(--ered)'),
+         line('Taxas do ML',nF?('– R$ '+F(tax)):'—','#241c08','var(--eamber)')
         +line('Custo dos fornecedores',cusMes>0?('– R$ '+F(cusMes)):'—','#241c08','var(--eamber)')
         +line('Imposto · 4% da receita',nF?('– R$ '+F(imp)):'—','#241c08','var(--eamber)')
         +line('Custo financeiro · juros dos credores'+(jurosAuto>0?' · incl. incorrido s/ lançamento':''),jurosMes>0?('– R$ '+F(jurosMes)):'—','#241c08','var(--eamber)')
         +'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:#241c08"><span style="font-size:12.5px;color:var(--eamber)">Despesas operacionais <button class="vbtn sm" style="margin-left:6px;padding:2px 9px" title="lançar despesa (aluguel, passagem, luz, hospedagem...)" data-despadd="1">+</button></span><span style="font-family:var(--emono);font-size:12.5px">'+(despOp===null?'<span style="color:var(--eamber)">aplicar SQL</span>':(despOpMes>0?('– R$ '+F(despOpMes)):'—'))+'</span></div>'
         +((despOp&&despOp.length)?despOp.map(x=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 13px 5px 26px;background:var(--epanel)"><span style="font-size:11.5px;color:var(--emuted)">'+String(x.data).slice(8,10)+'/'+String(x.data).slice(5,7)+' · '+String(x.descricao).replace(/</g,'&lt;')+' <button class="vbtn sm" style="padding:1px 7px;font-size:11px" title="anular (histórico preservado)" data-despanular="'+x.id+'" data-desc="'+String(x.descricao).replace(/"/g,'&quot;')+'">×</button></span><span style="font-family:var(--emono);font-size:11.5px">R$ '+F(+x.valor||0)+'</span></div>').join(''):'')
         +(mesOc.length?line('Perdas do mês · '+[ocDev?ocDev+' devolu\u00e7\u00e3o(\u00f5es)':'',ocApr?ocApr+' apreens\u00e3o(\u00f5es)':'',ocOut?ocOut+' outra(s) perda(s)':''].filter(Boolean).join(' + '),(perdas>0?'\u2013 R$ '+F(perdas):'\u2014'),'#241c08','var(--ered)'):'')
-        +line('= DESPESAS TOTAIS',(nF||mesOc.length)?('\u2013 R$ '+F(despTot)):'—','#2a0d0d','var(--ered)')
+        ) /* fim DESPESAS (26-Q) */
         +sec('RESULTADO','#1a2740','var(--emuted)')
         +line('Lucro operacional',(nF||mesOc.length)?('<span style="color:'+(lucOp>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+F(lucOp)+'</span>'):'—','var(--epanel2)')
         +line('(+) Colchão (reserva)',nF?('R$ '+F(col)):'—','#08231f','var(--eteal)')
         +tot
         +line('Margem média',margem==null?'—':F(margem)+' %')
-        +'<div style="padding:7px 13px;background:var(--epanel2);font-size:10.5px;letter-spacing:1px;color:var(--emuted)">CAPITAL · operação inteira</div>'
-        +line('Capital de giro preso (custo)','R$ '+F(preso))
+        +fold(sline('CAPITAL · operação inteira',(descT==null?'—':(descT>0?'<span style="color:var(--ered);font-weight:700">Descoberto R$ '+F(descT)+'</span>':'<span style="color:var(--eteal);font-weight:700">Coberto R$ '+F(-descT)+'</span>')),'var(--epanel2)','var(--emuted)'),
+         line('Capital de giro preso (custo)','R$ '+F(preso))
         +line('A receber no Mercado Pago','R$ '+F(recMP))
         +'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:var(--epanel)"><span style="font-size:12.5px">Devoluções a custo <button class="vbtn sm" style="margin-left:6px" title="adicionar item por fora ao capital a recuperar" data-recupadd="1">+</button></span><span style="font-family:var(--emono);font-size:12.5px">R$ '+F(devCusto)+'</span></div>'
         +itensExt.map(i=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 13px 7px 26px;background:var(--epanel)"><span style="font-size:12px;color:var(--emuted)">'+String(i.descricao).replace(/</g,'&lt;')+' <button class="vbtn sm" title="baixar item (histórico preservado)" data-recupbaixar="'+i.id+'">×</button></span><span style="font-family:var(--emono);font-size:12px">R$ '+F(+i.valor||0)+'</span></div>').join('')
         +line('MP libera após entrega',medLib==null?'— (sem venda liberada medida)':'~'+Math.round(medLib)+' dia(s) · mediana')
-        +(descT!=null?(descT>0?line('Descoberto','<span style="color:var(--ered);font-weight:700">R$ '+F(descT)+'</span>','#2a0d0d','var(--ered)'):line('Coberto','<span style="color:var(--eteal);font-weight:700">R$ '+F(-descT)+'</span>','#08231f','var(--eteal)')):'')
+        ) /* fim CAPITAL (26-Q); Coberto/Descoberto vive no resumo */
         +invHtml
         +degrHtml
         +'</div>'+aviso
@@ -9675,6 +9682,10 @@ window.fiscal = (function(){
 
 </script>
 
+<style id="fold-css">/* BUILD 2026-08-26-Q: blocos recolhidos do Termometro */
+.fn-fold{display:block}.fn-fold>summary{list-style:none;cursor:pointer;user-select:none}.fn-fold>summary::-webkit-details-marker{display:none}
+.fn-fold>summary .fn-chev{display:inline-block;width:12px;color:var(--emuted2);font-size:10px;transition:transform .15s}.fn-fold[open]>summary .fn-chev{transform:rotate(90deg)}
+.fn-fold>.fn-fold-body{display:flex;flex-direction:column;gap:1px;background:var(--eborder)}</style>
 <style id="mobile-css">
 /* BUILD 2026-08-25-F — camada celular. Fica no FIM do body de proposito: os estilos do e-commerce vivem em <style> dentro do body
    e venciam o bloco anterior (mesma especificidade, ordem posterior). !important onde ha estilo inline no template. So layout. */
