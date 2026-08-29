@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-26-O | selecta-banco-preco | CONTA MERCADO PAGO: SALDO DISPONIVEL + DIA LOCAL NOS CREDITOS (decisoes Igor 29/08, sobre 26-N): (1) quadrante renomeado "Conta Mercado Pago"; nova linha #fn-mp-saldo no topo = ultima linha de ecom_mp_saldo (SQL 13; Edge mp-conta v1.0 em ciclo de 30 min, cron job 12; saldo = linha "total" do relatorio de Liberacoes do MP, provado igual ao "Seu dinheiro disponivel" do painel ML, R$ 2.741,84 em 29/08) com dia/hora da captura em Brasilia; ambar quando a captura tem mais de 75 min. (2) Realtime: canal selecta-live passa a escutar INSERT em ecom_mp_saldo e re-renderiza so a linha do saldo (primeiro canal Realtime do financeiro). (3) Creditos previstos: corte de dia em America/Sao_Paulo (_diaLocal) em vez de UTC — o MP libera em horario local; Termometro/capitalBase INTOCADOS (competencia segue UTC). renderMpSaldo e assincrono e nunca bloqueia o Termometro. Zero mudanca de matematica. Base: 2026-08-26-N (md5 76e28833d4eed83285f530084b713ab4) -->
 <!-- BUILD 2026-08-26-N | selecta-banco-preco | CREDITOS PREVISTOS PELO MP, 7 DIAS, VALOR POR DIA (decisao Igor 28/08, sobre 26-M): novo quadrante em Relatorios > Financeiro, no lugar do Por mes: uma linha por dia (hoje + 6), nº de vendas e liquido previsto, dias sem credito zerados, amanha em destaque, total dos 7 dias. Fonte: MESMO d.vendas do Termometro (fonte()), campos data_liberacao_mp (promessa do MP, gravada pela ml-orders v1.3+) e valor_recebido_ml. Criterio de "ainda nao liberado" igual ao capitalBase (data >= hoje, UTC). Notas no rodape: vendas com liberacao alem de 7 dias, vendas SEM DATA (fora da previsao — Consulta 5 achou 31 entregues sem data, R$ 12.210; pendente de investigar a idade delas, porque o capitalBase as trata como NAO liberadas), vendas sem valor. Zero mudanca de matematica do Termometro. Parte B (saldo real da conta MP, Edge mp-conta + Realtime) fica para o 26-O. Base: 2026-08-26-M (md5 8b5bf2897959bba0c2e9b74300a0ab03) -->
 <!-- BUILD 2026-08-26-M | selecta-banco-preco | POR MES NO HISTORICO + PEDIDOS RECOLHIDOS (decisao Igor 28/08, sobre 26-L): (1) quadrante "Por mes (competencia)" sai de Relatorios > Financeiro e entra em Relatorios > Historico, RECOLHIDO (details/summary, mesmo padrao do 26-E), abaixo da Consulta gerencial — Historico passa a ser o lugar das consultas gerenciais (Igor vai reorganizar o modulo depois). Id rl-mensal e renderMensal intocados (espelho de calcMes); a sub-aba Historico agora chama ecomRelatorios.load() junto com ecomHistorico.load() para alimentar o quadro. (2) listagem "Pedidos enviados e entregues" (hs-list) no Historico tambem RECOLHIDA, clique para abrir; id e handlers intocados. Financeiro fica so com Termometro + Investidores. Zero mudanca de matematica. Base: 2026-08-26-L (md5 aa243d3b0d43409126ae2b0e09281d6a) -->
 <!-- BUILD 2026-08-26-L | selecta-banco-preco | HOTFIX PARSE (Igor 28/08: 'nao entra', botao Entrar nao reage): no 26-K, a chave que fechava o bloco else do laco 'Conferir com o Controle' ficou DENTRO do comentario adicionado na mesma linha (} // BUILD 26-K ... } // BUILD 26-I) — SyntaxError no modulo inteiro, login nunca era ligado (mesmo mecanismo do 23-B). O node --check nao pegou; o teste que pegou foi EXECUTAR o arquivo em jsdom com Supabase simulado — passa a ser o teste obrigatorio antes de entregar. Nenhuma outra mudanca. Base: 2026-08-26-K (md5 995c6d3c40257e2670caff09ea7970ba) -->
@@ -2049,8 +2050,10 @@
         <div id="fn-termometro"><div class="ph">carregando…</div></div>
       </div>
       <!-- BUILD 2026-08-26-M: quadrante "Por mes (competencia)" MOVIDO para o Historico (decisao Igor 28/08) -->
-      <div class="ecard" style="margin-top:18px;border-color:var(--eteal)"><!-- BUILD 2026-08-26-N: Conta Mercado Pago — creditos previstos por dia (Parte A). Saldo real entra no 26-O via Edge mp-conta -->
-        <h3>Créditos previstos pelo Mercado Pago · <span style="color:var(--eteal);text-transform:none;letter-spacing:0">próximos 7 dias</span></h3>
+      <div class="ecard" style="margin-top:18px;border-color:var(--eteal)"><!-- BUILD 2026-08-26-N: Conta Mercado Pago — creditos previstos por dia (Parte A). BUILD 2026-08-26-O: saldo disponivel (Edge mp-conta + ecom_mp_saldo, Realtime) -->
+        <h3>Conta Mercado Pago</h3>
+        <div id="fn-mp-saldo"><div class="ph">carregando…</div></div>
+        <div style="font-size:11px;color:var(--emuted2);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.06em">Créditos previstos · próximos 7 dias</div>
         <div id="fn-creditos"><div class="ph">carregando…</div></div>
       </div>
       </div><!-- /rlsub-financeiro -->
@@ -5455,9 +5458,12 @@ const ecomFinanceiro={
   // BUILD 2026-08-26-N: creditos previstos pelo MP, dia a dia (Parte A do quadrante Conta MP — decisao Igor 28/08).
   // Fonte: o MESMO d.vendas do Termometro. Usa data_liberacao_mp (promessa do MP gravada pela ml-orders) e valor_recebido_ml (liquido).
   // Criterio de "ainda nao liberado" = o mesmo do capitalBase (data > agora, em UTC). Sem data = fora da previsao, contado a parte.
+  // BUILD 2026-08-26-O: dia LOCAL (America/Sao_Paulo) neste quadrante — decisao Igor 29/08 ("o mais exato"): o MP libera em horario local;
+  // com corte UTC uma liberacao das 21h30 caia em "amanha". Termometro/capitalBase NAO mudam (competencia segue UTC).
+  _diaLocal(dt){ try{ return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(dt); }catch(e){ return dt.toISOString().slice(0,10); } },
   creditosPrevistos(d){
-    const agora=new Date(); const hojeK=agora.toISOString().slice(0,10);
-    const dias=[]; for(let i=0;i<7;i++){ const t=new Date(agora.getTime()+i*86400000); dias.push({k:t.toISOString().slice(0,10),n:0,v:0}); }
+    const agora=new Date(); const hojeK=this._diaLocal(agora);
+    const dias=[]; for(let i=0;i<7;i++){ const t=new Date(agora.getTime()+i*86400000); dias.push({k:this._diaLocal(t),n:0,v:0}); }
     const idx={}; dias.forEach(x=>idx[x.k]=x);
     let semData=0, semDataV=0, semValor=0, depois=0, depoisV=0;
     d.vendas.forEach(v=>{
@@ -5465,16 +5471,33 @@ const ecomFinanceiro={
       if(!['a_enviar','enviado','entregue'].includes(v.status)) return;
       const val=(v.valor_recebido_ml!=null)?+v.valor_recebido_ml:null;
       if(!v.data_liberacao_mp){ semData++; if(val!=null) semDataV+=val; return; }
-      const k=String(v.data_liberacao_mp).slice(0,10); if(k<hojeK) return;   // ja liberado (criterio do capitalBase)
+      const k=this._diaLocal(new Date(v.data_liberacao_mp)); if(k<hojeK) return;   // ja liberado (dia local; 26-O)
       if(val==null){ semValor++; return; }
       if(idx[k]){ idx[k].n++; idx[k].v+=val; } else { depois++; depoisV+=val; }
     });
     return {dias,hojeK,semData,semDataV,semValor,depois,depoisV,total:dias.reduce((a,x)=>a+x.v,0)};
   },
+  // BUILD 2026-08-26-O: saldo disponivel da conta MP = ultima linha de ecom_mp_saldo (Edge mp-conta, ciclo de 30 min; linha "total" do relatorio de Liberacoes = "Seu dinheiro disponivel" do painel ML).
+  async renderMpSaldo(){ const box=this._g('fn-mp-saldo'); if(!box) return;
+    try{
+      const r=await sb.from('ecom_mp_saldo').select('capturado_em,gerado_em,saldo_disponivel,periodo_fim').order('capturado_em',{ascending:false}).limit(1);
+      if(r.error) throw new Error(r.error.message);
+      const row=(r.data||[])[0];
+      if(!row){ box.innerHTML='<div class="ph" style="color:var(--eamber)">saldo ainda não capturado — aguarde o primeiro ciclo da mp-conta</div>'; return; }
+      const cap=new Date(row.capturado_em), min=Math.round((Date.now()-cap.getTime())/60000);
+      const hora=cap.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'});
+      const dia=cap.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',timeZone:'America/Sao_Paulo'});
+      const velho=min>75; const F=this.fmt;
+      box.innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;padding:10px 13px;background:var(--epanel2);border-radius:12px">'
+        +'<span style="font-size:12.5px">Saldo disponível</span>'
+        +'<span style="font-family:var(--emono);font-size:20px;font-weight:700;color:var(--eteal)">R$ '+F(row.saldo_disponivel)+'</span>'
+        +'<span style="font-size:11px;color:'+(velho?'var(--eamber)':'var(--emuted2)')+'">'+(velho?'\u26a0 ':'')+'capturado '+dia+' '+hora+(velho?' · há '+min+' min':'')+'</span></div>';
+    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">saldo: '+e.message+'</div>'; }
+  },
   renderCreditos(d){ const box=this._g('fn-creditos'); if(!box) return;
     const c=this.creditosPrevistos(d); const F=this.fmt;
     const wd=['dom','seg','ter','qua','qui','sex','sáb'];
-    const rows=c.dias.map((x,i)=>{ const dt=new Date(x.k+'T12:00:00Z'); const lbl=x.k.slice(8,10)+'/'+x.k.slice(5,7)+' <span style="color:var(--emuted2)">'+wd[dt.getUTCDay()]+'</span>'+(i===0?' <span style="color:var(--emuted2);font-size:10px">hoje</span>':(i===1?' <span style="color:var(--eteal);font-size:10px">amanhã</span>':''));
+    const rows=c.dias.map((x,i)=>{ const dt=new Date(x.k+'T12:00:00-03:00'); const lbl=x.k.slice(8,10)+'/'+x.k.slice(5,7)+' <span style="color:var(--emuted2)">'+wd[dt.getUTCDay()]+'</span>'+(i===0?' <span style="color:var(--emuted2);font-size:10px">hoje</span>':(i===1?' <span style="color:var(--eteal);font-size:10px">amanhã</span>':''));
       const cor=x.v>0?(i===1?'var(--eteal)':'var(--etext)'):'var(--emuted2)';
       return '<tr><td style="padding:5px 8px;white-space:nowrap">'+lbl+'</td><td class="mono" style="padding:5px 8px;text-align:right;color:var(--emuted2)">'+(x.n||'—')+'</td><td class="mono" style="padding:5px 8px;text-align:right;font-weight:'+(i===1?'700':'500')+';color:'+cor+'">'+(x.v>0?'R$ '+F(x.v):'—')+'</td></tr>'; }).join('');
     const tot='<tr style="border-top:2px solid var(--eborder);background:var(--epanel2)"><td style="padding:6px 8px;font-weight:700">7 dias</td><td class="mono" style="padding:6px 8px;text-align:right;color:var(--emuted2)">'+c.dias.reduce((a,x)=>a+x.n,0)+'</td><td class="mono" style="padding:6px 8px;text-align:right;font-weight:700;color:var(--eteal)">R$ '+F(c.total)+'</td></tr>';
@@ -5483,7 +5506,7 @@ const ecomFinanceiro={
     if(c.semData) notas.push('<span style="color:var(--eamber)">'+c.semData+' venda(s) sem data de liberação · R$ '+F(c.semDataV)+' fora da previsão</span>');
     if(c.semValor) notas.push('<span style="color:var(--eamber)">'+c.semValor+' venda(s) sem valor líquido</span>');
     box.innerHTML='<div style="border:1px solid var(--eborder);border-radius:12px;overflow:hidden"><table class="rptab" style="width:100%"><thead><tr><th style="text-align:left;padding:6px 8px">Dia</th><th style="text-align:right;padding:6px 8px">Vendas</th><th style="text-align:right;padding:6px 8px">Líquido previsto</th></tr></thead><tbody>'+rows+tot+'</tbody></table></div>'
-      +'<div style="font-size:11px;color:var(--emuted);margin-top:8px">Data e valor são a promessa do MP por venda (ml-orders); entrega antecipada ou contestação movem a data. Corte de dia em UTC, igual ao Termômetro.'+(notas.length?'<br>'+notas.join(' · '):'')+'</div>';
+      +'<div style="font-size:11px;color:var(--emuted);margin-top:8px">Data e valor são a promessa do MP por venda (ml-orders); entrega antecipada ou contestação movem a data. Dias em horário de Brasília.'+(notas.length?'<br>'+notas.join(' · '):'')+'</div>';
   },
   // capitalBase(d): capital da operação INTEIRA (19-A/B: critério liberação MP; perda fora do preso; devolvido a custo até reintegrar)
   capitalBase(d){ const hoje=new Date().toISOString(); let preso=0,recMP=0,devCusto=0;
@@ -5502,6 +5525,7 @@ const ecomFinanceiro={
       const lbl=this._g('fn-termo-mes'); if(lbl) lbl.textContent=this.mesNomeK(mkey);
       const c=this.calcMes(d,mkey), cap=this.capitalBase(d);
       try{ this.renderCreditos(d); }catch(e){ const cb=this._g('fn-creditos'); if(cb) cb.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; } // BUILD 2026-08-26-N
+      this.renderMpSaldo(); // BUILD 2026-08-26-O (assincrono, nao bloqueia o Termometro)
       const {n,nF,rec,recF,tax,cusMes,imp,col,perdas,perdasPend,ocDev,ocApr,ocOut,jurosMes,jurosAuto,despOpMes,despOpItens,lucOp,lucReal,margem,despTot,mesOc}=c;
       const pend=c.nPend, despOp=(d.despesas===null)?null:despOpItens;
       const {preso,recMP,devCusto}=cap;
@@ -9290,6 +9314,7 @@ checkSession();
     sb.channel('selecta-live')
       .on('postgres_changes',{event:'*',schema:'public',table:'ecom_anuncios'},()=>mark('anuncios'))
       .on('postgres_changes',{event:'*',schema:'public',table:'ecom_produtos'},()=>mark('produtos'))
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'ecom_mp_saldo'},()=>{ try{ if(typeof ecomFinanceiro!=='undefined'&&ecomFinanceiro.renderMpSaldo) ecomFinanceiro.renderMpSaldo(); }catch(e){} }) // BUILD 2026-08-26-O: primeiro canal Realtime do financeiro
       .subscribe(st=>{ if(st==='SUBSCRIBED') setLive('· ao vivo');
         else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){ setLive(''); console.warn('realtime indisponível ('+st+') — telas seguem no modo refresh manual.'); } });
   }catch(e){ console.warn('realtime não inicializado:',e.message); }
