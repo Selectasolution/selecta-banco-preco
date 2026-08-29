@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-26-S | selecta-banco-preco | SO O 3d, SEM CONVERSAO (Igor 29/08 ao ver o 26-P com dados: "informacao demais"): coluna Metricas 7d SAI da tabela; fica so Metricas 3d com "visitas · vendas" (sem %). ORDEM passa a ser por visitas 3d (Igor assume o risco do dia corrente parcial), desempate visitas 7d e pedidos 7d; o 7d sobrevive apenas no tooltip da celula. Nada mais muda. Base: 2026-08-26-P (md5 b57431f5223b417ad0d832732b74a89f) -->
 <!-- BUILD 2026-08-26-P | selecta-banco-preco | METRICAS 3d/7d NA ANALISE COMERCIAL + ORDEM POR VISITAS (decisoes Igor 29/08, sobre 26-R): linha dos Anuncios ativos vira Nº / Cod / MLB / Produto / Praticado / Margem / Metricas 3d / Metricas 7d / Historico. Metricas = visitas · vendas · conv% (quantidade de pedidos, padrao do painel ML; sem R$ por decisao Igor). Visitas: ecom_anuncio_visitas_dia (SQL 14; gravada pela Edge ml-visitas a cada 30 min, todos os ativos na mesma passada, time_window 7 dias por dia) — 7d = 7 ultimos dias, 3d = 3 ultimos (hoje parcial: o ML consolida com atraso, ressalva no tooltip). Vendas: ecom_vendas por anuncio_mlb (data_solicitacao na janela, cancelado excluido — this.vendas ja filtra). ORDEM: visitas 7d desc, desempate 3d desc, depois id; o VERDE do Historico continua (movimentado desde a ultima leitura) mas NAO poe mais no topo — supera o 26-E. Cabecalho ganha "visitas hh:mm" (ultima passada em ecom_visitas_run; ambar se > 75 min). Realtime: canal selecta-live escuta INSERT em ecom_visitas_run e re-renderiza a tabela. Cabecalho das colunas: 11px, negrito, cor mais clara (era 9,5px apagado). Tabela ausente/vazia = celulas em "—" (degrada, nao quebra). load() passa a selecionar anuncio_mlb nas vendas. Controle da Alexia INTOCADO. Zero mudanca de matematica. Base: 2026-08-26-R (md5 88399233adcbc4f50d1c9a66b6805ea5) -->
 <!-- BUILD 2026-08-26-R | selecta-banco-preco | BUSCA DE PEDIDO NO HISTORICO (Igor 29/08, sobre 26-Q): campo #hs-busca acima da listagem "Pedidos enviados e entregues" — filtra em memoria por numero do pedido, pack (ml_pack_id, o "Venda #" que o ML mostra), MLB, codigo do produto ou nome (contem, sem distinguir maiusculas; numeros tambem casam por digitos). Digitar abre a listagem recolhida sozinha; contador "N de M" ao lado. load() passa a selecionar ml_pack_id, anuncio_mlb e produto_codigo; guarda em _itens; render/handlers (Editar, entregue, PDF) intocados. Consulta gerencial intocada. Zero SQL, zero matematica. Base: 2026-08-26-Q (md5 7b8ba5efa9d379ed1e67887daa246463) -->
 <!-- BUILD 2026-08-26-Q | selecta-banco-preco | TERMOMETRO COM BLOCOS RECOLHIDOS + TREINO OCULTO (Igor 29/08, sobre 26-O): (1) tres blocos viram details/summary (fold): DESPESAS (resumo = DESPESAS TOTAIS; aberto lista taxas, custo, imposto, juros, despesas operacionais, perdas), CAPITAL · operacao inteira (resumo = Coberto/Descoberto, que era a ultima linha; aberto: preso, a receber MP, devolucoes a custo, mediana de liberacao) e INVESTIDORES (resumo = CREDORES R$ + contador ambar "N a validar" quando ha transferencia do portal pendente; aberto: credores, saldo a amortizar, venda minima, transferencias a validar, historico). Receitas e Resultado sempre abertos. Delegacao de clique do box intocada (botoes dentro do details continuam funcionando). CSS #fold-css. (2) Historico de validacoes ignora linhas com "[treino]" em obs (ecom_inv_funding e append-only por trigger — Igor marcou o treino do credor_3 de 25/08 por UPDATE em vez de DELETE). Zero mudanca de matematica. Base: 2026-08-26-O (md5 9720b5146bc60cec63fc83c116fd1d9f) -->
@@ -6646,7 +6647,7 @@ const ecomAlvo={
     // BUILD 2026-08-26-P: metricas de visitas (ecom_anuncio_visitas_dia, SQL 14) e vendas (ecom_vendas por MLB), janelas 7d e 3d; ordem por visitas 7d
     const met=await this._metricasVisitas();
     const metDe=a=>met.por[this._normMlb(a.anuncio_mlb)]||{v7:0,v3:0,n7:0,n3:0,tem:false};
-    const ordem=(a,b)=>{ const ma=metDe(a), mb=metDe(b); return (mb.v7-ma.v7) || (mb.v3-ma.v3) || (mb.n7-ma.n7) || ((+b.id||0)-(+a.id||0)); }; // verde continua marcando, mas nao ordena mais (supera 26-E)
+    const ordem=(a,b)=>{ const ma=metDe(a), mb=metDe(b); return (mb.v3-ma.v3) || (mb.v7-ma.v7) || (mb.n7-ma.n7) || ((+b.id||0)-(+a.id||0)); }; // BUILD 2026-08-26-S: ordem pelo 3d // verde continua marcando, mas nao ordena mais (supera 26-E)
     this._margTabela={}; // BUILD 2026-08-26-H: zera antes de renderizar
     let nCamp=0; // BUILD 2026-08-26-K: campanhas a analisar
     const ativos=anns.filter(a=>!a.pausado).sort(ordem);
@@ -6679,11 +6680,9 @@ const ecomAlvo={
       const cls=(dv.estado==='div'?' div':'')+(nl?' novo':'');
       const histCell=mlb?'<button data-atvhist="'+ea(mlb)+'" class="al-histlink atv'+cls+'" title="'+(nl?'movimentado desde a sua última leitura':'')+'">Histórico ('+hist.length+')</button>':'<span style="color:var(--emuted2)">—</span>';
       const m=metDe(an); // BUILD 2026-08-26-P
-      const metCell=(v,n,tem,tit)=>{ if(!tem) return '<span style="color:var(--emuted2)" title="'+ea(tit)+'">—</span>';
-        const conv=v>0?(n/v*100):null; const cCor=(conv==null)?'var(--emuted2)':(conv>=5?'var(--eemerald)':(conv>0?'var(--eamber)':'var(--emuted)'));
-        return '<span title="'+ea(tit)+'" style="white-space:nowrap"><b style="color:var(--etxt)">'+v+'</b><span style="color:var(--emuted2)"> vis · </span><b style="color:'+(n>0?'var(--eteal)':'var(--emuted)')+'">'+n+'</b><span style="color:var(--emuted2)"> vd · </span><span style="color:'+cCor+'">'+(conv==null?'—':conv.toFixed(0)+'%')+'</span></span>'; };
-      const t3='últimos 3 dias (o dia de hoje ainda está acumulando) · visitas · pedidos · conversão';
-      const t7='últimos 7 dias · visitas · pedidos · conversão'+(met.quando?' · visitas lidas '+met.quando:'');
+      const metCell=(v,n,tem,tit)=>{ if(!tem) return '<span style="color:var(--emuted2)" title="'+ea(tit)+'">—</span>'; // BUILD 2026-08-26-S: sem conversao
+        return '<span title="'+ea(tit)+'" style="white-space:nowrap"><b style="color:var(--etxt)">'+v+'</b><span style="color:var(--emuted2)"> vis · </span><b style="color:'+(n>0?'var(--eteal)':'var(--emuted)')+'">'+n+'</b><span style="color:var(--emuted2)"> vd</span></span>'; };
+      const t3='últimos 3 dias (hoje ainda acumulando) · visitas · pedidos · 7 dias: '+m.v7+' vis · '+m.n7+' vd'+(met.quando?' · lido '+met.quando:'');
       return '<tr'+(dim?' style="opacity:.55"':'')+'>'
         +'<td style="padding:4px 4px 4px 6px;font-family:var(--emono);color:var(--emuted2);text-align:right">'+n+'</td>'
         +'<td style="padding:4px 8px 4px 6px;font-family:var(--emono);color:var(--eteal);font-weight:700;white-space:nowrap">'+ea(cod||'—')+'</td>'
@@ -6691,18 +6690,16 @@ const ecomAlvo={
         +'<td style="padding:4px 12px 4px 6px;color:var(--etxt);white-space:nowrap">'+ea(an.titulo||'')+(dim?' <span style="font-size:9px;color:var(--emuted2);font-weight:700">PAUSADO</span>':'')+'</td>'
         +'<td style="padding:4px 8px;text-align:right;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap">'+precoCell+'</td>'
         +'<td style="padding:4px 8px;text-align:right;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap">'+margCell+campCell+'</td>'
-        +'<td style="padding:4px 8px;text-align:right;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap">'+metCell(m.v3,m.n3,m.tem,t3)+'</td>'
-        +'<td style="padding:4px 8px;text-align:right;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap">'+metCell(m.v7,m.n7,m.tem,t7)+'</td>' // BUILD 2026-08-26-P
+        +'<td style="padding:4px 8px;text-align:right;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap">'+metCell(m.v3,m.n3,m.tem,t3)+'</td>' // BUILD 2026-08-26-P · 26-S: so o 3d
         +'<td style="padding:4px 8px;white-space:nowrap">'+histCell+'</td>'
         +'</tr>'
-        +'<tr data-atvhrow="'+ea(mlb)+'" style="display:none"><td colspan="9" style="padding:4px 8px 10px"><div data-alhistbox="'+ea(mlb)+'" style="display:none;max-width:720px"></div></td></tr>';
+        +'<tr data-atvhrow="'+ea(mlb)+'" style="display:none"><td colspan="8" style="padding:4px 8px 10px"><div data-alhistbox="'+ea(mlb)+'" style="display:none;max-width:720px"></div></td></tr>';
     };
     const thead='<tr style="color:var(--emuted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">' // BUILD 2026-08-26-P: cabecalho maior e em negrito (Igor 29/08)
       +'<td style="padding:2px 4px 2px 6px;text-align:right">Nº</td><td style="padding:2px 8px 2px 6px">Cod</td><td style="padding:2px 8px">MLB</td><td style="padding:2px 10px 2px 6px">Produto</td>'
       +'<td style="padding:2px 8px;text-align:right" title="Preço em vigor no ML: promoção quando ativa, senão o cheio (cheio no tooltip)">Praticado</td>'
       +'<td style="padding:2px 8px;text-align:right" title="Margem líquida no preço praticado — o mesmo simulador do Editar (comissão + frete + imposto + colchão). ≥10 verde · 0–10 âmbar · ≤0 vermelho">Margem</td>'
-      +'<td style="padding:2px 8px;text-align:right" title="Últimos 3 dias: visitas · pedidos · conversão (hoje parcial)">Métricas 3d</td>'
-      +'<td style="padding:2px 8px;text-align:right" title="Últimos 7 dias: visitas · pedidos · conversão — a ordem da tabela é por estas visitas">Métricas 7d</td>' // BUILD 2026-08-26-P
+      +'<td style="padding:2px 8px;text-align:right" title="Últimos 3 dias: visitas · pedidos — a ordem da tabela é por estas visitas (7 dias no tooltip da célula)">Métricas 3d</td>' // BUILD 2026-08-26-P · 26-S
       +'<td style="padding:2px 8px" title="Verde = movimentado desde a sua última leitura · vermelho = divergente do ML na última varredura">Histórico</td></tr>';
     // BUILD 2026-08-26-F: largura pelo conteudo — Praticado/Margem/Historico colam no nome do produto; nada do titulo e cortado
     const tabela=rows=>'<div style="overflow-x:auto"><table style="width:auto;max-width:100%;border-collapse:collapse;font-size:12.5px;table-layout:auto">'
