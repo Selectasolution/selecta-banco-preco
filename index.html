@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-26-R | selecta-banco-preco | BUSCA DE PEDIDO NO HISTORICO (Igor 29/08, sobre 26-Q): campo #hs-busca acima da listagem "Pedidos enviados e entregues" — filtra em memoria por numero do pedido, pack (ml_pack_id, o "Venda #" que o ML mostra), MLB, codigo do produto ou nome (contem, sem distinguir maiusculas; numeros tambem casam por digitos). Digitar abre a listagem recolhida sozinha; contador "N de M" ao lado. load() passa a selecionar ml_pack_id, anuncio_mlb e produto_codigo; guarda em _itens; render/handlers (Editar, entregue, PDF) intocados. Consulta gerencial intocada. Zero SQL, zero matematica. Base: 2026-08-26-Q (md5 7b8ba5efa9d379ed1e67887daa246463) -->
 <!-- BUILD 2026-08-26-Q | selecta-banco-preco | TERMOMETRO COM BLOCOS RECOLHIDOS + TREINO OCULTO (Igor 29/08, sobre 26-O): (1) tres blocos viram details/summary (fold): DESPESAS (resumo = DESPESAS TOTAIS; aberto lista taxas, custo, imposto, juros, despesas operacionais, perdas), CAPITAL · operacao inteira (resumo = Coberto/Descoberto, que era a ultima linha; aberto: preso, a receber MP, devolucoes a custo, mediana de liberacao) e INVESTIDORES (resumo = CREDORES R$ + contador ambar "N a validar" quando ha transferencia do portal pendente; aberto: credores, saldo a amortizar, venda minima, transferencias a validar, historico). Receitas e Resultado sempre abertos. Delegacao de clique do box intocada (botoes dentro do details continuam funcionando). CSS #fold-css. (2) Historico de validacoes ignora linhas com "[treino]" em obs (ecom_inv_funding e append-only por trigger — Igor marcou o treino do credor_3 de 25/08 por UPDATE em vez de DELETE). Zero mudanca de matematica. Base: 2026-08-26-O (md5 9720b5146bc60cec63fc83c116fd1d9f) -->
 <!-- BUILD 2026-08-26-O | selecta-banco-preco | CONTA MERCADO PAGO: SALDO DISPONIVEL + DIA LOCAL NOS CREDITOS (decisoes Igor 29/08, sobre 26-N): (1) quadrante renomeado "Conta Mercado Pago"; nova linha #fn-mp-saldo no topo = ultima linha de ecom_mp_saldo (SQL 13; Edge mp-conta v1.0 em ciclo de 30 min, cron job 12; saldo = linha "total" do relatorio de Liberacoes do MP, provado igual ao "Seu dinheiro disponivel" do painel ML, R$ 2.741,84 em 29/08) com dia/hora da captura em Brasilia; ambar quando a captura tem mais de 75 min. (2) Realtime: canal selecta-live passa a escutar INSERT em ecom_mp_saldo e re-renderiza so a linha do saldo (primeiro canal Realtime do financeiro). (3) Creditos previstos: corte de dia em America/Sao_Paulo (_diaLocal) em vez de UTC — o MP libera em horario local; Termometro/capitalBase INTOCADOS (competencia segue UTC). renderMpSaldo e assincrono e nunca bloqueia o Termometro. Zero mudanca de matematica. Base: 2026-08-26-N (md5 76e28833d4eed83285f530084b713ab4) -->
 <!-- BUILD 2026-08-26-N | selecta-banco-preco | CREDITOS PREVISTOS PELO MP, 7 DIAS, VALOR POR DIA (decisao Igor 28/08, sobre 26-M): novo quadrante em Relatorios > Financeiro, no lugar do Por mes: uma linha por dia (hoje + 6), nº de vendas e liquido previsto, dias sem credito zerados, amanha em destaque, total dos 7 dias. Fonte: MESMO d.vendas do Termometro (fonte()), campos data_liberacao_mp (promessa do MP, gravada pela ml-orders v1.3+) e valor_recebido_ml. Criterio de "ainda nao liberado" igual ao capitalBase (data >= hoje, UTC). Notas no rodape: vendas com liberacao alem de 7 dias, vendas SEM DATA (fora da previsao — Consulta 5 achou 31 entregues sem data, R$ 12.210; pendente de investigar a idade delas, porque o capitalBase as trata como NAO liberadas), vendas sem valor. Zero mudanca de matematica do Termometro. Parte B (saldo real da conta MP, Edge mp-conta + Realtime) fica para o 26-O. Base: 2026-08-26-M (md5 8b5bf2897959bba0c2e9b74300a0ab03) -->
@@ -2082,6 +2083,10 @@
       <div class="ecard"><!-- BUILD 2026-08-26-M: listagem de pedidos recolhida (decisao Igor 28/08). Mesmo id hs-list, mesmos handlers -->
         <details id="hs-list-details">
         <summary style="cursor:pointer;list-style:none;user-select:none"><h3 style="display:inline;margin:0">Pedidos enviados e entregues <span style="font-weight:400;font-size:11px;color:var(--emuted2)">· clique para abrir</span></h3></summary>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><!-- BUILD 2026-08-26-R: busca de pedido (Igor 29/08) -->
+          <input class="vinput mono" id="hs-busca" placeholder="pedido, pack, MLB, código ou produto" style="flex:1;min-width:220px" autocomplete="off">
+          <span id="hs-busca-n" style="font-size:11px;color:var(--emuted2)"></span>
+        </div>
         <div id="hs-list" style="margin-top:12px"><div class="ph">carregando…</div></div>
         </details>
       </div>
@@ -5670,12 +5675,21 @@ const ecomHistorico={
   fmtD:iso=>iso?new Date(iso).toLocaleDateString('pt-BR'):'—',
   fmtDT(iso){ if(!iso) return ''; const d=new Date(iso); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); },
   async load(){ const box=this._g('hs-list');
-    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,preco_venda,data_solicitacao,data_embarque,data_entrega,status,comissao_valor,custo_unitario,editado_em,ocorrencia').in('status',['enviado','entregue']).order('data_embarque',{ascending:false,nullsFirst:false});
-      if(r.error) throw r.error; this.render(r.data||[]);
+    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,ml_pack_id,anuncio_mlb,produto_codigo,produto,preco_venda,data_solicitacao,data_embarque,data_entrega,status,comissao_valor,custo_unitario,editado_em,ocorrencia').in('status',['enviado','entregue']).order('data_embarque',{ascending:false,nullsFirst:false});
+      if(r.error) throw r.error; this._itens=r.data||[]; this._wireBusca(); this.render(this._filtrar(this._itens));
     }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
   },
+  // BUILD 2026-08-26-R: busca por pedido / pack / MLB / codigo / produto (Igor 29/08: "horrivel de procurar no olho")
+  _filtrar(itens){ const q=String((this._g('hs-busca')||{}).value||'').trim().toLowerCase(); const n=this._g('hs-busca-n');
+    if(!q){ if(n) n.textContent=''; return itens; }
+    const qd=q.replace(/\D/g,'');
+    const hit=v=>{ const campos=[v.ml_pedido_id,v.ml_pack_id,v.anuncio_mlb,v.produto_codigo,v.produto].map(x=>String(x||'').toLowerCase());
+      return campos.some(c=>c.indexOf(q)>=0) || (qd.length>=4 && campos.some(c=>c.replace(/\D/g,'').indexOf(qd)>=0)); };
+    const out=itens.filter(hit); if(n) n.textContent=out.length+' de '+itens.length; return out; },
+  _wireBusca(){ const inp=this._g('hs-busca'); if(!inp||inp._wired) return; inp._wired=true;
+    inp.addEventListener('input',()=>{ const d=this._g('hs-list-details'); if(d&&inp.value.trim()) d.open=true; this.render(this._filtrar(this._itens||[])); }); },
   render(itens){ const box=this._g('hs-list');
-    if(!itens.length){ box.innerHTML='<div class="ph">nenhuma venda postada ainda</div>'; return; }
+    if(!itens.length){ box.innerHTML='<div class="ph">'+((this._g('hs-busca')||{}).value?'nenhum pedido com esse termo':'nenhuma venda postada ainda')+'</div>'; return; }
     const rows=itens.map(v=>{
       const pendMargem=(v.comissao_valor==null||v.custo_unitario==null)?' <span style="font-size:10px;color:var(--eamber);border:1px solid #473714;border-radius:999px;padding:1px 7px">margem pendente</span>':'';
       const editTag=v.editado_em?' <span style="font-size:10px;color:var(--eamber)">editado</span>':'';
