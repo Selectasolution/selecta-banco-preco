@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-26-V | selecta-banco-preco | ABA SHOPEE v1 (Projeto Shopee, Igor 30/08; SQL 16 aplicado: ecom_shopee_taxas + ecom_fn_tarifa_shopee + ecom_shopee_anuncios + ecom_shopee_vendas): nova aba principal 🛍️ Shopee (data-tab=shopee) com sub-abas Alvo/Vendas/Relatorios, SEM Radar, Catalogo unico (lookup ecom_produtos por codigo). DECISAO IGOR 30/08: Shopee FORA do razao ML — tabelas proprias (ecom_shopee_vendas), termometro proprio; consolidacao geral fica no Fiscal (fase posterior). Nada toca ecom_vendas, Termometro ML, Controle da Alexia ou Fiscal. TARIFA: lida de ecom_shopee_taxas (banco = fonte unica; UPDATE na tabela reflete no app sem build — necessario porque a loja e Loja Oficial/Mall e a taxa da conta pode divergir da tabela padrao mar/2026). ALVO: cadastro de anuncio + simulador ao vivo por FAIXA DE PRECO (preco valido = promocao quando existe, regra da casa; campanha destaque +2,5%) com ALERTA DE FRONTEIRA (compara liquido atual vs liquido no teto da faixa anterior — ex.: R$80-88,36 rende MENOS que R$79,99; <R$8 = vermelho 50%) + lista de ativos com faixa/tarifa/margem (custo do Catalogo). VENDAS: lancamento manual (tarifa sugerida pela faixa x qtd, editavel p/ conciliacao; frete alem do subsidio; prazo de envio), fila em cartoes com chip de prazo (ENVIO ATRASADO vermelho / ENVIA HOJE ambar — regime de pontos semanais da Shopee) e botao "Liberado na carteira" (escrow ShopeePay manual: liberado_carteira + data_liberacao). RELATORIOS: termometro Shopee do mes (receita − tarifas − frete dif − custos − imposto 4% regua do razao = lucro; cancelado/devolvido FORA por convencao v1, mais duro que o razao ML, por desenho) + capital preso no escrow e a-enviar (independe do mes). JS: modulo shopeeTab dentro do script principal (mesmo escopo de sb/switchTab), exposto em window (padrao fiscal) p/ onclick inline. Sem Realtime, sem Edge — canal 100% manual ate a Open Platform aprovar. Base: 2026-08-26-U (md5 f7ec90f4ae61de10cefec142bb3413a8) -->
 <!-- BUILD 2026-08-26-U | selecta-banco-preco | MIDIA ABRE ABAIXO DA LINHA (Igor 30/08 sobre 26-T: o painel abria no fim da pagina): render() ESTACIONA o painel no holder antes de reescrever o tbody (senao o no morreria com o innerHTML — bug pego no jsdom); o painel #ecom-midia passa a ser MONTADO numa linha extra (tr.midia-row, colspan 7) logo abaixo do produto clicado, como o Historico do Controle; clicar de novo em Midia fecha; render() da tabela remonta o painel do produto aberto (midiaMount). Mesmo no, mesmos listeners — so muda o lugar. Limite segue 8 fotos por produto. Base: 2026-08-26-T (md5 8bd31afe876339d943e9c56bb19a4666) -->
 <!-- BUILD 2026-08-26-T | selecta-banco-preco | MIDIA DO CATALOGO (Igor 30/08, sobre 26-S; SQL 15 aplicado: bucket privado produto-midia + ecom_produto_midia): botao "Midia" em cada linha do Catalogo (contador N fotos / video) abre o painel #ecom-midia dentro da aba. ANEXAR: JPG/PNG, varios de uma vez ou arrastando; o navegador reduz para 2000 px no lado maior (JPEG q0.92) SO se a foto for maior que isso — foto menor sobe intacta; caminho CODIGO/timestamp-n.ext; linha em ecom_produto_midia com ordem (1 = capa), largura/altura/bytes; limite 8 por produto (front + trigger). ORDENAR (setas), REMOVER (banco + bucket), BAIXAR uma (nome CODIGO-01.jpg, byte a byte o que esta no banco) ou TODAS (ZIP via JSZip, ja carregado pelo Fiscal). VIDEO = so link externo (Drive), tipo video_link. Excluir produto: apaga as fotos do bucket ANTES de apagar o cadastro (linhas da tabela caem por cascade); falha ao apagar as fotos cancela a exclusao. Rodape: fotos no banco e MB usados (ambar > 800 MB — plano Free = 1 GB). Leitura por link assinado de 15 min; nada publico. Alexia: mesmos botoes (login proprio ainda pendente). Base: 2026-08-26-S (md5 4400574ae35b2b46b0fa4f4eb4b084d1) -->
 <!-- BUILD 2026-08-26-S | selecta-banco-preco | SO O 3d, SEM CONVERSAO (Igor 29/08 ao ver o 26-P com dados: "informacao demais"): coluna Metricas 7d SAI da tabela; fica so Metricas 3d com "visitas · vendas" (sem %). ORDEM passa a ser por visitas 3d (Igor assume o risco do dia corrente parcial), desempate visitas 7d e pedidos 7d; o 7d sobrevive apenas no tooltip da celula. Nada mais muda. Base: 2026-08-26-P (md5 b57431f5223b417ad0d832732b74a89f) -->
@@ -273,6 +274,7 @@
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="catalogo">Catálogo</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="importacao">📦 Importação</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="ecommerce">🛒 Mercado Livre</button>
+          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="shopee">🛍️ Shopee</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="instagram">📸 Instagram</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="fiscal">⚖️ Fiscal</button>
         </nav>
@@ -1696,6 +1698,174 @@
     <div id="fis-modal"><div class="box"><h3 id="fis-modal-tit"></h3><div id="fis-modal-body"></div><div class="err" id="fis-modal-err"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end"><button class="fis-btn" id="fis-modal-cancel">Cancelar</button><button class="fis-btn p" id="fis-modal-ok">Salvar</button></div></div></div>
   </section>
+
+<section id="tab-shopee" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
+  <style>
+  /* BUILD 2026-08-26-V · aba Shopee — tokens da casa, escopo próprio */
+  #tab-shopee{--epanel:#131c2e;--epanel2:#0f1726;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#f97316;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--etxt)}
+  #tab-shopee .ecard{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:13px 16px;margin-bottom:10px}
+  #tab-shopee .ecard h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin:0 0 12px;font-weight:600}
+  #tab-shopee .esub{color:var(--emuted);font-size:12.5px;margin:0 0 16px}
+  #tab-shopee .esub b{color:var(--eaccent);font-weight:600}
+  #tab-shopee .subnav{display:flex;gap:2px;border-bottom:1px solid var(--eborder);margin:0 0 18px;overflow-x:auto}
+  #tab-shopee .subtab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--emuted);font:inherit;font-size:13.5px;padding:9px 14px;cursor:pointer;white-space:nowrap}
+  #tab-shopee .subtab:hover{color:var(--etxt)}
+  #tab-shopee .subtab.active{color:var(--etxt);border-bottom-color:var(--eaccent)}
+  #tab-shopee .efield{display:flex;flex-direction:column;gap:4px;min-width:0}
+  #tab-shopee .efield label{font-size:11px;color:var(--emuted);text-transform:uppercase;letter-spacing:.05em}
+  #tab-shopee .vinput{background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:8px;padding:8px 10px;font-size:13px;width:100%}
+  #tab-shopee .vinput:focus{outline:none;border-color:var(--eaccent)}
+  #tab-shopee .vinput.mono{font-family:var(--emono)}
+  #tab-shopee .vrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+  #tab-shopee .vrow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px}
+  @media (max-width:640px){#tab-shopee .vrow,#tab-shopee .vrow3{grid-template-columns:1fr}}
+  #tab-shopee .vbtn{appearance:none;border:0;border-radius:9px;font:inherit;font-weight:600;padding:10px 16px;cursor:pointer;background:linear-gradient(135deg,var(--eaccent),#fb923c);color:#231003}
+  #tab-shopee .vbtn:hover{filter:brightness(1.08)}
+  #tab-shopee .vbtn.sm{padding:5px 10px;font-size:12px;border-radius:7px;background:none;border:1px solid var(--eborder);color:var(--etxt);font-weight:500}
+  #tab-shopee .vbtn.sm:hover{border-color:var(--eaccent)}
+  #tab-shopee .vbtn.sm.danger:hover{border-color:var(--ered);color:var(--ered)}
+  #tab-shopee .rd-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  #tab-shopee .rd-tbl th{font-size:11px;font-weight:700;color:var(--emuted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--eborder);white-space:nowrap}
+  #tab-shopee .rd-tbl td{padding:7px 8px;border-bottom:1px solid rgba(42,54,80,.5);vertical-align:top}
+  #tab-shopee .rd-tbl td.n{font-family:var(--emono);white-space:nowrap}
+  #tab-shopee .tblwrap{overflow-x:auto}
+  #tab-shopee .hintline{font-size:12px;color:var(--emuted);margin-top:4px;min-height:16px}
+  #tab-shopee .hintline.ok{color:var(--eteal)} #tab-shopee .hintline.err{color:var(--ered)}
+  #tab-shopee .simbox{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:14px;row-gap:6px}
+  #tab-shopee .simbox .kv b{display:block;font-size:10.5px;color:var(--emuted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  #tab-shopee .simbox .kv span{font-family:var(--emono)}
+  #tab-shopee .warnline{border-radius:8px;padding:7px 10px;font-size:12.5px;margin-top:8px;display:none}
+  #tab-shopee .warnline.amber{display:block;background:rgba(245,158,11,.12);border:1px solid var(--eamber);color:var(--eamber)}
+  #tab-shopee .warnline.red{display:block;background:rgba(239,68,68,.12);border:1px solid var(--ered);color:var(--ered)}
+  #tab-shopee .vli{border:1px solid var(--eborder);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--epanel2)}
+  #tab-shopee .vli .top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px}
+  #tab-shopee .vli .top .ped{font-family:var(--emono);font-weight:600}
+  #tab-shopee .vli .mid{font-size:12.5px;color:var(--emuted);margin:3px 0}
+  #tab-shopee .vli .money{font-family:var(--emono);font-size:12.5px;display:flex;gap:12px;flex-wrap:wrap;margin:4px 0}
+  #tab-shopee .vli .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  #tab-shopee .chip{display:inline-block;font-size:10.5px;font-weight:700;border-radius:20px;padding:2px 9px;letter-spacing:.03em}
+  #tab-shopee .chip.st-a_enviar{background:rgba(245,158,11,.15);color:var(--eamber)}
+  #tab-shopee .chip.st-enviado{background:rgba(45,212,191,.15);color:var(--eteal)}
+  #tab-shopee .chip.st-entregue{background:rgba(16,185,129,.18);color:var(--eemerald)}
+  #tab-shopee .chip.st-cancelado,#tab-shopee .chip.st-devolvido{background:rgba(239,68,68,.15);color:var(--ered)}
+  #tab-shopee .chip.prazo-hoje{background:rgba(245,158,11,.2);color:var(--eamber)}
+  #tab-shopee .chip.prazo-atrasado{background:rgba(239,68,68,.22);color:var(--ered)}
+  #tab-shopee .chip.lib{background:rgba(16,185,129,.15);color:var(--eemerald)}
+  #tab-shopee .chip.nlib{background:rgba(95,111,140,.25);color:var(--emuted)}
+  #tab-shopee .messel{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  #tab-shopee .messel b{font-size:13.5px}
+  #tab-shopee .trm{width:100%;max-width:560px;border-collapse:collapse;font-size:13px}
+  #tab-shopee .trm td{padding:6px 8px;border-bottom:1px solid rgba(42,54,80,.5)}
+  #tab-shopee .trm td.n{font-family:var(--emono);text-align:right;white-space:nowrap}
+  #tab-shopee .trm tr.big td{font-size:14.5px;font-weight:700;border-top:2px solid var(--eborder)}
+  #tab-shopee .pos{color:var(--eemerald)} #tab-shopee .neg{color:var(--ered)}
+  #tab-shopee .shp-toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--epanel);border:1px solid var(--eteal);color:var(--etxt);border-radius:10px;padding:9px 16px;font-size:13px;z-index:9998;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+  #tab-shopee .shp-toast.err{border-color:var(--ered)}
+  </style>
+
+  <h2 style="font-size:15px;font-weight:700;margin:0 0 2px">🛍️ Shopee</h2>
+  <p class="esub">Canal Shopee · Catálogo único · tarifas por <b>faixa de preço</b> (reforma mar/2026, tabela <span class="mono">ecom_shopee_taxas</span> editável por SQL) · termômetro próprio — <b>fora</b> do razão ML por decisão de 30/08. Escrow ShopeePay: liberação marcada à mão até a API.</p>
+
+  <div class="subnav">
+    <button class="subtab active" data-ssub="alvo">🎯 Alvo</button>
+    <button class="subtab" data-ssub="vendas">Vendas</button>
+    <button class="subtab" data-ssub="relatorios">Relatórios</button>
+  </div>
+
+  <!-- ============ ALVO ============ -->
+  <div id="shp-sub-alvo" class="shp-subpanel">
+    <div class="ecard" style="border-color:var(--eaccent)">
+      <h3 style="color:var(--eaccent)">Cadastro de anúncio Shopee</h3>
+      <div class="vrow3" style="margin-bottom:2px">
+        <div class="efield"><label>Código Produto *</label><input class="vinput mono" id="shp-al-cod" placeholder="SSD-0001" style="text-transform:uppercase"></div>
+        <div class="efield"><label>Item ID Shopee</label><input class="vinput mono" id="shp-al-item" placeholder="opcional"></div>
+        <div class="efield"><label>Data de publicação</label><input class="vinput mono" id="shp-al-pub" type="date"></div>
+      </div>
+      <div class="hintline" id="shp-al-echo"></div>
+      <div class="vrow" style="margin-bottom:2px">
+        <div class="efield"><label>Título do anúncio *</label><input class="vinput" id="shp-al-tit" placeholder="como está na Shopee"></div>
+        <div class="efield"><label>Campanha de destaque (+2,5%)</label><select class="vinput" id="shp-al-camp"><option value="0">Não</option><option value="1">Sim — em campanha</option></select></div>
+      </div>
+      <div class="vrow">
+        <div class="efield"><label>Preço (R$) *</label><input class="vinput mono" id="shp-al-preco" inputmode="decimal" placeholder="0,00"></div>
+        <div class="efield"><label>Preço promoção (R$)</label><input class="vinput mono" id="shp-al-promo" inputmode="decimal" placeholder="vazio = sem promoção"></div>
+      </div>
+      <div class="simbox" id="shp-al-sim">
+        <div class="kv"><b>Preço válido</b><span id="shp-sim-preco">—</span></div>
+        <div class="kv"><b>Faixa</b><span id="shp-sim-faixa">—</span></div>
+        <div class="kv"><b>Tarifa</b><span id="shp-sim-tarifa">—</span></div>
+        <div class="kv"><b>Líquido</b><span id="shp-sim-liq">—</span></div>
+        <div class="kv"><b>Margem s/ preço</b><span id="shp-sim-marg">—</span></div>
+      </div>
+      <div class="warnline" id="shp-al-warn"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        <button class="vbtn" id="shp-al-save">Salvar anúncio</button>
+        <button class="vbtn sm" id="shp-al-cancel" style="display:none">Cancelar edição</button>
+        <span class="hintline" id="shp-al-msg" style="margin:0"></span>
+      </div>
+    </div>
+
+    <div class="ecard">
+      <h3>Anúncios ativos <span id="shp-al-count" style="color:var(--emuted2);text-transform:none;letter-spacing:0"></span></h3>
+      <div class="tblwrap"><table class="rd-tbl"><thead><tr>
+        <th>Nº</th><th>Cod</th><th>Item</th><th>Produto</th><th>Praticado</th><th>Faixa</th><th>Tarifa</th><th>Margem</th><th></th>
+      </tr></thead><tbody id="shp-al-tbody"><tr><td colspan="9" style="color:var(--emuted)">Carregando…</td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ============ VENDAS ============ -->
+  <div id="shp-sub-vendas" class="shp-subpanel" style="display:none">
+    <div class="ecard" style="border-color:var(--eaccent)">
+      <h3 style="color:var(--eaccent)">Lançar venda Shopee</h3>
+      <div class="vrow3" style="margin-bottom:2px">
+        <div class="efield"><label>Nº do pedido *</label><input class="vinput mono" id="shp-vd-ped" placeholder="como na Central"></div>
+        <div class="efield"><label>Data da venda *</label><input class="vinput mono" id="shp-vd-data" type="date"></div>
+        <div class="efield"><label>Prazo de envio</label><input class="vinput mono" id="shp-vd-prazo" type="date"></div>
+      </div>
+      <div class="vrow3" style="margin-bottom:2px">
+        <div class="efield"><label>Código Produto *</label><input class="vinput mono" id="shp-vd-cod" placeholder="SSD-0001" style="text-transform:uppercase"></div>
+        <div class="efield"><label>Quantidade *</label><input class="vinput mono" id="shp-vd-qtd" inputmode="numeric" value="1"></div>
+        <div class="efield"><label>Preço unitário (R$) *</label><input class="vinput mono" id="shp-vd-preco" inputmode="decimal" placeholder="0,00"></div>
+      </div>
+      <div class="hintline" id="shp-vd-echo"></div>
+      <div class="vrow3" style="margin-bottom:2px">
+        <div class="efield"><label>Tarifa Shopee (R$) — sugerida, edite na conciliação</label><input class="vinput mono" id="shp-vd-tarifa" inputmode="decimal"></div>
+        <div class="efield"><label>Frete além do subsídio (R$)</label><input class="vinput mono" id="shp-vd-fretedif" inputmode="decimal" value="0,00"></div>
+        <div class="efield"><label>UF</label><input class="vinput mono" id="shp-vd-uf" maxlength="2" style="text-transform:uppercase" placeholder="PR"></div>
+      </div>
+      <div class="vrow">
+        <div class="efield"><label>Comprador</label><input class="vinput" id="shp-vd-comp" placeholder="opcional"></div>
+        <div class="efield"><label>Obs</label><input class="vinput" id="shp-vd-obs" placeholder="opcional"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+        <button class="vbtn" id="shp-vd-save">Lançar venda</button>
+        <span class="hintline" id="shp-vd-msg" style="margin:0"></span>
+      </div>
+    </div>
+
+    <div class="ecard">
+      <div class="messel"><button class="vbtn sm" id="shp-vd-prev">‹</button><b id="shp-vd-meslabel">—</b><button class="vbtn sm" id="shp-vd-next">›</button></div>
+      <h3>Pedidos do mês <span id="shp-vd-count" style="color:var(--emuted2);text-transform:none;letter-spacing:0"></span></h3>
+      <div id="shp-vd-list"><div style="color:var(--emuted);font-size:12.5px">Carregando…</div></div>
+    </div>
+  </div>
+
+  <!-- ============ RELATÓRIOS ============ -->
+  <div id="shp-sub-relatorios" class="shp-subpanel" style="display:none">
+    <div class="ecard" style="border-color:var(--eaccent)">
+      <div class="messel"><button class="vbtn sm" id="shp-rl-prev">‹</button><b id="shp-rl-meslabel">—</b><button class="vbtn sm" id="shp-rl-next">›</button></div>
+      <h3 style="color:var(--eaccent)">Termômetro Shopee · competência = data da venda</h3>
+      <table class="trm" id="shp-rl-trm"><tbody></tbody></table>
+      <div class="hintline" id="shp-rl-nota"></div>
+    </div>
+    <div class="ecard">
+      <h3>Capital na Shopee (independe do mês)</h3>
+      <table class="trm" id="shp-rl-cap"><tbody></tbody></table>
+      <div class="hintline">Preso = líquido de pedidos enviados/entregues ainda não marcados como liberados na carteira. Marcação manual na fila de Vendas até a API.</div>
+    </div>
+  </div>
+</section>
+
 
   <section id="tab-ecommerce" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
 
@@ -4279,7 +4449,7 @@ function switchTab(tabName) {
       btn.classList.add('text-gray-400', 'hover:bg-gray-700');
     }
   });
-  hide('#tab-catalogo'); hide('#tab-apple'); hide('#tab-simulador'); hide('#tab-importacao'); hide('#tab-ecommerce'); hide('#tab-instagram'); hide('#tab-fiscal'); // BUILD 2026-08-08-B + 2026-08-22-A fiscal
+  hide('#tab-catalogo'); hide('#tab-apple'); hide('#tab-simulador'); hide('#tab-importacao'); hide('#tab-ecommerce'); hide('#tab-instagram'); hide('#tab-fiscal'); hide('#tab-shopee'); // BUILD 2026-08-08-B + 2026-08-22-A fiscal
   show(`#tab-${tabName}`);
   if (tabName === 'apple') enterAppleTab();
   if (tabName === 'instagram') instagramTab.onEnter(); // BUILD 2026-08-08-B
@@ -4287,6 +4457,7 @@ function switchTab(tabName) {
   if (tabName === 'fiscal') fiscal.onEnter(); // BUILD 2026-08-22-A
   if (tabName === 'catalogo') catalogoTab.onEnter(); // BUILD 2026-08-08-C
   if (tabName === 'ecommerce') { ecom.onEnter().then(()=>{ if(!window._alvoBoot){ window._alvoBoot=true; try{ ecomAlvo.load(); }catch(_e){} } }); } // BUILD 2026-08-08-C: Alvo é a sub-aba default
+  if (tabName === 'shopee') shopeeTab.onEnter(); // BUILD 2026-08-26-V
 }
 
 // =====================================================================
@@ -9913,6 +10084,296 @@ window.fiscal = (function(){
 
   return {onEnter,reload,renderCron,renderDocs,renderFech,lancarReceita,anularReceita,deparaDoc,vincularVenda,fornSit,baixarXml,anularDoc,registrarManual,abrirSaldos,ajusteManual,anularMov,fechar,reabrir,salvarDasReal,marcarEnviado,gerarPacote,_S:S};
 })();
+
+// =====================================================================
+// BUILD 2026-08-26-V · MÓDULO SHOPEE (canal manual · termômetro próprio)
+// Doutrina: tarifa lida de ecom_shopee_taxas (fonte única = banco; UPDATE
+// na tabela reflete no app sem novo build). Nada aqui toca ecom_vendas,
+// Termômetro ML, Controle da Alexia ou o Fiscal.
+// =====================================================================
+const shopeeTab={
+  loaded:false, subtab:'alvo', taxas:[], anuncios:[], custos:{}, vendas:[],
+  mes:null, mesRl:null, editId:null, prodAl:null, prodVd:null,
+  _g:id=>document.getElementById(id),
+  fmt:v=>Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
+  esc:s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+  num(v){ if(v==null||v==='') return NaN; return parseFloat(String(v).replace(/\./g,'').replace(',','.')); },
+  hojeLocal(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); },
+  mesAtual(){ return this.hojeLocal().slice(0,7); },
+  mesLabel(m){ const nm=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']; const [y,mm]=m.split('-').map(Number); return nm[mm-1]+'/'+y; },
+  toast(msg,err){ const t=document.createElement('div'); t.className='shp-toast'+(err?' err':''); t.textContent=msg; this._g('tab-shopee').appendChild(t); setTimeout(()=>t.remove(),err?6000:3200); },
+
+  // ---------- tarifa (espelho JS da ecom_fn_tarifa_shopee; dados = banco) ----------
+  tarifa(preco,campanha){
+    if(!(preco>0)||!this.taxas.length) return null;
+    const fx=this.taxas.find(t=>preco>=Number(t.faixa_min)&&(t.faixa_max==null||preco<=Number(t.faixa_max)));
+    if(!fx) return null;
+    const pct=Number(fx.comissao_pct)+(campanha?2.5:0);
+    const total=Math.round((preco*pct/100+Number(fx.taxa_fixa))*100)/100;
+    return {pct,fixa:Number(fx.taxa_fixa),total,rotulo:fx.rotulo,min:Number(fx.faixa_min)};
+  },
+  // fronteira: compara o líquido atual com o líquido no teto da faixa anterior
+  fronteira(preco,campanha){
+    const cur=this.tarifa(preco,campanha); if(!cur) return null;
+    if(preco<8) return {tipo:'red',msg:'Faixa de 50% do valor — abaixo de R$8 a venda é inviável. Precifique a partir de R$8.'};
+    const abaixo=this.taxas.filter(t=>t.faixa_max!=null&&Number(t.faixa_max)<Number(cur.min)).sort((a,b)=>Number(b.faixa_max)-Number(a.faixa_max))[0];
+    if(!abaixo) return null;
+    const b=Number(abaixo.faixa_max), tb=this.tarifa(b,campanha);
+    const liqB=b-tb.total, liqP=preco-cur.total;
+    if(liqB>liqP+0.005) return {tipo:'amber',msg:'Fronteira de faixa: a R$'+this.fmt(b)+' o líquido seria R$'+this.fmt(liqB)+' — R$'+this.fmt(liqB-liqP)+' a MAIS por item que a R$'+this.fmt(preco)+'.'};
+    return null;
+  },
+
+  // ---------- carga ----------
+  async onEnter(){
+    if(this.loaded){ this.renderAll(); return; }
+    this.mes=this.mesAtual(); this.mesRl=this.mesAtual();
+    const d=this.hojeLocal(); this._g('shp-vd-data').value=d;
+    try{
+      const [tx,an,vd]=await Promise.all([
+        sb.from('ecom_shopee_taxas').select('*').order('faixa_min'),
+        sb.from('ecom_shopee_anuncios').select('*').eq('ativo',true).order('criado_em'),
+        sb.from('ecom_shopee_vendas').select('*').order('data_solicitacao',{ascending:false})
+      ]);
+      if(tx.error||an.error||vd.error) throw (tx.error||an.error||vd.error);
+      this.taxas=tx.data||[]; this.anuncios=an.data||[]; this.vendas=vd.data||[];
+      await this.loadCustos();
+      this.loaded=true; this.renderAll();
+      if(!this.taxas.length) this.toast('ecom_shopee_taxas vazia — aplique o SQL 16.',true);
+    }catch(e){ this.toast('Erro ao carregar Shopee: '+(e.message||e),true); }
+  },
+  async loadCustos(){
+    const cods=[...new Set(this.anuncios.map(a=>a.codigo))]; if(!cods.length) return;
+    const {data}=await sb.from('ecom_produtos').select('codigo,custo').in('codigo',cods);
+    (data||[]).forEach(p=>{ this.custos[p.codigo]=Number(p.custo); });
+  },
+  renderAll(){ this.renderAnuncios(); this.renderVendas(); this.renderRelatorios(); this.sim(); },
+
+  // ---------- subnav ----------
+  switchSub(s){ this.subtab=s;
+    document.querySelectorAll('#tab-shopee .subtab').forEach(b=>b.classList.toggle('active',b.dataset.ssub===s));
+    document.querySelectorAll('#tab-shopee .shp-subpanel').forEach(p=>{ p.style.display=(p.id==='shp-sub-'+s)?'':'none'; });
+  },
+
+  // ---------- ALVO ----------
+  async echoProduto(cod,elId,slot){
+    const el=this._g(elId); el.className='hintline'; el.textContent='';
+    this[slot]=null; cod=(cod||'').trim().toUpperCase(); if(!cod) return;
+    const {data,error}=await sb.from('ecom_produtos').select('codigo,produto,custo').eq('codigo',cod).eq('ativo',true).maybeSingle();
+    if(error){ el.className='hintline err'; el.textContent=error.message; return; }
+    if(!data){ el.className='hintline err'; el.textContent='Código não encontrado ou inativo no Catálogo.'; return; }
+    this[slot]=data; el.className='hintline ok'; el.textContent=data.produto+' · custo NF R$ '+this.fmt(data.custo);
+    if(slot==='prodAl') this.sim(); if(slot==='prodVd') this.sugerirTarifa();
+  },
+  precoValidoForm(){ const p=this.num(this._g('shp-al-preco').value), pr=this.num(this._g('shp-al-promo').value); return (pr>0)?pr:p; },
+  sim(){
+    const g=id=>this._g(id); if(!g('shp-sim-preco')) return;
+    const camp=g('shp-al-camp').value==='1', pv=this.precoValidoForm(), warn=g('shp-al-warn');
+    warn.className='warnline'; warn.textContent='';
+    if(!(pv>0)){ ['shp-sim-preco','shp-sim-faixa','shp-sim-tarifa','shp-sim-liq','shp-sim-marg'].forEach(i=>g(i).textContent='—'); return; }
+    const t=this.tarifa(pv,camp); if(!t){ g('shp-sim-faixa').textContent='sem tabela'; return; }
+    const liq=pv-t.total;
+    g('shp-sim-preco').textContent='R$ '+this.fmt(pv)+(this.num(g('shp-al-promo').value)>0?' (promo)':'');
+    g('shp-sim-faixa').textContent=t.rotulo;
+    g('shp-sim-tarifa').textContent=t.pct.toLocaleString('pt-BR')+'% + R$'+this.fmt(t.fixa)+' = R$ '+this.fmt(t.total);
+    g('shp-sim-liq').textContent='R$ '+this.fmt(liq);
+    if(this.prodAl){ const m=(liq-Number(this.prodAl.custo))/pv*100;
+      g('shp-sim-marg').textContent=m.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
+      g('shp-sim-marg').className=m<0?'neg':''; }
+    else g('shp-sim-marg').textContent='informe o código';
+    const f=this.fronteira(pv,camp); if(f){ warn.className='warnline '+f.tipo; warn.textContent=f.msg; }
+  },
+  async salvarAnuncio(){
+    const g=id=>this._g(id), msg=g('shp-al-msg'); msg.className='hintline'; msg.textContent='';
+    const cod=(g('shp-al-cod').value||'').trim().toUpperCase(), tit=(g('shp-al-tit').value||'').trim();
+    const preco=this.num(g('shp-al-preco').value), promo=this.num(g('shp-al-promo').value);
+    if(!cod||!tit||!(preco>0)){ msg.className='hintline err'; msg.textContent='Código, título e preço são obrigatórios.'; return; }
+    if(!this.prodAl||this.prodAl.codigo!==cod){ msg.className='hintline err'; msg.textContent='Valide o código no Catálogo (produto ativo).'; return; }
+    const dados={codigo:cod,shopee_item_id:(g('shp-al-item').value||'').trim()||null,titulo:tit,preco,
+      preco_promocao:(promo>0)?promo:null,campanha:g('shp-al-camp').value==='1',
+      data_publicacao:g('shp-al-pub').value||null};
+    try{
+      if(this.editId){ const {error}=await sb.from('ecom_shopee_anuncios').update(dados).eq('id',this.editId); if(error) throw error; this.toast('Anúncio atualizado.'); }
+      else{ const {error}=await sb.from('ecom_shopee_anuncios').insert(dados); if(error) throw error; this.toast('Anúncio salvo.'); }
+      this.limparAnuncio(); await this.reloadAnuncios();
+    }catch(e){ msg.className='hintline err'; msg.textContent=e.message||String(e); }
+  },
+  limparAnuncio(){ this.editId=null; this.prodAl=null;
+    ['shp-al-cod','shp-al-item','shp-al-tit','shp-al-preco','shp-al-promo','shp-al-pub'].forEach(i=>this._g(i).value='');
+    this._g('shp-al-camp').value='0'; this._g('shp-al-echo').textContent=''; this._g('shp-al-echo').className='hintline';
+    this._g('shp-al-cancel').style.display='none'; this._g('shp-al-save').textContent='Salvar anúncio'; this.sim(); },
+  editarAnuncio(id){ const a=this.anuncios.find(x=>x.id===id); if(!a) return;
+    this.editId=id; const g=i=>this._g(i);
+    g('shp-al-cod').value=a.codigo; g('shp-al-item').value=a.shopee_item_id||''; g('shp-al-tit').value=a.titulo;
+    g('shp-al-preco').value=this.fmt(a.preco); g('shp-al-promo').value=a.preco_promocao?this.fmt(a.preco_promocao):'';
+    g('shp-al-camp').value=a.campanha?'1':'0'; g('shp-al-pub').value=a.data_publicacao||'';
+    g('shp-al-cancel').style.display=''; g('shp-al-save').textContent='Atualizar anúncio';
+    this.echoProduto(a.codigo,'shp-al-echo','prodAl');
+    this.switchSub('alvo'); window.scrollTo({top:0,behavior:'smooth'}); },
+  async encerrarAnuncio(id){ const a=this.anuncios.find(x=>x.id===id); if(!a) return;
+    if(!confirm('Encerrar o anúncio "'+a.titulo+'"? Ele sai da lista de ativos (histórico preservado no banco).')) return;
+    const {error}=await sb.from('ecom_shopee_anuncios').update({ativo:false}).eq('id',id);
+    if(error){ this.toast(error.message,true); return; }
+    this.toast('Anúncio encerrado.'); await this.reloadAnuncios(); },
+  async reloadAnuncios(){ const {data,error}=await sb.from('ecom_shopee_anuncios').select('*').eq('ativo',true).order('criado_em');
+    if(!error){ this.anuncios=data||[]; await this.loadCustos(); this.renderAnuncios(); } },
+  renderAnuncios(){
+    const tb=this._g('shp-al-tbody'); if(!tb) return;
+    this._g('shp-al-count').textContent=this.anuncios.length?('· '+this.anuncios.length):'';
+    if(!this.anuncios.length){ tb.innerHTML='<tr><td colspan="9" style="color:var(--emuted)">Nenhum anúncio ativo.</td></tr>'; return; }
+    tb.innerHTML=this.anuncios.map((a,i)=>{
+      const pv=(a.preco_promocao&&Number(a.preco_promocao)>0)?Number(a.preco_promocao):Number(a.preco);
+      const t=this.tarifa(pv,!!a.campanha); const custo=this.custos[a.codigo];
+      let marg='—',mcls='';
+      if(t!=null&&custo!=null){ const m=(pv-t.total-custo)/pv*100; marg=m.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%'; mcls=m<0?'neg':''; }
+      return '<tr><td class="n">'+(i+1)+'</td><td class="n">'+this.esc(a.codigo)+'</td><td class="n">'+this.esc(a.shopee_item_id||'—')+'</td>'
+        +'<td>'+this.esc(a.titulo)+(a.campanha?' <span class="chip prazo-hoje" title="campanha de destaque">+2,5%</span>':'')+'</td>'
+        +'<td class="n">R$ '+this.fmt(pv)+(a.preco_promocao?' <span style="color:var(--emuted2)">promo</span>':'')+'</td>'
+        +'<td style="white-space:nowrap;color:var(--emuted)">'+(t?this.esc(t.rotulo.split('·')[1]||t.rotulo):'—')+'</td>'
+        +'<td class="n">'+(t?('R$ '+this.fmt(t.total)):'—')+'</td>'
+        +'<td class="n '+mcls+'">'+marg+'</td>'
+        +'<td style="white-space:nowrap"><button class="vbtn sm" onclick="shopeeTab.editarAnuncio('+a.id+')">Editar</button> '
+        +'<button class="vbtn sm danger" onclick="shopeeTab.encerrarAnuncio('+a.id+')">Encerrar</button></td></tr>';
+    }).join('');
+  },
+
+  // ---------- VENDAS ----------
+  sugerirTarifa(){
+    const g=i=>this._g(i), q=parseInt(g('shp-vd-qtd').value)||1, p=this.num(g('shp-vd-preco').value);
+    if(p>0){ const t=this.tarifa(p,false); if(t) g('shp-vd-tarifa').value=this.fmt(t.total*q); }
+  },
+  async lancarVenda(){
+    const g=i=>this._g(i), msg=g('shp-vd-msg'); msg.className='hintline'; msg.textContent='';
+    const ped=(g('shp-vd-ped').value||'').trim(), data=g('shp-vd-data').value;
+    const cod=(g('shp-vd-cod').value||'').trim().toUpperCase();
+    const qtd=parseInt(g('shp-vd-qtd').value)||0, preco=this.num(g('shp-vd-preco').value);
+    if(!ped||!data||!cod||!(qtd>0)||!(preco>0)){ msg.className='hintline err'; msg.textContent='Pedido, data, código, quantidade e preço são obrigatórios.'; return; }
+    if(!this.prodVd||this.prodVd.codigo!==cod){ msg.className='hintline err'; msg.textContent='Valide o código no Catálogo (produto ativo).'; return; }
+    const tarifa=this.num(g('shp-vd-tarifa').value); const fdif=this.num(g('shp-vd-fretedif').value)||0;
+    const custoU=Number(this.prodVd.custo), receita=Math.round(preco*qtd*100)/100;
+    const an=this.anuncios.find(a=>a.codigo===cod);
+    const dados={pedido_id:ped,data_solicitacao:data,status:'a_enviar',
+      prazo_envio:g('shp-vd-prazo').value||null,produto_codigo:cod,produto:this.prodVd.produto,
+      quantidade:qtd,preco_unitario:preco,receita_bruta:receita,
+      comissao_valor:isNaN(tarifa)?null:tarifa,frete_diferenca:fdif,
+      custo_unitario:custoU,custo_total:Math.round(custoU*qtd*100)/100,
+      comprador:(g('shp-vd-comp').value||'').trim()||null,uf:(g('shp-vd-uf').value||'').trim().toUpperCase()||null,
+      shopee_item_id:an?an.shopee_item_id:null,obs:(g('shp-vd-obs').value||'').trim()||null};
+    try{
+      const {error}=await sb.from('ecom_shopee_vendas').insert(dados); if(error) throw error;
+      this.toast('Venda lançada.');
+      ['shp-vd-ped','shp-vd-preco','shp-vd-comp','shp-vd-obs','shp-vd-tarifa','shp-vd-prazo'].forEach(i=>g(i).value='');
+      g('shp-vd-qtd').value='1'; g('shp-vd-fretedif').value='0,00';
+      await this.reloadVendas();
+    }catch(e){ msg.className='hintline err'; msg.textContent=e.message||String(e); }
+  },
+  async reloadVendas(){ const {data,error}=await sb.from('ecom_shopee_vendas').select('*').order('data_solicitacao',{ascending:false});
+    if(!error){ this.vendas=data||[]; this.renderVendas(); this.renderRelatorios(); } },
+  async setStatus(id,st){ const lbl={enviado:'ENVIADO',entregue:'ENTREGUE',cancelado:'CANCELADO',devolvido:'DEVOLVIDO'};
+    if((st==='cancelado'||st==='devolvido')&&!confirm('Marcar pedido como '+lbl[st]+'?')) return;
+    const {error}=await sb.from('ecom_shopee_vendas').update({status:st}).eq('id',id);
+    if(error){ this.toast(error.message,true); return; } this.toast('Status: '+lbl[st]+'.'); await this.reloadVendas(); },
+  async liberar(id){ if(!confirm('Confirmar: valor deste pedido LIBERADO na Carteira do Vendedor (ShopeePay)?')) return;
+    const {error}=await sb.from('ecom_shopee_vendas').update({liberado_carteira:true,data_liberacao:this.hojeLocal()}).eq('id',id);
+    if(error){ this.toast(error.message,true); return; } this.toast('Liberação registrada.'); await this.reloadVendas(); },
+  vendasDoMes(m){ return this.vendas.filter(v=>String(v.data_solicitacao||'').slice(0,7)===m); },
+  renderVendas(){
+    const list=this._g('shp-vd-list'); if(!list) return;
+    this._g('shp-vd-meslabel').textContent=this.mesLabel(this.mes);
+    const vs=this.vendasDoMes(this.mes); this._g('shp-vd-count').textContent=vs.length?('· '+vs.length):'';
+    if(!vs.length){ list.innerHTML='<div style="color:var(--emuted);font-size:12.5px">Nenhum pedido no mês.</div>'; return; }
+    const hoje=this.hojeLocal();
+    list.innerHTML=vs.map(v=>{
+      const liq=Number(v.receita_bruta)-Number(v.comissao_valor||0)-Number(v.frete_diferenca||0);
+      let prazo='';
+      if(v.status==='a_enviar'&&v.prazo_envio){
+        if(hoje>v.prazo_envio) prazo='<span class="chip prazo-atrasado">ENVIO ATRASADO · '+v.prazo_envio.slice(8,10)+'/'+v.prazo_envio.slice(5,7)+'</span>';
+        else if(hoje===v.prazo_envio) prazo='<span class="chip prazo-hoje">ENVIA HOJE</span>';
+        else prazo='<span class="chip nlib">envio até '+v.prazo_envio.slice(8,10)+'/'+v.prazo_envio.slice(5,7)+'</span>';
+      }
+      const lib=(v.status==='enviado'||v.status==='entregue')?(v.liberado_carteira
+        ?'<span class="chip lib">liberado '+(v.data_liberacao?v.data_liberacao.slice(8,10)+'/'+v.data_liberacao.slice(5,7):'')+'</span>'
+        :'<span class="chip nlib">não liberado</span>'):'';
+      const acts=[];
+      if(v.status==='a_enviar') acts.push('<button class="vbtn sm" onclick="shopeeTab.setStatus('+v.id+',\'enviado\')">Enviado</button>');
+      if(v.status==='enviado') acts.push('<button class="vbtn sm" onclick="shopeeTab.setStatus('+v.id+',\'entregue\')">Entregue</button>');
+      if((v.status==='enviado'||v.status==='entregue')&&!v.liberado_carteira) acts.push('<button class="vbtn sm" onclick="shopeeTab.liberar('+v.id+')">Liberado na carteira</button>');
+      if(v.status!=='cancelado'&&v.status!=='devolvido'){
+        acts.push('<button class="vbtn sm danger" onclick="shopeeTab.setStatus('+v.id+',\'devolvido\')">Devolvido</button>');
+        if(v.status==='a_enviar') acts.push('<button class="vbtn sm danger" onclick="shopeeTab.setStatus('+v.id+',\'cancelado\')">Cancelar</button>');
+      }
+      return '<div class="vli"><div class="top"><span class="ped">#'+this.esc(v.pedido_id)+'</span>'
+        +'<span><span class="chip st-'+v.status+'">'+v.status.replace('_',' ')+'</span> '+prazo+' '+lib+'</span></div>'
+        +'<div class="mid">'+this.esc(v.produto||'')+' <span style="color:var(--emuted2)">('+this.esc(v.produto_codigo||'')+')</span> · '
+        +v.quantidade+' × R$ '+this.fmt(v.preco_unitario)+' · '+(v.data_solicitacao?v.data_solicitacao.slice(8,10)+'/'+v.data_solicitacao.slice(5,7):'')
+        +(v.uf?' · '+this.esc(v.uf):'')+'</div>'
+        +'<div class="money"><span>Receita <b>R$ '+this.fmt(v.receita_bruta)+'</b></span>'
+        +'<span>Tarifa <b>R$ '+this.fmt(v.comissao_valor||0)+'</b></span>'
+        +(Number(v.frete_diferenca)>0?'<span>Frete dif. <b>R$ '+this.fmt(v.frete_diferenca)+'</b></span>':'')
+        +'<span>Líquido <b>R$ '+this.fmt(liq)+'</b></span></div>'
+        +(acts.length?'<div class="acts">'+acts.join(' ')+'</div>':'')+'</div>';
+    }).join('');
+  },
+
+  // ---------- RELATÓRIOS ----------
+  renderRelatorios(){
+    const trm=this._g('shp-rl-trm'); if(!trm) return;
+    this._g('shp-rl-meslabel').textContent=this.mesLabel(this.mesRl);
+    const IMPOSTO_PCT=4; // mesma régua do razão (Simples 4% sobre o faturado)
+    const vs=this.vendasDoMes(this.mesRl);
+    const ok=vs.filter(v=>v.status!=='cancelado'&&v.status!=='devolvido');
+    const nCanc=vs.filter(v=>v.status==='cancelado').length, nDev=vs.filter(v=>v.status==='devolvido').length;
+    const receita=ok.reduce((s,v)=>s+Number(v.receita_bruta),0);
+    const tarifas=ok.reduce((s,v)=>s+Number(v.comissao_valor||0),0);
+    const fdif=ok.reduce((s,v)=>s+Number(v.frete_diferenca||0),0);
+    const custos=ok.reduce((s,v)=>s+Number(v.custo_total||0),0);
+    const imposto=receita*IMPOSTO_PCT/100;
+    const lucro=receita-tarifas-fdif-custos-imposto;
+    const F=v=>'R$ '+this.fmt(v);
+    trm.querySelector('tbody').innerHTML=
+      '<tr><td>Pedidos válidos</td><td class="n">'+ok.length+'</td></tr>'
+      +'<tr><td>Receita bruta</td><td class="n">'+F(receita)+'</td></tr>'
+      +'<tr><td>(−) Tarifas Shopee</td><td class="n">'+F(tarifas)+'</td></tr>'
+      +'<tr><td>(−) Frete além do subsídio</td><td class="n">'+F(fdif)+'</td></tr>'
+      +'<tr><td>(−) Custo das mercadorias</td><td class="n">'+F(custos)+'</td></tr>'
+      +'<tr><td>(−) Imposto ('+IMPOSTO_PCT+'% · régua do razão)</td><td class="n">'+F(imposto)+'</td></tr>'
+      +'<tr class="big"><td>LUCRO DO MÊS · SHOPEE</td><td class="n '+(lucro<0?'neg':'pos')+'">'+F(lucro)+'</td></tr>'
+      +'<tr><td>Margem média s/ receita</td><td class="n">'+(receita>0?(lucro/receita*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%':'—')+'</td></tr>';
+    this._g('shp-rl-nota').textContent=(nCanc||nDev)
+      ?('Fora do resultado: '+nCanc+' cancelado(s), '+nDev+' devolvido(s). Convenção v1: devolvido sai do mês inteiro (custo e receita) — mais duro que o razão ML, por desenho.')
+      :'Cancelados e devolvidos ficam fora do resultado (convenção v1).';
+    // capital
+    const cap=this._g('shp-rl-cap');
+    const liqDe=v=>Number(v.receita_bruta)-Number(v.comissao_valor||0)-Number(v.frete_diferenca||0);
+    const presas=this.vendas.filter(v=>(v.status==='enviado'||v.status==='entregue')&&!v.liberado_carteira);
+    const aEnv=this.vendas.filter(v=>v.status==='a_enviar');
+    const preso=presas.reduce((s,v)=>s+liqDe(v),0), fut=aEnv.reduce((s,v)=>s+liqDe(v),0);
+    cap.querySelector('tbody').innerHTML=
+      '<tr><td>Preso no escrow (enviado/entregue, não liberado)</td><td class="n">R$ '+this.fmt(preso)+' · '+presas.length+' ped.</td></tr>'
+      +'<tr><td>A enviar (ainda não expedido)</td><td class="n">R$ '+this.fmt(fut)+' · '+aEnv.length+' ped.</td></tr>';
+  },
+
+  wire(){
+    document.querySelectorAll('#tab-shopee .subtab').forEach(b=>b.addEventListener('click',()=>this.switchSub(b.dataset.ssub)));
+    const g=i=>this._g(i);
+    g('shp-al-cod').addEventListener('change',e=>this.echoProduto(e.target.value,'shp-al-echo','prodAl'));
+    ['shp-al-preco','shp-al-promo'].forEach(i=>g(i).addEventListener('input',()=>this.sim()));
+    g('shp-al-camp').addEventListener('change',()=>this.sim());
+    g('shp-al-save').addEventListener('click',()=>this.salvarAnuncio());
+    g('shp-al-cancel').addEventListener('click',()=>this.limparAnuncio());
+    g('shp-vd-cod').addEventListener('change',e=>this.echoProduto(e.target.value,'shp-vd-echo','prodVd'));
+    ['shp-vd-preco','shp-vd-qtd'].forEach(i=>g(i).addEventListener('input',()=>this.sugerirTarifa()));
+    g('shp-vd-save').addEventListener('click',()=>this.lancarVenda());
+    g('shp-vd-prev').addEventListener('click',()=>{ this.mes=this.shiftMes(this.mes,-1); this.renderVendas(); });
+    g('shp-vd-next').addEventListener('click',()=>{ this.mes=this.shiftMes(this.mes,1); this.renderVendas(); });
+    g('shp-rl-prev').addEventListener('click',()=>{ this.mesRl=this.shiftMes(this.mesRl,-1); this.renderRelatorios(); });
+    g('shp-rl-next').addEventListener('click',()=>{ this.mesRl=this.shiftMes(this.mesRl,1); this.renderRelatorios(); });
+  },
+  shiftMes(m,delta){ const [y,mm]=m.split('-').map(Number); const d=new Date(y,mm-1+delta,1);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+};
+try{ shopeeTab.wire(); }catch(e){ console.error('shopee wire',e); }
+window.shopeeTab = shopeeTab; // inline onclick resolve via window (padrao fiscal)
 
 </script>
 
