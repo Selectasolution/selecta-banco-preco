@@ -1,3 +1,4 @@
+<!-- BUILD 2026-08-26-T | selecta-banco-preco | MIDIA DO CATALOGO (Igor 30/08, sobre 26-S; SQL 15 aplicado: bucket privado produto-midia + ecom_produto_midia): botao "Midia" em cada linha do Catalogo (contador N fotos / video) abre o painel #ecom-midia dentro da aba. ANEXAR: JPG/PNG, varios de uma vez ou arrastando; o navegador reduz para 2000 px no lado maior (JPEG q0.92) SO se a foto for maior que isso — foto menor sobe intacta; caminho CODIGO/timestamp-n.ext; linha em ecom_produto_midia com ordem (1 = capa), largura/altura/bytes; limite 8 por produto (front + trigger). ORDENAR (setas), REMOVER (banco + bucket), BAIXAR uma (nome CODIGO-01.jpg, byte a byte o que esta no banco) ou TODAS (ZIP via JSZip, ja carregado pelo Fiscal). VIDEO = so link externo (Drive), tipo video_link. Excluir produto: apaga as fotos do bucket ANTES de apagar o cadastro (linhas da tabela caem por cascade); falha ao apagar as fotos cancela a exclusao. Rodape: fotos no banco e MB usados (ambar > 800 MB — plano Free = 1 GB). Leitura por link assinado de 15 min; nada publico. Alexia: mesmos botoes (login proprio ainda pendente). Base: 2026-08-26-S (md5 4400574ae35b2b46b0fa4f4eb4b084d1) -->
 <!-- BUILD 2026-08-26-S | selecta-banco-preco | SO O 3d, SEM CONVERSAO (Igor 29/08 ao ver o 26-P com dados: "informacao demais"): coluna Metricas 7d SAI da tabela; fica so Metricas 3d com "visitas · vendas" (sem %). ORDEM passa a ser por visitas 3d (Igor assume o risco do dia corrente parcial), desempate visitas 7d e pedidos 7d; o 7d sobrevive apenas no tooltip da celula. Nada mais muda. Base: 2026-08-26-P (md5 b57431f5223b417ad0d832732b74a89f) -->
 <!-- BUILD 2026-08-26-P | selecta-banco-preco | METRICAS 3d/7d NA ANALISE COMERCIAL + ORDEM POR VISITAS (decisoes Igor 29/08, sobre 26-R): linha dos Anuncios ativos vira Nº / Cod / MLB / Produto / Praticado / Margem / Metricas 3d / Metricas 7d / Historico. Metricas = visitas · vendas · conv% (quantidade de pedidos, padrao do painel ML; sem R$ por decisao Igor). Visitas: ecom_anuncio_visitas_dia (SQL 14; gravada pela Edge ml-visitas a cada 30 min, todos os ativos na mesma passada, time_window 7 dias por dia) — 7d = 7 ultimos dias, 3d = 3 ultimos (hoje parcial: o ML consolida com atraso, ressalva no tooltip). Vendas: ecom_vendas por anuncio_mlb (data_solicitacao na janela, cancelado excluido — this.vendas ja filtra). ORDEM: visitas 7d desc, desempate 3d desc, depois id; o VERDE do Historico continua (movimentado desde a ultima leitura) mas NAO poe mais no topo — supera o 26-E. Cabecalho ganha "visitas hh:mm" (ultima passada em ecom_visitas_run; ambar se > 75 min). Realtime: canal selecta-live escuta INSERT em ecom_visitas_run e re-renderiza a tabela. Cabecalho das colunas: 11px, negrito, cor mais clara (era 9,5px apagado). Tabela ausente/vazia = celulas em "—" (degrada, nao quebra). load() passa a selecionar anuncio_mlb nas vendas. Controle da Alexia INTOCADO. Zero mudanca de matematica. Base: 2026-08-26-R (md5 88399233adcbc4f50d1c9a66b6805ea5) -->
 <!-- BUILD 2026-08-26-R | selecta-banco-preco | BUSCA DE PEDIDO NO HISTORICO (Igor 29/08, sobre 26-Q): campo #hs-busca acima da listagem "Pedidos enviados e entregues" — filtra em memoria por numero do pedido, pack (ml_pack_id, o "Venda #" que o ML mostra), MLB, codigo do produto ou nome (contem, sem distinguir maiusculas; numeros tambem casam por digitos). Digitar abre a listagem recolhida sozinha; contador "N de M" ao lado. load() passa a selecionar ml_pack_id, anuncio_mlb e produto_codigo; guarda em _itens; render/handlers (Editar, entregue, PDF) intocados. Consulta gerencial intocada. Zero SQL, zero matematica. Base: 2026-08-26-Q (md5 7b8ba5efa9d379ed1e67887daa246463) -->
@@ -491,6 +492,18 @@
   #tab-catalogo .rowbtn{background:none;border:1px solid var(--eborder);color:var(--emuted);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer}
   #tab-catalogo .rowbtn:hover{border-color:var(--eaccent);color:var(--etxt)}
   #tab-catalogo .rowbtn.del:hover{border-color:var(--ered);color:var(--ered)}
+  /* BUILD 2026-08-26-T: painel Midia */
+  #tab-catalogo .midia-n{display:inline-block;margin-left:5px;font-size:10px;color:var(--eaccent);font-family:var(--emono)}
+  #tab-catalogo .midia-drop{margin-top:10px;padding:14px;border:1px dashed var(--eborder);border-radius:10px;display:flex;align-items:center;flex-wrap:wrap}
+  #tab-catalogo .midia-drop.over{border-color:var(--eaccent);background:rgba(52,211,153,.06)}
+  #tab-catalogo .midia-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:12px}
+  #tab-catalogo .midia-card{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:8px}
+  #tab-catalogo .midia-card.capa{border-color:var(--eaccent)}
+  #tab-catalogo .midia-card img{width:100%;aspect-ratio:1/1;object-fit:contain;background:#fff;border-radius:6px;display:block}
+  #tab-catalogo .midia-meta{font-size:10.5px;color:var(--emuted2);margin-top:6px;font-family:var(--emono)}
+  #tab-catalogo .midia-meta b{color:var(--eaccent)}
+  #tab-catalogo .midia-acts{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+  #tab-catalogo .midia-acts .rowbtn:disabled{opacity:.35;cursor:default}
   #tab-catalogo .efooter{margin-top:14px;padding-top:13px;border-top:1px solid var(--eborder);font-size:12.5px;color:var(--emuted);line-height:1.6}
   #tab-catalogo select.ainput{appearance:auto}
 
@@ -892,6 +905,34 @@
     </div>
 
     <!-- BUILD 2026-08-08-E: Parametros comerciais, sentinela, modalidade, frete oficial ML e regra ML MOVIDOS p/ Mercado Livre > Alvo > Parametros comerciais (ids preservados) -->
+
+    <!-- BUILD 2026-08-26-T: painel Midia do produto (fotos no bucket produto-midia + link de video) -->
+    <div class="ecard" id="ecom-midia" style="display:none;margin-top:16px">
+      <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+        <h3 style="margin:0">Mídia · <span id="ecom-midia-titulo" style="font-family:var(--emono);color:var(--eteal)"></span></h3>
+        <span class="note" id="ecom-midia-sub" style="margin:0"></span>
+        <span style="flex:1"></span>
+        <span class="note" id="ecom-midia-cont" style="margin:0"></span>
+        <button class="cancelbtn" id="ecom-midia-fechar">Fechar</button>
+      </div>
+      <div id="ecom-midia-drop" class="midia-drop">
+        <input type="file" id="ecom-midia-file" accept="image/jpeg,image/png" multiple style="display:none">
+        <button class="rowbtn" id="ecom-midia-add" style="font-size:12.5px;padding:6px 14px">+ Anexar fotos</button>
+        <span class="note" style="margin:0 0 0 10px">ou arraste os arquivos aqui · JPG/PNG · até 8 por produto · a primeira é a capa</span>
+      </div>
+      <div id="ecom-midia-grid" class="midia-grid"></div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <button class="rowbtn" id="ecom-midia-todas" style="font-size:12.5px;padding:6px 14px">⬇ Baixar todas (ZIP)</button>
+        <span class="note" id="ecom-midia-status" style="margin:0"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px">
+        <label class="note" style="margin:0">Vídeo (link)</label>
+        <input class="ainput" id="ecom-midia-video" placeholder="https://drive.google.com/…" style="flex:1;min-width:240px">
+        <button class="rowbtn" id="ecom-midia-video-salvar">Salvar link</button>
+        <a id="ecom-midia-video-abrir" href="#" target="_blank" rel="noopener" class="rowbtn" style="display:none;text-decoration:none">Abrir</a>
+      </div>
+      <div class="note" id="ecom-midia-uso" style="margin:10px 0 0;text-align:right"></div>
+    </div>
 
     </div><!-- /ecom-sub-simulador -->
     </div>
@@ -3788,7 +3829,7 @@ const ecom = {
     catch(e){ console.warn('ecom_categoria_comissao load:',e.message); this.comMap={}; } },
   comPctDe(categoria,tipo,pr){ const m=categoria?this.comMap[categoria]:null; const prem=(tipo==='premium');
     const v=m?(prem?m.p:m.c):null; return ((v==null||isNaN(v))?(prem?pr.comP:pr.comC):v)/100; },
-  async loadProdutos(){ try{ const r=await sb.from('ecom_produtos').select('*').eq('ativo',true).order('criado_em'); if(r.error) throw r.error; this.itens=r.data||[]; }
+  async loadProdutos(){ try{ const r=await sb.from('ecom_produtos').select('*').eq('ativo',true).order('criado_em'); if(r.error) throw r.error; this.itens=r.data||[]; await this.midiaLoadCounts(); }
     catch(e){ console.warn('ecom_produtos load:',e.message); this.itens=[]; } },
 
   wire(){ const g=id=>this._g(id);
@@ -3857,7 +3898,139 @@ const ecom = {
   updateCount(){ const vis=this.itens.filter(it=>this.isVis(it)).length;
     this._g('ecom-flt-count').textContent=(this.fCod||this.fCat)?`${vis} de ${this.itens.length} itens`:`${this.itens.length} itens no banco`; },
 
-  render(){ this.populateCatFilter(); this.sentinela(); const tb=this._g('ecom-tbody');
+  // ===== BUILD 2026-08-26-T · MIDIA DO CATALOGO (bucket produto-midia + ecom_produto_midia) =====
+  midiaMap:{}, midiaCod:null, midiaItens:[], midiaUrls:{}, midiaBusy:false, midiaWired:false,
+  MIDIA_MAX_PX:2000, MIDIA_Q:0.92, MIDIA_MAX_FOTOS:8,
+  async midiaLoadCounts(){
+    try{ const r=await sb.from('ecom_produto_midia').select('produto_codigo,tipo'); if(r.error) throw r.error;
+      const m={}; (r.data||[]).forEach(x=>{ const k=String(x.produto_codigo||'').toUpperCase(); if(!m[k]) m[k]={fotos:0,video:false}; if(x.tipo==='foto') m[k].fotos++; else m[k].video=true; });
+      this.midiaMap=m; }
+    catch(e){ console.warn('ecom_produto_midia count:',e.message); this.midiaMap={}; }
+  },
+  midiaBadge(cod){ const m=this.midiaMap[String(cod||'').toUpperCase()]; if(!m) return ''; const p=[]; if(m.fotos) p.push(m.fotos+' foto'+(m.fotos>1?'s':'')); if(m.video) p.push('vídeo'); return p.length?' <span class="midia-n">'+p.join(' · ')+'</span>':''; },
+  async midiaOpen(cod){ cod=String(cod||'').trim().toUpperCase(); if(!cod){ alert('Produto sem código: cadastre o código antes de anexar mídia.'); return; }
+    this.midiaCod=cod; const it=this.itens.find(x=>String(x.codigo||'').toUpperCase()===cod);
+    const box=this._g('ecom-midia'); box.style.display='block';
+    this._g('ecom-midia-titulo').textContent=cod;
+    this._g('ecom-midia-sub').textContent=it?([it.marca,it.modelo,it.capacidade,it.interface].filter(Boolean).join(' · ')||it.produto||''):'';
+    this._g('ecom-midia-status').textContent='';
+    this._g('ecom-midia-grid').innerHTML='<div class="note">carregando…</div>';
+    await this.midiaLoad(); await this.midiaRenumerar(); this.midiaRender();
+    try{ box.scrollIntoView({behavior:'smooth',block:'start'}); }catch(_e){} },
+  midiaClose(){ this._g('ecom-midia').style.display='none'; this.midiaCod=null; this.midiaItens=[]; this.midiaUrls={}; },
+  async midiaLoad(){ if(!this.midiaCod) return; const r=await sb.from('ecom_produto_midia').select('*').eq('produto_codigo',this.midiaCod).order('ordem').order('id');
+    if(r.error){ alert('Erro ao ler a mídia: '+r.error.message); this.midiaItens=[]; return; }
+    this.midiaItens=r.data||[]; this.midiaUrls={};
+    const paths=this.midiaItens.filter(x=>x.tipo==='foto'&&x.caminho).map(x=>x.caminho);
+    if(paths.length){ const s=await sb.storage.from('produto-midia').createSignedUrls(paths,900);
+      if(s.error) console.warn('signed urls:',s.error.message); else (s.data||[]).forEach(u=>{ if(u.signedUrl&&u.path) this.midiaUrls[u.path]=u.signedUrl; }); } },
+  midiaFotos(){ return this.midiaItens.filter(x=>x.tipo==='foto'); },
+  midiaRender(){ const fotos=this.midiaFotos(); const vid=this.midiaItens.find(x=>x.tipo==='video_link');
+    const grid=this._g('ecom-midia-grid');
+    if(!fotos.length) grid.innerHTML='<div class="note" style="padding:14px 0">Nenhuma foto ainda.</div>';
+    else grid.innerHTML=fotos.map((f,i)=>{ const u=this.midiaUrls[f.caminho]||''; const kb=f.bytes?(f.bytes/1024).toFixed(0)+' KB':'?';
+      return '<div class="midia-card'+(i===0?' capa':'')+'">'
+        +'<a href="'+(u||'#')+'" target="_blank" rel="noopener"><img src="'+u+'" alt="'+f.caminho+'" loading="lazy"></a>'
+        +'<div class="midia-meta">'+(i===0?'<b>CAPA</b> · ':'')+(f.largura||'?')+'×'+(f.altura||'?')+' · '+kb+'</div>'
+        +'<div class="midia-acts">'
+        +'<button class="rowbtn" data-mact="esq" data-mid="'+f.id+'" title="mover para a esquerda"'+(i===0?' disabled':'')+'>◀</button>'
+        +'<button class="rowbtn" data-mact="dir" data-mid="'+f.id+'" title="mover para a direita"'+(i===fotos.length-1?' disabled':'')+'>▶</button>'
+        +'<button class="rowbtn" data-mact="baixar" data-mid="'+f.id+'">Baixar</button>'
+        +'<button class="rowbtn del" data-mact="remover" data-mid="'+f.id+'">Remover</button>'
+        +'</div></div>'; }).join('');
+    grid.querySelectorAll('[data-mact]').forEach(b=>b.addEventListener('click',()=>this.midiaAct(b.dataset.mact,b.dataset.mid)));
+    this._g('ecom-midia-video').value=vid?vid.url:'';
+    const vlink=this._g('ecom-midia-video-abrir'); if(vid){ vlink.href=vid.url; vlink.style.display='inline'; } else vlink.style.display='none';
+    this._g('ecom-midia-cont').textContent=fotos.length+' de '+this.MIDIA_MAX_FOTOS+' fotos';
+    this._g('ecom-midia-todas').disabled=!fotos.length;
+    this._g('ecom-midia-add').disabled=fotos.length>=this.MIDIA_MAX_FOTOS;
+    this.midiaUso(); },
+  async midiaUso(){ const el=this._g('ecom-midia-uso'); if(!el) return;
+    try{ const r=await sb.from('ecom_produto_midia').select('bytes').eq('tipo','foto'); if(r.error) throw r.error;
+      const tot=(r.data||[]).reduce((a,x)=>a+(Number(x.bytes)||0),0); const n=(r.data||[]).length; const mb=tot/1048576;
+      el.textContent=n+' foto'+(n===1?'':'s')+' no banco · '+mb.toFixed(1)+' MB de 1.024 MB (plano Free)';
+      el.style.color=mb>800?'var(--eamber)':'var(--emuted2)'; }
+    catch(_e){ el.textContent=''; } },
+  midiaLerImagem(file){ return new Promise((res,rej)=>{ const url=URL.createObjectURL(file); const img=new Image();
+    img.onload=()=>{ URL.revokeObjectURL(url); res(img); };
+    img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('não é uma imagem legível')); };
+    img.src=url; }); },
+  async midiaPreparar(file){ const img=await this.midiaLerImagem(file); const w=img.naturalWidth, h=img.naturalHeight; const max=this.MIDIA_MAX_PX;
+    const tipoOk=(file.type==='image/jpeg'||file.type==='image/png');
+    if(Math.max(w,h)<=max&&tipoOk) return {blob:file,w:w,h:h,type:file.type,ext:(file.type==='image/png'?'png':'jpg'),reduzida:false};
+    const k=Math.min(1,max/Math.max(w,h)); const nw=Math.round(w*k), nh=Math.round(h*k);
+    const c=document.createElement('canvas'); c.width=nw; c.height=nh; const ctx=c.getContext('2d');
+    ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high'; ctx.drawImage(img,0,0,nw,nh);
+    const blob=await new Promise(res=>c.toBlob(res,'image/jpeg',this.MIDIA_Q)); if(!blob) throw new Error('falha ao redimensionar');
+    return {blob:blob,w:nw,h:nh,type:'image/jpeg',ext:'jpg',reduzida:true}; },
+  async midiaUpload(files){ if(!this.midiaCod||this.midiaBusy) return;
+    files=Array.from(files||[]).filter(f=>/^image\/(jpeg|png)$/i.test(f.type)||/\.(jpe?g|png)$/i.test(f.name||''));
+    if(!files.length){ alert('Selecione arquivos JPG ou PNG.'); return; }
+    const atuais=this.midiaFotos().length; const vaga=this.MIDIA_MAX_FOTOS-atuais;
+    if(files.length>vaga){ alert('Limite de '+this.MIDIA_MAX_FOTOS+' fotos por produto: '+atuais+' já no banco, cabe'+(vaga===1?'':'m')+' mais '+vaga+'.\nRemova alguma ou selecione menos arquivos.'); return; }
+    this.midiaBusy=true; const st=this._g('ecom-midia-status'); let ordem=atuais, ok=0; const erros=[];
+    for(const f of files){
+      try{ st.textContent='Preparando '+f.name+'…'; const p=await this.midiaPreparar(f); ordem++;
+        const path=this.midiaCod+'/'+Date.now()+'-'+ordem+'.'+p.ext;
+        st.textContent='Enviando '+f.name+' ('+(p.blob.size/1024).toFixed(0)+' KB'+(p.reduzida?', reduzida para '+p.w+'×'+p.h:', original')+')…';
+        const up=await sb.storage.from('produto-midia').upload(path,p.blob,{contentType:p.type,upsert:false}); if(up.error) throw up.error;
+        const ins=await sb.from('ecom_produto_midia').insert({produto_codigo:this.midiaCod,tipo:'foto',caminho:path,ordem:ordem,largura:p.w,altura:p.h,bytes:p.blob.size});
+        if(ins.error){ await sb.storage.from('produto-midia').remove([path]); throw ins.error; }
+        ok++; }
+      catch(e){ erros.push(f.name+': '+e.message); ordem--; }
+    }
+    this.midiaBusy=false; st.textContent=ok+' foto'+(ok===1?'':'s')+' salva'+(ok===1?'':'s')+(erros.length?' · '+erros.length+' erro(s)':'');
+    if(erros.length) alert('Erro ao anexar:\n'+erros.join('\n'));
+    await this.midiaLoad(); this.midiaRender(); await this.midiaLoadCounts(); this.render(); },
+  async midiaRenumerar(){ const fotos=this.midiaFotos(); for(let i=0;i<fotos.length;i++){ if(fotos[i].ordem!==i+1){ const r=await sb.from('ecom_produto_midia').update({ordem:i+1}).eq('id',fotos[i].id); if(!r.error) fotos[i].ordem=i+1; } } },
+  async midiaAct(act,id){ const f=this.midiaItens.find(x=>String(x.id)===String(id)); if(!f||this.midiaBusy) return;
+    if(act==='baixar'){ await this.midiaBaixar(f); return; }
+    if(act==='remover'){ if(!confirm('Remover esta foto de '+this.midiaCod+'?\n\nSai do banco e do armazenamento. Não tem volta.')) return;
+      const d=await sb.from('ecom_produto_midia').delete().eq('id',f.id); if(d.error){ alert('Erro ao remover: '+d.error.message); return; }
+      const s=await sb.storage.from('produto-midia').remove([f.caminho]); if(s.error) console.warn('storage remove:',s.error.message);
+      await this.midiaLoad(); await this.midiaRenumerar(); this.midiaRender(); await this.midiaLoadCounts(); this.render(); return; }
+    if(act==='esq'||act==='dir'){ const fotos=this.midiaFotos(); const i=fotos.findIndex(x=>String(x.id)===String(id)); const j=(act==='esq')?i-1:i+1; if(i<0||j<0||j>=fotos.length) return;
+      const a=fotos[i], b=fotos[j]; const oa=a.ordem, ob=b.ordem;
+      const r1=await sb.from('ecom_produto_midia').update({ordem:ob}).eq('id',a.id); const r2=await sb.from('ecom_produto_midia').update({ordem:oa}).eq('id',b.id);
+      if(r1.error||r2.error) alert('Erro ao reordenar: '+((r1.error||r2.error).message));
+      await this.midiaLoad(); this.midiaRender(); } },
+  midiaNome(f,i){ const ext=(f.caminho||'').split('.').pop()||'jpg'; return this.midiaCod+'-'+String(i+1).padStart(2,'0')+'.'+ext; },
+  midiaSalvarBlob(blob,nome){ const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),5000); },
+  async midiaBaixar(f){ const fotos=this.midiaFotos(); const i=Math.max(0,fotos.findIndex(x=>String(x.id)===String(f.id)));
+    const d=await sb.storage.from('produto-midia').download(f.caminho); if(d.error){ alert('Erro ao baixar: '+d.error.message); return; }
+    this.midiaSalvarBlob(d.data,this.midiaNome(f,i)); },
+  async midiaBaixarTodas(){ if(!window.JSZip){ alert('JSZip não carregou (CDN). Recarregue a página.'); return; }
+    const fotos=this.midiaFotos(); if(!fotos.length||this.midiaBusy) return; const st=this._g('ecom-midia-status'); const zip=new JSZip(); let n=0; this.midiaBusy=true;
+    try{ for(let i=0;i<fotos.length;i++){ st.textContent='Baixando '+(i+1)+' de '+fotos.length+'…';
+        const d=await sb.storage.from('produto-midia').download(fotos[i].caminho); if(d.error){ console.warn('download:',d.error.message); continue; }
+        zip.file(this.midiaNome(fotos[i],i),await d.data.arrayBuffer()); n++; }
+      if(!n){ st.textContent='Nada baixado.'; return; }
+      const blob=await zip.generateAsync({type:'blob',compression:'STORE'}); this.midiaSalvarBlob(blob,this.midiaCod+'-fotos.zip'); st.textContent=n+' foto(s) no ZIP — arquivos idênticos aos do banco.'; }
+    finally{ this.midiaBusy=false; } },
+  async midiaVideoSalvar(){ if(!this.midiaCod) return; const url=(this._g('ecom-midia-video').value||'').trim(); const vid=this.midiaItens.find(x=>x.tipo==='video_link');
+    if(url&&!/^https?:\/\//i.test(url)){ alert('Cole o link completo (começa com https://).'); return; }
+    let r; if(!url){ if(!vid) return; r=await sb.from('ecom_produto_midia').delete().eq('id',vid.id); }
+    else if(vid) r=await sb.from('ecom_produto_midia').update({url:url}).eq('id',vid.id);
+    else r=await sb.from('ecom_produto_midia').insert({produto_codigo:this.midiaCod,tipo:'video_link',url:url,ordem:99});
+    if(r.error){ alert('Erro ao salvar o link: '+r.error.message); return; }
+    await this.midiaLoad(); this.midiaRender(); await this.midiaLoadCounts(); this.render(); },
+  midiaWire(){ if(this.midiaWired) return; const g=id=>this._g(id); if(!g('ecom-midia')) return; this.midiaWired=true;
+    g('ecom-midia-fechar').addEventListener('click',()=>this.midiaClose());
+    g('ecom-midia-add').addEventListener('click',()=>g('ecom-midia-file').click());
+    g('ecom-midia-file').addEventListener('change',e=>{ const fl=e.target.files; this.midiaUpload(fl).finally(()=>{ e.target.value=''; }); });
+    g('ecom-midia-todas').addEventListener('click',()=>this.midiaBaixarTodas());
+    g('ecom-midia-video-salvar').addEventListener('click',()=>this.midiaVideoSalvar());
+    const dz=g('ecom-midia-drop');
+    ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{ e.preventDefault(); dz.classList.add('over'); }));
+    ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{ e.preventDefault(); dz.classList.remove('over'); }));
+    dz.addEventListener('drop',e=>{ if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files.length) this.midiaUpload(e.dataTransfer.files); }); },
+  async midiaApagarTudo(cod){ cod=String(cod||'').trim().toUpperCase(); if(!cod) return;
+    const r=await sb.from('ecom_produto_midia').select('caminho').eq('produto_codigo',cod).eq('tipo','foto'); if(r.error) throw r.error;
+    const paths=(r.data||[]).map(x=>x.caminho).filter(Boolean);
+    if(paths.length){ const s=await sb.storage.from('produto-midia').remove(paths); if(s.error) throw s.error; }
+    if(this.midiaCod===cod) this.midiaClose(); },
+  // ===== fim BUILD 2026-08-26-T =====
+  render(){ this.midiaWire(); this.populateCatFilter(); this.sentinela(); const tb=this._g('ecom-tbody');
     if(!this.itens.length){ tb.innerHTML=''; show('#ecom-vazio'); this.updateCount(); return; }
     hide('#ecom-vazio');
     const vsCell=(p,ref)=>{ if(!ref||ref<=0) return '<span class="vsnull">—</span>'; const d=(p-ref)/ref*100; return `<span class="${d>0?'vsacima':'vsabaixo'}">${d>0?'+':''}${d.toFixed(1)}%</span>`; };
@@ -3875,12 +4048,13 @@ const ecom = {
         <td><input class="cellInput mkt" type="text" inputmode="decimal" data-id="${it.id}" data-f="media" placeholder="méd" value="${it.media==null?'':this.fmt(it.media)}"></td>
         <td>${vsCell(it.preco,it.media)}</td>
         <td>${this.fmt(it.custo)}</td>
-        <td><div class="acts"><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
+        <td><div class="acts"><button class="rowbtn ecom-midia-btn" data-cod="${it.codigo||''}">Mídia${this.midiaBadge(it.codigo)}</button><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
       </tr>`; }).join('');
     tb.innerHTML=rows||'<tr><td class="l" colspan="7" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
     tb.querySelectorAll('.cellInput').forEach(inp=>inp.addEventListener('change',e=>this.inlineEdit(e.target)));
     tb.querySelectorAll('.ecom-edit').forEach(b=>b.addEventListener('click',()=>this.edit(b.dataset.id)));
     tb.querySelectorAll('.ecom-del').forEach(b=>b.addEventListener('click',()=>this.del(b.dataset.id)));
+    tb.querySelectorAll('.ecom-midia-btn').forEach(b=>b.addEventListener('click',()=>this.midiaOpen(b.dataset.cod)));
     this.updateCount(); },
 
   sentinela(){ const box=this._g('ecom-sentinela'); if(!box) return; const itens=this.itens||[]; const probs=[];
@@ -3992,6 +4166,7 @@ const ecom = {
         if((gkit.count||0)>0){ alert('Exclusão bloqueada: "'+cod+'" é componente de '+(gkit.count)+' kit(s).\n\nOrdem correta: edite o(s) kit(s) no Catálogo e remova este componente da composição antes de excluir o produto.'); return; }
       }
       if(!confirm(`Excluir DEFINITIVAMENTE "${it.produto} · ${it.marca||''}" (${cod||'sem código'}) do banco?\n\nVendas históricas ficam preservadas (têm cópia própria dos dados). Esta ação NÃO tem volta.`)) return;
+      if(cod){ try{ await this.midiaApagarTudo(cod); }catch(e){ alert('Não foi possível apagar as fotos do produto: '+e.message+'\n\nExclusão cancelada — nada foi apagado.'); return; } }
       if(this.editId&&String(this.editId)===String(id)) this.cancelEdit();
       const idx=this.itens.findIndex(x=>String(x.id)===String(id)); const rem=this.itens[idx];
       this.itens=this.itens.filter(x=>String(x.id)!==String(id)); this.render();
