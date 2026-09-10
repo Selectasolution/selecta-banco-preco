@@ -1,4 +1,4 @@
-<!-- BUILD 2026-08-26-V | selecta-banco-preco | ABA SHOPEE v1 (Projeto Shopee, Igor 30/08; SQL 16 aplicado: ecom_shopee_taxas + ecom_fn_tarifa_shopee + ecom_shopee_anuncios + ecom_shopee_vendas): nova aba principal 🛍️ Shopee (data-tab=shopee) com sub-abas Alvo/Vendas/Relatorios, SEM Radar, Catalogo unico (lookup ecom_produtos por codigo). DECISAO IGOR 30/08: Shopee FORA do razao ML — tabelas proprias (ecom_shopee_vendas), termometro proprio; consolidacao geral fica no Fiscal (fase posterior). Nada toca ecom_vendas, Termometro ML, Controle da Alexia ou Fiscal. TARIFA: lida de ecom_shopee_taxas (banco = fonte unica; UPDATE na tabela reflete no app sem build — necessario porque a loja e Loja Oficial/Mall e a taxa da conta pode divergir da tabela padrao mar/2026). ALVO: cadastro de anuncio + simulador ao vivo por FAIXA DE PRECO (preco valido = promocao quando existe, regra da casa; campanha destaque +2,5%) com ALERTA DE FRONTEIRA (compara liquido atual vs liquido no teto da faixa anterior — ex.: R$80-88,36 rende MENOS que R$79,99; <R$8 = vermelho 50%) + lista de ativos com faixa/tarifa/margem (custo do Catalogo). VENDAS: lancamento manual (tarifa sugerida pela faixa x qtd, editavel p/ conciliacao; frete alem do subsidio; prazo de envio), fila em cartoes com chip de prazo (ENVIO ATRASADO vermelho / ENVIA HOJE ambar — regime de pontos semanais da Shopee) e botao "Liberado na carteira" (escrow ShopeePay manual: liberado_carteira + data_liberacao). RELATORIOS: termometro Shopee do mes (receita − tarifas − frete dif − custos − imposto 4% regua do razao = lucro; cancelado/devolvido FORA por convencao v1, mais duro que o razao ML, por desenho) + capital preso no escrow e a-enviar (independe do mes). JS: modulo shopeeTab dentro do script principal (mesmo escopo de sb/switchTab), exposto em window (padrao fiscal) p/ onclick inline. Sem Realtime, sem Edge — canal 100% manual ate a Open Platform aprovar. Base: 2026-08-26-U (md5 f7ec90f4ae61de10cefec142bb3413a8) -->
+<!-- BUILD 2026-09-10-A | selecta-banco-preco | POPOVER DETALHES OPACO + EXPORTAR (MD) DO CONTROLE (Igor 10/09, sessao de revisao item a item): (1) CAUSA RAIZ do popover transparente: var --epanel3 usada 18x mas NUNCA definida nos escopos #tab-catalogo/#tab-ecommerce (so fallback #18233a numa linha) -> background invalido = transparente; corrigido definindo --epanel3:#18233a nos DOIS escopos (conserta tambem chips, botao limpar, textarea de import e afins que degradavam em silencio) + regra do popover .msim-meta2 reforcada com fundo SOLIDO proprio #1a2742, borda #44568a, sombra dupla mais pesada e z-index 30 (antes 6). (2) NOVO botao "Exportar (md)" (id al-anuncios-export) no cabecalho do Controle, ao lado do Atualizar: gera controle_anuncios_AAAA-MM-DD.md com a lista DA TELA (respeita filtro al-anuncios-busca e a MESMA ordenacao do renderAnuncios) \u2014 por anuncio: codigo/MLB/titulo/status/dias no ar/vendas, preco+tipo+promocao (estorno declarado), MARGEM DO MOTOR (_simMargem com reputacao vigente, promocao governa, estorno de campanha) com lucro e selo LIBERADO/NEGADO, custo NF, comissao com origem (real/aferida/est.), frete, colchao e estoque do catalogo. DOUTRINA da sessao 10/09: analise externa NUNCA recalcula margem \u2014 este export e o insumo oficial p/ chats e Agente de Anuncios (mata o print de popover item a item). Metodo ecomAlvo.exportarControleMd, sem calculo paralelo (reusa _simMargem/_estornoPromo, mesmo caminho da coluna Margem da Analise, BUILD 26-G/26-I/26-K). Zero SQL; Controle da Alexia, gate e demais telas intocados. Base: 2026-08-26-V (md5 3f9cb27f89d58635ecd8eacfffcf9a0d conferido na sessao) -->\n<!-- BUILD 2026-08-26-V | selecta-banco-preco | ABA SHOPEE v1 (Projeto Shopee, Igor 30/08; SQL 16 aplicado: ecom_shopee_taxas + ecom_fn_tarifa_shopee + ecom_shopee_anuncios + ecom_shopee_vendas): nova aba principal 🛍️ Shopee (data-tab=shopee) com sub-abas Alvo/Vendas/Relatorios, SEM Radar, Catalogo unico (lookup ecom_produtos por codigo). DECISAO IGOR 30/08: Shopee FORA do razao ML — tabelas proprias (ecom_shopee_vendas), termometro proprio; consolidacao geral fica no Fiscal (fase posterior). Nada toca ecom_vendas, Termometro ML, Controle da Alexia ou Fiscal. TARIFA: lida de ecom_shopee_taxas (banco = fonte unica; UPDATE na tabela reflete no app sem build — necessario porque a loja e Loja Oficial/Mall e a taxa da conta pode divergir da tabela padrao mar/2026). ALVO: cadastro de anuncio + simulador ao vivo por FAIXA DE PRECO (preco valido = promocao quando existe, regra da casa; campanha destaque +2,5%) com ALERTA DE FRONTEIRA (compara liquido atual vs liquido no teto da faixa anterior — ex.: R$80-88,36 rende MENOS que R$79,99; <R$8 = vermelho 50%) + lista de ativos com faixa/tarifa/margem (custo do Catalogo). VENDAS: lancamento manual (tarifa sugerida pela faixa x qtd, editavel p/ conciliacao; frete alem do subsidio; prazo de envio), fila em cartoes com chip de prazo (ENVIO ATRASADO vermelho / ENVIA HOJE ambar — regime de pontos semanais da Shopee) e botao "Liberado na carteira" (escrow ShopeePay manual: liberado_carteira + data_liberacao). RELATORIOS: termometro Shopee do mes (receita − tarifas − frete dif − custos − imposto 4% regua do razao = lucro; cancelado/devolvido FORA por convencao v1, mais duro que o razao ML, por desenho) + capital preso no escrow e a-enviar (independe do mes). JS: modulo shopeeTab dentro do script principal (mesmo escopo de sb/switchTab), exposto em window (padrao fiscal) p/ onclick inline. Sem Realtime, sem Edge — canal 100% manual ate a Open Platform aprovar. Base: 2026-08-26-U (md5 f7ec90f4ae61de10cefec142bb3413a8) -->
 <!-- BUILD 2026-08-26-U | selecta-banco-preco | MIDIA ABRE ABAIXO DA LINHA (Igor 30/08 sobre 26-T: o painel abria no fim da pagina): render() ESTACIONA o painel no holder antes de reescrever o tbody (senao o no morreria com o innerHTML — bug pego no jsdom); o painel #ecom-midia passa a ser MONTADO numa linha extra (tr.midia-row, colspan 7) logo abaixo do produto clicado, como o Historico do Controle; clicar de novo em Midia fecha; render() da tabela remonta o painel do produto aberto (midiaMount). Mesmo no, mesmos listeners — so muda o lugar. Limite segue 8 fotos por produto. Base: 2026-08-26-T (md5 8bd31afe876339d943e9c56bb19a4666) -->
 <!-- BUILD 2026-08-26-T | selecta-banco-preco | MIDIA DO CATALOGO (Igor 30/08, sobre 26-S; SQL 15 aplicado: bucket privado produto-midia + ecom_produto_midia): botao "Midia" em cada linha do Catalogo (contador N fotos / video) abre o painel #ecom-midia dentro da aba. ANEXAR: JPG/PNG, varios de uma vez ou arrastando; o navegador reduz para 2000 px no lado maior (JPEG q0.92) SO se a foto for maior que isso — foto menor sobe intacta; caminho CODIGO/timestamp-n.ext; linha em ecom_produto_midia com ordem (1 = capa), largura/altura/bytes; limite 8 por produto (front + trigger). ORDENAR (setas), REMOVER (banco + bucket), BAIXAR uma (nome CODIGO-01.jpg, byte a byte o que esta no banco) ou TODAS (ZIP via JSZip, ja carregado pelo Fiscal). VIDEO = so link externo (Drive), tipo video_link. Excluir produto: apaga as fotos do bucket ANTES de apagar o cadastro (linhas da tabela caem por cascade); falha ao apagar as fotos cancela a exclusao. Rodape: fotos no banco e MB usados (ambar > 800 MB — plano Free = 1 GB). Leitura por link assinado de 15 min; nada publico. Alexia: mesmos botoes (login proprio ainda pendente). Base: 2026-08-26-S (md5 4400574ae35b2b46b0fa4f4eb4b084d1) -->
 <!-- BUILD 2026-08-26-S | selecta-banco-preco | SO O 3d, SEM CONVERSAO (Igor 29/08 ao ver o 26-P com dados: "informacao demais"): coluna Metricas 7d SAI da tabela; fica so Metricas 3d com "visitas · vendas" (sem %). ORDEM passa a ser por visitas 3d (Igor assume o risco do dia corrente parcial), desempate visitas 7d e pedidos 7d; o 7d sobrevive apenas no tooltip da celula. Nada mais muda. Base: 2026-08-26-P (md5 b57431f5223b417ad0d832732b74a89f) -->
@@ -390,7 +390,7 @@
     #tab-catalogo .ctl-sec-btn:hover:not(.active){color:#e5e7eb}
     /* BUILD 2026-08-08-D: duplicata do bloco central ecom-v8-style (ecard/param-grid/addform/ainput/mtx/chips) — faltava no C */
 
-  #tab-catalogo{--ebg:#0b1220;--epanel:#131c2e;--epanel2:#0f1726;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#34d399;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  #tab-catalogo{--ebg:#0b1220;--epanel:#131c2e;--epanel2:#0f1726;--epanel3:#18233a;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#34d399;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
   #tab-catalogo *{box-sizing:border-box}
   #tab-catalogo{color:var(--etxt);font-size:14px;line-height:1.5}
   #tab-catalogo .esub{color:var(--emuted);font-size:12.5px;margin:0 0 16px}
@@ -732,7 +732,7 @@
     #tab-catalogo details.msim-det summary{font-size:11.5px;color:var(--emuted2);cursor:pointer;user-select:none;list-style:none}
     #tab-catalogo details.msim-det summary::-webkit-details-marker{display:none}
     #tab-catalogo details.msim-det[open] summary{color:var(--emuted)}
-    #tab-catalogo details.msim-det .msim-meta2{position:absolute;right:0;bottom:calc(100% + 6px);z-index:6;min-width:290px;font-size:12px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;padding:10px 14px;background:var(--epanel3);border:1px solid var(--eborder);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    #tab-catalogo details.msim-det .msim-meta2{position:absolute;right:0;bottom:calc(100% + 6px);z-index:30;min-width:290px;font-size:12px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;padding:10px 14px;background:#1a2742;border:1px solid #44568a;border-radius:8px;box-shadow:0 14px 36px rgba(0,0,0,.75),0 2px 8px rgba(0,0,0,.5)}
     #tab-catalogo .meta-grid{display:grid;grid-template-columns:auto 1fr;column-gap:16px;row-gap:4px;align-items:baseline}
     #tab-catalogo .meta-grid .k{color:var(--emuted);font-size:11.5px;white-space:nowrap}
     #tab-catalogo .meta-grid .vv{text-align:right;color:var(--etxt)}
@@ -1371,7 +1371,7 @@
   <!-- TAB: E-COMMERCE (piloto — simulador de margem Mercado Livre) -->
   <!-- =========================================================== -->
   <style id="ecom-v8-style">
-  #tab-ecommerce{--ebg:#0b1220;--epanel:#131c2e;--epanel2:#0f1726;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#34d399;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  #tab-ecommerce{--ebg:#0b1220;--epanel:#131c2e;--epanel2:#0f1726;--epanel3:#18233a;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#34d399;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
   #tab-ecommerce *{box-sizing:border-box}
   #tab-ecommerce{color:var(--etxt);font-size:14px;line-height:1.5}
   #tab-ecommerce .esub{color:var(--emuted);font-size:12.5px;margin:0 0 16px}
@@ -2039,7 +2039,7 @@
     #tab-ecommerce details.msim-det summary{font-size:11.5px;color:var(--emuted2);cursor:pointer;user-select:none;list-style:none}
     #tab-ecommerce details.msim-det summary::-webkit-details-marker{display:none}
     #tab-ecommerce details.msim-det[open] summary{color:var(--emuted)}
-    #tab-ecommerce details.msim-det .msim-meta2{position:absolute;right:0;bottom:calc(100% + 6px);z-index:6;min-width:290px;font-size:12px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;padding:10px 14px;background:var(--epanel3);border:1px solid var(--eborder);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    #tab-ecommerce details.msim-det .msim-meta2{position:absolute;right:0;bottom:calc(100% + 6px);z-index:30;min-width:290px;font-size:12px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;padding:10px 14px;background:#1a2742;border:1px solid #44568a;border-radius:8px;box-shadow:0 14px 36px rgba(0,0,0,.75),0 2px 8px rgba(0,0,0,.5)}
     #tab-ecommerce .meta-grid{display:grid;grid-template-columns:auto 1fr;column-gap:16px;row-gap:4px;align-items:baseline}
     #tab-ecommerce .meta-grid .k{color:var(--emuted);font-size:11.5px;white-space:nowrap}
     #tab-ecommerce .meta-grid .vv{text-align:right;color:var(--etxt)}
@@ -2448,6 +2448,7 @@
           </div>
           <div style="display:flex;align-items:center;gap:8px">
             <span id="al-anuncios-count" class="al-hcount"></span>
+            <button class="vbtn sm" id="al-anuncios-export" title="Exporta a lista da tela (com o filtro aplicado) em Markdown: preço, tipo, promoção, margem do app, custo NF, comissão, frete, colchão, estoque — insumo para análise externa/agente">⬇ Exportar (md)</button>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
               <button class="vbtn sm" id="al-anuncios-refresh" title="Puxar as últimas alterações da Alexia e reler o preço publicado no ML (histórico vermelho = diverge do app; verde = confere)">🔄 Atualizar</button>
               <span id="al-snap-quando" style="font-size:10.5px;color:var(--emuted2);font-family:var(--emono);white-space:nowrap"></span>
@@ -6585,6 +6586,62 @@ const ecomAlvo={
       } }
     this.renderSim(id);
   },
+  // BUILD 2026-09-10-A: Exportar (md) do Controle — mesma matematica da tela (_simMargem + estorno; promocao vigente governa). Nenhum calculo paralelo.
+  exportarControleMd(){
+    if(typeof ecom==='undefined'||!ecom.loaded){ alert('Cat\u00e1logo ainda n\u00e3o carregado \u2014 tente de novo em instantes.'); return; }
+    const rep=(ecom.reputacao||'verde');
+    const fR=v=>(+v).toFixed(2).replace('.',',');
+    const anns=this.anuncios||[];
+    const _flt=(this.anunciosFiltro||'').trim().toLowerCase();
+    const hoje0=new Date(); hoje0.setHours(0,0,0,0);
+    const diasDe=s=>{ const p=String(s||'').slice(0,10).split('-').map(Number); if(p.length<3||!p[0]) return null; return Math.round((hoje0-new Date(p[0],p[1]-1,p[2]))/864e5); };
+    const rows=anns.map(an=>{ const dias=diasDe(an.data_publicacao);
+      const pub=new Date(String(an.data_publicacao||'').slice(0,10)+'T00:00:00');
+      const vendas=(this.vendas||[]).filter(v=>v.produto_codigo===an.produto_codigo && v.data_solicitacao && new Date(v.data_solicitacao)>=pub).length;
+      return {an,dias,vendas}; });
+    const enc=a=>(a.ativo===false?2:(a.pausado?1:0));
+    rows.sort((a,b)=> (enc(a.an)-enc(b.an)) || (b.vendas-a.vendas) || ((b.dias==null?-1:b.dias)-(a.dias==null?-1:a.dias)) );
+    const lista=_flt?rows.filter(r=>String(r.an.produto_codigo||'').toLowerCase().includes(_flt)):rows;
+    if(!lista.length){ alert('nenhum an\u00fancio para exportar'+(_flt?(' com o filtro \u00ab'+String(this.anunciosFiltro).trim()+'\u00bb'):'')); return; }
+    const prodMap={}; (ecom.itens||[]).forEach(p=>{ prodMap[String(p.codigo).toUpperCase()]=p; });
+    const impPct=(ecom._n?ecom._n('ecom-imp'):4), colPct=(ecom._n?ecom._n('ecom-colchao'):6);
+    let md='# Controle de An\u00fancios \u2014 export\n\n'
+      +'- gerado: '+new Date().toLocaleString('pt-BR')+'\n'
+      +'- reputa\u00e7\u00e3o: '+rep+' \u00b7 imposto '+impPct+'% \u00b7 colch\u00e3o '+colPct+'% s/ venda \u00b7 piso 10%\n'
+      +'- an\u00fancios: '+lista.length+' de '+rows.length+(_flt?(' (filtro \u00ab'+String(this.anunciosFiltro).trim()+'\u00bb)'):'')+'\n'
+      +'- margem = motor do app (comiss\u00e3o da categoria \u00d7 frete FRETE_TBL \u00d7 reputa\u00e7\u00e3o; promo\u00e7\u00e3o vigente governa; estorno de campanha quando analisado)\n\n';
+    lista.forEach(row=>{ const an=row.an;
+      const cod=String(an.produto_codigo||'').trim().toUpperCase();
+      const prod=prodMap[cod]||null;
+      const temPromo=an.preco_promocao!=null;
+      const praticado=temPromo?+an.preco_promocao:(an.preco!=null?+an.preco:null);
+      const tipo=(an.tipo_anuncio==='premium')?'premium':'classico';
+      const est=temPromo?this._estornoPromo(an,+an.preco,praticado):0;
+      const r=(prod&&praticado!=null)?this._simMargem(prod,praticado,tipo,rep,est):null;
+      const status=an.ativo===false?'ENCERRADO NO ML':(an.pausado?'PAUSADO':'ativo');
+      md+='## '+cod+' \u00b7 MLB '+(an.anuncio_mlb||'\u2014')+'\n'
+        +'- t\u00edtulo: '+(an.titulo||'\u2014')+'\n'
+        +'- status: '+status+' \u00b7 '+(row.dias==null?'sem data':(row.dias<0?'agendado':row.dias+' dias no ar'))+' \u00b7 '+row.vendas+' venda(s) desde a publica\u00e7\u00e3o\n'
+        +'- pre\u00e7o: R$ '+(an.preco!=null?fR(an.preco):'\u2014')+' \u00b7 '+(tipo==='premium'?'Premium':'Cl\u00e1ssico')
+        +(temPromo?(' \u00b7 promo\u00e7\u00e3o vigente R$ '+fR(an.preco_promocao)+(an.promo_ml_pct!=null?(' (estorno ML '+(+an.promo_ml_pct).toFixed(0)+'%)'):' (campanha sem estorno analisado)')):'')+'\n';
+      if(r&&r.ok){
+        const pct=r.margemPct*100;
+        const catRow=(prod&&ecom.comMap)?ecom.comMap[prod.categoria]:null;
+        const comOrigem=(catRow&&catRow.origem==='reconciliacao')?'real':(catRow&&(catRow.origem==='manual'||catRow.origem==='api_ml')?'aferida':'est.');
+        md+='- margem (app): **'+pct.toFixed(1)+'%** \u00b7 lucro R$ '+fR(r.margem)+' \u00b7 '+(pct>=10?'LIBERADO':'NEGADO \u2014 abaixo do piso')+'\n'
+          +'- detalhes: custo NF R$ '+fR(prod.custo)+' \u00b7 comiss\u00e3o '+(r.comPct*100).toFixed(2)+'% ('+comOrigem+') \u00b7 frete R$ '+fR(r.frete)+' \u00b7 colch\u00e3o R$ '+fR(praticado*colPct/100)+(r.estorno>0?(' \u00b7 estorno campanha +R$ '+fR(r.estorno)):'')+'\n';
+        if(prod.estoque_atual!=null) md+='- estoque (cat\u00e1logo): '+prod.estoque_atual+' un.\n';
+      } else {
+        md+='- margem (app): sem c\u00e1lculo \u2014 '+((r&&r.reason)||(prod?'sem pre\u00e7o':'produto n\u00e3o encontrado/inativo no cat\u00e1logo'))+'\n';
+        if(prod&&prod.custo!=null) md+='- custo NF R$ '+fR(prod.custo)+'\n';
+      }
+      md+='\n';
+    });
+    const blob=new Blob([md],{type:'text/markdown;charset=utf-8'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download='controle_anuncios_'+new Date().toISOString().slice(0,10)+'.md';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  },
   _simAvalGate(id){
     const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return null;
     const get=f=>{ const el=box.querySelector('[data-ef="'+f+'"]'); return el?el.value:''; };
@@ -8228,6 +8285,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const abz=ecomAlvo._g('al-anuncios-busca'); if(abz) abz.addEventListener('input',()=>{ ecomAlvo.anunciosFiltro=abz.value; ecomAlvo.renderAnuncios(); });
   const abzc=ecomAlvo._g('al-anuncios-busca-clear'); if(abzc) abzc.addEventListener('click',()=>{ const i=ecomAlvo._g('al-anuncios-busca'); if(i) i.value=''; ecomAlvo.anunciosFiltro=''; ecomAlvo.renderAnuncios(); if(i) i.focus(); });
   const aud=ecomAlvo._g('al-atv-audit'); if(aud) aud.addEventListener('click',()=>ecomAlvo.auditarMargens()); // BUILD 2026-08-26-H
+  const aex=ecomAlvo._g('al-anuncios-export'); if(aex) aex.addEventListener('click',async()=>{ const p=aex.textContent; aex.disabled=true; aex.textContent='gerando\u2026'; try{ if(typeof ecom!=='undefined'&&!ecom.loaded){ await ecom.loadFreteTbl(); await ecom.loadComissoes(); await ecom.loadProdutos(); ecom.loaded=true; } ecomAlvo.exportarControleMd(); }catch(e){ alert('Erro no export: '+e.message); } aex.disabled=false; aex.textContent=p; }); // BUILD 2026-09-10-A
   const arf=ecomAlvo._g('al-anuncios-refresh'); if(arf) arf.addEventListener('click',async()=>{ const prev=arf.textContent; arf.disabled=true; arf.textContent='conferindo no ML\u2026'; let okSync=true; try{ await ecomAlvo.conferirAgora(); }catch(e){ okSync=false; console.warn('conferirAgora:',e.message); } try{ await ecomAlvo.load(); arf.textContent=okSync?'\u2713 conferido':'\u2713 recarregado (ML indisponível)'; }catch(e){ arf.textContent='erro ao atualizar'; } setTimeout(()=>{ arf.disabled=false; arf.textContent=prev; },1800); }); // BUILD 2026-08-25-M
   const bar=document.getElementById('alsubbar'); if(bar) bar.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
     const tgt=b.dataset.alsub;
