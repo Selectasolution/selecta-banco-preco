@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-11-B | selecta-banco-preco | RADAR v1.0 — CHIPS COM TRILHA + VARREDURA VAZIA NAO TRAVA (correcao pos-aceite do caso real "teclado sem fio": discovery devolveu Teclados MLB5005 = teclados de ELEVADOR — trend "tls thyssenkrupp" entregou o diagnostico; highlights 404; pesquisa #49 vazia e presa na anti-dup): (1) requer Edge ml-radar v0.3.1 deployada ANTES (discovery enriquece candidatos com path da arvore + total_items; trava anti-dup ignora pesquisa do dia com 0 itens de ranking). (2) Chips de nicho em 2 linhas: nome+ID / trilha › da arvore + total de itens formatado — o que distingue Teclados de informatica de Teclados de elevador. (3) varrerCat: se highlights==0, chips PERMANECEM na tela com aviso ambar "nicho sem ranking BEST_SELLER — escolha outro candidato"; chips somem apenas com ranking capturado ou reaproveitado. | base: 2026-09-11-A -->
 <!-- BUILD 2026-09-11-A | selecta-banco-preco | RADAR DE NICHO v1.0 — BUSCADOR DE OPORTUNIDADES (redesenho aprovado Igor 11/09 apos 6 provas de API com token real na sessao: /sites/search 403=fechado ML; domain_discovery OK; highlights OK; /products OK; trends OK; /users OK): (1) Edge ml-radar v0.3 deployada ANTES desta build e validada em producao (pesquisa #48 mouse/MLB1714 = 19 highlights + 50 trends; acoes discovery/varrer; trava anti-duplicata por dia BRT; nickname do seller em dados.buy_box_winner; multiget de vencedores negado pelo ML = link cai p/ permalink do jsonb ou /p/product_id). (2) Aba Radar: SO 2 sub-abas (Pesquisa | Candidatos); fluxo = campo unico -> chips de dominio (discovery devolve ruido, ex mouse->Aguas minerais; confirmacao 1 clique) -> varredura. (3) Card v1.0: dominancia de marca + vendedores distintos + %Full + contagem de novos; tabela = # Produto(+novo<=6m) Marca Preco Vendedor Full Ver(link SEMPRE); OPORTUNIDADES = trends nao atendidas pelo top (cruzamento tokens x titulos+marcas, stoplist) + marca em ascensao (prefixo 3+ nas 50 trends). Sem sold_quantity (API nega a terceiros) — posicao = rank oficial; rodape de honestidade. (4) ecomPesq (Itens alvo pesquisa v1.0 de 07/07) APAGADO — HTML+JS+wiring. (5) Candidatos a importacao INTOCADO. (6) Seletores Mais Vendidos/Mais Procurados removidos — resultado e sempre o top vendidos; delta semanal entra/sai = proxima build (precisa de 2a captura). Marcador visivel: "radar v1.0 - 11/09/2026". | base: 2026-09-10-C -->
 <!-- BUILD 2026-09-10-C | selecta-banco-preco | HOTFIX DO \n VISIVEL (Igor 10/09 sobre o 10-B publicado): o build 10-A trouxe um \n LITERAL entre dois comentarios do topo (antes do DOCTYPE) — texto solto que o navegador move p/ dentro do body e aparece na tela; auditoria do 10-B nao pegou (falha reconhecida). Corrigido: \n literal vira quebra de linha real; varredura confirma ZERO texto solto antes do DOCTYPE. Nenhuma outra mudanca — seletor da tabela (10-B) intacto. DISCRIMINADOR p/ conferir a lista no ar: 1a opcao apos "— escolher —" = "Access Point" -> lista da tabela ativa; = "SSD" -> fallback fixo (consulta falhou). Base: 2026-09-10-B (md5 7d52b52fc53ee019dcaa42418466945f) -->
 <!-- BUILD 2026-09-10-B | selecta-banco-preco | SELETOR DE CATEGORIA LIDO DA TABELA (Igor 10/09, caso CVM: sigla criada no banco com 13/18 api_ml — MLB417500 Conversores de Fibra Optica — mas invisivel no app): a lista do #ecom-f-categoria deixa de ser HTML fixo e passa a ser MONTADA de ecom_categoria_comissao (sigla+nome, ordem alfabetica pt-BR pelo nome) em ecom.rebuildCatSelect(), chamada no onEnter apos os loads. TABELA = DONA DA LISTA (mesma doutrina das taxas Shopee 26-V): categoria nova entra por INSERT, sem build. FALLBACK: se a consulta falhar (comList vazia), o select NAO e tocado e a lista fixa do HTML segue valendo; loadComissoes agora tambem le a coluna nome. Pre-requisito aplicado no banco: linha KIT inserida (14/19 estimativa teto, doutrina TAB 13-D — kit anuncia na categoria do produto ancora, margem subestimada de proposito) p/ tabela cobrir 100% do seletor. Nome do produto no save() passa a vir do nome da tabela (texto da option). Zero mudanca no motor de margem; Controle da Alexia, gate e demais telas intocados. Base: 2026-09-10-A (md5 74d8796cca362804d9095a6c48ab2df6 conferido na sessao) -->
@@ -7542,8 +7543,16 @@ const ecomRadar={
       msg.style.color='var(--emuted)';
       msg.textContent='Confirme o nicho (o discovery erra — 1º candidato nem sempre é o certo):';
       dbox.style.display='';
+      const fmtN=v=>v==null?null:(v>=1e6?(v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mi':v>=1e3?Math.round(v/1e3).toLocaleString('pt-BR')+' mil':String(v));
       dbox.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap">'
-        + cand.map(c=>'<button class="chip" data-rdcat="'+this.esc(c.category_id)+'" data-rdnome="'+this.esc(c.category_name||c.domain_name||c.category_id)+'" style="border-color:var(--eteal);color:var(--eteal);padding:8px 14px;font-size:13px">'+this.esc(c.category_name||c.domain_name)+' <span style="color:var(--emuted2);font-family:var(--emono);font-size:11px">'+this.esc(c.category_id)+'</span></button>').join('')
+        + cand.map(c=>{
+            const tot=fmtN(c.total_items);
+            const sub=[c.path?this.esc(c.path):null, tot?tot+' itens':null].filter(Boolean).join(' · ');
+            return '<button class="chip" data-rdcat="'+this.esc(c.category_id)+'" data-rdnome="'+this.esc(c.category_name||c.domain_name||c.category_id)+'" style="border-color:var(--eteal);color:var(--eteal);padding:8px 14px;font-size:13px;text-align:left;max-width:420px">'
+              +this.esc(c.category_name||c.domain_name)+' <span style="color:var(--emuted2);font-family:var(--emono);font-size:11px">'+this.esc(c.category_id)+'</span>'
+              +(sub?'<span style="display:block;color:var(--emuted);font-size:11px;margin-top:3px;font-weight:400">'+sub+'</span>':'')
+              +'</button>';
+          }).join('')
         +'</div>';
     }catch(e){ msg.style.color='var(--ered)'; msg.textContent='✗ '+this.esc(e.message); }
     finally{ btn.disabled=false; }
@@ -7560,13 +7569,19 @@ const ecomRadar={
       if(r.error) throw new Error(r.error.message||'falha na Edge Function');
       const d=r.data||{};
       if(d.erro) throw new Error(d.erro+(d.detalhe?' — '+d.detalhe:''));
-      msg.style.color='var(--eemerald)';
+      const vazia=!d.reaproveitada && !(Number(d.highlights)>0);
       if(d.reaproveitada){
+        msg.style.color='var(--eemerald)';
         msg.textContent='♻️ Nicho já varrido hoje — exibindo a captura #'+d.pesquisa_id+' (trava anti-duplicata; dado do ML muda no ritmo semanal).';
+        if(dbox) dbox.style.display='none';
+      }else if(vazia){
+        msg.style.color='var(--eamber)';
+        msg.textContent='⚠️ Pesquisa #'+d.pesquisa_id+': este nicho não tem ranking BEST_SELLER no ML ('+((d.avisos||[]).join(' | ')||'0 itens')+'). Escolha outro candidato acima ou uma folha na árvore — a varredura vazia não trava o dia.';
       }else{
+        msg.style.color='var(--eemerald)';
         msg.textContent='✓ Pesquisa #'+d.pesquisa_id+': '+(d.highlights??'?')+' no top vendidos + '+(d.trends??'?')+' trends ('+d.status+')'+((d.avisos&&d.avisos.length)?' — avisos: '+d.avisos.join(' | '):'');
+        if(dbox) dbox.style.display='none';
       }
-      if(dbox) dbox.style.display='none';
       this.cacheHi={}; this._filtro=id; await this.load();
     }catch(e){ msg.style.color='var(--ered)'; msg.textContent='✗ '+this.esc(e.message); }
     finally{ btn.disabled=false; }
