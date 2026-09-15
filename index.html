@@ -1,3 +1,5 @@
+<!-- BUILD 2026-09-15-B | selecta-banco-preco | LOG SHOPEE COMPLETO (conferencia SQL 20 bloco A, Igor 15/09, sobre o 15-A NAO publicado): as colunas reais do SQL 17 tem codigo/shopee_item_id/por/margem_pior_zona_pct alem do minimo — os inserts de ecom_shopee_anuncio_alteracao (Editar/Encerrar do Controle) e o upsert de ecom_shopee_anuncio_lido passam a preenche-las: codigo e Item ID do anuncio, por = e-mail da sessao (mesmo padrao do marcarLido do ML), margem_pior_zona_pct = margem da regua no preco valido NOVO (no Encerrar, no preco vigente), arredondada a 2 casas. Bloco C do SQL 20: ecom_shopee_vendas so tem PK em id — multi-item ja livre no banco, bloco D descartado. Bloco B: semente 18b confirmada (7 anuncios). Nenhuma outra mudanca. | base: 2026-09-15-A (md5 c502f8e45a2367bcfa985b78af850225) -->
+<!-- BUILD 2026-09-15-A | selecta-banco-preco | SHOPEE PARIDADE (reconstrucao do 26-W orfao, Igor 15/09; base = 2026-09-11-C md5 fa4645ae86914e530bf861cfd76453ef, index anexado por Igor com vendas reais chegando): a linhagem 10-A..11-C foi construida sobre o 26-V e a paridade do 26-W nunca chegou a producao — reconstruida aqui sobre a base atual. (1) margemDe() = UNICA conta de margem do modulo (tarifa da faixa + custo NF + colchao 6% da venda + imposto 4%, piso 10% LIBERADO/NEGADO; frete dif = 0 no simulador, sem tabela de frete Shopee — espelho da _simMargem ML); corrige a margem inflada do 26-V em producao (que ignorava colchao e imposto). (2) CINCO sub-abas: Alvo (so cadastro + simulador completo com colchao/imposto/lucro/selo), Analise Comercial (Igor: leitura, verde+topo por alteracao posterior a ultima leitura via ecom_shopee_anuncio_lido upsert onConflict anuncio_id, abrir historico marca lido), Controle de Anuncios (Alexia: Editar inline com gate ao vivo e MOTIVO obrigatorio, NEGADO pede confirmacao mas nao trava — decisao humana; Encerrar com motivo; log em ecom_shopee_anuncio_alteracao com colunas espelho do ML: anuncio_id/campo/preco_anterior/preco_novo/motivo — CONFERIR colunas reais do SQL 17 ANTES de publicar, checklist), Vendas, Relatorios. (3) VENDAS multi-item: fila agrupada por pedido_id (um card por pedido, linhas por item com acoes proprias); apos lancar, o nº do pedido PERMANECE no form p/ lancar o proximo item; aviso ao repetir produto no mesmo pedido; tarifa sugerida agora usa a campanha do anuncio. (4) RELATORIOS: linha de colchao (6% da receita) + RESULTADO AMORTECIDO como linha grande; margem media sobre o amortecido. (5) FIX 26-V: input date vazava a direita no Safari/iPhone — min-width:0 + appearance none no escopo. Historico/lido degradam com aviso se o SQL 17 divergir (try/catch), o resto da aba vive. Zero mudanca fora da regiao Shopee; ML/Fiscal/Radar intocados. Requer SQL 17 aplicado (Igor 31/08 Success) e SQL 18b conferido (SELECT no pacote). | base: 2026-09-11-C -->
 <!-- BUILD 2026-09-11-C | selecta-banco-preco | RADAR — LIMPEZA DE UI (3 pedidos Igor 11/09 pos-uso real; base = BUILD-B confirmada publicada pelos prints da sessao): (1) mensagem "Confirme o nicho (o discovery erra...)" APAGADA — chips falam por si (trilha da arvore ja distingue). (2) Botao e textos: Varrer -> Consultar (Consultando/consultado/consulta vazia/consulte; nomes internos de funcao inalterados — varrerCat/descobrir). (3) Dominio MLB-MINERAL_WATERS (Aguas Minerais MLB269718) FILTRADO da exibicao do discovery — ruido recorrente da API do ML, provado nas consultas mouse e teclado; corte documentado, so exibicao (Edge intocada). Sem SQL, sem Edge. | base: 2026-09-11-B -->
 <!-- BUILD 2026-09-11-B | selecta-banco-preco | RADAR v1.0 — CHIPS COM TRILHA + VARREDURA VAZIA NAO TRAVA (correcao pos-aceite do caso real "teclado sem fio": discovery devolveu Teclados MLB5005 = teclados de ELEVADOR — trend "tls thyssenkrupp" entregou o diagnostico; highlights 404; pesquisa #49 vazia e presa na anti-dup): (1) requer Edge ml-radar v0.3.1 deployada ANTES (discovery enriquece candidatos com path da arvore + total_items; trava anti-dup ignora pesquisa do dia com 0 itens de ranking). (2) Chips de nicho em 2 linhas: nome+ID / trilha › da arvore + total de itens formatado — o que distingue Teclados de informatica de Teclados de elevador. (3) varrerCat: se highlights==0, chips PERMANECEM na tela com aviso ambar "nicho sem ranking BEST_SELLER — escolha outro candidato"; chips somem apenas com ranking capturado ou reaproveitado. | base: 2026-09-11-A -->
 <!-- BUILD 2026-09-11-A | selecta-banco-preco | RADAR DE NICHO v1.0 — BUSCADOR DE OPORTUNIDADES (redesenho aprovado Igor 11/09 apos 6 provas de API com token real na sessao: /sites/search 403=fechado ML; domain_discovery OK; highlights OK; /products OK; trends OK; /users OK): (1) Edge ml-radar v0.3 deployada ANTES desta build e validada em producao (pesquisa #48 mouse/MLB1714 = 19 highlights + 50 trends; acoes discovery/varrer; trava anti-duplicata por dia BRT; nickname do seller em dados.buy_box_winner; multiget de vencedores negado pelo ML = link cai p/ permalink do jsonb ou /p/product_id). (2) Aba Radar: SO 2 sub-abas (Pesquisa | Candidatos); fluxo = campo unico -> chips de dominio (discovery devolve ruido, ex mouse->Aguas minerais; confirmacao 1 clique) -> varredura. (3) Card v1.0: dominancia de marca + vendedores distintos + %Full + contagem de novos; tabela = # Produto(+novo<=6m) Marca Preco Vendedor Full Ver(link SEMPRE); OPORTUNIDADES = trends nao atendidas pelo top (cruzamento tokens x titulos+marcas, stoplist) + marca em ascensao (prefixo 3+ nas 50 trends). Sem sold_quantity (API nega a terceiros) — posicao = rank oficial; rodape de honestidade. (4) ecomPesq (Itens alvo pesquisa v1.0 de 07/07) APAGADO — HTML+JS+wiring. (5) Candidatos a importacao INTOCADO. (6) Seletores Mais Vendidos/Mais Procurados removidos — resultado e sempre o top vendidos; delta semanal entra/sai = proxima build (precisa de 2a captura). Marcador visivel: "radar v1.0 - 11/09/2026". | base: 2026-09-10-C -->
@@ -1707,7 +1709,7 @@
 
 <section id="tab-shopee" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
   <style>
-  /* BUILD 2026-08-26-V · aba Shopee — tokens da casa, escopo próprio */
+  /* BUILD 2026-09-15-A · aba Shopee — paridade com o modus operandi ML (reconstrucao do 26-W orfao) */
   #tab-shopee{--epanel:#131c2e;--epanel2:#0f1726;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#f97316;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--etxt)}
   #tab-shopee .ecard{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:13px 16px;margin-bottom:10px}
   #tab-shopee .ecard h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin:0 0 12px;font-weight:600}
@@ -1722,6 +1724,8 @@
   #tab-shopee .vinput{background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:8px;padding:8px 10px;font-size:13px;width:100%}
   #tab-shopee .vinput:focus{outline:none;border-color:var(--eaccent)}
   #tab-shopee .vinput.mono{font-family:var(--emono)}
+  /* BUILD 15-A: input date vazava a direita no Safari/iPhone (26-V) — largura contida no grid */
+  #tab-shopee input[type="date"].vinput{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;box-sizing:border-box}
   #tab-shopee .vrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
   #tab-shopee .vrow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px}
   @media (max-width:640px){#tab-shopee .vrow,#tab-shopee .vrow3{grid-template-columns:1fr}}
@@ -1734,12 +1738,16 @@
   #tab-shopee .rd-tbl th{font-size:11px;font-weight:700;color:var(--emuted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--eborder);white-space:nowrap}
   #tab-shopee .rd-tbl td{padding:7px 8px;border-bottom:1px solid rgba(42,54,80,.5);vertical-align:top}
   #tab-shopee .rd-tbl td.n{font-family:var(--emono);white-space:nowrap}
+  #tab-shopee .rd-tbl tr.verde td{background:rgba(16,185,129,.07)}
   #tab-shopee .tblwrap{overflow-x:auto}
   #tab-shopee .hintline{font-size:12px;color:var(--emuted);margin-top:4px;min-height:16px}
   #tab-shopee .hintline.ok{color:var(--eteal)} #tab-shopee .hintline.err{color:var(--ered)}
   #tab-shopee .simbox{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:14px;row-gap:6px}
   #tab-shopee .simbox .kv b{display:block;font-size:10.5px;color:var(--emuted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
   #tab-shopee .simbox .kv span{font-family:var(--emono)}
+  #tab-shopee .selo{display:inline-block;border-radius:6px;padding:2px 8px;font-size:10.5px;font-weight:700;letter-spacing:.03em}
+  #tab-shopee .selo.lib{background:rgba(16,185,129,.16);color:var(--eemerald)}
+  #tab-shopee .selo.neg{background:rgba(239,68,68,.16);color:var(--ered)}
   #tab-shopee .warnline{border-radius:8px;padding:7px 10px;font-size:12.5px;margin-top:8px;display:none}
   #tab-shopee .warnline.amber{display:block;background:rgba(245,158,11,.12);border:1px solid var(--eamber);color:var(--eamber)}
   #tab-shopee .warnline.red{display:block;background:rgba(239,68,68,.12);border:1px solid var(--ered);color:var(--ered)}
@@ -1749,6 +1757,8 @@
   #tab-shopee .vli .mid{font-size:12.5px;color:var(--emuted);margin:3px 0}
   #tab-shopee .vli .money{font-family:var(--emono);font-size:12.5px;display:flex;gap:12px;flex-wrap:wrap;margin:4px 0}
   #tab-shopee .vli .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  #tab-shopee .vli .itemln{border-top:1px dashed var(--eborder);margin-top:7px;padding-top:7px}
+  #tab-shopee .vli .itemln:first-of-type{border-top:0;margin-top:0;padding-top:0}
   #tab-shopee .chip{display:inline-block;font-size:10.5px;font-weight:700;border-radius:20px;padding:2px 9px;letter-spacing:.03em}
   #tab-shopee .chip.st-a_enviar{background:rgba(245,158,11,.15);color:var(--eamber)}
   #tab-shopee .chip.st-enviado{background:rgba(45,212,191,.15);color:var(--eteal)}
@@ -1760,25 +1770,37 @@
   #tab-shopee .chip.nlib{background:rgba(95,111,140,.25);color:var(--emuted)}
   #tab-shopee .messel{display:flex;align-items:center;gap:10px;margin-bottom:12px}
   #tab-shopee .messel b{font-size:13.5px}
-  #tab-shopee .trm{width:100%;max-width:560px;border-collapse:collapse;font-size:13px}
-  #tab-shopee .trm td{padding:6px 8px;border-bottom:1px solid rgba(42,54,80,.5)}
+  #tab-shopee .trm{width:100%;border-collapse:collapse;font-size:13px}
+  #tab-shopee .trm td{padding:6px 4px;border-bottom:1px solid rgba(42,54,80,.5)}
   #tab-shopee .trm td.n{font-family:var(--emono);text-align:right;white-space:nowrap}
   #tab-shopee .trm tr.big td{font-size:14.5px;font-weight:700;border-top:2px solid var(--eborder)}
   #tab-shopee .pos{color:var(--eemerald)} #tab-shopee .neg{color:var(--ered)}
+  #tab-shopee .histbox{border:1px solid var(--eborder);border-left:2px solid var(--eaccent);border-radius:8px;background:var(--epanel2);padding:9px 12px;font-size:12.5px}
+  #tab-shopee .histbox .hln{padding:4px 0;border-bottom:1px dashed rgba(42,54,80,.6)}
+  #tab-shopee .histbox .hln:last-child{border-bottom:0}
+  #tab-shopee .histbox .hln .dt{font-family:var(--emono);color:var(--emuted2);font-size:11px;margin-right:6px}
+  #tab-shopee .histbox .hln .cp{color:var(--eaccent);font-weight:600;margin-right:4px}
+  #tab-shopee .ctcard{border:1px solid var(--eborder);border-radius:10px;background:var(--epanel2);padding:10px 12px;margin-bottom:8px}
+  #tab-shopee .ctcard .t1{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:600}
+  #tab-shopee .ctcard .t2{font-size:12px;color:var(--emuted);font-family:var(--emono);margin:2px 0 4px}
+  #tab-shopee .ctcard .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  #tab-shopee .ctedit{margin-top:9px;border-top:1px dashed var(--eborder);padding-top:9px}
   #tab-shopee .shp-toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--epanel);border:1px solid var(--eteal);color:var(--etxt);border-radius:10px;padding:9px 16px;font-size:13px;z-index:9998;box-shadow:0 8px 30px rgba(0,0,0,.5)}
   #tab-shopee .shp-toast.err{border-color:var(--ered)}
   </style>
 
   <h2 style="font-size:15px;font-weight:700;margin:0 0 2px">🛍️ Shopee</h2>
-  <p class="esub">Canal Shopee · Catálogo único · tarifas por <b>faixa de preço</b> (reforma mar/2026, tabela <span class="mono">ecom_shopee_taxas</span> editável por SQL) · termômetro próprio — <b>fora</b> do razão ML por decisão de 30/08. Escrow ShopeePay: liberação marcada à mão até a API.</p>
+  <p class="esub">Canal Shopee · Catálogo único · tarifas por <b>faixa de preço</b> (tabela <span class="mono">ecom_shopee_taxas</span> editável por SQL) · margem = régua da casa (tarifa + custo NF + colchão 6% + imposto 4%, piso 10%) · termômetro próprio — <b>fora</b> do razão ML por decisão de 30/08. Escrow ShopeePay: liberação à mão até a API.</p>
 
   <div class="subnav">
     <button class="subtab active" data-ssub="alvo">🎯 Alvo</button>
+    <button class="subtab" data-ssub="analise">Análise Comercial</button>
+    <button class="subtab" data-ssub="controle">Controle de Anúncios</button>
     <button class="subtab" data-ssub="vendas">Vendas</button>
     <button class="subtab" data-ssub="relatorios">Relatórios</button>
   </div>
 
-  <!-- ============ ALVO ============ -->
+  <!-- ============ ALVO (cadastro + simulador) ============ -->
   <div id="shp-sub-alvo" class="shp-subpanel">
     <div class="ecard" style="border-color:var(--eaccent)">
       <h3 style="color:var(--eaccent)">Cadastro de anúncio Shopee</h3>
@@ -1800,9 +1822,12 @@
         <div class="kv"><b>Preço válido</b><span id="shp-sim-preco">—</span></div>
         <div class="kv"><b>Faixa</b><span id="shp-sim-faixa">—</span></div>
         <div class="kv"><b>Tarifa</b><span id="shp-sim-tarifa">—</span></div>
-        <div class="kv"><b>Líquido</b><span id="shp-sim-liq">—</span></div>
-        <div class="kv"><b>Margem s/ preço</b><span id="shp-sim-marg">—</span></div>
+        <div class="kv"><b>Colchão 6%</b><span id="shp-sim-colchao">—</span></div>
+        <div class="kv"><b>Imposto 4%</b><span id="shp-sim-imposto">—</span></div>
+        <div class="kv"><b>Lucro / item</b><span id="shp-sim-lucro">—</span></div>
+        <div class="kv"><b>Margem líquida</b><span id="shp-sim-marg">—</span> <span id="shp-sim-selo"></span></div>
       </div>
+      <div class="hintline" style="margin-top:6px">Simulador assume frete dif. = 0 (sem tabela de frete Shopee — diferença real entra na venda). Régua espelho do Editar ML: piso 10% LIBERADO/NEGADO.</div>
       <div class="warnline" id="shp-al-warn"></div>
       <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
         <button class="vbtn" id="shp-al-save">Salvar anúncio</button>
@@ -1810,19 +1835,38 @@
         <span class="hintline" id="shp-al-msg" style="margin:0"></span>
       </div>
     </div>
+  </div>
 
+  <!-- ============ ANÁLISE COMERCIAL (Igor · leitura) ============ -->
+  <div id="shp-sub-analise" class="shp-subpanel" style="display:none">
     <div class="ecard">
-      <h3>Anúncios ativos <span id="shp-al-count" style="color:var(--emuted2);text-transform:none;letter-spacing:0"></span></h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <h3 style="margin:0">Anúncios ativos <span id="shp-an-count" style="color:var(--emuted2);text-transform:none;letter-spacing:0"></span></h3>
+        <button class="vbtn sm" id="shp-an-refresh">Atualizar</button>
+      </div>
       <div class="tblwrap"><table class="rd-tbl"><thead><tr>
-        <th>Nº</th><th>Cod</th><th>Item</th><th>Produto</th><th>Praticado</th><th>Faixa</th><th>Tarifa</th><th>Margem</th><th></th>
-      </tr></thead><tbody id="shp-al-tbody"><tr><td colspan="9" style="color:var(--emuted)">Carregando…</td></tr></tbody></table></div>
+        <th>Nº</th><th>Cod</th><th>Item</th><th>Produto</th><th>Praticado</th><th>Margem</th><th>Histórico</th>
+      </tr></thead><tbody id="shp-an-tbody"><tr><td colspan="7" style="color:var(--emuted)">Carregando…</td></tr></tbody></table></div>
+      <div class="hintline">Verde + topo = alteração no histórico posterior à sua última leitura; abrir o histórico marca como lido. Ordem: última alteração primeiro.</div>
+    </div>
+  </div>
+
+  <!-- ============ CONTROLE DE ANÚNCIOS (Alexia) ============ -->
+  <div id="shp-sub-controle" class="shp-subpanel" style="display:none">
+    <div class="ecard">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <h3 style="margin:0">Controle de anúncios <span id="shp-ct-count" style="color:var(--emuted2);text-transform:none;letter-spacing:0"></span></h3>
+        <button class="vbtn sm" id="shp-ct-refresh">Atualizar</button>
+      </div>
+      <div id="shp-ct-list"><div style="color:var(--emuted);font-size:12.5px">Carregando…</div></div>
+      <div class="hintline">Editar exige motivo (registrado no histórico, append-only). Rito: Shopee primeiro, registro depois. Preço válido = promoção quando existe.</div>
     </div>
   </div>
 
   <!-- ============ VENDAS ============ -->
   <div id="shp-sub-vendas" class="shp-subpanel" style="display:none">
     <div class="ecard" style="border-color:var(--eaccent)">
-      <h3 style="color:var(--eaccent)">Lançar venda Shopee</h3>
+      <h3 style="color:var(--eaccent)">Lançar venda Shopee <span style="color:var(--emuted2);text-transform:none;letter-spacing:0;font-weight:400">· pedido com vários itens = um lançamento por item, mesmo nº do pedido</span></h3>
       <div class="vrow3" style="margin-bottom:2px">
         <div class="efield"><label>Nº do pedido *</label><input class="vinput mono" id="shp-vd-ped" placeholder="como na Central"></div>
         <div class="efield"><label>Data da venda *</label><input class="vinput mono" id="shp-vd-data" type="date"></div>
@@ -9873,8 +9917,10 @@ window.fiscal = (function(){
 // Termômetro ML, Controle da Alexia ou o Fiscal.
 // =====================================================================
 const shopeeTab={
-  loaded:false, subtab:'alvo', taxas:[], anuncios:[], custos:{}, vendas:[],
-  mes:null, mesRl:null, editId:null, prodAl:null, prodVd:null,
+  // BUILD 2026-09-15-A · paridade com o ML (reconstrucao do 26-W orfao sobre a base 11-C)
+  loaded:false, subtab:'alvo', taxas:[], anuncios:[], custos:{}, vendas:[], alteracoes:[], lido:{},
+  mes:null, mesRl:null, editId:null, ctlEditId:null, prodAl:null, prodVd:null, prodCt:null, histAviso:false,
+  FIXOS:{IMPOSTO:0.04, COLCHAO:0.06, PISO:10},
   _g:id=>document.getElementById(id),
   fmt:v=>Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
   esc:s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
@@ -9893,7 +9939,18 @@ const shopeeTab={
     const total=Math.round((preco*pct/100+Number(fx.taxa_fixa))*100)/100;
     return {pct,fixa:Number(fx.taxa_fixa),total,rotulo:fx.rotulo,min:Number(fx.faixa_min)};
   },
-  // fronteira: compara o líquido atual com o líquido no teto da faixa anterior
+  // ---------- MARGEM: unica conta do modulo (regua da casa, espelho da _simMargem do ML) ----------
+  // pv = preco valido (promocao governa) · frete dif = 0 no simulador (sem tabela de frete Shopee)
+  margemDe(pv,campanha,custo){
+    const t=this.tarifa(pv,campanha); if(!t||!(custo>=0)||!(pv>0)) return null;
+    const colchao=pv*this.FIXOS.COLCHAO, imposto=pv*this.FIXOS.IMPOSTO;
+    const lucro=pv-t.total-custo-colchao-imposto, pct=lucro/pv*100;
+    return {t,colchao,imposto,lucro,pct,libera:pct>=this.FIXOS.PISO};
+  },
+  seloHtml(m){ if(!m) return ''; return m.libera?'<span class="selo lib">LIBERADO</span>':'<span class="selo neg">NEGADO</span>'; },
+  quem(){ return (typeof state!=='undefined'&&state.user&&state.user.email)||null; },
+  pvDe(a){ return (a.preco_promocao&&Number(a.preco_promocao)>0)?Number(a.preco_promocao):Number(a.preco); },
+  // fronteira: compara o liquido atual com o liquido no teto da faixa anterior
   fronteira(preco,campanha){
     const cur=this.tarifa(preco,campanha); if(!cur) return null;
     if(preco<8) return {tipo:'red',msg:'Faixa de 50% do valor — abaixo de R$8 a venda é inviável. Precifique a partir de R$8.'};
@@ -9918,7 +9975,7 @@ const shopeeTab={
       ]);
       if(tx.error||an.error||vd.error) throw (tx.error||an.error||vd.error);
       this.taxas=tx.data||[]; this.anuncios=an.data||[]; this.vendas=vd.data||[];
-      await this.loadCustos();
+      await this.loadCustos(); await this.loadHist();
       this.loaded=true; this.renderAll();
       if(!this.taxas.length) this.toast('ecom_shopee_taxas vazia — aplique o SQL 16.',true);
     }catch(e){ this.toast('Erro ao carregar Shopee: '+(e.message||e),true); }
@@ -9928,7 +9985,19 @@ const shopeeTab={
     const {data}=await sb.from('ecom_produtos').select('codigo,custo').in('codigo',cods);
     (data||[]).forEach(p=>{ this.custos[p.codigo]=Number(p.custo); });
   },
-  renderAll(){ this.renderAnuncios(); this.renderVendas(); this.renderRelatorios(); this.sim(); },
+  // Historico (SQL 17): tolerante — se as tabelas/colunas divergirem, degrada com aviso e o resto vive
+  async loadHist(){
+    try{
+      const ha=await sb.from('ecom_shopee_anuncio_alteracao').select('*').order('criado_em',{ascending:false});
+      if(ha.error) throw ha.error; this.alteracoes=ha.data||[]; this.histAviso=false;
+    }catch(e){ this.alteracoes=[]; if(!this.histAviso){ this.histAviso=true; console.warn('shopee hist:',e.message||e); this.toast('Histórico Shopee indisponível ('+(e.message||e)+') — confira o SQL 17.',true);} }
+    try{
+      const hl=await sb.from('ecom_shopee_anuncio_lido').select('*');
+      if(!hl.error) (hl.data||[]).forEach(x=>{ if(x.anuncio_id!=null) this.lido[x.anuncio_id]=x.lido_em; });
+    }catch(e){ console.warn('shopee lido:',e.message||e); }
+  },
+  histDo(id){ return this.alteracoes.filter(h=>h.anuncio_id===id); },
+  renderAll(){ this.renderAnalise(); this.renderControle(); this.renderVendas(); this.renderRelatorios(); this.sim(); },
 
   // ---------- subnav ----------
   switchSub(s){ this.subtab=s;
@@ -9936,7 +10005,7 @@ const shopeeTab={
     document.querySelectorAll('#tab-shopee .shp-subpanel').forEach(p=>{ p.style.display=(p.id==='shp-sub-'+s)?'':'none'; });
   },
 
-  // ---------- ALVO ----------
+  // ---------- ALVO (cadastro + simulador) ----------
   async echoProduto(cod,elId,slot){
     const el=this._g(elId); el.className='hintline'; el.textContent='';
     this[slot]=null; cod=(cod||'').trim().toUpperCase(); if(!cod) return;
@@ -9944,24 +10013,26 @@ const shopeeTab={
     if(error){ el.className='hintline err'; el.textContent=error.message; return; }
     if(!data){ el.className='hintline err'; el.textContent='Código não encontrado ou inativo no Catálogo.'; return; }
     this[slot]=data; el.className='hintline ok'; el.textContent=data.produto+' · custo NF R$ '+this.fmt(data.custo);
-    if(slot==='prodAl') this.sim(); if(slot==='prodVd') this.sugerirTarifa();
+    if(slot==='prodAl') this.sim(); if(slot==='prodVd') this.sugerirTarifa(); if(slot==='prodCt') this.ctlSim();
   },
   precoValidoForm(){ const p=this.num(this._g('shp-al-preco').value), pr=this.num(this._g('shp-al-promo').value); return (pr>0)?pr:p; },
   sim(){
     const g=id=>this._g(id); if(!g('shp-sim-preco')) return;
     const camp=g('shp-al-camp').value==='1', pv=this.precoValidoForm(), warn=g('shp-al-warn');
     warn.className='warnline'; warn.textContent='';
-    if(!(pv>0)){ ['shp-sim-preco','shp-sim-faixa','shp-sim-tarifa','shp-sim-liq','shp-sim-marg'].forEach(i=>g(i).textContent='—'); return; }
-    const t=this.tarifa(pv,camp); if(!t){ g('shp-sim-faixa').textContent='sem tabela'; return; }
-    const liq=pv-t.total;
+    const zera=()=>['shp-sim-preco','shp-sim-faixa','shp-sim-tarifa','shp-sim-colchao','shp-sim-imposto','shp-sim-lucro','shp-sim-marg'].forEach(i=>g(i).textContent='—');
+    if(!(pv>0)){ zera(); g('shp-sim-selo').innerHTML=''; return; }
+    const t=this.tarifa(pv,camp); if(!t){ zera(); g('shp-sim-faixa').textContent='sem tabela'; g('shp-sim-selo').innerHTML=''; return; }
     g('shp-sim-preco').textContent='R$ '+this.fmt(pv)+(this.num(g('shp-al-promo').value)>0?' (promo)':'');
     g('shp-sim-faixa').textContent=t.rotulo;
     g('shp-sim-tarifa').textContent=t.pct.toLocaleString('pt-BR')+'% + R$'+this.fmt(t.fixa)+' = R$ '+this.fmt(t.total);
-    g('shp-sim-liq').textContent='R$ '+this.fmt(liq);
-    if(this.prodAl){ const m=(liq-Number(this.prodAl.custo))/pv*100;
-      g('shp-sim-marg').textContent=m.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
-      g('shp-sim-marg').className=m<0?'neg':''; }
-    else g('shp-sim-marg').textContent='informe o código';
+    g('shp-sim-colchao').textContent='R$ '+this.fmt(pv*this.FIXOS.COLCHAO);
+    g('shp-sim-imposto').textContent='R$ '+this.fmt(pv*this.FIXOS.IMPOSTO);
+    if(this.prodAl){ const m=this.margemDe(pv,camp,Number(this.prodAl.custo));
+      g('shp-sim-lucro').textContent='R$ '+this.fmt(m.lucro);
+      g('shp-sim-marg').textContent=m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
+      g('shp-sim-marg').className=m.lucro<0?'neg':''; g('shp-sim-selo').innerHTML=this.seloHtml(m); }
+    else { g('shp-sim-lucro').textContent='—'; g('shp-sim-marg').textContent='informe o código'; g('shp-sim-selo').innerHTML=''; }
     const f=this.fronteira(pv,camp); if(f){ warn.className='warnline '+f.tipo; warn.textContent=f.msg; }
   },
   async salvarAnuncio(){
@@ -9983,45 +10054,154 @@ const shopeeTab={
     ['shp-al-cod','shp-al-item','shp-al-tit','shp-al-preco','shp-al-promo','shp-al-pub'].forEach(i=>this._g(i).value='');
     this._g('shp-al-camp').value='0'; this._g('shp-al-echo').textContent=''; this._g('shp-al-echo').className='hintline';
     this._g('shp-al-cancel').style.display='none'; this._g('shp-al-save').textContent='Salvar anúncio'; this.sim(); },
-  editarAnuncio(id){ const a=this.anuncios.find(x=>x.id===id); if(!a) return;
-    this.editId=id; const g=i=>this._g(i);
-    g('shp-al-cod').value=a.codigo; g('shp-al-item').value=a.shopee_item_id||''; g('shp-al-tit').value=a.titulo;
-    g('shp-al-preco').value=this.fmt(a.preco); g('shp-al-promo').value=a.preco_promocao?this.fmt(a.preco_promocao):'';
-    g('shp-al-camp').value=a.campanha?'1':'0'; g('shp-al-pub').value=a.data_publicacao||'';
-    g('shp-al-cancel').style.display=''; g('shp-al-save').textContent='Atualizar anúncio';
-    this.echoProduto(a.codigo,'shp-al-echo','prodAl');
-    this.switchSub('alvo'); window.scrollTo({top:0,behavior:'smooth'}); },
-  async encerrarAnuncio(id){ const a=this.anuncios.find(x=>x.id===id); if(!a) return;
-    if(!confirm('Encerrar o anúncio "'+a.titulo+'"? Ele sai da lista de ativos (histórico preservado no banco).')) return;
-    const {error}=await sb.from('ecom_shopee_anuncios').update({ativo:false}).eq('id',id);
-    if(error){ this.toast(error.message,true); return; }
-    this.toast('Anúncio encerrado.'); await this.reloadAnuncios(); },
   async reloadAnuncios(){ const {data,error}=await sb.from('ecom_shopee_anuncios').select('*').eq('ativo',true).order('criado_em');
-    if(!error){ this.anuncios=data||[]; await this.loadCustos(); this.renderAnuncios(); } },
-  renderAnuncios(){
-    const tb=this._g('shp-al-tbody'); if(!tb) return;
-    this._g('shp-al-count').textContent=this.anuncios.length?('· '+this.anuncios.length):'';
-    if(!this.anuncios.length){ tb.innerHTML='<tr><td colspan="9" style="color:var(--emuted)">Nenhum anúncio ativo.</td></tr>'; return; }
-    tb.innerHTML=this.anuncios.map((a,i)=>{
-      const pv=(a.preco_promocao&&Number(a.preco_promocao)>0)?Number(a.preco_promocao):Number(a.preco);
-      const t=this.tarifa(pv,!!a.campanha); const custo=this.custos[a.codigo];
-      let marg='—',mcls='';
-      if(t!=null&&custo!=null){ const m=(pv-t.total-custo)/pv*100; marg=m.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%'; mcls=m<0?'neg':''; }
-      return '<tr><td class="n">'+(i+1)+'</td><td class="n">'+this.esc(a.codigo)+'</td><td class="n">'+this.esc(a.shopee_item_id||'—')+'</td>'
-        +'<td>'+this.esc(a.titulo)+(a.campanha?' <span class="chip prazo-hoje" title="campanha de destaque">+2,5%</span>':'')+'</td>'
-        +'<td class="n">R$ '+this.fmt(pv)+(a.preco_promocao?' <span style="color:var(--emuted2)">promo</span>':'')+'</td>'
-        +'<td style="white-space:nowrap;color:var(--emuted)">'+(t?this.esc(t.rotulo.split('·')[1]||t.rotulo):'—')+'</td>'
-        +'<td class="n">'+(t?('R$ '+this.fmt(t.total)):'—')+'</td>'
-        +'<td class="n '+mcls+'">'+marg+'</td>'
-        +'<td style="white-space:nowrap"><button class="vbtn sm" onclick="shopeeTab.editarAnuncio('+a.id+')">Editar</button> '
-        +'<button class="vbtn sm danger" onclick="shopeeTab.encerrarAnuncio('+a.id+')">Encerrar</button></td></tr>';
+    if(!error){ this.anuncios=data||[]; await this.loadCustos(); await this.loadHist(); this.renderAnalise(); this.renderControle(); } },
+
+  // ---------- ANÁLISE COMERCIAL (Igor · leitura; verde+topo = alteracao apos ultima leitura) ----------
+  _anOrdenados(){
+    const ult=a=>{ const h=this.histDo(a.id); return h.length?h[0].criado_em:''; };
+    const verde=a=>{ const h=this.histDo(a.id); if(!h.length) return false; const l=this.lido[a.id]; return !l||h[0].criado_em>l; };
+    return this.anuncios.slice().sort((a,b)=>{
+      const va=verde(a)?1:0, vb=verde(b)?1:0; if(va!==vb) return vb-va;
+      const ua=ult(a), ub=ult(b); if(ua!==ub) return ua<ub?1:-1;
+      return (a.id||0)-(b.id||0);
+    }).map(a=>({a,verde:verde(a)}));
+  },
+  renderAnalise(){
+    const tb=this._g('shp-an-tbody'); if(!tb) return;
+    this._g('shp-an-count').textContent=this.anuncios.length?('· '+this.anuncios.length):'';
+    if(!this.anuncios.length){ tb.innerHTML='<tr><td colspan="7" style="color:var(--emuted)">Nenhum anúncio ativo.</td></tr>'; return; }
+    tb.innerHTML=this._anOrdenados().map((r,i)=>{
+      const a=r.a, pv=this.pvDe(a), m=this.margemDe(pv,!!a.campanha,this.custos[a.codigo]);
+      const marg=m?(m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% '+this.seloHtml(m)):'—';
+      const n=this.histDo(a.id).length;
+      return '<tr class="'+(r.verde?'verde':'')+'" data-anrow="'+a.id+'"><td class="n">'+(i+1)+'</td>'
+        +'<td class="n">'+this.esc(a.codigo)+'</td><td class="n">'+this.esc(a.shopee_item_id||'—')+'</td>'
+        +'<td>'+this.esc(a.titulo)+'</td>'
+        +'<td class="n">R$ '+this.fmt(pv)+(a.preco_promocao?' <span style="color:var(--emuted2)">(promo)</span>':'')+(a.campanha?' <span style="color:var(--eamber)">⚑</span>':'')+'</td>'
+        +'<td class="n">'+marg+'</td>'
+        +'<td><button class="vbtn sm" onclick="shopeeTab.toggleHist('+a.id+',\'an\')">Histórico ('+n+')</button></td></tr>'
+        +'<tr data-anhist="'+a.id+'" style="display:none"><td colspan="7"><div class="histbox">'+this.histHtml(a)+'</div></td></tr>';
     }).join('');
+  },
+  histHtml(a){
+    const h=this.histDo(a.id);
+    const dias=a.data_publicacao?Math.max(0,Math.round((Date.parse(this.hojeLocal())-Date.parse(a.data_publicacao))/86400000)):null;
+    const vendas=this.vendas.filter(v=>v.produto_codigo===a.codigo&&v.status!=='cancelado'&&v.status!=='devolvido').reduce((s,v)=>s+Number(v.quantidade||0),0);
+    let out='<div class="hln" style="color:var(--emuted)">'+(dias!=null?dias+' dia(s) no ar · ':'')+vendas+' venda(s)</div>';
+    if(!h.length) return out+'<div class="hln" style="color:var(--emuted2)">Sem alterações registradas.</div>';
+    out+=h.map(x=>{ const dt=(x.criado_em||'').slice(0,16).replace('T',' ');
+      const de=x.preco_anterior!=null?('R$ '+this.fmt(x.preco_anterior)):null, pa=x.preco_novo!=null?('R$ '+this.fmt(x.preco_novo)):null;
+      return '<div class="hln"><span class="dt">'+dt+'</span><span class="cp">'+this.esc(x.campo||'')+'</span>'
+        +(de||pa?('<span class="n" style="font-family:var(--emono)">'+(de||'—')+' → '+(pa||'—')+'</span> · '):'')
+        +this.esc(x.motivo||'')+'</div>'; }).join('');
+    return out;
+  },
+  async toggleHist(id,origem){
+    const sel=origem==='an'?'[data-anhist="'+id+'"]':'[data-cthist="'+id+'"]';
+    const row=document.querySelector('#tab-shopee '+sel); if(!row) return;
+    const abre=row.style.display==='none'; row.style.display=abre?'':'none';
+    if(abre&&origem==='an'){
+      const agora=new Date().toISOString(); this.lido[id]=agora;
+      const tr=document.querySelector('#tab-shopee [data-anrow="'+id+'"]'); if(tr) tr.classList.remove('verde');
+      try{ const r=await sb.from('ecom_shopee_anuncio_lido').upsert({anuncio_id:id,lido_em:agora,por:this.quem()},{onConflict:'anuncio_id'});
+        if(r.error) console.warn('shopee lido:',r.error.message); }catch(e){ console.warn('shopee lido:',e.message); }
+    }
+  },
+
+  // ---------- CONTROLE DE ANÚNCIOS (Alexia · Editar com motivo, gate ao vivo, Encerrar) ----------
+  renderControle(){
+    const box=this._g('shp-ct-list'); if(!box) return;
+    this._g('shp-ct-count').textContent=this.anuncios.length?('· '+this.anuncios.length+' ativo(s)'):'';
+    if(!this.anuncios.length){ box.innerHTML='<div style="color:var(--emuted);font-size:12.5px">Nenhum anúncio ativo.</div>'; return; }
+    box.innerHTML=this.anuncios.map(a=>{
+      const pv=this.pvDe(a), m=this.margemDe(pv,!!a.campanha,this.custos[a.codigo]);
+      const marg=m?(m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% '+this.seloHtml(m)):'—';
+      const n=this.histDo(a.id).length;
+      const edit=this.ctlEditId===a.id?this.ctlEditHtml(a):'';
+      return '<div class="ctcard" data-ctcard="'+a.id+'">'
+        +'<div class="t1"><span>'+this.esc(a.titulo)+'</span><span class="n" style="font-family:var(--emono)">R$ '+this.fmt(pv)+(a.preco_promocao?' (promo)':'')+(a.campanha?' ⚑':'')+' · '+marg+'</span></div>'
+        +'<div class="t2">'+this.esc(a.codigo)+' · Item '+this.esc(a.shopee_item_id||'—')+'</div>'
+        +'<div class="acts"><button class="vbtn sm" onclick="shopeeTab.ctlEditar('+a.id+')">'+(this.ctlEditId===a.id?'Fechar edição':'Editar')+'</button>'
+        +'<button class="vbtn sm" onclick="shopeeTab.toggleHist('+a.id+',\'ct\')">Histórico ('+n+')</button>'
+        +'<button class="vbtn sm danger" onclick="shopeeTab.ctlEncerrar('+a.id+')">Encerrar</button></div>'
+        +'<div data-cthist="'+a.id+'" style="display:none;margin-top:8px"><div class="histbox">'+this.histHtml(a)+'</div></div>'
+        +edit+'</div>';
+    }).join('');
+    if(this.ctlEditId!=null){ this.ctlSim(); const a=this.anuncios.find(x=>x.id===this.ctlEditId); if(a) this.echoProduto(a.codigo,'shp-ct-echo','prodCt'); }
+  },
+  ctlEditHtml(a){
+    return '<div class="ctedit">'
+      +'<div class="vrow3" style="margin-bottom:2px">'
+      +'<div class="efield"><label>Preço (R$)</label><input class="vinput mono" id="shp-ct-preco" inputmode="decimal" value="'+this.fmt(a.preco)+'"></div>'
+      +'<div class="efield"><label>Preço promoção (R$)</label><input class="vinput mono" id="shp-ct-promo" inputmode="decimal" value="'+(a.preco_promocao?this.fmt(a.preco_promocao):'')+'" placeholder="vazio = sem promoção"></div>'
+      +'<div class="efield"><label>Campanha (+2,5%)</label><select class="vinput" id="shp-ct-camp"><option value="0"'+(a.campanha?'':' selected')+'>Não</option><option value="1"'+(a.campanha?' selected':'')+'>Sim</option></select></div>'
+      +'</div>'
+      +'<div class="hintline" id="shp-ct-echo"></div>'
+      +'<div class="simbox"><div class="kv"><b>Margem no preço válido</b><span id="shp-ct-marg">—</span> <span id="shp-ct-selo"></span></div><div class="kv"><b>Lucro / item</b><span id="shp-ct-lucro">—</span></div></div>'
+      +'<div class="efield" style="margin-top:8px"><label>Motivo da alteração *</label><input class="vinput" id="shp-ct-motivo" placeholder="obrigatório — poucas palavras"></div>'
+      +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center"><button class="vbtn" id="shp-ct-save" onclick="shopeeTab.ctlSalvar()">Salvar alteração</button><span class="hintline" id="shp-ct-msg" style="margin:0"></span></div>'
+      +'</div>';
+  },
+  ctlEditar(id){ this.ctlEditId=(this.ctlEditId===id)?null:id; this.prodCt=null; this.renderControle(); },
+  ctlSim(){
+    const g=i=>this._g(i); if(!g('shp-ct-preco')) return;
+    const a=this.anuncios.find(x=>x.id===this.ctlEditId); if(!a) return;
+    const p=this.num(g('shp-ct-preco').value), pr=this.num(g('shp-ct-promo').value), camp=g('shp-ct-camp').value==='1';
+    const pv=(pr>0)?pr:p, custo=this.prodCt?Number(this.prodCt.custo):this.custos[a.codigo];
+    const m=(pv>0)?this.margemDe(pv,camp,custo):null;
+    g('shp-ct-marg').textContent=m?(m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%'):'—';
+    g('shp-ct-lucro').textContent=m?('R$ '+this.fmt(m.lucro)):'—';
+    g('shp-ct-selo').innerHTML=this.seloHtml(m);
+  },
+  async ctlSalvar(){
+    const g=i=>this._g(i), msg=g('shp-ct-msg'); msg.className='hintline'; msg.textContent='';
+    const a=this.anuncios.find(x=>x.id===this.ctlEditId); if(!a) return;
+    const p=this.num(g('shp-ct-preco').value), pr=this.num(g('shp-ct-promo').value), camp=g('shp-ct-camp').value==='1';
+    const motivo=(g('shp-ct-motivo').value||'').trim();
+    if(!(p>0)){ msg.className='hintline err'; msg.textContent='Preço inválido.'; return; }
+    if(pr>0&&pr>=p){ msg.className='hintline err'; msg.textContent='Promoção deve ser menor que o preço cheio.'; return; }
+    const mudouPreco=Math.abs(p-Number(a.preco))>0.004;
+    const promoAnt=a.preco_promocao?Number(a.preco_promocao):null, promoNova=(pr>0)?pr:null;
+    const mudouPromo=(promoAnt==null)!==(promoNova==null)||(promoAnt!=null&&promoNova!=null&&Math.abs(promoNova-promoAnt)>0.004);
+    const mudouCamp=camp!==!!a.campanha;
+    if(!mudouPreco&&!mudouPromo&&!mudouCamp){ msg.className='hintline err'; msg.textContent='Nada mudou.'; return; }
+    if(!motivo){ msg.className='hintline err'; msg.textContent='Motivo é obrigatório.'; return; }
+    const pv=(promoNova!=null)?promoNova:p, m=this.margemDe(pv,camp,this.custos[a.codigo]);
+    if(m&&!m.libera&&!confirm('Margem '+m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% — ABAIXO do piso de 10% (NEGADO). Salvar mesmo assim?')) return;
+    try{
+      const up={preco:p,preco_promocao:promoNova,campanha:camp};
+      const r=await sb.from('ecom_shopee_anuncios').update(up).eq('id',a.id); if(r.error) throw r.error;
+      const base={anuncio_id:a.id,codigo:a.codigo,shopee_item_id:a.shopee_item_id||null,por:this.quem(),
+        margem_pior_zona_pct:m?Math.round(m.pct*100)/100:null};
+      const rows=[];
+      if(mudouPreco) rows.push({...base,campo:'preco',preco_anterior:Number(a.preco),preco_novo:p,motivo});
+      if(mudouPromo) rows.push({...base,campo:'promocao',preco_anterior:promoAnt,preco_novo:promoNova,motivo});
+      if(mudouCamp) rows.push({...base,campo:'campanha',preco_anterior:null,preco_novo:null,motivo:(camp?'ENTROU em campanha destaque':'SAIU de campanha destaque')+' — '+motivo});
+      if(rows.length){ const rl=await sb.from('ecom_shopee_anuncio_alteracao').insert(rows);
+        if(rl.error){ this.toast('Alteração salva, mas o histórico falhou: '+rl.error.message,true); } }
+      this.toast('Alteração registrada.'); this.ctlEditId=null; this.prodCt=null; await this.reloadAnuncios();
+    }catch(e){ msg.className='hintline err'; msg.textContent=e.message||String(e); }
+  },
+  async ctlEncerrar(id){ const a=this.anuncios.find(x=>x.id===id); if(!a) return;
+    const motivo=prompt('Encerrar "'+a.titulo+'"? Informe o motivo (obrigatório):');
+    if(motivo==null) return; if(!motivo.trim()){ this.toast('Motivo é obrigatório.',true); return; }
+    try{
+      const {error}=await sb.from('ecom_shopee_anuncios').update({ativo:false}).eq('id',id); if(error) throw error;
+      const mEnc=this.margemDe(this.pvDe(a),!!a.campanha,this.custos[a.codigo]);
+      const rl=await sb.from('ecom_shopee_anuncio_alteracao').insert({anuncio_id:id,codigo:a.codigo,shopee_item_id:a.shopee_item_id||null,por:this.quem(),
+        margem_pior_zona_pct:mEnc?Math.round(mEnc.pct*100)/100:null,campo:'encerrado',preco_anterior:null,preco_novo:null,motivo:motivo.trim()});
+      if(rl.error) this.toast('Encerrado, mas o histórico falhou: '+rl.error.message,true); else this.toast('Anúncio encerrado.');
+      await this.reloadAnuncios();
+    }catch(e){ this.toast(e.message||String(e),true); }
   },
 
   // ---------- VENDAS ----------
   sugerirTarifa(){
     const g=i=>this._g(i), q=parseInt(g('shp-vd-qtd').value)||1, p=this.num(g('shp-vd-preco').value);
-    if(p>0){ const t=this.tarifa(p,false); if(t) g('shp-vd-tarifa').value=this.fmt(t.total*q); }
+    const cod=(g('shp-vd-cod').value||'').trim().toUpperCase();
+    const an=this.anuncios.find(a=>a.codigo===cod);
+    if(p>0){ const t=this.tarifa(p,!!(an&&an.campanha)); if(t) g('shp-vd-tarifa').value=this.fmt(t.total*q); }
   },
   async lancarVenda(){
     const g=i=>this._g(i), msg=g('shp-vd-msg'); msg.className='hintline'; msg.textContent='';
@@ -10030,6 +10210,7 @@ const shopeeTab={
     const qtd=parseInt(g('shp-vd-qtd').value)||0, preco=this.num(g('shp-vd-preco').value);
     if(!ped||!data||!cod||!(qtd>0)||!(preco>0)){ msg.className='hintline err'; msg.textContent='Pedido, data, código, quantidade e preço são obrigatórios.'; return; }
     if(!this.prodVd||this.prodVd.codigo!==cod){ msg.className='hintline err'; msg.textContent='Valide o código no Catálogo (produto ativo).'; return; }
+    if(this.vendas.some(v=>v.pedido_id===ped&&v.produto_codigo===cod)&&!confirm('Já existe lançamento deste produto no pedido '+ped+'. Lançar mesmo assim?')) return;
     const tarifa=this.num(g('shp-vd-tarifa').value); const fdif=this.num(g('shp-vd-fretedif').value)||0;
     const custoU=Number(this.prodVd.custo), receita=Math.round(preco*qtd*100)/100;
     const an=this.anuncios.find(a=>a.codigo===cod);
@@ -10043,56 +10224,67 @@ const shopeeTab={
     try{
       const {error}=await sb.from('ecom_shopee_vendas').insert(dados); if(error) throw error;
       this.toast('Venda lançada.');
-      ['shp-vd-ped','shp-vd-preco','shp-vd-comp','shp-vd-obs','shp-vd-tarifa','shp-vd-prazo'].forEach(i=>g(i).value='');
+      ['shp-vd-cod','shp-vd-preco','shp-vd-obs','shp-vd-tarifa'].forEach(i=>g(i).value='');
       g('shp-vd-qtd').value='1'; g('shp-vd-fretedif').value='0,00';
-      await this.reloadVendas();
+      g('shp-vd-echo').textContent='Pedido '+ped+' mantido — lance o próximo item ou limpe o nº do pedido.'; g('shp-vd-echo').className='hintline ok';
+      this.prodVd=null; await this.reloadVendas();
     }catch(e){ msg.className='hintline err'; msg.textContent=e.message||String(e); }
   },
   async reloadVendas(){ const {data,error}=await sb.from('ecom_shopee_vendas').select('*').order('data_solicitacao',{ascending:false});
-    if(!error){ this.vendas=data||[]; this.renderVendas(); this.renderRelatorios(); } },
+    if(!error){ this.vendas=data||[]; this.renderVendas(); this.renderRelatorios(); this.renderAnalise(); } },
   async setStatus(id,st){ const lbl={enviado:'ENVIADO',entregue:'ENTREGUE',cancelado:'CANCELADO',devolvido:'DEVOLVIDO'};
-    if((st==='cancelado'||st==='devolvido')&&!confirm('Marcar pedido como '+lbl[st]+'?')) return;
+    if((st==='cancelado'||st==='devolvido')&&!confirm('Marcar este item como '+lbl[st]+'?')) return;
     const {error}=await sb.from('ecom_shopee_vendas').update({status:st}).eq('id',id);
     if(error){ this.toast(error.message,true); return; } this.toast('Status: '+lbl[st]+'.'); await this.reloadVendas(); },
-  async liberar(id){ if(!confirm('Confirmar: valor deste pedido LIBERADO na Carteira do Vendedor (ShopeePay)?')) return;
+  async liberar(id){ if(!confirm('Confirmar: valor deste item LIBERADO na Carteira do Vendedor (ShopeePay)?')) return;
     const {error}=await sb.from('ecom_shopee_vendas').update({liberado_carteira:true,data_liberacao:this.hojeLocal()}).eq('id',id);
     if(error){ this.toast(error.message,true); return; } this.toast('Liberação registrada.'); await this.reloadVendas(); },
   vendasDoMes(m){ return this.vendas.filter(v=>String(v.data_solicitacao||'').slice(0,7)===m); },
+  // fila agrupada por pedido — um pedido pode ter varios itens (uma linha da tabela por item)
   renderVendas(){
     const list=this._g('shp-vd-list'); if(!list) return;
     this._g('shp-vd-meslabel').textContent=this.mesLabel(this.mes);
-    const vs=this.vendasDoMes(this.mes); this._g('shp-vd-count').textContent=vs.length?('· '+vs.length):'';
-    if(!vs.length){ list.innerHTML='<div style="color:var(--emuted);font-size:12.5px">Nenhum pedido no mês.</div>'; return; }
+    const vs=this.vendasDoMes(this.mes);
+    const grupos=[]; const idx={};
+    vs.forEach(v=>{ const k=v.pedido_id||('#'+v.id); if(idx[k]==null){ idx[k]=grupos.length; grupos.push({ped:k,itens:[]}); } grupos[idx[k]].itens.push(v); });
+    this._g('shp-vd-count').textContent=grupos.length?('· '+grupos.length+' pedido(s) · '+vs.length+' item(ns)'):'';
+    if(!grupos.length){ list.innerHTML='<div style="color:var(--emuted);font-size:12.5px">Nenhum pedido no mês.</div>'; return; }
     const hoje=this.hojeLocal();
-    list.innerHTML=vs.map(v=>{
-      const liq=Number(v.receita_bruta)-Number(v.comissao_valor||0)-Number(v.frete_diferenca||0);
+    list.innerHTML=grupos.map(gp=>{
+      const v0=gp.itens[0];
+      const tot=gp.itens.reduce((s,v)=>s+Number(v.receita_bruta),0);
+      const totLiq=gp.itens.reduce((s,v)=>s+Number(v.receita_bruta)-Number(v.comissao_valor||0)-Number(v.frete_diferenca||0),0);
       let prazo='';
-      if(v.status==='a_enviar'&&v.prazo_envio){
-        if(hoje>v.prazo_envio) prazo='<span class="chip prazo-atrasado">ENVIO ATRASADO · '+v.prazo_envio.slice(8,10)+'/'+v.prazo_envio.slice(5,7)+'</span>';
-        else if(hoje===v.prazo_envio) prazo='<span class="chip prazo-hoje">ENVIA HOJE</span>';
-        else prazo='<span class="chip nlib">envio até '+v.prazo_envio.slice(8,10)+'/'+v.prazo_envio.slice(5,7)+'</span>';
-      }
-      const lib=(v.status==='enviado'||v.status==='entregue')?(v.liberado_carteira
-        ?'<span class="chip lib">liberado '+(v.data_liberacao?v.data_liberacao.slice(8,10)+'/'+v.data_liberacao.slice(5,7):'')+'</span>'
-        :'<span class="chip nlib">não liberado</span>'):'';
-      const acts=[];
-      if(v.status==='a_enviar') acts.push('<button class="vbtn sm" onclick="shopeeTab.setStatus('+v.id+',\'enviado\')">Enviado</button>');
-      if(v.status==='enviado') acts.push('<button class="vbtn sm" onclick="shopeeTab.setStatus('+v.id+',\'entregue\')">Entregue</button>');
-      if((v.status==='enviado'||v.status==='entregue')&&!v.liberado_carteira) acts.push('<button class="vbtn sm" onclick="shopeeTab.liberar('+v.id+')">Liberado na carteira</button>');
-      if(v.status!=='cancelado'&&v.status!=='devolvido'){
-        acts.push('<button class="vbtn sm danger" onclick="shopeeTab.setStatus('+v.id+',\'devolvido\')">Devolvido</button>');
-        if(v.status==='a_enviar') acts.push('<button class="vbtn sm danger" onclick="shopeeTab.setStatus('+v.id+',\'cancelado\')">Cancelar</button>');
-      }
-      return '<div class="vli"><div class="top"><span class="ped">#'+this.esc(v.pedido_id)+'</span>'
-        +'<span><span class="chip st-'+v.status+'">'+v.status.replace('_',' ')+'</span> '+prazo+' '+lib+'</span></div>'
-        +'<div class="mid">'+this.esc(v.produto||'')+' <span style="color:var(--emuted2)">('+this.esc(v.produto_codigo||'')+')</span> · '
-        +v.quantidade+' × R$ '+this.fmt(v.preco_unitario)+' · '+(v.data_solicitacao?v.data_solicitacao.slice(8,10)+'/'+v.data_solicitacao.slice(5,7):'')
-        +(v.uf?' · '+this.esc(v.uf):'')+'</div>'
-        +'<div class="money"><span>Receita <b>R$ '+this.fmt(v.receita_bruta)+'</b></span>'
-        +'<span>Tarifa <b>R$ '+this.fmt(v.comissao_valor||0)+'</b></span>'
-        +(Number(v.frete_diferenca)>0?'<span>Frete dif. <b>R$ '+this.fmt(v.frete_diferenca)+'</b></span>':'')
-        +'<span>Líquido <b>R$ '+this.fmt(liq)+'</b></span></div>'
-        +(acts.length?'<div class="acts">'+acts.join(' ')+'</div>':'')+'</div>';
+      const abertos=gp.itens.filter(v=>v.status==='a_enviar'&&v.prazo_envio);
+      if(abertos.length){ const pmin=abertos.map(v=>v.prazo_envio).sort()[0];
+        if(hoje>pmin) prazo='<span class="chip prazo-atrasado">ENVIO ATRASADO · '+pmin.slice(8,10)+'/'+pmin.slice(5,7)+'</span>';
+        else if(hoje===pmin) prazo='<span class="chip prazo-hoje">ENVIA HOJE</span>';
+        else prazo='<span class="chip nlib">envio até '+pmin.slice(8,10)+'/'+pmin.slice(5,7)+'</span>'; }
+      const linhas=gp.itens.map(v=>{
+        const liq=Number(v.receita_bruta)-Number(v.comissao_valor||0)-Number(v.frete_diferenca||0);
+        const lib=(v.status==='enviado'||v.status==='entregue')?(v.liberado_carteira
+          ?'<span class="chip lib">liberado '+(v.data_liberacao?v.data_liberacao.slice(8,10)+'/'+v.data_liberacao.slice(5,7):'')+'</span>'
+          :'<span class="chip nlib">não liberado</span>'):'';
+        const acts=[];
+        if(v.status==='a_enviar') acts.push('<button class="vbtn sm" onclick="shopeeTab.setStatus('+v.id+',\'enviado\')">Enviado</button>');
+        if(v.status==='enviado') acts.push('<button class="vbtn sm" onclick="shopeeTab.setStatus('+v.id+',\'entregue\')">Entregue</button>');
+        if((v.status==='enviado'||v.status==='entregue')&&!v.liberado_carteira) acts.push('<button class="vbtn sm" onclick="shopeeTab.liberar('+v.id+')">Liberado na carteira</button>');
+        if(v.status!=='cancelado'&&v.status!=='devolvido'){
+          acts.push('<button class="vbtn sm danger" onclick="shopeeTab.setStatus('+v.id+',\'devolvido\')">Devolvido</button>');
+          if(v.status==='a_enviar') acts.push('<button class="vbtn sm danger" onclick="shopeeTab.setStatus('+v.id+',\'cancelado\')">Cancelar</button>');
+        }
+        return '<div class="itemln"><div class="mid" style="color:var(--etxt)">'+this.esc(v.produto||'')+' <span style="color:var(--emuted2)">('+this.esc(v.produto_codigo||'')+')</span> · '
+          +v.quantidade+' × R$ '+this.fmt(v.preco_unitario)+' <span class="chip st-'+v.status+'">'+String(v.status).replace('_',' ')+'</span> '+lib+'</div>'
+          +'<div class="money"><span>Receita <b>R$ '+this.fmt(v.receita_bruta)+'</b></span>'
+          +'<span>Tarifa <b>R$ '+this.fmt(v.comissao_valor||0)+'</b></span>'
+          +(Number(v.frete_diferenca)>0?'<span>Frete dif. <b>R$ '+this.fmt(v.frete_diferenca)+'</b></span>':'')
+          +'<span>Líquido <b>R$ '+this.fmt(liq)+'</b></span></div>'
+          +(acts.length?'<div class="acts">'+acts.join(' ')+'</div>':'')+'</div>';
+      }).join('');
+      return '<div class="vli"><div class="top"><span class="ped">#'+this.esc(gp.ped)+'</span>'
+        +'<span>'+prazo+' <span style="color:var(--emuted);font-size:12px">'+(v0.data_solicitacao?v0.data_solicitacao.slice(8,10)+'/'+v0.data_solicitacao.slice(5,7):'')+(v0.uf?' · '+this.esc(v0.uf):'')+'</span></span></div>'
+        +(gp.itens.length>1?'<div class="mid">'+gp.itens.length+' itens · Receita R$ '+this.fmt(tot)+' · Líquido R$ '+this.fmt(totLiq)+'</div>':'')
+        +linhas+'</div>';
     }).join('');
   },
 
@@ -10100,7 +10292,7 @@ const shopeeTab={
   renderRelatorios(){
     const trm=this._g('shp-rl-trm'); if(!trm) return;
     this._g('shp-rl-meslabel').textContent=this.mesLabel(this.mesRl);
-    const IMPOSTO_PCT=4; // mesma régua do razão (Simples 4% sobre o faturado)
+    const IMPOSTO_PCT=this.FIXOS.IMPOSTO*100, COLCHAO_PCT=this.FIXOS.COLCHAO*100;
     const vs=this.vendasDoMes(this.mesRl);
     const ok=vs.filter(v=>v.status!=='cancelado'&&v.status!=='devolvido');
     const nCanc=vs.filter(v=>v.status==='cancelado').length, nDev=vs.filter(v=>v.status==='devolvido').length;
@@ -10108,18 +10300,22 @@ const shopeeTab={
     const tarifas=ok.reduce((s,v)=>s+Number(v.comissao_valor||0),0);
     const fdif=ok.reduce((s,v)=>s+Number(v.frete_diferenca||0),0);
     const custos=ok.reduce((s,v)=>s+Number(v.custo_total||0),0);
-    const imposto=receita*IMPOSTO_PCT/100;
+    const imposto=receita*this.FIXOS.IMPOSTO;
     const lucro=receita-tarifas-fdif-custos-imposto;
+    const colchao=receita*this.FIXOS.COLCHAO;
+    const amortecido=lucro-colchao;
     const F=v=>'R$ '+this.fmt(v);
     trm.querySelector('tbody').innerHTML=
-      '<tr><td>Pedidos válidos</td><td class="n">'+ok.length+'</td></tr>'
+      '<tr><td>Pedidos válidos (itens)</td><td class="n">'+ok.length+'</td></tr>'
       +'<tr><td>Receita bruta</td><td class="n">'+F(receita)+'</td></tr>'
       +'<tr><td>(−) Tarifas Shopee</td><td class="n">'+F(tarifas)+'</td></tr>'
       +'<tr><td>(−) Frete além do subsídio</td><td class="n">'+F(fdif)+'</td></tr>'
       +'<tr><td>(−) Custo das mercadorias</td><td class="n">'+F(custos)+'</td></tr>'
       +'<tr><td>(−) Imposto ('+IMPOSTO_PCT+'% · régua do razão)</td><td class="n">'+F(imposto)+'</td></tr>'
-      +'<tr class="big"><td>LUCRO DO MÊS · SHOPEE</td><td class="n '+(lucro<0?'neg':'pos')+'">'+F(lucro)+'</td></tr>'
-      +'<tr><td>Margem média s/ receita</td><td class="n">'+(receita>0?(lucro/receita*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%':'—')+'</td></tr>';
+      +'<tr><td>Lucro antes do colchão</td><td class="n '+(lucro<0?'neg':'')+'">'+F(lucro)+'</td></tr>'
+      +'<tr><td>(−) Colchão ('+COLCHAO_PCT+'% da receita · reserva da casa)</td><td class="n">'+F(colchao)+'</td></tr>'
+      +'<tr class="big"><td>RESULTADO AMORTECIDO · SHOPEE</td><td class="n '+(amortecido<0?'neg':'pos')+'">'+F(amortecido)+'</td></tr>'
+      +'<tr><td>Margem média s/ receita (amortecida)</td><td class="n">'+(receita>0?(amortecido/receita*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%':'—')+'</td></tr>';
     this._g('shp-rl-nota').textContent=(nCanc||nDev)
       ?('Fora do resultado: '+nCanc+' cancelado(s), '+nDev+' devolvido(s). Convenção v1: devolvido sai do mês inteiro (custo e receita) — mais duro que o razão ML, por desenho.')
       :'Cancelados e devolvidos ficam fora do resultado (convenção v1).';
@@ -10130,8 +10326,8 @@ const shopeeTab={
     const aEnv=this.vendas.filter(v=>v.status==='a_enviar');
     const preso=presas.reduce((s,v)=>s+liqDe(v),0), fut=aEnv.reduce((s,v)=>s+liqDe(v),0);
     cap.querySelector('tbody').innerHTML=
-      '<tr><td>Preso no escrow (enviado/entregue, não liberado)</td><td class="n">R$ '+this.fmt(preso)+' · '+presas.length+' ped.</td></tr>'
-      +'<tr><td>A enviar (ainda não expedido)</td><td class="n">R$ '+this.fmt(fut)+' · '+aEnv.length+' ped.</td></tr>';
+      '<tr><td>Preso no escrow (enviado/entregue, não liberado)</td><td class="n">R$ '+this.fmt(preso)+' · '+presas.length+' item(ns)</td></tr>'
+      +'<tr><td>A enviar (ainda não expedido)</td><td class="n">R$ '+this.fmt(fut)+' · '+aEnv.length+' item(ns)</td></tr>';
   },
 
   wire(){
@@ -10142,6 +10338,8 @@ const shopeeTab={
     g('shp-al-camp').addEventListener('change',()=>this.sim());
     g('shp-al-save').addEventListener('click',()=>this.salvarAnuncio());
     g('shp-al-cancel').addEventListener('click',()=>this.limparAnuncio());
+    g('shp-an-refresh').addEventListener('click',()=>this.reloadAnuncios());
+    g('shp-ct-refresh').addEventListener('click',()=>this.reloadAnuncios());
     g('shp-vd-cod').addEventListener('change',e=>this.echoProduto(e.target.value,'shp-vd-echo','prodVd'));
     ['shp-vd-preco','shp-vd-qtd'].forEach(i=>g(i).addEventListener('input',()=>this.sugerirTarifa()));
     g('shp-vd-save').addEventListener('click',()=>this.lancarVenda());
@@ -10149,6 +10347,8 @@ const shopeeTab={
     g('shp-vd-next').addEventListener('click',()=>{ this.mes=this.shiftMes(this.mes,1); this.renderVendas(); });
     g('shp-rl-prev').addEventListener('click',()=>{ this.mesRl=this.shiftMes(this.mesRl,-1); this.renderRelatorios(); });
     g('shp-rl-next').addEventListener('click',()=>{ this.mesRl=this.shiftMes(this.mesRl,1); this.renderRelatorios(); });
+    document.addEventListener('input',e=>{ if(e.target&&/^shp-ct-(preco|promo)$/.test(e.target.id)) this.ctlSim(); });
+    document.addEventListener('change',e=>{ if(e.target&&e.target.id==='shp-ct-camp') this.ctlSim(); });
   },
   shiftMes(m,delta){ const [y,mm]=m.split('-').map(Number); const d=new Date(y,mm-1+delta,1);
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
