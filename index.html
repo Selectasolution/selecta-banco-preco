@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-15-F | selecta-banco-preco | PARIDADE VISUAL SHOPEE = ML (correcao Igor 15/09: "quero praticamente o APP igual nas duas plataformas"; o Painel de chips do 15-E ficou aquem): (1) Painel Shopee refeito como ESPELHO card a card do kpiHtml do ML — grid .rp-idxrow/.rp-idx replicado no escopo #tab-shopee (mesmo desenho, tokens do canal): Faturamento, Resultado amortecido (good/bad), Margem s/ receita, Devolucoes (custo preso), Custo das mercadorias, Preso no escrow, Nº de itens, Cancelamentos. (2) shopeeTab.calcMes ganha devV (custo preso em devolucao) e cancV (receita cancelada) — campos NOVOS por agregacao das mesmas linhas; nenhuma conta existente muda. (3) Historico Shopee ganha o quadrante Por mês (paridade com o ML): tabela mes a mes via calcMes, mais recente primeiro. Estrutura das duas plataformas agora identica: Alvo (cadastro+simulador+Analise/Controle internos) / Vendas / Relatorios (Termometro=Painel+termometro do canal | Historico=Por mes+busca+pedidos). Diferencas remanescentes DECLARADAS (dado, nao desenho): ML tem consulta gerencial e edicao de pedido no Historico (Shopee manual ainda nao tem editor de venda — candidata a proxima paridade); convencao de devolucao difere por desenho (Shopee v1 tira o mes inteiro). | base: 2026-09-15-E (md5 85c4c9a4343717009d1aa9e26c8ed077) -->
 <!-- BUILD 2026-09-15-E | selecta-banco-preco | RAZAO DA SELECTA NO FINANCEIRO + TERMOMETRO DE CANAL + PAINEL SHOPEE (doutrina Igor 15/09: capital preso, investidores e toda a matematica que move a operacao sao da EMPRESA, nao dos canais — centralizar no Financeiro e de la fazer todos os controles; corrige a direcao do 15-D, que devolvera o razao completo ao ML): (1) o bloco financeiro completo (Termometro com folds DESPESAS/CAPITAL/INVESTIDORES, validacoes do portal, Conta Mercado Pago com saldo e creditos previstos) MOVE do ML para #tab-financeiro (fin-empresa-body); finMacro.load chama ecomFinanceiro.load — todos os controles de investidor/capital operam de la; Realtime do saldo MP segue por getElementById; fm-capital (resumo do 15-D) REMOVIDO por redundancia. (2) ML Relatorios > Termometro = Painel (rl-kpis) + TERMOMETRO DO CANAL novo (mlCanalTermo, tabela mlrl-termo): espelho puro do calcMes — pedidos, receita, taxas, custos, imposto, PERDAS DO CANAL, RESULTADO DO CANAL (colchao retido = luc−perdas) e colchao/colchao devolvido; SEM juros/fixos/despesas op/investidores/capital (moram no Financeiro; hint declara). Zero conta nova — so campos que calcMes ja devolve. (3) SHOPEE ganha o Painel (1o quadrante do Termometro, pedido Igor): chips itens validos/receita/resultado amortecido/margem/preso no escrow, mesmos numeros do calcMes. (4) Nota do macro atualizada: doutrina aplicada; RESSALVA declarada — a fonte de receitas do razao da empresa ainda e so o ML; integrar vendas Shopee na fonte() = BUILD 15-F (muda matematica travada; com consultas de conferencia antes/depois). Nenhuma conta alterada nesta build. | base: 2026-09-15-D (md5 5c2187bc31c1d4a70281993d7a144404) -->
 <!-- BUILD 2026-09-15-D | selecta-banco-preco | RAZAO POR CANAL + FINANCEIRO MACRO (decisoes Igor 15/09, sobre 15-C NAO publicado — publicar o 15-D carrega A/B/C): monitoramento individual por plataforma; a aba central Financeiro vira a LEITURA MACRO da empresa (os dois canais custeiam tudo). (1) ML Relatorios = 🌡 Termometro | 🗂 Historico; o quadrante Painel (rl-kpis) vira o PRIMEIRO quadrante do Termometro (pedido Igor), seguido do bloco financeiro ML inteiro (fin-ml-body: Termometro fn-* com folds, Conta MP, Investidores) que VOLTA da aba central para o razao do canal; hooks = par ecomFinanceiro.load+ecomRelatorios.load no pane e na entrada da sub-aba. (2) SHOPEE Relatorios = mesma estrutura: barra 🌡 Termometro | 🗂 Historico; Termometro = o de sempre; HISTORICO NOVO: todos os pedidos, busca em memoria (pedido/codigo/produto/UF), mesmos cards da fila (renderizador unico _cardsPedidos extraido — zero conta nova). shopeeTab.calcMes(m,arr) extraido do renderRelatorios = UNICA conta do mes Shopee (termometro e macro consomem a mesma funcao; numeros identicos). (3) FINANCEIRO MACRO (modulo finMacro, hook do switchTab): quadro Canais do mes — receita e resultado por canal (ML: lucOp e lucReal espelhos do calcMes; Shopee: amortecido) + EMPRESA receita e RESULTADO CONSERVADOR = ML lucOp + Shopee amortecido (colchao retido nos DOIS — convencoes diferentes dos razoes nao se somam cruas; lucro real ML segue visivel na linha do canal) + colchao retido total; quadro Capital — saldo MP (mesmos campos do renderMpSaldo), preso/recMP do capitalBase ML, escrow Shopee preso/a-enviar; seletor de mes; Realtime do saldo MP tambem atualiza o macro. RODAPE DE DOUTRINA declarado: fixos R$3.050 e juros de credores hoje moram SO no razao ML — reparticao entre canais e decisao pendente de Igor (mudaria matematica travada; NAO feita nesta build). Zero mudanca nas contas existentes. | base: 2026-09-15-C (md5 502ca0d83e5c3b348a69416af08d980e) -->
 <!-- BUILD 2026-09-15-C | selecta-banco-preco | REORGANIZACAO MULTIPLATAFORMA (decisoes Igor 15/09, sobre 15-B NAO publicado — publicar o 15-C ja carrega o 15-B): objetivo declarado = cada plataforma roda independente e as informacoes se juntam no Financeiro (SUPERA a doutrina 30/08 de consolidar no Fiscal; o Termometro central multi-canal e a PROXIMA build, esta so muda lugares — ZERO matematica). (1) BARRA PRINCIPAL: Catalogo · Importacao · ML · Shopee · 📡 Radar · 💰 Financeiro · ⚖️ Fiscal; Instagram OCULTO por comentario (payload/JS/dados intactos). (2) FINANCEIRO promovido: o pane rlsub-financeiro inteiro (Termometro fn-*, Conta MP, Investidores) vira section #tab-financeiro (id interno renomeado fin-main-body p/ sair do loop do rlsubbar); hook do switchTab = mesmo par do rlsub antigo (ecomFinanceiro.load + ecomRelatorios.load); Realtime ecom_mp_saldo intacto (getElementById). Relatorios ML fica Painel | Historico. (3) RADAR promovido a #tab-radar (fonte segue ML/Edge ml-radar — multiplataforma e evolucao futura); hook ecomRadar.load; sai do subnav ML. (4) CSS: todo seletor #tab-ecommerce dos blocos <style> (head + secao + responsivo do rodape) virou :is(#tab-ecommerce,#tab-financeiro,#tab-radar) — tokens, .ecard e media queries valem nos 3 escopos, fonte unica, JS intocado (transformacao restrita a <style>; supera a ideia de duplicar, que perdia .ecard/--epanel definidos fora do bloco da secao). (5) ML subnav = Alvo/Vendas/Relatorios. (6) SHOPEE subnav = Alvo/Vendas/Relatorios; Analise Comercial e Controle de Anuncios (15-A/B) movidos para DENTRO do Alvo com barra interna shp-alsubbar (padrao ML) — ids, handlers, historico SQL 17 e Realtime intactos; default = Analise aberta. Nada alem dos lugares mudou; margemDe/termometros/razoes intocados. | base: 2026-09-15-B (md5 0618e383fe6ceb9ed783a43a407d8d0f) -->
@@ -1790,6 +1791,13 @@
   #tab-shopee .ctcard .t2{font-size:12px;color:var(--emuted);font-family:var(--emono);margin:2px 0 4px}
   #tab-shopee .ctcard .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
   #tab-shopee .ctedit{margin-top:9px;border-top:1px dashed var(--eborder);padding-top:9px}
+  /* BUILD 2026-09-15-F: paridade visual — cards do Painel identicos aos do ML (.rp-idx) */
+  #tab-shopee .rp-idxrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:4px}
+  @media(max-width:900px){#tab-shopee .rp-idxrow{grid-template-columns:repeat(2,1fr)}}
+  #tab-shopee .rp-idx{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:13px}
+  #tab-shopee .rp-idx .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted)}
+  #tab-shopee .rp-idx .v{font-family:var(--emono);font-size:21px;font-weight:600;margin-top:5px}
+  #tab-shopee .rp-idx.bad .v{color:var(--eamber)} #tab-shopee .rp-idx.good .v{color:var(--eemerald)}
   #tab-shopee .shp-toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--epanel);border:1px solid var(--eteal);color:var(--etxt);border-radius:10px;padding:9px 16px;font-size:13px;z-index:9998;box-shadow:0 8px 30px rgba(0,0,0,.5)}
   #tab-shopee .shp-toast.err{border-color:var(--ered)}
   </style>
@@ -1933,6 +1941,10 @@
     </div>
     </div><!-- /shp-rl-termo -->
     <div id="shp-rl-hist" style="display:none">
+      <div class="ecard"><!-- BUILD 2026-09-15-F: Por mês — paridade com o Histórico ML -->
+        <h3>Por mês · competência da venda</h3>
+        <table class="trm" id="shp-hs-mensal"><tbody><tr><td class="ph">—</td></tr></tbody></table>
+      </div>
       <div class="ecard">
         <h3>Histórico de pedidos <span id="shp-hs-count" style="color:var(--emuted2);text-transform:none;letter-spacing:0"></span></h3>
         <input class="vinput mono" id="shp-hs-busca" placeholder="pedido, código, produto ou UF" style="max-width:340px;margin-bottom:10px">
@@ -10345,6 +10357,11 @@ const shopeeTab={
   // BUILD 2026-09-15-D: Historico Shopee — todos os pedidos, busca em memoria (espelho enxuto do hs-busca ML)
   renderHist(){
     const list=this._g('shp-hs-list'); if(!list) return;
+    const mb=this._g('shp-hs-mensal'); // BUILD 2026-09-15-F: Por mês (espelho calcMes, mais recente primeiro)
+    if(mb){ const meses=[...new Set(this.vendas.map(v=>String(v.data_solicitacao||'').slice(0,7)).filter(Boolean))].sort().reverse();
+      mb.querySelector('tbody').innerHTML=meses.length?('<tr><td style="color:var(--emuted)">Mês</td><td class="n" style="color:var(--emuted)">Itens</td><td class="n" style="color:var(--emuted)">Receita</td><td class="n" style="color:var(--emuted)">Amortecido</td></tr>'
+        +meses.map(m=>{ const c=this.calcMes(m);
+          return '<tr><td>'+this.mesLabel(m)+'</td><td class="n">'+c.nOk+'</td><td class="n">R$ '+this.fmt(c.receita)+'</td><td class="n '+(c.amortecido<0?'neg':'pos')+'">R$ '+this.fmt(c.amortecido)+'</td></tr>'; }).join('')):'<tr><td class="ph">sem vendas ainda</td></tr>'; }
     const q=(this._g('shp-hs-busca').value||'').trim().toLowerCase();
     let arr=this.vendas;
     if(q) arr=arr.filter(v=>[v.pedido_id,v.produto_codigo,v.produto,v.uf].some(x=>String(x||'').toLowerCase().includes(q)));
@@ -10366,7 +10383,9 @@ const shopeeTab={
     const imposto=receita*this.FIXOS.IMPOSTO;
     const lucro=receita-tarifas-fdif-custos-imposto;
     const colchao=receita*this.FIXOS.COLCHAO;
-    return {nOk:ok.length,nCanc,nDev,receita,tarifas,fdif,custos,imposto,lucro,colchao,amortecido:lucro-colchao};
+    const devV=vs.filter(v=>v.status==='devolvido').reduce((s,v)=>s+Number(v.custo_total||0),0);   // BUILD 15-F: custo preso em devolucao
+    const cancV=vs.filter(v=>v.status==='cancelado').reduce((s,v)=>s+Number(v.receita_bruta||0),0); // BUILD 15-F: receita cancelada
+    return {nOk:ok.length,nCanc,nDev,devV,cancV,receita,tarifas,fdif,custos,imposto,lucro,colchao,amortecido:lucro-colchao};
   },
   renderRelatorios(){
     const trm=this._g('shp-rl-trm'); if(!trm) return;
@@ -10374,14 +10393,21 @@ const shopeeTab={
     const IMPOSTO_PCT=this.FIXOS.IMPOSTO*100, COLCHAO_PCT=this.FIXOS.COLCHAO*100;
     const c=this.calcMes(this.mesRl); // BUILD 2026-09-15-D: fonte unica
     const {nCanc,nDev,receita,tarifas,fdif,custos,imposto,lucro,colchao,amortecido}=c; const okLen=c.nOk;
-    const kp=this._g('shp-rl-kpis'); // BUILD 2026-09-15-E: Painel — mesmos numeros do calcMes + escrow
+    const kp=this._g('shp-rl-kpis'); // BUILD 2026-09-15-F: Painel ESPELHO do kpiHtml ML — mesmos cards, dados do canal
     if(kp){ const presoK=this.vendas.filter(v=>(v.status==='enviado'||v.status==='entregue')&&!v.liberado_carteira)
         .reduce((s,v)=>s+Number(v.receita_bruta)-Number(v.comissao_valor||0)-Number(v.frete_diferenca||0),0);
-      const chip=(l,v,cor)=>'<div style="background:var(--epanel2);border:1px solid var(--eborder);border-radius:8px;padding:6px 10px;font-size:11.5px;color:var(--emuted)">'+l+' <b style="color:'+(cor||'var(--etxt)')+';font-family:var(--emono)">'+v+'</b></div>';
-      kp.innerHTML=chip('Itens válidos',String(okLen))+chip('Receita','R$ '+this.fmt(receita))
-        +chip('Resultado amortecido','R$ '+this.fmt(amortecido),amortecido<0?'var(--ered)':'var(--eemerald)')
-        +chip('Margem',receita>0?(amortecido/receita*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%':'—')
-        +chip('Preso no escrow','R$ '+this.fmt(presoK),'var(--eamber)'); }
+      const card=(l,v,cls)=>'<div class="rp-idx'+(cls||'')+'"><div class="l">'+l+'</div><div class="v">'+v+'</div></div>';
+      const F=this.fmt;
+      kp.innerHTML='<div class="rp-idxrow">'
+        +card('Faturamento','R$ '+F(receita))
+        +card('Resultado amortecido do mês','R$ '+F(amortecido),amortecido>=0?' good':' bad')
+        +card('Margem s/ receita (amortecida)',receita>0?(amortecido/receita*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%':'—')
+        +card('Devoluções (custo preso)',c.nDev+' · R$ '+F(c.devV),c.nDev?' bad':'')
+        +card('Custo das mercadorias (mês)','R$ '+F(custos))
+        +card('Preso no escrow (líquido)','R$ '+F(presoK),' bad')
+        +card('Nº de itens vendidos',String(okLen))
+        +card('Cancelamentos',c.nCanc+' · R$ '+F(c.cancV),c.nCanc?' bad':'')
+        +'</div>'; }
     const F=v=>'R$ '+this.fmt(v);
     trm.querySelector('tbody').innerHTML=
       '<tr><td>Pedidos válidos (itens)</td><td class="n">'+okLen+'</td></tr>'
