@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-15-C | selecta-banco-preco | REORGANIZACAO MULTIPLATAFORMA (decisoes Igor 15/09, sobre 15-B NAO publicado — publicar o 15-C ja carrega o 15-B): objetivo declarado = cada plataforma roda independente e as informacoes se juntam no Financeiro (SUPERA a doutrina 30/08 de consolidar no Fiscal; o Termometro central multi-canal e a PROXIMA build, esta so muda lugares — ZERO matematica). (1) BARRA PRINCIPAL: Catalogo · Importacao · ML · Shopee · 📡 Radar · 💰 Financeiro · ⚖️ Fiscal; Instagram OCULTO por comentario (payload/JS/dados intactos). (2) FINANCEIRO promovido: o pane rlsub-financeiro inteiro (Termometro fn-*, Conta MP, Investidores) vira section #tab-financeiro (id interno renomeado fin-main-body p/ sair do loop do rlsubbar); hook do switchTab = mesmo par do rlsub antigo (ecomFinanceiro.load + ecomRelatorios.load); Realtime ecom_mp_saldo intacto (getElementById). Relatorios ML fica Painel | Historico. (3) RADAR promovido a #tab-radar (fonte segue ML/Edge ml-radar — multiplataforma e evolucao futura); hook ecomRadar.load; sai do subnav ML. (4) CSS: todo seletor #tab-ecommerce dos blocos <style> (head + secao + responsivo do rodape) virou :is(#tab-ecommerce,#tab-financeiro,#tab-radar) — tokens, .ecard e media queries valem nos 3 escopos, fonte unica, JS intocado (transformacao restrita a <style>; supera a ideia de duplicar, que perdia .ecard/--epanel definidos fora do bloco da secao). (5) ML subnav = Alvo/Vendas/Relatorios. (6) SHOPEE subnav = Alvo/Vendas/Relatorios; Analise Comercial e Controle de Anuncios (15-A/B) movidos para DENTRO do Alvo com barra interna shp-alsubbar (padrao ML) — ids, handlers, historico SQL 17 e Realtime intactos; default = Analise aberta. Nada alem dos lugares mudou; margemDe/termometros/razoes intocados. | base: 2026-09-15-B (md5 0618e383fe6ceb9ed783a43a407d8d0f) -->
 <!-- BUILD 2026-09-15-B | selecta-banco-preco | LOG SHOPEE COMPLETO (conferencia SQL 20 bloco A, Igor 15/09, sobre o 15-A NAO publicado): as colunas reais do SQL 17 tem codigo/shopee_item_id/por/margem_pior_zona_pct alem do minimo — os inserts de ecom_shopee_anuncio_alteracao (Editar/Encerrar do Controle) e o upsert de ecom_shopee_anuncio_lido passam a preenche-las: codigo e Item ID do anuncio, por = e-mail da sessao (mesmo padrao do marcarLido do ML), margem_pior_zona_pct = margem da regua no preco valido NOVO (no Encerrar, no preco vigente), arredondada a 2 casas. Bloco C do SQL 20: ecom_shopee_vendas so tem PK em id — multi-item ja livre no banco, bloco D descartado. Bloco B: semente 18b confirmada (7 anuncios). Nenhuma outra mudanca. | base: 2026-09-15-A (md5 c502f8e45a2367bcfa985b78af850225) -->
 <!-- BUILD 2026-09-15-A | selecta-banco-preco | SHOPEE PARIDADE (reconstrucao do 26-W orfao, Igor 15/09; base = 2026-09-11-C md5 fa4645ae86914e530bf861cfd76453ef, index anexado por Igor com vendas reais chegando): a linhagem 10-A..11-C foi construida sobre o 26-V e a paridade do 26-W nunca chegou a producao — reconstruida aqui sobre a base atual. (1) margemDe() = UNICA conta de margem do modulo (tarifa da faixa + custo NF + colchao 6% da venda + imposto 4%, piso 10% LIBERADO/NEGADO; frete dif = 0 no simulador, sem tabela de frete Shopee — espelho da _simMargem ML); corrige a margem inflada do 26-V em producao (que ignorava colchao e imposto). (2) CINCO sub-abas: Alvo (so cadastro + simulador completo com colchao/imposto/lucro/selo), Analise Comercial (Igor: leitura, verde+topo por alteracao posterior a ultima leitura via ecom_shopee_anuncio_lido upsert onConflict anuncio_id, abrir historico marca lido), Controle de Anuncios (Alexia: Editar inline com gate ao vivo e MOTIVO obrigatorio, NEGADO pede confirmacao mas nao trava — decisao humana; Encerrar com motivo; log em ecom_shopee_anuncio_alteracao com colunas espelho do ML: anuncio_id/campo/preco_anterior/preco_novo/motivo — CONFERIR colunas reais do SQL 17 ANTES de publicar, checklist), Vendas, Relatorios. (3) VENDAS multi-item: fila agrupada por pedido_id (um card por pedido, linhas por item com acoes proprias); apos lancar, o nº do pedido PERMANECE no form p/ lancar o proximo item; aviso ao repetir produto no mesmo pedido; tarifa sugerida agora usa a campanha do anuncio. (4) RELATORIOS: linha de colchao (6% da receita) + RESULTADO AMORTECIDO como linha grande; margem media sobre o amortecido. (5) FIX 26-V: input date vazava a direita no Safari/iPhone — min-width:0 + appearance none no escopo. Historico/lido degradam com aviso se o SQL 17 divergir (try/catch), o resto da aba vive. Zero mudanca fora da regiao Shopee; ML/Fiscal/Radar intocados. Requer SQL 17 aplicado (Igor 31/08 Success) e SQL 18b conferido (SELECT no pacote). | base: 2026-09-11-C -->
 <!-- BUILD 2026-09-11-C | selecta-banco-preco | RADAR — LIMPEZA DE UI (3 pedidos Igor 11/09 pos-uso real; base = BUILD-B confirmada publicada pelos prints da sessao): (1) mensagem "Confirme o nicho (o discovery erra...)" APAGADA — chips falam por si (trilha da arvore ja distingue). (2) Botao e textos: Varrer -> Consultar (Consultando/consultado/consulta vazia/consulte; nomes internos de funcao inalterados — varrerCat/descobrir). (3) Dominio MLB-MINERAL_WATERS (Aguas Minerais MLB269718) FILTRADO da exibicao do discovery — ruido recorrente da API do ML, provado nas consultas mouse e teclado; corte documentado, so exibicao (Edge intocada). Sem SQL, sem Edge. | base: 2026-09-11-B -->
@@ -283,7 +284,9 @@
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="importacao">📦 Importação</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="ecommerce">🛒 Mercado Livre</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="shopee">🛍️ Shopee</button>
-          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="instagram">📸 Instagram</button>
+          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="radar">📡 Radar</button>
+          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="financeiro">💰 Financeiro</button>
+          <!-- BUILD 2026-09-15-C: Instagram OCULTO (nao apagado — payload, JS e dados intactos; reativar = descomentar): <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="instagram">📸 Instagram</button> -->
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="fiscal">⚖️ Fiscal</button>
         </nav>
       </div>
@@ -1379,116 +1382,116 @@
   <!-- TAB: E-COMMERCE (piloto — simulador de margem Mercado Livre) -->
   <!-- =========================================================== -->
   <style id="ecom-v8-style">
-  #tab-ecommerce{--ebg:#0b1220;--epanel:#131c2e;--epanel2:#0f1726;--epanel3:#18233a;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#34d399;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
-  #tab-ecommerce *{box-sizing:border-box}
-  #tab-ecommerce{color:var(--etxt);font-size:14px;line-height:1.5}
-  #tab-ecommerce .esub{color:var(--emuted);font-size:12.5px;margin:0 0 16px}
-  #tab-ecommerce .esub b{color:var(--eaccent);font-weight:600}
-  #tab-ecommerce .addform .pesofield{position:relative}
-  #tab-ecommerce .ffaixa{position:absolute;top:100%;left:0;margin-top:4px;font-size:10.5px;color:var(--eteal);white-space:nowrap}
-  #tab-ecommerce .ffaixa.warn{color:var(--eamber)}
-  #tab-ecommerce .ecom-sentinela{border-radius:10px;padding:9px 13px;margin-bottom:12px;font-size:12px;border:1px solid var(--eborder)}
-  #tab-ecommerce .ecom-sentinela.ok{background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.28);color:var(--eemerald)}
-  #tab-ecommerce .ecom-sentinela.warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.32);color:var(--etxt)}
-  #tab-ecommerce .ecom-sentinela.crit{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.38);color:var(--etxt)}
-  #tab-ecommerce .ecom-sentinela .sent-h{font-weight:600;margin-bottom:5px}
-  #tab-ecommerce .ecom-sentinela ul{margin:0;padding-left:18px}
-  #tab-ecommerce .ecom-sentinela li{margin:2px 0;color:var(--emuted)}
-  #tab-ecommerce .simfield label .hsim{font-size:9px;color:var(--emuted2);font-weight:400;text-transform:none;letter-spacing:0}
-  #tab-ecommerce .robe{background:#0c1422;border-style:dashed;color:var(--emuted)}
-  #tab-ecommerce .mgsimf{font-weight:700}
-  #tab-ecommerce .mgsimf.v{color:var(--eemerald)} #tab-ecommerce .mgsimf.a{color:var(--eamber)} #tab-ecommerce .mgsimf.r{color:var(--ered)}
-  #tab-ecommerce .ecard{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:13px 16px;margin-bottom:10px}
-  #tab-ecommerce .ecard h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin:0 0 12px;font-weight:600}
-  #tab-ecommerce .frete-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:18px}
-  @media(max-width:880px){#tab-ecommerce .frete-grid{grid-template-columns:1fr}}
-  #tab-ecommerce .selrow{margin-bottom:11px}
-  #tab-ecommerce .selrow .lab{font-size:11px;color:var(--emuted);margin-bottom:5px}
-  #tab-ecommerce .chips{display:flex;gap:6px;flex-wrap:wrap}
-  #tab-ecommerce .chip{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:6px 11px;font-size:12px;cursor:pointer}
-  #tab-ecommerce .chip:hover{border-color:var(--eaccent);color:var(--etxt)}
-  #tab-ecommerce .chip.active{background:var(--eaccent);color:#06281d;border-color:var(--eaccent);font-weight:600}
-  #tab-ecommerce .applied{margin-top:12px;padding:8px 12px;background:#0c2c22;border:1px solid #1c5c44;border-radius:10px}
-  #tab-ecommerce .applied .ctx{font-size:12px;color:var(--eteal)}
-  #tab-ecommerce .mtitle{font-size:11px;color:var(--emuted);margin-bottom:6px}
-  #tab-ecommerce table.mtx{border-collapse:collapse;width:100%}
-  #tab-ecommerce table.mtx th{font-size:10px;color:var(--emuted2);font-weight:600;padding:4px;text-align:center;white-space:nowrap}
-  #tab-ecommerce table.mtx td.rl{font-size:11px;color:var(--emuted);text-align:left;padding-right:8px;white-space:nowrap}
-  #tab-ecommerce .mcell{width:100%;background:#26220c;border:1px solid #4a4118;color:#f3e6a8;border-radius:6px;padding:5px 6px;font-family:var(--emono);font-size:12px;text-align:right}
-  #tab-ecommerce .mcell:focus{outline:none;border-color:var(--eamber)}
-  #tab-ecommerce .mcell.sel{border-color:var(--eaccent);box-shadow:0 0 0 1px var(--eaccent)}
-  #tab-ecommerce .mcell.calib{background:#082418;border-color:#1c5c44;color:#a8f3d0}
-  #tab-ecommerce .mcell.calib:focus{border-color:var(--eemerald)}
-  #tab-ecommerce .mcell.calib.sel{box-shadow:0 0 0 1px var(--eemerald)}
-  #tab-ecommerce .mtxlegend{display:flex;gap:14px;font-size:10.5px;color:var(--emuted2);margin-top:6px;flex-wrap:wrap}
-  #tab-ecommerce .mtxlegend .lg{display:inline-flex;align-items:center;gap:5px}
-  #tab-ecommerce .mtxlegend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;border:1px solid}
-  #tab-ecommerce .mtxlegend .sw.c{background:#082418;border-color:#1c5c44}
-  #tab-ecommerce .mtxlegend .sw.e{background:#26220c;border-color:#4a4118}
-  #tab-ecommerce .mnote{font-size:12.5px;color:var(--eamber);margin-top:8px;line-height:1.6}
-  #tab-ecommerce .mnote b{color:#f3e6a8}
-  #tab-ecommerce .param-grid{display:flex;flex-wrap:wrap;gap:11px 16px;align-items:flex-end}
-  #tab-ecommerce .efield label{display:block;font-size:11px;color:var(--emuted);margin-bottom:5px}
-  #tab-ecommerce .field-row{display:flex;align-items:center;gap:6px}
-  #tab-ecommerce .num{width:56px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:7px 8px;font-family:var(--emono);font-size:14px;text-align:right}
-  #tab-ecommerce .num:focus{outline:none;border-color:var(--eaccent)}
-  #tab-ecommerce .unit{color:var(--emuted2);font-family:var(--emono);font-size:13px}
-  #tab-ecommerce .toggle-row{display:flex;gap:6px;margin-top:5px}
-  #tab-ecommerce .note{font-size:12.5px;color:var(--emuted);margin-top:8px;line-height:1.6}
-  #tab-ecommerce .modbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:9px 12px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:9px}
-  #tab-ecommerce .modbar .ml{font-size:11px;color:var(--emuted)}
-  #tab-ecommerce .modtog{display:flex;gap:6px}
-  #tab-ecommerce .modtog .tg{background:var(--ebg);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:12px}
-  #tab-ecommerce .modtog .tg.active{background:#0c2c22;border-color:var(--eaccent);color:var(--eaccent);font-weight:600}
-  #tab-ecommerce .modwarn{font-size:11px;color:var(--eamber)}
-  #tab-ecommerce .fixgrid{display:flex;flex-wrap:wrap;gap:11px 14px;margin-top:8px}
-  #tab-ecommerce .fixgrid .fx label{font-size:10px;color:var(--emuted2);display:block;margin-bottom:4px;white-space:nowrap}
-  #tab-ecommerce .fixnum{width:66px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:6px;padding:6px 7px;font-family:var(--emono);font-size:12.5px;text-align:right}
-  #tab-ecommerce .fixnum:focus{outline:none;border-color:var(--eaccent)}
-  #tab-ecommerce .fixnum.locked{background:#0c1320;color:var(--emuted2)}
-  #tab-ecommerce .efiltrow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
-  #tab-ecommerce .addform{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
-  #tab-ecommerce .addform .efield{display:flex;flex-direction:column}
-  #tab-ecommerce .ainput{background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:7px 9px;font-size:13px}
-  #tab-ecommerce .ainput:focus{outline:none;border-color:var(--eaccent)}
-  #tab-ecommerce .ainput.mono{font-family:var(--emono);text-align:right}
-  #tab-ecommerce .req{color:var(--eamber)}
-  #tab-ecommerce .addbtn{background:var(--eaccent);color:#06281d;border:none;border-radius:7px;padding:9px 18px;font-weight:600;cursor:pointer;font-size:13px}
-  #tab-ecommerce .addbtn:hover{filter:brightness(1.08)}
-  #tab-ecommerce .cancelbtn{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:9px 14px;cursor:pointer;font-size:13px}
-  #tab-ecommerce .formmsg{font-size:11.5px;color:var(--eamber);margin-top:8px;min-height:14px}
-  #tab-ecommerce .tbl-wrap{overflow-x:auto;margin-top:6px}
-  #tab-ecommerce table.emain{width:auto;border-collapse:collapse;font-size:13px}
-  #tab-ecommerce table.emain thead th{text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--emuted);font-weight:600;padding:0 9px 9px;border-bottom:1px solid var(--eborder);white-space:nowrap}
-  #tab-ecommerce table.emain thead th.l{text-align:left}
-  #tab-ecommerce table.emain tbody td{padding:7px 9px;border-bottom:1px solid #1c2740;text-align:right;font-family:var(--emono);white-space:nowrap;vertical-align:middle}
-  #tab-ecommerce table.emain tbody td.l{text-align:left;font-family:inherit;font-size:13.5px}
-  #tab-ecommerce table.emain tbody tr:hover{background:#0f1828}
-  #tab-ecommerce table.emain .cellInput.mkt{font-size:11px}
-  #tab-ecommerce .eprod{font-weight:600}
-  #tab-ecommerce .emodel{color:var(--emuted2);font-size:12px;font-family:var(--emono)}
-  #tab-ecommerce .ezona{font-size:10.5px;color:var(--eamber);margin-top:2px}
-  #tab-ecommerce .cellInput{width:74px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:6px;padding:5px 7px;font-family:var(--emono);font-size:12.5px;text-align:right}
-  #tab-ecommerce .cellInput:focus{outline:none;border-color:var(--eaccent)}
-  #tab-ecommerce .cellInput.me{border-color:#3a4a6a;color:var(--eaccent)}
-  #tab-ecommerce .stack{display:flex;flex-direction:column;gap:3px;align-items:flex-end}
-  #tab-ecommerce .gratis{color:var(--eemerald);font-size:11.5px}
-  #tab-ecommerce .gratis small{display:block;color:var(--emuted2);font-size:10px}
-  #tab-ecommerce .pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
-  #tab-ecommerce .pill.priorizar{background:#0c2c22;color:var(--eemerald)}
-  #tab-ecommerce .pill.analisar{background:#2e2410;color:var(--eamber)}
-  #tab-ecommerce .pill.excluir{background:#2e1517;color:var(--ered)}
-  #tab-ecommerce .mneg{color:var(--ered)} #tab-ecommerce .vsacima{color:var(--ered)} #tab-ecommerce .vsabaixo{color:var(--eemerald)} #tab-ecommerce .vsnull{color:var(--emuted2)}
-  #tab-ecommerce .smper{font-size:11px;color:var(--emuted)}
-  #tab-ecommerce .acts{display:flex;gap:6px;justify-content:center}
-  #tab-ecommerce .rowbtn{background:none;border:1px solid var(--eborder);color:var(--emuted);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer}
-  #tab-ecommerce .rowbtn:hover{border-color:var(--eaccent);color:var(--etxt)}
-  #tab-ecommerce .rowbtn.del:hover{border-color:var(--ered);color:var(--ered)}
-  #tab-ecommerce .efooter{margin-top:14px;padding-top:13px;border-top:1px solid var(--eborder);font-size:12.5px;color:var(--emuted);line-height:1.6}
-  #tab-ecommerce select.ainput{appearance:auto}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar){--ebg:#0b1220;--epanel:#131c2e;--epanel2:#0f1726;--epanel3:#18233a;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#34d399;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) *{box-sizing:border-box}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar){color:var(--etxt);font-size:14px;line-height:1.5}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .esub{color:var(--emuted);font-size:12.5px;margin:0 0 16px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .esub b{color:var(--eaccent);font-weight:600}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .addform .pesofield{position:relative}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ffaixa{position:absolute;top:100%;left:0;margin-top:4px;font-size:10.5px;color:var(--eteal);white-space:nowrap}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ffaixa.warn{color:var(--eamber)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-sentinela{border-radius:10px;padding:9px 13px;margin-bottom:12px;font-size:12px;border:1px solid var(--eborder)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-sentinela.ok{background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.28);color:var(--eemerald)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-sentinela.warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.32);color:var(--etxt)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-sentinela.crit{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.38);color:var(--etxt)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-sentinela .sent-h{font-weight:600;margin-bottom:5px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-sentinela ul{margin:0;padding-left:18px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-sentinela li{margin:2px 0;color:var(--emuted)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .simfield label .hsim{font-size:9px;color:var(--emuted2);font-weight:400;text-transform:none;letter-spacing:0}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .robe{background:#0c1422;border-style:dashed;color:var(--emuted)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mgsimf{font-weight:700}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mgsimf.v{color:var(--eemerald)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mgsimf.a{color:var(--eamber)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mgsimf.r{color:var(--ered)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecard{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:13px 16px;margin-bottom:10px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecard h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin:0 0 12px;font-weight:600}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .frete-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:18px}
+  @media(max-width:880px){:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .frete-grid{grid-template-columns:1fr}}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .selrow{margin-bottom:11px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .selrow .lab{font-size:11px;color:var(--emuted);margin-bottom:5px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .chips{display:flex;gap:6px;flex-wrap:wrap}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .chip{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:6px 11px;font-size:12px;cursor:pointer}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .chip:hover{border-color:var(--eaccent);color:var(--etxt)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .chip.active{background:var(--eaccent);color:#06281d;border-color:var(--eaccent);font-weight:600}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .applied{margin-top:12px;padding:8px 12px;background:#0c2c22;border:1px solid #1c5c44;border-radius:10px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .applied .ctx{font-size:12px;color:var(--eteal)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mtitle{font-size:11px;color:var(--emuted);margin-bottom:6px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.mtx{border-collapse:collapse;width:100%}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.mtx th{font-size:10px;color:var(--emuted2);font-weight:600;padding:4px;text-align:center;white-space:nowrap}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.mtx td.rl{font-size:11px;color:var(--emuted);text-align:left;padding-right:8px;white-space:nowrap}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mcell{width:100%;background:#26220c;border:1px solid #4a4118;color:#f3e6a8;border-radius:6px;padding:5px 6px;font-family:var(--emono);font-size:12px;text-align:right}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mcell:focus{outline:none;border-color:var(--eamber)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mcell.sel{border-color:var(--eaccent);box-shadow:0 0 0 1px var(--eaccent)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mcell.calib{background:#082418;border-color:#1c5c44;color:#a8f3d0}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mcell.calib:focus{border-color:var(--eemerald)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mcell.calib.sel{box-shadow:0 0 0 1px var(--eemerald)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mtxlegend{display:flex;gap:14px;font-size:10.5px;color:var(--emuted2);margin-top:6px;flex-wrap:wrap}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mtxlegend .lg{display:inline-flex;align-items:center;gap:5px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mtxlegend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;border:1px solid}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mtxlegend .sw.c{background:#082418;border-color:#1c5c44}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mtxlegend .sw.e{background:#26220c;border-color:#4a4118}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mnote{font-size:12.5px;color:var(--eamber);margin-top:8px;line-height:1.6}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mnote b{color:#f3e6a8}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .param-grid{display:flex;flex-wrap:wrap;gap:11px 16px;align-items:flex-end}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .efield label{display:block;font-size:11px;color:var(--emuted);margin-bottom:5px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .field-row{display:flex;align-items:center;gap:6px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .num{width:56px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:7px 8px;font-family:var(--emono);font-size:14px;text-align:right}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .num:focus{outline:none;border-color:var(--eaccent)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .unit{color:var(--emuted2);font-family:var(--emono);font-size:13px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .toggle-row{display:flex;gap:6px;margin-top:5px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .note{font-size:12.5px;color:var(--emuted);margin-top:8px;line-height:1.6}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .modbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:9px 12px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:9px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .modbar .ml{font-size:11px;color:var(--emuted)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .modtog{display:flex;gap:6px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .modtog .tg{background:var(--ebg);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:12px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .modtog .tg.active{background:#0c2c22;border-color:var(--eaccent);color:var(--eaccent);font-weight:600}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .modwarn{font-size:11px;color:var(--eamber)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .fixgrid{display:flex;flex-wrap:wrap;gap:11px 14px;margin-top:8px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .fixgrid .fx label{font-size:10px;color:var(--emuted2);display:block;margin-bottom:4px;white-space:nowrap}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .fixnum{width:66px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:6px;padding:6px 7px;font-family:var(--emono);font-size:12.5px;text-align:right}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .fixnum:focus{outline:none;border-color:var(--eaccent)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .fixnum.locked{background:#0c1320;color:var(--emuted2)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .efiltrow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .addform{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .addform .efield{display:flex;flex-direction:column}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ainput{background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:7px 9px;font-size:13px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ainput:focus{outline:none;border-color:var(--eaccent)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ainput.mono{font-family:var(--emono);text-align:right}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .req{color:var(--eamber)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .addbtn{background:var(--eaccent);color:#06281d;border:none;border-radius:7px;padding:9px 18px;font-weight:600;cursor:pointer;font-size:13px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .addbtn:hover{filter:brightness(1.08)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .cancelbtn{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:7px;padding:9px 14px;cursor:pointer;font-size:13px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .formmsg{font-size:11.5px;color:var(--eamber);margin-top:8px;min-height:14px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .tbl-wrap{overflow-x:auto;margin-top:6px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.emain{width:auto;border-collapse:collapse;font-size:13px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.emain thead th{text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--emuted);font-weight:600;padding:0 9px 9px;border-bottom:1px solid var(--eborder);white-space:nowrap}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.emain thead th.l{text-align:left}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.emain tbody td{padding:7px 9px;border-bottom:1px solid #1c2740;text-align:right;font-family:var(--emono);white-space:nowrap;vertical-align:middle}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.emain tbody td.l{text-align:left;font-family:inherit;font-size:13.5px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.emain tbody tr:hover{background:#0f1828}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.emain .cellInput.mkt{font-size:11px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .eprod{font-weight:600}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .emodel{color:var(--emuted2);font-size:12px;font-family:var(--emono)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ezona{font-size:10.5px;color:var(--eamber);margin-top:2px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .cellInput{width:74px;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:6px;padding:5px 7px;font-family:var(--emono);font-size:12.5px;text-align:right}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .cellInput:focus{outline:none;border-color:var(--eaccent)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .cellInput.me{border-color:#3a4a6a;color:var(--eaccent)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .stack{display:flex;flex-direction:column;gap:3px;align-items:flex-end}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .gratis{color:var(--eemerald);font-size:11.5px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .gratis small{display:block;color:var(--emuted2);font-size:10px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .pill.priorizar{background:#0c2c22;color:var(--eemerald)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .pill.analisar{background:#2e2410;color:var(--eamber)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .pill.excluir{background:#2e1517;color:var(--ered)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mneg{color:var(--ered)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vsacima{color:var(--ered)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vsabaixo{color:var(--eemerald)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vsnull{color:var(--emuted2)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .smper{font-size:11px;color:var(--emuted)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .acts{display:flex;gap:6px;justify-content:center}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rowbtn{background:none;border:1px solid var(--eborder);color:var(--emuted);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rowbtn:hover{border-color:var(--eaccent);color:var(--etxt)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rowbtn.del:hover{border-color:var(--ered);color:var(--ered)}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .efooter{margin-top:14px;padding-top:13px;border-top:1px solid var(--eborder);font-size:12.5px;color:var(--emuted);line-height:1.6}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) select.ainput{appearance:auto}
 
   /* BUILD 2026-07-12-A: aba Vendas — redesenho v5 aprovado em preview.
-     Causa-raiz dos builds F/G/H: (1) variáveis --e* declaradas apenas em #tab-ecommerce não resolviam
+     Causa-raiz dos builds F/G/H: (1) variáveis --e* declaradas apenas em :is(#tab-ecommerce,#tab-financeiro,#tab-radar) não resolviam
      dentro de #tab-apple; (2) alinhamento à direita sob cabeçalhos largos. Agora: variáveis no escopo,
      cabeçalho com faixa de fundo, campo e valor com a MESMA origem esquerda (padding-left 12px),
      card abraça o conteúdo, coluna Nº, badges semânticos, valores sem prefixo R$. */
@@ -1794,8 +1797,6 @@
 
   <div class="subnav">
     <button class="subtab active" data-ssub="alvo">🎯 Alvo</button>
-    <button class="subtab" data-ssub="analise">Análise Comercial</button>
-    <button class="subtab" data-ssub="controle">Controle de Anúncios</button>
     <button class="subtab" data-ssub="vendas">Vendas</button>
     <button class="subtab" data-ssub="relatorios">Relatórios</button>
   </div>
@@ -1835,10 +1836,13 @@
         <span class="hintline" id="shp-al-msg" style="margin:0"></span>
       </div>
     </div>
-  </div>
-
-  <!-- ============ ANÁLISE COMERCIAL (Igor · leitura) ============ -->
-  <div id="shp-sub-analise" class="shp-subpanel" style="display:none">
+    <!-- BUILD 2026-09-15-C: padrao ML — Analise Comercial (Igor) e Controle (Alexia) moram DENTRO do Alvo -->
+    <div style="display:flex;gap:8px;align-items:center;margin:6px 0 14px;flex-wrap:wrap" id="shp-alsubbar">
+      <button class="vbtn sm" data-shpalsub="analise" style="border-color:var(--eaccent)">📊 Análise Comercial</button>
+      <button class="vbtn sm" data-shpalsub="controle">📈 Controle de Anúncios</button>
+    </div>
+<!-- ============ ANÁLISE COMERCIAL (Igor · leitura) ============ -->
+  <div id="shp-sub-analise">
     <div class="ecard">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
         <h3 style="margin:0">Anúncios ativos <span id="shp-an-count" style="color:var(--emuted2);text-transform:none;letter-spacing:0"></span></h3>
@@ -1852,7 +1856,7 @@
   </div>
 
   <!-- ============ CONTROLE DE ANÚNCIOS (Alexia) ============ -->
-  <div id="shp-sub-controle" class="shp-subpanel" style="display:none">
+  <div id="shp-sub-controle" style="display:none">
     <div class="ecard">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
         <h3 style="margin:0">Controle de anúncios <span id="shp-ct-count" style="color:var(--emuted2);text-transform:none;letter-spacing:0"></span></h3>
@@ -1862,6 +1866,8 @@
       <div class="hintline">Editar exige motivo (registrado no histórico, append-only). Rito: Shopee primeiro, registro depois. Preço válido = promoção quando existe.</div>
     </div>
   </div>
+
+    </div>
 
   <!-- ============ VENDAS ============ -->
   <div id="shp-sub-vendas" class="shp-subpanel" style="display:none">
@@ -1920,299 +1926,298 @@
   <section id="tab-ecommerce" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
 
     <style>
-    #tab-ecommerce .ecom-subnav{display:flex;gap:2px;border-bottom:1px solid var(--eborder);margin:0 0 18px;overflow-x:auto}
-    #tab-ecommerce .ecom-subtab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--emuted);font:inherit;font-size:13.5px;padding:9px 14px;cursor:pointer;white-space:nowrap}
-    #tab-ecommerce .ecom-subtab:hover{color:var(--etxt)}
-    #tab-ecommerce .ecom-subtab.active{color:var(--etxt);border-bottom-color:var(--eemerald)}
-    #tab-ecommerce .ecom-subtab.alvo.active{border-bottom-color:var(--eteal)}
-    #tab-ecommerce .ecom-subtab.radar.active{border-bottom-color:var(--eamber)}
-    #tab-ecommerce .rd-kw{display:inline-block;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:8px;padding:5px 10px;font-size:12.5px;margin:0 6px 6px 0}
-    #tab-ecommerce .rd-kw .n{color:var(--emuted2);font-family:var(--emono);font-size:11px;margin-right:5px}
-    #tab-ecommerce .rd-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
-    #tab-ecommerce .rd-tbl th{color:var(--emuted);text-align:left;font-weight:600;padding:7px 9px;border-bottom:1px solid var(--eborder);white-space:nowrap}
-    #tab-ecommerce .rd-tbl td{padding:7px 9px;border-bottom:1px solid var(--epanel2);color:var(--etxt);vertical-align:top}
-    #tab-ecommerce .rd-tbl td.mono{font-family:var(--emono);white-space:nowrap}
-    #tab-ecommerce .rd-row-pesq{cursor:pointer}
-    #tab-ecommerce .rd-row-pesq:hover td{background:var(--epanel2)}
-    #tab-ecommerce .rd-row-pesq.sel td{background:var(--epanel3,#18233a)}
-    #tab-ecommerce .rd-badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600}
-    #tab-ecommerce .rd-badge.ok{background:rgba(16,185,129,.14);color:var(--eemerald)}
-    #tab-ecommerce .rd-badge.warn{background:rgba(245,158,11,.14);color:var(--eamber)}
-    #tab-ecommerce .rd-badge.err{background:rgba(239,68,68,.14);color:var(--ered)}
-    #tab-ecommerce .rd-acc-head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px}
-    #tab-ecommerce .rd-acc-tit{font-size:13.5px;font-weight:600;color:var(--etxt)}
-    #tab-ecommerce .rd-acc-id{color:var(--emuted2);font-family:var(--emono);font-size:11px;font-weight:400;margin-left:4px}
-    #tab-ecommerce .rd-acc-sub{font-size:11.5px;color:var(--emuted);margin-top:2px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-    #tab-ecommerce .rd-acc-chev{color:var(--eamber);font-size:15px;flex-shrink:0}
-    #tab-ecommerce .rd-acc-top3{margin-top:9px;border-top:1px dashed var(--eborder);padding-top:8px}
-    #tab-ecommerce .rd-top3{font-size:12.5px;color:var(--etxt);padding:3px 0}
-    #tab-ecommerce .rd-top3 .n{color:var(--eamber);font-family:var(--emono);font-weight:700;margin-right:4px}
-    #tab-ecommerce .rd-top3 .p{color:var(--eemerald);font-family:var(--emono);margin-left:6px}
-    #tab-ecommerce .rd-top3 .v{color:var(--emuted2);font-size:11px;margin-left:6px}
-    #tab-ecommerce .rd-acc-body{margin-top:10px;border-top:1px solid var(--eborder);padding-top:10px}
-    #tab-ecommerce .rd-kpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-    #tab-ecommerce .rd-kpi{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:8px;padding:6px 10px;font-size:11.5px}
-    #tab-ecommerce .rd-kpi b{color:var(--etxt);font-family:var(--emono);font-weight:600}
-    #tab-ecommerce a.rd-kw{text-decoration:none;cursor:pointer}
-    #tab-ecommerce a.rd-kw:hover{border-color:var(--eamber);color:var(--eamber)}
-    #tab-ecommerce .alsubbar{display:flex;gap:8px;align-items:center;margin:6px 0 18px;flex-wrap:wrap}
-    #tab-ecommerce .alsub-btn{background:var(--epanel2);color:var(--emuted);border:1px solid var(--eborder);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all .12s}
-    #tab-ecommerce .alsub-btn:hover{color:var(--etxt);border-color:var(--emuted2)}
-    #tab-ecommerce .alsub-btn.active{background:var(--epanel3);color:var(--etxt);border-color:var(--eteal)}
-    #tab-ecommerce .alsub-btn.cmd{margin-left:auto;border-style:dashed}
-    #tab-ecommerce .ph{color:var(--emuted2);font-size:13px;text-align:center;padding:30px 10px}
-    #tab-ecommerce .vgrid{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start}
-    @media(max-width:900px){#tab-ecommerce .vgrid{grid-template-columns:1fr}}
-    #tab-ecommerce .vform .efield,#tab-ecommerce .vrow .efield,#tab-ecommerce .vrow3 .efield{margin-bottom:12px}
-    #tab-ecommerce .vform label{display:block;font-size:11px;color:var(--emuted);margin-bottom:5px}
-    #tab-ecommerce .vrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    #tab-ecommerce .vrow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-subnav{display:flex;gap:2px;border-bottom:1px solid var(--eborder);margin:0 0 18px;overflow-x:auto}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-subtab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--emuted);font:inherit;font-size:13.5px;padding:9px 14px;cursor:pointer;white-space:nowrap}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-subtab:hover{color:var(--etxt)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-subtab.active{color:var(--etxt);border-bottom-color:var(--eemerald)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-subtab.alvo.active{border-bottom-color:var(--eteal)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-subtab.radar.active{border-bottom-color:var(--eamber)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-kw{display:inline-block;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:8px;padding:5px 10px;font-size:12.5px;margin:0 6px 6px 0}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-kw .n{color:var(--emuted2);font-family:var(--emono);font-size:11px;margin-right:5px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-tbl th{color:var(--emuted);text-align:left;font-weight:600;padding:7px 9px;border-bottom:1px solid var(--eborder);white-space:nowrap}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-tbl td{padding:7px 9px;border-bottom:1px solid var(--epanel2);color:var(--etxt);vertical-align:top}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-tbl td.mono{font-family:var(--emono);white-space:nowrap}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-row-pesq{cursor:pointer}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-row-pesq:hover td{background:var(--epanel2)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-row-pesq.sel td{background:var(--epanel3,#18233a)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-badge.ok{background:rgba(16,185,129,.14);color:var(--eemerald)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-badge.warn{background:rgba(245,158,11,.14);color:var(--eamber)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-badge.err{background:rgba(239,68,68,.14);color:var(--ered)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-acc-head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-acc-tit{font-size:13.5px;font-weight:600;color:var(--etxt)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-acc-id{color:var(--emuted2);font-family:var(--emono);font-size:11px;font-weight:400;margin-left:4px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-acc-sub{font-size:11.5px;color:var(--emuted);margin-top:2px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-acc-chev{color:var(--eamber);font-size:15px;flex-shrink:0}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-acc-top3{margin-top:9px;border-top:1px dashed var(--eborder);padding-top:8px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-top3{font-size:12.5px;color:var(--etxt);padding:3px 0}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-top3 .n{color:var(--eamber);font-family:var(--emono);font-weight:700;margin-right:4px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-top3 .p{color:var(--eemerald);font-family:var(--emono);margin-left:6px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-top3 .v{color:var(--emuted2);font-size:11px;margin-left:6px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-acc-body{margin-top:10px;border-top:1px solid var(--eborder);padding-top:10px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-kpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-kpi{background:var(--epanel2);border:1px solid var(--eborder);color:var(--emuted);border-radius:8px;padding:6px 10px;font-size:11.5px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rd-kpi b{color:var(--etxt);font-family:var(--emono);font-weight:600}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) a.rd-kw{text-decoration:none;cursor:pointer}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) a.rd-kw:hover{border-color:var(--eamber);color:var(--eamber)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .alsubbar{display:flex;gap:8px;align-items:center;margin:6px 0 18px;flex-wrap:wrap}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .alsub-btn{background:var(--epanel2);color:var(--emuted);border:1px solid var(--eborder);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all .12s}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .alsub-btn:hover{color:var(--etxt);border-color:var(--emuted2)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .alsub-btn.active{background:var(--epanel3);color:var(--etxt);border-color:var(--eteal)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .alsub-btn.cmd{margin-left:auto;border-style:dashed}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ph{color:var(--emuted2);font-size:13px;text-align:center;padding:30px 10px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vgrid{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start}
+    @media(max-width:900px){:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vgrid{grid-template-columns:1fr}}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vform .efield,:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vrow .efield,:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vrow3 .efield{margin-bottom:12px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vform label{display:block;font-size:11px;color:var(--emuted);margin-bottom:5px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vrow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
     /* BUILD 2026-08-03-A: linhas densas alinhadas à esquerda (larguras fixas, sem esticar) */
-    #tab-ecommerce .vlinha{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
-    #tab-ecommerce .vlinha .efield{margin-bottom:10px}
-    #tab-ecommerce .vd-mlbox{border-left:2px solid var(--eteal);padding-left:10px;margin-top:4px}
-    #tab-ecommerce .vd-mlbox.travado{border-left-color:var(--eborder)}
-    #tab-ecommerce .vd-mlbox .vinput:disabled{opacity:.35;cursor:not-allowed}
-    #tab-ecommerce .vd-mlhint{font-size:11.5px;color:var(--eteal);margin:0 0 8px}
-    #tab-ecommerce .vd-mlbox.travado .vd-mlhint{color:var(--emuted2)}
-    #tab-ecommerce .vd-messel{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-    #tab-ecommerce .vd-messel button{background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:5px 11px;cursor:pointer;font-size:12px}
-    #tab-ecommerce .vd-mes{font-weight:700;font-size:14px;color:var(--eteal);font-family:var(--emono)}
-    #tab-ecommerce .vd-mestot{margin-left:auto;font-size:12.5px;color:var(--emuted);font-family:var(--emono)}
-    #tab-ecommerce .vpill.st-aenv{background:rgba(245,158,11,.15);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
-    #tab-ecommerce .vpill.st-env{background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.35)}
-    #tab-ecommerce .vpill.st-ent{background:rgba(16,185,129,.15);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
-    #tab-ecommerce .vpill.st-can{background:rgba(95,111,140,.18);color:var(--emuted2);border:1px solid var(--eborder)}
-    #tab-ecommerce .vpill.st-per{background:rgba(239,68,68,.15);color:var(--ered);border:1px solid rgba(239,68,68,.35)}
-    #tab-ecommerce .vinput{width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:8px;padding:9px 11px;font:inherit}
-    #tab-ecommerce .vinput.mono{font-family:var(--emono);font-variant-numeric:tabular-nums}
-    #tab-ecommerce .vinput:focus{outline:2px solid var(--eemerald);border-color:transparent}
-    #tab-ecommerce .vpulled{background:var(--epanel2);border:1px dashed var(--eborder);border-radius:8px;padding:8px 11px;font-size:12.5px;color:var(--emuted)}
-    #tab-ecommerce .vpulled b{color:var(--eteal)}
-    #tab-ecommerce .vbtn{appearance:none;border:0;border-radius:9px;font:inherit;font-weight:600;padding:10px 16px;cursor:pointer;background:linear-gradient(135deg,var(--eemerald),var(--eteal));color:#06231a}
-    #tab-ecommerce .vbtn:hover{filter:brightness(1.08)}
-    #tab-ecommerce .vbtn.sm{padding:5px 10px;font-size:12px;border-radius:7px;background:none;border:1px solid var(--eborder);color:var(--etxt);font-weight:500}
-    #tab-ecommerce .vbtn.sm:hover{border-color:var(--eemerald)}
-    #tab-ecommerce .vli{display:flex;align-items:center;gap:6px;padding:10px 0;border-bottom:1px solid var(--eborder)}
-    #tab-ecommerce .vli:last-child{border-bottom:0}
-    #tab-ecommerce .vli .vmain{flex:1;min-width:0}
-    #tab-ecommerce .vli .vp{font-size:13px;font-weight:500}
-    #tab-ecommerce .vli .vm{font-family:var(--emono);font-size:11px;color:var(--emuted)}
-    #tab-ecommerce .vpill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600}
-    #tab-ecommerce .vpill.warn{background:#241c08;color:#facc6b;border:1px solid #473714}
-    #tab-ecommerce .vpill.ok{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vlinha{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vlinha .efield{margin-bottom:10px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vd-mlbox{border-left:2px solid var(--eteal);padding-left:10px;margin-top:4px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vd-mlbox.travado{border-left-color:var(--eborder)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vd-mlbox .vinput:disabled{opacity:.35;cursor:not-allowed}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vd-mlhint{font-size:11.5px;color:var(--eteal);margin:0 0 8px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vd-mlbox.travado .vd-mlhint{color:var(--emuted2)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vd-messel{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vd-messel button{background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:7px;padding:5px 11px;cursor:pointer;font-size:12px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vd-mes{font-weight:700;font-size:14px;color:var(--eteal);font-family:var(--emono)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vd-mestot{margin-left:auto;font-size:12.5px;color:var(--emuted);font-family:var(--emono)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-aenv{background:rgba(245,158,11,.15);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-env{background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.35)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-ent{background:rgba(16,185,129,.15);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-can{background:rgba(95,111,140,.18);color:var(--emuted2);border:1px solid var(--eborder)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-per{background:rgba(239,68,68,.15);color:var(--ered);border:1px solid rgba(239,68,68,.35)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vinput{width:100%;background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:8px;padding:9px 11px;font:inherit}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vinput.mono{font-family:var(--emono);font-variant-numeric:tabular-nums}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vinput:focus{outline:2px solid var(--eemerald);border-color:transparent}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpulled{background:var(--epanel2);border:1px dashed var(--eborder);border-radius:8px;padding:8px 11px;font-size:12.5px;color:var(--emuted)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpulled b{color:var(--eteal)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vbtn{appearance:none;border:0;border-radius:9px;font:inherit;font-weight:600;padding:10px 16px;cursor:pointer;background:linear-gradient(135deg,var(--eemerald),var(--eteal));color:#06231a}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vbtn:hover{filter:brightness(1.08)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vbtn.sm{padding:5px 10px;font-size:12px;border-radius:7px;background:none;border:1px solid var(--eborder);color:var(--etxt);font-weight:500}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vbtn.sm:hover{border-color:var(--eemerald)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli{display:flex;align-items:center;gap:6px;padding:10px 0;border-bottom:1px solid var(--eborder)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli:last-child{border-bottom:0}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli .vmain{flex:1;min-width:0}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli .vp{font-size:13px;font-weight:500}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli .vm{font-family:var(--emono);font-size:11px;color:var(--emuted)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.warn{background:#241c08;color:#facc6b;border:1px solid #473714}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.ok{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
     /* BUILD 2026-07-16-B · semáforo de envio na lista de Vendas */
-    #tab-ecommerce .vpill.err{background:#2a0d0d;color:#f28b8b;border:1px solid #5c1a1a}
-    #tab-ecommerce .vpill.mut{background:var(--epanel2);color:var(--emuted);border:1px solid var(--eborder)}
-    #tab-ecommerce .vpill.crit{background:var(--ered);color:#fff;border:1px solid #b91c1c;font-weight:700}
-    #tab-ecommerce .vd-postbox{background:var(--epanel2);border:1px solid var(--eteal);border-radius:10px;padding:10px 12px;margin:8px 0 10px;display:flex;gap:10px;align-items:end;flex-wrap:wrap}
-    #tab-ecommerce .vmsg{font-size:12px;margin-top:8px;min-height:16px}
-    #tab-ecommerce .vmsg.ok{color:var(--eemerald)} #tab-ecommerce .vmsg.err{color:var(--ered)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.err{background:#2a0d0d;color:#f28b8b;border:1px solid #5c1a1a}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.mut{background:var(--epanel2);color:var(--emuted);border:1px solid var(--eborder)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.crit{background:var(--ered);color:#fff;border:1px solid #b91c1c;font-weight:700}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vd-postbox{background:var(--epanel2);border:1px solid var(--eteal);border-radius:10px;padding:10px 12px;margin:8px 0 10px;display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vmsg{font-size:12px;margin-top:8px;min-height:16px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vmsg.ok{color:var(--eemerald)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vmsg.err{color:var(--ered)}
     /* modo edição — sinal visual (aprovado 08/07/2026): caixa verde clarinho só ao editar */
-    #tab-ecommerce [data-aleditbox].editing{background:rgba(16,185,129,.06);border:1px solid rgba(52,211,153,.42)!important;border-left:3px solid var(--eemerald)!important;border-radius:10px;padding:12px 14px 14px!important;box-shadow:0 0 0 1px rgba(52,211,153,.06) inset}
-    #tab-ecommerce [data-aleditbox].editing .efield label{color:#9fe6c6}
-    #tab-ecommerce [data-aleditbox].editing .vinput{border-color:rgba(52,211,153,.28)}
-    #tab-ecommerce [data-aleditbox].editing .msim{border-color:rgba(52,211,153,.22)}
-    #tab-ecommerce .al-editflag{display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,.14);color:var(--eemerald);border:1px solid rgba(52,211,153,.3);border-radius:7px;padding:3px 9px;font-size:11px;font-weight:700;margin-bottom:11px}
-    #tab-ecommerce .msim{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:8px 12px;margin:8px 0 4px}
-    #tab-ecommerce .msim-h{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin-bottom:4px;font-weight:600}
-    #tab-ecommerce .msim-h .msim-hint{text-transform:none;letter-spacing:0;font-weight:400;color:var(--emuted2);font-size:11px}
-    #tab-ecommerce .msim-zonas{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:2px}
-    #tab-ecommerce .msim-zonas:empty{display:none}
-    #tab-ecommerce .msim-z{background:var(--epanel);border:1px solid var(--eborder);border-radius:8px;padding:8px 10px;font-family:var(--emono);font-variant-numeric:tabular-nums}
-    #tab-ecommerce .msim-z .msim-zl{font-size:10px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.05em;font-family:inherit;display:flex;align-items:center;gap:5px}
-    #tab-ecommerce .msim-z .msim-zv{font-size:15px;font-weight:600;margin-top:2px}
-    #tab-ecommerce .msim-z.v .msim-zv{color:var(--eemerald)} #tab-ecommerce .msim-z.a .msim-zv{color:var(--eamber)} #tab-ecommerce .msim-z.r .msim-zv{color:var(--ered)}
-    #tab-ecommerce .msim-z.pior{border-color:var(--eamber)}
-    #tab-ecommerce .msim-z .msim-dot{display:inline-block;width:7px;height:7px;border-radius:50%}
-    #tab-ecommerce .msim-z .msim-dot.calib{background:var(--eemerald)}
-    #tab-ecommerce .msim-z .msim-dot.est{background:transparent;border:1px solid var(--emuted2)}
-    #tab-ecommerce .msim-piso{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:7px;font-size:12px;font-weight:500}
-    #tab-ecommerce .msim-piso:empty{display:none}
-    #tab-ecommerce .msim-piso.ok{background:rgba(16,185,129,.10);color:var(--eemerald);border:1px solid rgba(16,185,129,.25)}
-    #tab-ecommerce .msim-piso.no{background:rgba(239,68,68,.10);color:var(--ered);border:1px solid rgba(239,68,68,.30)}
-    #tab-ecommerce .msim-piso.warn{background:rgba(245,158,11,.10);color:var(--eamber);border:1px solid rgba(245,158,11,.30)}
-    #tab-ecommerce .msim-main{display:flex;align-items:center;gap:10px;padding:3px 4px 2px}
-    #tab-ecommerce .msim-main .msim-pct{font-family:var(--emono);font-variant-numeric:tabular-nums;font-size:24px;font-weight:700;letter-spacing:-.02em}
-    #tab-ecommerce .msim-main.v .msim-pct{color:var(--eemerald)}
-    #tab-ecommerce .msim-main.r .msim-pct{color:var(--ered)}
-    #tab-ecommerce .msim-main.warn .msim-pct{color:var(--emuted2)}
-    #tab-ecommerce .msim-main .msim-selo{font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;letter-spacing:.02em}
-    #tab-ecommerce .msim-main .msim-selo.v{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
-    #tab-ecommerce .msim-main .msim-selo.r{background:rgba(239,68,68,.12);color:var(--ered);border:1px solid rgba(239,68,68,.4)}
-    #tab-ecommerce .msim-main .msim-selo.warn{background:rgba(245,158,11,.12);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) [data-aleditbox].editing{background:rgba(16,185,129,.06);border:1px solid rgba(52,211,153,.42)!important;border-left:3px solid var(--eemerald)!important;border-radius:10px;padding:12px 14px 14px!important;box-shadow:0 0 0 1px rgba(52,211,153,.06) inset}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) [data-aleditbox].editing .efield label{color:#9fe6c6}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) [data-aleditbox].editing .vinput{border-color:rgba(52,211,153,.28)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) [data-aleditbox].editing .msim{border-color:rgba(52,211,153,.22)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-editflag{display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,.14);color:var(--eemerald);border:1px solid rgba(52,211,153,.3);border-radius:7px;padding:3px 9px;font-size:11px;font-weight:700;margin-bottom:11px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:8px 12px;margin:8px 0 4px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-h{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin-bottom:4px;font-weight:600}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-h .msim-hint{text-transform:none;letter-spacing:0;font-weight:400;color:var(--emuted2);font-size:11px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-zonas{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:2px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-zonas:empty{display:none}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-z{background:var(--epanel);border:1px solid var(--eborder);border-radius:8px;padding:8px 10px;font-family:var(--emono);font-variant-numeric:tabular-nums}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-z .msim-zl{font-size:10px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.05em;font-family:inherit;display:flex;align-items:center;gap:5px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-z .msim-zv{font-size:15px;font-weight:600;margin-top:2px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-z.v .msim-zv{color:var(--eemerald)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-z.a .msim-zv{color:var(--eamber)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-z.r .msim-zv{color:var(--ered)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-z.pior{border-color:var(--eamber)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-z .msim-dot{display:inline-block;width:7px;height:7px;border-radius:50%}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-z .msim-dot.calib{background:var(--eemerald)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-z .msim-dot.est{background:transparent;border:1px solid var(--emuted2)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-piso{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:7px;font-size:12px;font-weight:500}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-piso:empty{display:none}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-piso.ok{background:rgba(16,185,129,.10);color:var(--eemerald);border:1px solid rgba(16,185,129,.25)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-piso.no{background:rgba(239,68,68,.10);color:var(--ered);border:1px solid rgba(239,68,68,.30)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-piso.warn{background:rgba(245,158,11,.10);color:var(--eamber);border:1px solid rgba(245,158,11,.30)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-main{display:flex;align-items:center;gap:10px;padding:3px 4px 2px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-main .msim-pct{font-family:var(--emono);font-variant-numeric:tabular-nums;font-size:24px;font-weight:700;letter-spacing:-.02em}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-main.v .msim-pct{color:var(--eemerald)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-main.r .msim-pct{color:var(--ered)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-main.warn .msim-pct{color:var(--emuted2)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-main .msim-selo{font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;letter-spacing:.02em}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-main .msim-selo.v{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-main .msim-selo.r{background:rgba(239,68,68,.12);color:var(--ered);border:1px solid rgba(239,68,68,.4)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-main .msim-selo.warn{background:rgba(245,158,11,.12);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
     /* BUILD 01/08-A: chave do override + selo de estado */
-    #tab-ecommerce label[data-alovr]{border:1px solid rgba(245,158,11,.5);border-radius:8px;padding:7px 14px;background:rgba(245,158,11,.07);font-weight:700;font-size:12.5px}
-    #tab-ecommerce label[data-alovr]:hover{background:rgba(245,158,11,.14)}
-    #tab-ecommerce label[data-alovr]:has(input:checked){background:rgba(245,158,11,.22);color:#fbbf24;border-color:var(--eamber)}
-    #tab-ecommerce label[data-alovr] input{transform:scale(1.35);margin-right:4px;accent-color:var(--eamber)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) label[data-alovr]{border:1px solid rgba(245,158,11,.5);border-radius:8px;padding:7px 14px;background:rgba(245,158,11,.07);font-weight:700;font-size:12.5px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) label[data-alovr]:hover{background:rgba(245,158,11,.14)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) label[data-alovr]:has(input:checked){background:rgba(245,158,11,.22);color:#fbbf24;border-color:var(--eamber)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) label[data-alovr] input{transform:scale(1.35);margin-right:4px;accent-color:var(--eamber)}
     /* BUILD 30/07-C: anúncios ativos + integridade */
-    #tab-ecommerce .atv-integ{border-radius:8px;padding:7px 11px;font-size:12px;margin-bottom:8px}
-    #tab-ecommerce .atv-integ.v{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);color:var(--eemerald)}
-    #tab-ecommerce .atv-integ.a{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);color:var(--eamber)}
-    #tab-ecommerce .atv-integ.r{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.35);color:var(--ered)}
-    #tab-ecommerce .atv-integ.n{background:none;border:0;color:var(--emuted2);font-size:11px;padding:2px 11px}
-    #tab-ecommerce details.atv-row{border:1px solid var(--eborder);border-radius:10px;margin-bottom:6px;background:var(--epanel2)}
-    #tab-ecommerce details.atv-row summary{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;list-style:none;flex-wrap:wrap}
-    #tab-ecommerce details.atv-row summary::-webkit-details-marker{display:none}
-    #tab-ecommerce details.atv-row summary .mono{font-family:var(--emono);font-size:12px;color:var(--emuted)}
-    #tab-ecommerce details.atv-row summary .mono.c{color:var(--eteal);font-weight:700}
-    #tab-ecommerce details.atv-row summary .t{flex:1;min-width:180px;font-size:12.5px;color:var(--etxt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    #tab-ecommerce details.atv-row summary .tp{font-size:11px;color:var(--emuted2)}
-    #tab-ecommerce .atv-badge{font-size:9.5px;font-weight:700;border-radius:5px;padding:2px 7px;letter-spacing:.04em}
-    #tab-ecommerce .atv-badge.p{background:rgba(95,111,140,.15);color:var(--emuted);border:1px solid var(--eborder)}
-    #tab-ecommerce .atv-badge.z{background:rgba(239,68,68,.12);color:var(--ered);border:1px solid rgba(239,68,68,.35)}
-    #tab-ecommerce .atv-body{padding:4px 12px 10px;border-top:1px dashed var(--eborder)}
-    #tab-ecommerce .atv-cen{display:flex;align-items:center;gap:10px;font-family:var(--emono);font-variant-numeric:tabular-nums;font-size:12.5px;padding:6px 8px;border-radius:8px;margin-top:6px;background:var(--epanel3);border:1px solid var(--eborder);flex-wrap:wrap}
-    #tab-ecommerce .atv-cen.vig{border-color:rgba(52,211,153,.5)}
-    #tab-ecommerce .atv-cen.off{opacity:.5}
-    #tab-ecommerce .atv-cen .k{font-size:10.5px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.05em}
-    #tab-ecommerce .atv-cen .p{color:var(--etxt)}
-    #tab-ecommerce .atv-cen .m{font-weight:700}
-    #tab-ecommerce .atv-cen .m.v{color:var(--eemerald)} #tab-ecommerce .atv-cen .m.a{color:var(--eamber)} #tab-ecommerce .atv-cen .m.r{color:var(--ered)}
-    #tab-ecommerce .atv-sug{font-size:11.5px;color:var(--emuted);margin-top:8px}
-    #tab-ecommerce .atv-imp{margin-top:8px}
-    #tab-ecommerce .atv-imp textarea{width:100%;min-height:84px;background:var(--epanel3);color:var(--etxt);border:1px solid var(--eborder);border-radius:8px;padding:10px;font:11.5px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-integ{border-radius:8px;padding:7px 11px;font-size:12px;margin-bottom:8px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-integ.v{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);color:var(--eemerald)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-integ.a{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);color:var(--eamber)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-integ.r{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.35);color:var(--ered)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-integ.n{background:none;border:0;color:var(--emuted2);font-size:11px;padding:2px 11px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) details.atv-row{border:1px solid var(--eborder);border-radius:10px;margin-bottom:6px;background:var(--epanel2)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) details.atv-row summary{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;list-style:none;flex-wrap:wrap}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) details.atv-row summary::-webkit-details-marker{display:none}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) details.atv-row summary .mono{font-family:var(--emono);font-size:12px;color:var(--emuted)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) details.atv-row summary .mono.c{color:var(--eteal);font-weight:700}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) details.atv-row summary .t{flex:1;min-width:180px;font-size:12.5px;color:var(--etxt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) details.atv-row summary .tp{font-size:11px;color:var(--emuted2)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-badge{font-size:9.5px;font-weight:700;border-radius:5px;padding:2px 7px;letter-spacing:.04em}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-badge.p{background:rgba(95,111,140,.15);color:var(--emuted);border:1px solid var(--eborder)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-badge.z{background:rgba(239,68,68,.12);color:var(--ered);border:1px solid rgba(239,68,68,.35)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-body{padding:4px 12px 10px;border-top:1px dashed var(--eborder)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-cen{display:flex;align-items:center;gap:10px;font-family:var(--emono);font-variant-numeric:tabular-nums;font-size:12.5px;padding:6px 8px;border-radius:8px;margin-top:6px;background:var(--epanel3);border:1px solid var(--eborder);flex-wrap:wrap}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-cen.vig{border-color:rgba(52,211,153,.5)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-cen.off{opacity:.5}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-cen .k{font-size:10.5px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.05em}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-cen .p{color:var(--etxt)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-cen .m{font-weight:700}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-cen .m.v{color:var(--eemerald)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-cen .m.a{color:var(--eamber)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-cen .m.r{color:var(--ered)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-sug{font-size:11.5px;color:var(--emuted);margin-top:8px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-imp{margin-top:8px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .atv-imp textarea{width:100%;min-height:84px;background:var(--epanel3);color:var(--etxt);border:1px solid var(--eborder);border-radius:8px;padding:10px;font:11.5px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
     /* BUILD 30/07-A: margem inline compacta + popover detalhes */
-    #tab-ecommerce .alm-row{display:grid;grid-template-columns:1.1fr .8fr 1.4fr;gap:12px}
-    #tab-ecommerce .mginline{display:flex;align-items:center;gap:9px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:8px;padding:8px 11px;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
-    #tab-ecommerce .mginline.vigente{border-color:rgba(52,211,153,.5)}
-    #tab-ecommerce .mginline .mgi-pct{font-size:16px;font-weight:700}
-    #tab-ecommerce .mginline.v .mgi-pct{color:var(--eemerald)} #tab-ecommerce .mginline.a .mgi-pct{color:var(--eamber)} #tab-ecommerce .mginline.r .mgi-pct{color:var(--ered)} #tab-ecommerce .mginline.mute .mgi-pct{color:var(--emuted2)}
-    #tab-ecommerce .mginline .mgi-luc{font-size:12.5px;color:var(--emuted)}
-    #tab-ecommerce .mginline .mgi-luc b{color:var(--etxt)}
-    #tab-ecommerce .mginline .mgi-selo{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;margin-left:auto}
-    #tab-ecommerce .mginline .mgi-selo.v{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
-    #tab-ecommerce .mginline .mgi-selo.r{background:rgba(239,68,68,.12);color:var(--ered);border:1px solid rgba(239,68,68,.4)}
-    #tab-ecommerce .mginline .mgi-selo.warn{background:rgba(245,158,11,.12);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
-    #tab-ecommerce details.msim-det{position:relative;display:inline-block;margin-left:auto}
-    #tab-ecommerce details.msim-det summary{font-size:11.5px;color:var(--emuted2);cursor:pointer;user-select:none;list-style:none}
-    #tab-ecommerce details.msim-det summary::-webkit-details-marker{display:none}
-    #tab-ecommerce details.msim-det[open] summary{color:var(--emuted)}
-    #tab-ecommerce details.msim-det .msim-meta2{position:absolute;right:0;bottom:calc(100% + 6px);z-index:30;min-width:290px;font-size:12px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;padding:10px 14px;background:#1a2742;border:1px solid #44568a;border-radius:8px;box-shadow:0 14px 36px rgba(0,0,0,.75),0 2px 8px rgba(0,0,0,.5)}
-    #tab-ecommerce .meta-grid{display:grid;grid-template-columns:auto 1fr;column-gap:16px;row-gap:4px;align-items:baseline}
-    #tab-ecommerce .meta-grid .k{color:var(--emuted);font-size:11.5px;white-space:nowrap}
-    #tab-ecommerce .meta-grid .vv{text-align:right;color:var(--etxt)}
-    #tab-ecommerce .meta-grid .vig{grid-column:1/-1;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--eaccent);font-weight:700;padding-bottom:2px;border-bottom:1px solid var(--eborder);margin-bottom:3px}
-    #tab-ecommerce .meta-grid .nf-k{color:#9fe6c6;font-size:12.5px;font-weight:700}
-    #tab-ecommerce .meta-grid .nf-v{text-align:right;color:var(--eaccent);font-size:16px;font-weight:800;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:6px;padding:2px 8px}
-    #tab-ecommerce .msim-reason{color:var(--eamber);font-size:12px;padding:0 4px 6px;display:block}
-    #tab-ecommerce .msim-meta{font-size:12.5px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;margin-top:3px;line-height:1.45;padding-top:5px;border-top:1px solid var(--eborder)}
-    #tab-ecommerce .msim-meta:empty{display:none;border-top:0;padding-top:0;margin-top:0}
-    #tab-ecommerce .msim-meta b{color:var(--etxt);font-weight:600}
-    #tab-ecommerce .rep-pill{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.45);color:#fca5a5;padding:2px 10px;border-radius:6px;font-family:var(--emono);font-variant-numeric:tabular-nums;font-size:12px}
-    #tab-ecommerce .al-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:7px;line-height:1.35}
-    #tab-ecommerce .al-line > span:not(:last-child)::after{content:"·";color:var(--emuted2);margin-left:7px;font-weight:400}
-    #tab-ecommerce .al-code{color:var(--etxt);font-weight:600;font-size:13px;font-family:var(--emono);font-variant-numeric:tabular-nums;letter-spacing:.01em}
-    #tab-ecommerce .al-title{color:var(--etxt);font-weight:600;font-size:13px}
-    #tab-ecommerce .al-info{font-size:11.5px;font-family:var(--emono);font-variant-numeric:tabular-nums}
-    #tab-ecommerce .al-info.novo{color:var(--emuted2)}
-    #tab-ecommerce .al-info.ok{color:#6ee7b7}
-    #tab-ecommerce .al-info.med{color:#fcd34d}
-    #tab-ecommerce .al-info.crit{color:#fca5a5}
-    #tab-ecommerce .al-actions{display:flex;flex-direction:column;gap:2px;align-items:flex-start;margin-top:2px}
-    #tab-ecommerce #al-anuncios .vli{padding:6px 0}
-    #tab-ecommerce .al-sug{background:none;border:0;padding:0;cursor:pointer;font-size:11.5px;font-weight:600;text-decoration:underline;font-family:inherit}
-    #tab-ecommerce .al-sug.gray,#tab-ecommerce .al-sug.n{color:var(--emuted2)}
-    #tab-ecommerce .al-sug.o{color:#6ee7b7}
-    #tab-ecommerce .al-sug.a{color:#fcd34d}
-    #tab-ecommerce .al-sug.c{color:#fca5a5}
-    #tab-ecommerce .al-sug.b{color:#38bdf8}
-    #tab-ecommerce .al-sug:hover{filter:brightness(1.15)}
-    #tab-ecommerce .al-histlink{background:none;border:0;color:var(--emuted2);font-size:11.5px;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit}
-    #tab-ecommerce .al-histlink:hover{color:var(--etxt)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .alm-row{display:grid;grid-template-columns:1.1fr .8fr 1.4fr;gap:12px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mginline{display:flex;align-items:center;gap:9px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:8px;padding:8px 11px;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mginline.vigente{border-color:rgba(52,211,153,.5)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mginline .mgi-pct{font-size:16px;font-weight:700}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mginline.v .mgi-pct{color:var(--eemerald)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mginline.a .mgi-pct{color:var(--eamber)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mginline.r .mgi-pct{color:var(--ered)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mginline.mute .mgi-pct{color:var(--emuted2)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mginline .mgi-luc{font-size:12.5px;color:var(--emuted)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mginline .mgi-luc b{color:var(--etxt)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mginline .mgi-selo{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;margin-left:auto}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mginline .mgi-selo.v{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mginline .mgi-selo.r{background:rgba(239,68,68,.12);color:var(--ered);border:1px solid rgba(239,68,68,.4)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mginline .mgi-selo.warn{background:rgba(245,158,11,.12);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) details.msim-det{position:relative;display:inline-block;margin-left:auto}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) details.msim-det summary{font-size:11.5px;color:var(--emuted2);cursor:pointer;user-select:none;list-style:none}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) details.msim-det summary::-webkit-details-marker{display:none}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) details.msim-det[open] summary{color:var(--emuted)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) details.msim-det .msim-meta2{position:absolute;right:0;bottom:calc(100% + 6px);z-index:30;min-width:290px;font-size:12px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;padding:10px 14px;background:#1a2742;border:1px solid #44568a;border-radius:8px;box-shadow:0 14px 36px rgba(0,0,0,.75),0 2px 8px rgba(0,0,0,.5)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .meta-grid{display:grid;grid-template-columns:auto 1fr;column-gap:16px;row-gap:4px;align-items:baseline}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .meta-grid .k{color:var(--emuted);font-size:11.5px;white-space:nowrap}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .meta-grid .vv{text-align:right;color:var(--etxt)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .meta-grid .vig{grid-column:1/-1;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--eaccent);font-weight:700;padding-bottom:2px;border-bottom:1px solid var(--eborder);margin-bottom:3px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .meta-grid .nf-k{color:#9fe6c6;font-size:12.5px;font-weight:700}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .meta-grid .nf-v{text-align:right;color:var(--eaccent);font-size:16px;font-weight:800;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:6px;padding:2px 8px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-reason{color:var(--eamber);font-size:12px;padding:0 4px 6px;display:block}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-meta{font-size:12.5px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;margin-top:3px;line-height:1.45;padding-top:5px;border-top:1px solid var(--eborder)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-meta:empty{display:none;border-top:0;padding-top:0;margin-top:0}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-meta b{color:var(--etxt);font-weight:600}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rep-pill{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.45);color:#fca5a5;padding:2px 10px;border-radius:6px;font-family:var(--emono);font-variant-numeric:tabular-nums;font-size:12px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:7px;line-height:1.35}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-line > span:not(:last-child)::after{content:"·";color:var(--emuted2);margin-left:7px;font-weight:400}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-code{color:var(--etxt);font-weight:600;font-size:13px;font-family:var(--emono);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-title{color:var(--etxt);font-weight:600;font-size:13px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-info{font-size:11.5px;font-family:var(--emono);font-variant-numeric:tabular-nums}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-info.novo{color:var(--emuted2)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-info.ok{color:#6ee7b7}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-info.med{color:#fcd34d}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-info.crit{color:#fca5a5}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-actions{display:flex;flex-direction:column;gap:2px;align-items:flex-start;margin-top:2px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) #al-anuncios .vli{padding:6px 0}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sug{background:none;border:0;padding:0;cursor:pointer;font-size:11.5px;font-weight:600;text-decoration:underline;font-family:inherit}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sug.gray,:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sug.n{color:var(--emuted2)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sug.o{color:#6ee7b7}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sug.a{color:#fcd34d}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sug.c{color:#fca5a5}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sug.b{color:#38bdf8}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sug:hover{filter:brightness(1.15)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histlink{background:none;border:0;color:var(--emuted2);font-size:11.5px;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histlink:hover{color:var(--etxt)}
     /* BUILD 2026-08-25-I: historico e o unico link; cor = leitura rapida app x ML */
-#tab-ecommerce .al-histlink{font-size:13px;font-weight:700;color:var(--etxt)}
-#tab-ecommerce .al-histlink.ok{color:var(--eemerald)}
-#tab-ecommerce .al-histlink.div{color:#f87171}
+:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histlink{font-size:13px;font-weight:700;color:var(--etxt)}
+:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histlink.ok{color:var(--eemerald)}
+:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histlink.div{color:#f87171}
     /* BUILD 2026-08-26-E: Analise Comercial — nao-lido em verde; divergencia (vermelho) prevalece */
-    #tab-ecommerce .al-histlink.atv{font-size:12.5px}
-    #tab-ecommerce .al-histlink.atv.novo{color:var(--eemerald)}
-    #tab-ecommerce .al-histlink.atv.div{color:#f87171}
-#tab-ecommerce .al-histnote{font-size:12px;margin-left:8px;font-family:var(--emono);font-variant-numeric:tabular-nums}
-#tab-ecommerce .al-histnote.ok{color:var(--eemerald)}
-#tab-ecommerce .al-histnote.div{color:#f87171;font-weight:600}
-#tab-ecommerce .al-histbanner{padding:8px 12px;border-radius:7px;margin-bottom:8px;font-size:13px;font-weight:600}
-#tab-ecommerce .al-histbanner.ok{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
-#tab-ecommerce .al-histbanner.div{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.4)}
-#tab-ecommerce .al-histbanner.na{background:rgba(138,153,180,.10);color:var(--emuted);border:1px solid var(--eborder);font-weight:500}
-#tab-ecommerce .al-histbanner b{font-family:var(--emono);font-variant-numeric:tabular-nums}
-    #tab-ecommerce .al-sugbox{background:var(--epanel2);border:1px solid var(--eborder);border-left-width:4px;border-radius:8px;padding:10px 14px;position:relative}
-    #tab-ecommerce .al-sugbox.o{border-left-color:#6ee7b7;background:linear-gradient(90deg,rgba(16,185,129,.08),var(--epanel2) 30%)}
-    #tab-ecommerce .al-sugbox.a{border-left-color:#fcd34d;background:linear-gradient(90deg,rgba(245,158,11,.08),var(--epanel2) 30%)}
-    #tab-ecommerce .al-sugbox.c{border-left-color:#fca5a5;background:linear-gradient(90deg,rgba(239,68,68,.08),var(--epanel2) 30%)}
-    #tab-ecommerce .al-sugbox.b{border-left-color:#38bdf8;background:linear-gradient(90deg,rgba(56,189,248,.10),var(--epanel2) 30%)}
-    #tab-ecommerce .al-sugbox.n,#tab-ecommerce .al-sugbox.gray{border-left-color:var(--emuted2)}
-    #tab-ecommerce .al-sugh{font-size:13.5px;color:var(--etxt);margin-bottom:6px;font-weight:600}
-    #tab-ecommerce .al-sugp{font-size:13px;color:var(--etxt);line-height:1.6}
-    #tab-ecommerce .al-sugmeta{font-size:10px;color:var(--emuted2);margin-top:8px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
-    #tab-ecommerce .al-histli{display:flex;gap:10px;align-items:center;font-size:12.5px;padding:7px 0;border-top:1px solid var(--eborder)}
-    #tab-ecommerce .al-histli:first-of-type{border-top:0}
-    #tab-ecommerce .al-histdt{color:var(--emuted);font-family:var(--emono);font-variant-numeric:tabular-nums;min-width:96px;font-size:12px}
-    #tab-ecommerce .al-histtag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.02em}
-    #tab-ecommerce .al-histtag.o{background:rgba(16,185,129,.15);color:#6ee7b7}
-    #tab-ecommerce .al-histtag.a{background:rgba(245,158,11,.15);color:#fcd34d}
-    #tab-ecommerce .al-histtag.c{background:rgba(239,68,68,.15);color:#fca5a5}
-    #tab-ecommerce .al-histtag.n{background:rgba(138,153,180,.15);color:var(--emuted2)}
-    #tab-ecommerce .al-histtag.b{background:rgba(56,189,248,.15);color:#7dd3fc}
-    #tab-ecommerce .al-histmeta{color:var(--etxt);font-size:12.5px;flex:1}
-    #tab-ecommerce .al-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;margin:0 -14px 10px;background:rgba(16,185,129,.07);border-radius:10px;flex-wrap:wrap}
-    #tab-ecommerce .al-header-l{display:flex;flex-direction:row;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
-    #tab-ecommerce .al-htitle{font-size:13px;font-weight:800;color:#06231a;margin:0;padding:8px 14px;border-radius:9px;background:linear-gradient(135deg,var(--eemerald),var(--eteal));letter-spacing:-.01em;text-transform:none;box-shadow:0 3px 10px -4px rgba(16,185,129,.35)}
-    #tab-ecommerce .al-hsub{font-size:11px;color:var(--emuted2);font-weight:500;letter-spacing:.05em;text-transform:uppercase}
-    #tab-ecommerce .al-hcount{font-size:12px;color:#6ee7b7;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.02em;font-weight:700;background:rgba(16,185,129,.14);padding:4px 10px;border-radius:6px}
-    #tab-ecommerce .rep-pill.amarela{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.45);color:#fcd34d}
-    #tab-ecommerce .rep-pill.verde{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.45);color:#6ee7b7}
-    #tab-ecommerce .msim-h .rep-pill{font-size:10.5px;padding:1px 8px}
-    #tab-ecommerce .vbtn.sm[disabled]{opacity:.45;cursor:not-allowed;border-color:var(--eborder)}
-    #tab-ecommerce .vbtn.sm[disabled]:hover{border-color:var(--eborder)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histlink.atv{font-size:12.5px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histlink.atv.novo{color:var(--eemerald)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histlink.atv.div{color:#f87171}
+:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histnote{font-size:12px;margin-left:8px;font-family:var(--emono);font-variant-numeric:tabular-nums}
+:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histnote.ok{color:var(--eemerald)}
+:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histnote.div{color:#f87171;font-weight:600}
+:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histbanner{padding:8px 12px;border-radius:7px;margin-bottom:8px;font-size:13px;font-weight:600}
+:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histbanner.ok{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
+:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histbanner.div{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.4)}
+:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histbanner.na{background:rgba(138,153,180,.10);color:var(--emuted);border:1px solid var(--eborder);font-weight:500}
+:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histbanner b{font-family:var(--emono);font-variant-numeric:tabular-nums}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sugbox{background:var(--epanel2);border:1px solid var(--eborder);border-left-width:4px;border-radius:8px;padding:10px 14px;position:relative}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sugbox.o{border-left-color:#6ee7b7;background:linear-gradient(90deg,rgba(16,185,129,.08),var(--epanel2) 30%)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sugbox.a{border-left-color:#fcd34d;background:linear-gradient(90deg,rgba(245,158,11,.08),var(--epanel2) 30%)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sugbox.c{border-left-color:#fca5a5;background:linear-gradient(90deg,rgba(239,68,68,.08),var(--epanel2) 30%)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sugbox.b{border-left-color:#38bdf8;background:linear-gradient(90deg,rgba(56,189,248,.10),var(--epanel2) 30%)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sugbox.n,:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sugbox.gray{border-left-color:var(--emuted2)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sugh{font-size:13.5px;color:var(--etxt);margin-bottom:6px;font-weight:600}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sugp{font-size:13px;color:var(--etxt);line-height:1.6}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-sugmeta{font-size:10px;color:var(--emuted2);margin-top:8px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histli{display:flex;gap:10px;align-items:center;font-size:12.5px;padding:7px 0;border-top:1px solid var(--eborder)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histli:first-of-type{border-top:0}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histdt{color:var(--emuted);font-family:var(--emono);font-variant-numeric:tabular-nums;min-width:96px;font-size:12px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histtag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.02em}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histtag.o{background:rgba(16,185,129,.15);color:#6ee7b7}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histtag.a{background:rgba(245,158,11,.15);color:#fcd34d}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histtag.c{background:rgba(239,68,68,.15);color:#fca5a5}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histtag.n{background:rgba(138,153,180,.15);color:var(--emuted2)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histtag.b{background:rgba(56,189,248,.15);color:#7dd3fc}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-histmeta{color:var(--etxt);font-size:12.5px;flex:1}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;margin:0 -14px 10px;background:rgba(16,185,129,.07);border-radius:10px;flex-wrap:wrap}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-header-l{display:flex;flex-direction:row;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-htitle{font-size:13px;font-weight:800;color:#06231a;margin:0;padding:8px 14px;border-radius:9px;background:linear-gradient(135deg,var(--eemerald),var(--eteal));letter-spacing:-.01em;text-transform:none;box-shadow:0 3px 10px -4px rgba(16,185,129,.35)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-hsub{font-size:11px;color:var(--emuted2);font-weight:500;letter-spacing:.05em;text-transform:uppercase}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-hcount{font-size:12px;color:#6ee7b7;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.02em;font-weight:700;background:rgba(16,185,129,.14);padding:4px 10px;border-radius:6px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rep-pill.amarela{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.45);color:#fcd34d}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rep-pill.verde{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.45);color:#6ee7b7}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .msim-h .rep-pill{font-size:10.5px;padding:1px 8px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vbtn.sm[disabled]{opacity:.45;cursor:not-allowed;border-color:var(--eborder)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vbtn.sm[disabled]:hover{border-color:var(--eborder)}
 .ecom-subpanel .ecard>h3{color:var(--eemerald)}
-    #tab-ecommerce .rp-idxrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
-    @media(max-width:900px){#tab-ecommerce .rp-idxrow{grid-template-columns:repeat(2,1fr)}}
-    #tab-ecommerce .rp-idx{background:var(--epanel);border:1px solid var(--eborder);border-radius:10px;padding:13px}
-    #tab-ecommerce .rp-idx .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted)}
-    #tab-ecommerce .rp-idx .v{font-family:var(--emono);font-size:21px;font-weight:600;margin-top:5px}
-    #tab-ecommerce .rp-idx.bad .v{color:var(--eamber)} #tab-ecommerce .rp-idx.good .v{color:var(--eemerald)}
-    #tab-ecommerce table.rptab{width:100%;border-collapse:collapse;font-size:13px}
-    #tab-ecommerce table.rptab th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted);font-weight:600;padding:10px 12px;background:var(--epanel2);border-bottom:1px solid var(--eborder)}
-    #tab-ecommerce table.rptab td{padding:11px 12px;border-bottom:1px solid var(--eborder);vertical-align:top}
-    #tab-ecommerce table.rptab tr:last-child td{border-bottom:0}
-    #tab-ecommerce table.rptab tr.crit td:first-child{box-shadow:inset 3px 0 0 var(--ered)}
-    #tab-ecommerce table.rptab tr.warn td:first-child{box-shadow:inset 3px 0 0 var(--eamber)}
-    #tab-ecommerce .rpfar{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:600}
-    #tab-ecommerce .rpfar.c{background:#240f12;color:#fb7185;border:1px solid #4a2026}
-    #tab-ecommerce .rpfar.a{background:#241c08;color:#facc6b;border:1px solid #473714}
-    #tab-ecommerce .rpfar.o{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
-    #tab-ecommerce .rpfar.n{background:var(--epanel2);color:var(--emuted2);border:1px solid var(--eborder)}
-    #tab-ecommerce .mono{font-family:var(--emono);font-variant-numeric:tabular-nums}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rp-idxrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+    @media(max-width:900px){:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rp-idxrow{grid-template-columns:repeat(2,1fr)}}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rp-idx{background:var(--epanel);border:1px solid var(--eborder);border-radius:10px;padding:13px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rp-idx .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rp-idx .v{font-family:var(--emono);font-size:21px;font-weight:600;margin-top:5px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rp-idx.bad .v{color:var(--eamber)} :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rp-idx.good .v{color:var(--eemerald)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.rptab{width:100%;border-collapse:collapse;font-size:13px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.rptab th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--emuted);font-weight:600;padding:10px 12px;background:var(--epanel2);border-bottom:1px solid var(--eborder)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.rptab td{padding:11px 12px;border-bottom:1px solid var(--eborder);vertical-align:top}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.rptab tr:last-child td{border-bottom:0}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.rptab tr.crit td:first-child{box-shadow:inset 3px 0 0 var(--ered)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) table.rptab tr.warn td:first-child{box-shadow:inset 3px 0 0 var(--eamber)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rpfar{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:600}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rpfar.c{background:#240f12;color:#fb7185;border:1px solid #4a2026}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rpfar.a{background:#241c08;color:#facc6b;border:1px solid #473714}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rpfar.o{background:#08231a;color:#5fe0a8;border:1px solid #15402f}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rpfar.n{background:var(--epanel2);color:var(--emuted2);border:1px solid var(--eborder)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .mono{font-family:var(--emono);font-variant-numeric:tabular-nums}
     /* BUILD 2026-08-03-B: CSS da projeção (rl-forecast/rl-fc) removido junto com o quadrante */
-    #tab-ecommerce .al-quad{display:grid;grid-template-columns:78px 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:10px}
-    #tab-ecommerce .al-quad .qaxis{font-size:10px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;text-align:center}
-    #tab-ecommerce .al-quad .qaxis.v{writing-mode:vertical-rl;transform:rotate(180deg)}
-    #tab-ecommerce .al-quad .qcell{border:1px solid var(--eborder);border-radius:11px;padding:12px;min-height:110px;background:var(--epanel2)}
-    #tab-ecommerce .al-quad .qcell h4{margin:0 0 3px;font-size:13px}
-    #tab-ecommerce .al-quad .qcell .d{font-size:10.5px;color:var(--emuted2);margin-bottom:8px}
-    #tab-ecommerce .al-quad .qcell.scale{background:#06231f;border-color:#15514a}
-    #tab-ecommerce .al-quad .qcell.scale h4{color:var(--eteal)}
-    #tab-ecommerce .al-quad .qcell.fix{border-color:#473714}
-    #tab-ecommerce .al-quad .qcell.fix h4{color:var(--eamber)}
-    #tab-ecommerce .chip{display:inline-block;background:var(--epanel3);border:1px solid var(--eborder);border-radius:7px;padding:3px 8px;font-size:11px;margin:0 5px 5px 0}
-    #tab-ecommerce .chip.t{border-color:#15514a;color:var(--eteal)}
-    #tab-ecommerce .al-regs{display:flex;flex-direction:column;gap:10px}
-    #tab-ecommerce .al-reg .rn{font-size:12px;font-weight:600}
-    #tab-ecommerce .al-reg .rt{font-size:11.5px;color:var(--emuted);margin-top:3px}
-    #tab-ecommerce .al-reg .bar{height:5px;background:var(--epanel3);border-radius:3px;margin-top:6px;overflow:hidden}
-    #tab-ecommerce .al-reg .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--eemerald),var(--eteal))}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-quad{display:grid;grid-template-columns:78px 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:10px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-quad .qaxis{font-size:10px;color:var(--emuted2);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;text-align:center}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-quad .qaxis.v{writing-mode:vertical-rl;transform:rotate(180deg)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-quad .qcell{border:1px solid var(--eborder);border-radius:11px;padding:12px;min-height:110px;background:var(--epanel2)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-quad .qcell h4{margin:0 0 3px;font-size:13px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-quad .qcell .d{font-size:10.5px;color:var(--emuted2);margin-bottom:8px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-quad .qcell.scale{background:#06231f;border-color:#15514a}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-quad .qcell.scale h4{color:var(--eteal)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-quad .qcell.fix{border-color:#473714}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-quad .qcell.fix h4{color:var(--eamber)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .chip{display:inline-block;background:var(--epanel3);border:1px solid var(--eborder);border-radius:7px;padding:3px 8px;font-size:11px;margin:0 5px 5px 0}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .chip.t{border-color:#15514a;color:var(--eteal)}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-regs{display:flex;flex-direction:column;gap:10px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-reg .rn{font-size:12px;font-weight:600}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-reg .rt{font-size:11.5px;color:var(--emuted);margin-top:3px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-reg .bar{height:5px;background:var(--epanel3);border-radius:3px;margin-top:6px;overflow:hidden}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .al-reg .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--eemerald),var(--eteal))}
     /* BUILD 2026-07-16-A · Financeiro: lançamento inline abaixo do pedido */
-    #tab-ecommerce #fn-list #fn-form{background:var(--epanel2);border:1px solid var(--eteal);border-radius:12px;padding:14px;margin:10px 0 14px}
-    #tab-ecommerce #fn-list .vli.fn-open{background:rgba(45,212,191,.06);border-radius:8px;padding-left:8px;padding-right:8px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) #fn-list #fn-form{background:var(--epanel2);border:1px solid var(--eteal);border-radius:12px;padding:14px;margin:10px 0 14px}
+    :is(#tab-ecommerce,#tab-financeiro,#tab-radar) #fn-list .vli.fn-open{background:rgba(45,212,191,.06);border-radius:8px;padding-left:8px;padding-right:8px}
     </style>
 
     <div class="ecom-subnav">
       <button class="ecom-subtab alvo active" data-sub="alvo">🎯 Alvo</button>
       <button class="ecom-subtab" data-sub="vendas">Vendas</button>
       <button class="ecom-subtab" data-sub="relatorios">Relatórios</button>
-      <button class="ecom-subtab radar" data-sub="radar">📡 Radar de Nicho</button>
     </div>
     <!-- BUILD 2026-08-21-E: modal unico padrao Selecta (recuperavel + despesas op). DENTRO do #tab-ecommerce de proposito: o CSS da casa (.vinput/.vbtn/.efield) e escopado por aba — o modal do 21-C nascia em document.body, FORA do escopo, por isso saiu sem estilo e com input quebrado. -->
     <div id="sel-modal" style="display:none;position:fixed;inset:0;background:rgba(2,10,8,.62);align-items:center;justify-content:center;z-index:9999">
@@ -2307,26 +2312,12 @@
     <div id="ecom-sub-relatorios" class="ecom-subpanel" style="display:none">
       <div class="alsubbar" id="rlsubbar" style="margin:0 0 14px">
         <button class="alsub-btn active" data-rlsub="painel">📊 Painel</button>
-        <button class="alsub-btn" data-rlsub="financeiro">💰 Financeiro</button><!-- BUILD 2026-08-08-M -->
         <button class="alsub-btn" data-rlsub="historico">🗂 Histórico</button>
       </div>
       <div id="rlsub-painel"><!-- BUILD 2026-08-21-D: Painel = SO o resumo do mes (Visao geral); Compras do dia + Pedidos a fechar (com fn-form-park) migraram para a aba Vendas -->
       <h3 id="rl-kpis-titulo" style="font-size:12.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Visão geral · mês corrente</h3>
       <div id="rl-kpis"><div class="ph">carregando…</div></div>
       </div><!-- /rlsub-painel -->
-      <div id="rlsub-financeiro" style="display:none"><!-- BUILD 2026-08-17-B: Financeiro = visao mensal (Termometro; Por mes/competencia foi para o Historico no 26-M) -->
-      <div class="ecard" style="border-color:var(--eteal)">
-        <h3>Termômetro financeiro · <span id="fn-termo-mes" style="color:var(--eteal);text-transform:none;letter-spacing:0"></span></h3>
-        <div id="fn-termometro"><div class="ph">carregando…</div></div>
-      </div>
-      <!-- BUILD 2026-08-26-M: quadrante "Por mes (competencia)" MOVIDO para o Historico (decisao Igor 28/08) -->
-      <div class="ecard" style="margin-top:18px;border-color:var(--eteal)"><!-- BUILD 2026-08-26-N: Conta Mercado Pago — creditos previstos por dia (Parte A). BUILD 2026-08-26-O: saldo disponivel (Edge mp-conta + ecom_mp_saldo, Realtime) -->
-        <h3>Conta Mercado Pago</h3>
-        <div id="fn-mp-saldo"><div class="ph">carregando…</div></div>
-        <div style="font-size:11px;color:var(--emuted2);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.06em">Créditos previstos · próximos 7 dias</div>
-        <div id="fn-creditos"><div class="ph">carregando…</div></div>
-      </div>
-      </div><!-- /rlsub-financeiro -->
       <div id="rlsub-historico" style="display:none">
       <div class="ecard" style="margin-bottom:18px"><!-- BUILD 2026-08-17-B: Consulta gerencial movida do Painel (mesmos ids rl-*, mesma logica) -->
         <h3>Consulta gerencial</h3>
@@ -2557,7 +2548,33 @@
          Sem número absoluto de vendas (API nega a terceiros) — posição =
          rank oficial de venda. ecomPesq apagado nesta build.
          ===================================================================== -->
-    <div id="ecom-sub-radar" class="ecom-subpanel" style="display:none">
+
+
+
+  </section>
+<!-- BUILD 2026-09-15-C: Financeiro promovido a aba principal (payload identico, ids fn-* preservados; Realtime ecom_mp_saldo continua funcionando por getElementById) -->
+<section id="tab-financeiro" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
+    
+  <h2 style="font-size:15px;font-weight:700;margin:0 0 12px">💰 Financeiro</h2>
+      <div id="fin-main-body"><!-- BUILD 2026-08-17-B: Financeiro = visao mensal (Termometro; Por mes/competencia foi para o Historico no 26-M) -->
+      <div class="ecard" style="border-color:var(--eteal)">
+        <h3>Termômetro financeiro · <span id="fn-termo-mes" style="color:var(--eteal);text-transform:none;letter-spacing:0"></span></h3>
+        <div id="fn-termometro"><div class="ph">carregando…</div></div>
+      </div>
+      <!-- BUILD 2026-08-26-M: quadrante "Por mes (competencia)" MOVIDO para o Historico (decisao Igor 28/08) -->
+      <div class="ecard" style="margin-top:18px;border-color:var(--eteal)"><!-- BUILD 2026-08-26-N: Conta Mercado Pago — creditos previstos por dia (Parte A). BUILD 2026-08-26-O: saldo disponivel (Edge mp-conta + ecom_mp_saldo, Realtime) -->
+        <h3>Conta Mercado Pago</h3>
+        <div id="fn-mp-saldo"><div class="ph">carregando…</div></div>
+        <div style="font-size:11px;color:var(--emuted2);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.06em">Créditos previstos · próximos 7 dias</div>
+        <div id="fn-creditos"><div class="ph">carregando…</div></div>
+      </div>
+      </div><!-- /rlsub-financeiro -->
+</section>
+
+<!-- BUILD 2026-09-15-C: Radar de Nicho promovido a aba principal (rastreador de oportunidades; fonte atual = ML via Edge ml-radar) -->
+<section id="tab-radar" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
+    
+    <div id="ecom-sub-radar" class="radar-body">
       <div class="alsubbar" id="rdtabbar" style="margin-bottom:10px">
         <button class="alsub-btn active" data-rdtab="pesquisa">🔎 Pesquisa</button>
         <button class="alsub-btn" data-rdtab="cand">📦 Candidatos importação</button>
@@ -2602,10 +2619,8 @@
         </div>
       </div>
     </div>
+</section>
 
-
-
-  </section>
 
 </div>
 
@@ -4440,7 +4455,7 @@ function switchTab(tabName) {
       btn.classList.add('text-gray-400', 'hover:bg-gray-700');
     }
   });
-  hide('#tab-catalogo'); hide('#tab-apple'); hide('#tab-simulador'); hide('#tab-importacao'); hide('#tab-ecommerce'); hide('#tab-instagram'); hide('#tab-fiscal'); hide('#tab-shopee'); // BUILD 2026-08-08-B + 2026-08-22-A fiscal
+  hide('#tab-catalogo'); hide('#tab-apple'); hide('#tab-simulador'); hide('#tab-importacao'); hide('#tab-ecommerce'); hide('#tab-instagram'); hide('#tab-fiscal'); hide('#tab-shopee'); hide('#tab-financeiro'); hide('#tab-radar'); // BUILD 2026-09-15-C // BUILD 2026-08-08-B + 2026-08-22-A fiscal
   show(`#tab-${tabName}`);
   if (tabName === 'apple') enterAppleTab();
   if (tabName === 'instagram') instagramTab.onEnter(); // BUILD 2026-08-08-B
@@ -4449,6 +4464,8 @@ function switchTab(tabName) {
   if (tabName === 'catalogo') catalogoTab.onEnter(); // BUILD 2026-08-08-C
   if (tabName === 'ecommerce') { ecom.onEnter().then(()=>{ if(!window._alvoBoot){ window._alvoBoot=true; try{ ecomAlvo.load(); }catch(_e){} } }); } // BUILD 2026-08-08-C: Alvo é a sub-aba default
   if (tabName === 'shopee') shopeeTab.onEnter(); // BUILD 2026-08-26-V
+  if (tabName === 'financeiro') { try{ ecomFinanceiro.load(); ecomRelatorios.load(); }catch(e){ console.warn('fin tab:',e.message); } } // BUILD 2026-09-15-C (mesmo par do antigo rlsub)
+  if (tabName === 'radar') { try{ ecomRadar.load(); }catch(e){ console.warn('radar tab:',e.message); } } // BUILD 2026-09-15-C
 }
 
 // =====================================================================
@@ -8022,7 +8039,6 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value){ dt.value=ecomVendas.nowLocal(); } ecomVendas.calcPostarAte(); ecomVendas.loaded=true; ecomVendas.load(); ecomFinanceiro.load(); } // BUILD 2026-08-21-D: Compras do dia + Pedidos a fechar moram em Vendas
   if(sub==='relatorios'){ ecomRelatorios.load(); } // BUILD 2026-08-21-D: Painel = so resumo do mes; operacao diaria mora em Vendas
   if(sub==='alvo'){ ecomAlvo.load(); }
-  if(sub==='radar'){ ecomRadar.load(); }
 }));
 (function(){ const v=document.getElementById('rd-varrer'); if(v) v.addEventListener('click',()=>ecomRadar.descobrir());
   const ti=document.getElementById('rd-termo'); if(ti) ti.addEventListener('keydown',e=>{ if(e.key==='Enter') ecomRadar.descobrir(); });
@@ -8072,10 +8088,10 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const rb=document.getElementById('rlsubbar'); if(rb) rb.addEventListener('click',e=>{ const b=e.target.closest('.alsub-btn'); if(!b) return;
     rb.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x===b));
     const t=b.dataset.rlsub;
-    ['painel','financeiro','historico'].forEach(k=>{ const el=document.getElementById('rlsub-'+k); if(el) el.style.display=(k===t)?'':'none'; });
+    ['painel','historico'].forEach(k=>{ const el=document.getElementById('rlsub-'+k); if(el) el.style.display=(k===t)?'':'none'; });
     if(t==='painel') ecomRelatorios.load(); // BUILD 2026-08-21-D: Painel = resumo do mes; leitura diaria foi para Vendas
     if(t==='historico'){ ecomHistorico.load(); ecomRelatorios.load(); } // BUILD 2026-08-26-M: Por mes agora mora no Historico — carrega junto
-    if(t==='financeiro'){ ecomFinanceiro.load(); ecomRelatorios.load(); } }); // BUILD 2026-08-21-C: Por mes (competencia) recarrega na sub-aba — antes so recarregava ao reentrar em Relatorios (causa raiz do "nao atualiza")
+    }); // BUILD 2026-08-21-C (rota financeiro migrou p/ aba principal no 15-C): Por mes (competencia) recarrega na sub-aba — antes so recarregava ao reentrar em Relatorios (causa raiz do "nao atualiza")
 })();
 (function(){
   const list=ecomFinanceiro._g('fn-list');
@@ -10339,6 +10355,11 @@ const shopeeTab={
     g('shp-al-save').addEventListener('click',()=>this.salvarAnuncio());
     g('shp-al-cancel').addEventListener('click',()=>this.limparAnuncio());
     g('shp-an-refresh').addEventListener('click',()=>this.reloadAnuncios());
+    const ab=this._g('shp-alsubbar'); if(ab) ab.addEventListener('click',e=>{ const b=e.target.closest('[data-shpalsub]'); if(!b) return;
+      ab.querySelectorAll('[data-shpalsub]').forEach(x=>x.style.borderColor=(x===b)?'var(--eaccent)':'var(--eborder)');
+      const t=b.dataset.shpalsub;
+      this._g('shp-sub-analise').style.display=(t==='analise')?'':'none';
+      this._g('shp-sub-controle').style.display=(t==='controle')?'':'none'; }); // BUILD 2026-09-15-C
     g('shp-ct-refresh').addEventListener('click',()=>this.reloadAnuncios());
     g('shp-vd-cod').addEventListener('change',e=>this.echoProduto(e.target.value,'shp-vd-echo','prodVd'));
     ['shp-vd-preco','shp-vd-qtd'].forEach(i=>g(i).addEventListener('input',()=>this.sugerirTarifa()));
@@ -10377,30 +10398,30 @@ window.shopeeTab = shopeeTab; // inline onclick resolve via window (padrao fisca
   header nav::-webkit-scrollbar{display:none}
   header nav .tab-btn{white-space:nowrap;padding:8px 10px;font-size:13px}
   #user-email{display:none}
-  #tab-ecommerce{padding:10px 10px 24px}
-  #tab-ecommerce .ecom-subnav{overflow-x:auto;scrollbar-width:none;margin-bottom:12px}
-  #tab-ecommerce .ecom-subnav::-webkit-scrollbar{display:none}
-  #tab-ecommerce .ecom-subtab{padding:10px 12px;font-size:13px}
-  #tab-ecommerce .ecard{padding:12px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar){padding:10px 10px 24px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-subnav{overflow-x:auto;scrollbar-width:none;margin-bottom:12px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-subnav::-webkit-scrollbar{display:none}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecom-subtab{padding:10px 12px;font-size:13px}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .ecard{padding:12px}
   #fn-compras-dia{font-size:14px}
   #vd-pdf-compra{flex:1 1 100%;min-height:42px;font-size:14px}
   /* ---- fila Vendas: cada venda vira um cartao ----
      andar 1: numero + produto | andar 2: pedido/sku/data/valor | andar 3: rastreio | andar 4: status + semaforo + ocorrencia/postado */
-  #tab-ecommerce .vli{display:flex!important;flex-wrap:wrap!important;gap:8px!important;padding:12px 0!important;align-items:center!important}
-  #tab-ecommerce .vli .vmain{flex:1 1 100%!important;display:flex!important;flex-wrap:wrap!important;gap:3px 8px!important;align-items:baseline!important;min-width:0!important}
-  #tab-ecommerce .vli .vmain > .vm.mono:first-child{flex:0 0 auto!important;font-size:12px!important}
-  #tab-ecommerce .vli .vmain > .vp{flex:1 1 0!important;min-width:60%!important;font-size:15.5px!important;line-height:1.3!important;margin:0!important;white-space:normal!important}
-  #tab-ecommerce .vli .vmain > .vm:not(:first-child){flex:1 1 100%!important;font-size:11.5px!important;line-height:1.55!important;white-space:normal!important;word-break:break-word}
-  #tab-ecommerce .vli .vmain > .vm[style*="inline-flex"]{display:flex!important;gap:6px!important}
-  #tab-ecommerce .vli > .vpill{flex:0 0 auto!important;font-size:11.5px!important;padding:4px 10px!important}
-  #tab-ecommerce .vli > select{flex:1 1 auto!important;min-width:0!important;width:auto!important;min-height:40px!important;font-size:14px!important;padding:6px 10px!important}
-  #tab-ecommerce .vli > div[style*="display:flex"]{margin-left:auto!important}
-  #tab-ecommerce .vli .vbtn.sm{min-height:40px!important;padding:8px 16px!important;font-size:13.5px!important}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli{display:flex!important;flex-wrap:wrap!important;gap:8px!important;padding:12px 0!important;align-items:center!important}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli .vmain{flex:1 1 100%!important;display:flex!important;flex-wrap:wrap!important;gap:3px 8px!important;align-items:baseline!important;min-width:0!important}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli .vmain > .vm.mono:first-child{flex:0 0 auto!important;font-size:12px!important}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli .vmain > .vp{flex:1 1 0!important;min-width:60%!important;font-size:15.5px!important;line-height:1.3!important;margin:0!important;white-space:normal!important}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli .vmain > .vm:not(:first-child){flex:1 1 100%!important;font-size:11.5px!important;line-height:1.55!important;white-space:normal!important;word-break:break-word}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli .vmain > .vm[style*="inline-flex"]{display:flex!important;gap:6px!important}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli > .vpill{flex:0 0 auto!important;font-size:11.5px!important;padding:4px 10px!important}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli > select{flex:1 1 auto!important;min-width:0!important;width:auto!important;min-height:40px!important;font-size:14px!important;padding:6px 10px!important}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli > div[style*="display:flex"]{margin-left:auto!important}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vli .vbtn.sm{min-height:40px!important;padding:8px 16px!important;font-size:13.5px!important}
   /* formulario Lancar venda empilhado */
-  #tab-ecommerce .vlinha .efield{width:100%!important}
-  #tab-ecommerce .vrow3{grid-template-columns:1fr!important}
-  #tab-ecommerce .vd-messel{flex-wrap:wrap!important}
-  #tab-ecommerce .vinput{min-height:42px!important;font-size:15px!important}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vlinha .efield{width:100%!important}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vrow3{grid-template-columns:1fr!important}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vd-messel{flex-wrap:wrap!important}
+  :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vinput{min-height:42px!important;font-size:15px!important}
 }
 </style>
 <script>/* BUILD 2026-08-25-E: instalabilidade (sem cache) */if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js",{scope:"./"}).catch(()=>{});});}</script>
