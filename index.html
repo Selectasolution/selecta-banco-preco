@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-15-G | selecta-banco-preco | VERDE TOTAL NA SHOPEE + ALVO NO PADRAO ML (decisao Igor 17/09: "Verde total. Quero um padrao so dentro do sistema" — cai o laranja de canal do 26-V; cada tela e aberta por vez, sem diferenciador de cor): (1) token --eaccent do #tab-shopee: #f97316 -> #34d399 (mesmo do ML; propaga p/ esub b, histbox, hovers); --epanel3:#18233a adicionado ao escopo. (2) .vbtn: gradiente esmeralda->teal, texto #06231a (espelho do ML); .vbtn.sm:hover esmeralda. (3) .vinput:focus = contorno esmeralda (padrao ML). (4) .subtab.active esmeralda + .subtab.alvo.active teal; botao Alvo ganha classe alvo. (5) Barra Analise/Controle do Alvo refeita no padrao ML: CSS .alsubbar/.alsub-btn replicado no escopo #tab-shopee, botoes viram pilulas .alsub-btn com estado .active, toggle JS troca borderColor inline por classList.toggle('active') — ids, handlers e dados intactos. ZERO matematica, zero consulta: so CSS, 2 classes no HTML e 1 linha de JS. | base: 2026-09-15-F (md5 c495ee2cb4f8c349aae30ed7787dac08) -->
 <!-- BUILD 2026-09-15-F | selecta-banco-preco | PARIDADE VISUAL SHOPEE = ML (correcao Igor 15/09: "quero praticamente o APP igual nas duas plataformas"; o Painel de chips do 15-E ficou aquem): (1) Painel Shopee refeito como ESPELHO card a card do kpiHtml do ML — grid .rp-idxrow/.rp-idx replicado no escopo #tab-shopee (mesmo desenho, tokens do canal): Faturamento, Resultado amortecido (good/bad), Margem s/ receita, Devolucoes (custo preso), Custo das mercadorias, Preso no escrow, Nº de itens, Cancelamentos. (2) shopeeTab.calcMes ganha devV (custo preso em devolucao) e cancV (receita cancelada) — campos NOVOS por agregacao das mesmas linhas; nenhuma conta existente muda. (3) Historico Shopee ganha o quadrante Por mês (paridade com o ML): tabela mes a mes via calcMes, mais recente primeiro. Estrutura das duas plataformas agora identica: Alvo (cadastro+simulador+Analise/Controle internos) / Vendas / Relatorios (Termometro=Painel+termometro do canal | Historico=Por mes+busca+pedidos). Diferencas remanescentes DECLARADAS (dado, nao desenho): ML tem consulta gerencial e edicao de pedido no Historico (Shopee manual ainda nao tem editor de venda — candidata a proxima paridade); convencao de devolucao difere por desenho (Shopee v1 tira o mes inteiro). | base: 2026-09-15-E (md5 85c4c9a4343717009d1aa9e26c8ed077) -->
 <!-- BUILD 2026-09-15-E | selecta-banco-preco | RAZAO DA SELECTA NO FINANCEIRO + TERMOMETRO DE CANAL + PAINEL SHOPEE (doutrina Igor 15/09: capital preso, investidores e toda a matematica que move a operacao sao da EMPRESA, nao dos canais — centralizar no Financeiro e de la fazer todos os controles; corrige a direcao do 15-D, que devolvera o razao completo ao ML): (1) o bloco financeiro completo (Termometro com folds DESPESAS/CAPITAL/INVESTIDORES, validacoes do portal, Conta Mercado Pago com saldo e creditos previstos) MOVE do ML para #tab-financeiro (fin-empresa-body); finMacro.load chama ecomFinanceiro.load — todos os controles de investidor/capital operam de la; Realtime do saldo MP segue por getElementById; fm-capital (resumo do 15-D) REMOVIDO por redundancia. (2) ML Relatorios > Termometro = Painel (rl-kpis) + TERMOMETRO DO CANAL novo (mlCanalTermo, tabela mlrl-termo): espelho puro do calcMes — pedidos, receita, taxas, custos, imposto, PERDAS DO CANAL, RESULTADO DO CANAL (colchao retido = luc−perdas) e colchao/colchao devolvido; SEM juros/fixos/despesas op/investidores/capital (moram no Financeiro; hint declara). Zero conta nova — so campos que calcMes ja devolve. (3) SHOPEE ganha o Painel (1o quadrante do Termometro, pedido Igor): chips itens validos/receita/resultado amortecido/margem/preso no escrow, mesmos numeros do calcMes. (4) Nota do macro atualizada: doutrina aplicada; RESSALVA declarada — a fonte de receitas do razao da empresa ainda e so o ML; integrar vendas Shopee na fonte() = BUILD 15-F (muda matematica travada; com consultas de conferencia antes/depois). Nenhuma conta alterada nesta build. | base: 2026-09-15-D (md5 5c2187bc31c1d4a70281993d7a144404) -->
 <!-- BUILD 2026-09-15-D | selecta-banco-preco | RAZAO POR CANAL + FINANCEIRO MACRO (decisoes Igor 15/09, sobre 15-C NAO publicado — publicar o 15-D carrega A/B/C): monitoramento individual por plataforma; a aba central Financeiro vira a LEITURA MACRO da empresa (os dois canais custeiam tudo). (1) ML Relatorios = 🌡 Termometro | 🗂 Historico; o quadrante Painel (rl-kpis) vira o PRIMEIRO quadrante do Termometro (pedido Igor), seguido do bloco financeiro ML inteiro (fin-ml-body: Termometro fn-* com folds, Conta MP, Investidores) que VOLTA da aba central para o razao do canal; hooks = par ecomFinanceiro.load+ecomRelatorios.load no pane e na entrada da sub-aba. (2) SHOPEE Relatorios = mesma estrutura: barra 🌡 Termometro | 🗂 Historico; Termometro = o de sempre; HISTORICO NOVO: todos os pedidos, busca em memoria (pedido/codigo/produto/UF), mesmos cards da fila (renderizador unico _cardsPedidos extraido — zero conta nova). shopeeTab.calcMes(m,arr) extraido do renderRelatorios = UNICA conta do mes Shopee (termometro e macro consomem a mesma funcao; numeros identicos). (3) FINANCEIRO MACRO (modulo finMacro, hook do switchTab): quadro Canais do mes — receita e resultado por canal (ML: lucOp e lucReal espelhos do calcMes; Shopee: amortecido) + EMPRESA receita e RESULTADO CONSERVADOR = ML lucOp + Shopee amortecido (colchao retido nos DOIS — convencoes diferentes dos razoes nao se somam cruas; lucro real ML segue visivel na linha do canal) + colchao retido total; quadro Capital — saldo MP (mesmos campos do renderMpSaldo), preso/recMP do capitalBase ML, escrow Shopee preso/a-enviar; seletor de mes; Realtime do saldo MP tambem atualiza o macro. RODAPE DE DOUTRINA declarado: fixos R$3.050 e juros de credores hoje moram SO no razao ML — reparticao entre canais e decisao pendente de Igor (mudaria matematica travada; NAO feita nesta build). Zero mudanca nas contas existentes. | base: 2026-09-15-C (md5 502ca0d83e5c3b348a69416af08d980e) -->
@@ -1716,7 +1717,8 @@
 <section id="tab-shopee" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
   <style>
   /* BUILD 2026-09-15-A · aba Shopee — paridade com o modus operandi ML (reconstrucao do 26-W orfao) */
-  #tab-shopee{--epanel:#131c2e;--epanel2:#0f1726;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#f97316;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--etxt)}
+  /* BUILD 2026-09-15-G: verde total (decisao Igor 17/09) — --eaccent laranja #f97316 vira o verde padrao Selecta #34d399 (mesmo token do ML); --epanel3 adicionado (fundo da pilula .alsub-btn.active, paridade ML) */
+  #tab-shopee{--epanel:#131c2e;--epanel2:#0f1726;--epanel3:#18233a;--eborder:#2a3650;--etxt:#e6edf7;--emuted:#8a99b4;--emuted2:#5f6f8c;--eemerald:#10b981;--eteal:#2dd4bf;--eamber:#f59e0b;--ered:#ef4444;--eaccent:#34d399;--emono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--etxt)}
   #tab-shopee .ecard{background:var(--epanel);border:1px solid var(--eborder);border-radius:12px;padding:13px 16px;margin-bottom:10px}
   #tab-shopee .ecard h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--emuted);margin:0 0 12px;font-weight:600}
   #tab-shopee .esub{color:var(--emuted);font-size:12.5px;margin:0 0 16px}
@@ -1724,21 +1726,27 @@
   #tab-shopee .subnav{display:flex;gap:2px;border-bottom:1px solid var(--eborder);margin:0 0 18px;overflow-x:auto}
   #tab-shopee .subtab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--emuted);font:inherit;font-size:13.5px;padding:9px 14px;cursor:pointer;white-space:nowrap}
   #tab-shopee .subtab:hover{color:var(--etxt)}
-  #tab-shopee .subtab.active{color:var(--etxt);border-bottom-color:var(--eaccent)}
+  #tab-shopee .subtab.active{color:var(--etxt);border-bottom-color:var(--eemerald)}
+  #tab-shopee .subtab.alvo.active{border-bottom-color:var(--eteal)}
   #tab-shopee .efield{display:flex;flex-direction:column;gap:4px;min-width:0}
   #tab-shopee .efield label{font-size:11px;color:var(--emuted);text-transform:uppercase;letter-spacing:.05em}
   #tab-shopee .vinput{background:var(--epanel2);border:1px solid var(--eborder);color:var(--etxt);border-radius:8px;padding:8px 10px;font-size:13px;width:100%}
-  #tab-shopee .vinput:focus{outline:none;border-color:var(--eaccent)}
+  #tab-shopee .vinput:focus{outline:2px solid var(--eemerald);border-color:transparent}
   #tab-shopee .vinput.mono{font-family:var(--emono)}
   /* BUILD 15-A: input date vazava a direita no Safari/iPhone (26-V) — largura contida no grid */
   #tab-shopee input[type="date"].vinput{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;box-sizing:border-box}
   #tab-shopee .vrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
   #tab-shopee .vrow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px}
   @media (max-width:640px){#tab-shopee .vrow,#tab-shopee .vrow3{grid-template-columns:1fr}}
-  #tab-shopee .vbtn{appearance:none;border:0;border-radius:9px;font:inherit;font-weight:600;padding:10px 16px;cursor:pointer;background:linear-gradient(135deg,var(--eaccent),#fb923c);color:#231003}
+  #tab-shopee .vbtn{appearance:none;border:0;border-radius:9px;font:inherit;font-weight:600;padding:10px 16px;cursor:pointer;background:linear-gradient(135deg,var(--eemerald),var(--eteal));color:#06231a}
   #tab-shopee .vbtn:hover{filter:brightness(1.08)}
   #tab-shopee .vbtn.sm{padding:5px 10px;font-size:12px;border-radius:7px;background:none;border:1px solid var(--eborder);color:var(--etxt);font-weight:500}
-  #tab-shopee .vbtn.sm:hover{border-color:var(--eaccent)}
+  #tab-shopee .vbtn.sm:hover{border-color:var(--eemerald)}
+  /* BUILD 2026-09-15-G: barra interna Analise/Controle no padrao ML (.alsubbar/.alsub-btn) */
+  #tab-shopee .alsubbar{display:flex;gap:8px;align-items:center;margin:6px 0 14px;flex-wrap:wrap}
+  #tab-shopee .alsub-btn{background:var(--epanel2);color:var(--emuted);border:1px solid var(--eborder);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all .12s;font-family:inherit}
+  #tab-shopee .alsub-btn:hover{color:var(--etxt);border-color:var(--emuted2)}
+  #tab-shopee .alsub-btn.active{background:var(--epanel3);color:var(--etxt);border-color:var(--eteal)}
   #tab-shopee .vbtn.sm.danger:hover{border-color:var(--ered);color:var(--ered)}
   #tab-shopee .rd-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
   #tab-shopee .rd-tbl th{font-size:11px;font-weight:700;color:var(--emuted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--eborder);white-space:nowrap}
@@ -1806,7 +1814,7 @@
   <p class="esub">Canal Shopee · Catálogo único · tarifas por <b>faixa de preço</b> (tabela <span class="mono">ecom_shopee_taxas</span> editável por SQL) · margem = régua da casa (tarifa + custo NF + colchão 6% + imposto 4%, piso 10%) · termômetro próprio — <b>fora</b> do razão ML por decisão de 30/08. Escrow ShopeePay: liberação à mão até a API.</p>
 
   <div class="subnav">
-    <button class="subtab active" data-ssub="alvo">🎯 Alvo</button>
+    <button class="subtab alvo active" data-ssub="alvo">🎯 Alvo</button>
     <button class="subtab" data-ssub="vendas">Vendas</button>
     <button class="subtab" data-ssub="relatorios">Relatórios</button>
   </div>
@@ -1847,9 +1855,9 @@
       </div>
     </div>
     <!-- BUILD 2026-09-15-C: padrao ML — Analise Comercial (Igor) e Controle (Alexia) moram DENTRO do Alvo -->
-    <div style="display:flex;gap:8px;align-items:center;margin:6px 0 14px;flex-wrap:wrap" id="shp-alsubbar">
-      <button class="vbtn sm" data-shpalsub="analise" style="border-color:var(--eaccent)">📊 Análise Comercial</button>
-      <button class="vbtn sm" data-shpalsub="controle">📈 Controle de Anúncios</button>
+    <div class="alsubbar" id="shp-alsubbar"><!-- BUILD 2026-09-15-G: pilulas .alsub-btn identicas ao alsubbar do ML -->
+      <button class="alsub-btn active" data-shpalsub="analise">📊 Análise Comercial</button>
+      <button class="alsub-btn" data-shpalsub="controle">📈 Controle de Anúncios</button>
     </div>
 <!-- ============ ANÁLISE COMERCIAL (Igor · leitura) ============ -->
   <div id="shp-sub-analise">
@@ -10444,7 +10452,7 @@ const shopeeTab={
     g('shp-al-cancel').addEventListener('click',()=>this.limparAnuncio());
     g('shp-an-refresh').addEventListener('click',()=>this.reloadAnuncios());
     const ab=this._g('shp-alsubbar'); if(ab) ab.addEventListener('click',e=>{ const b=e.target.closest('[data-shpalsub]'); if(!b) return;
-      ab.querySelectorAll('[data-shpalsub]').forEach(x=>x.style.borderColor=(x===b)?'var(--eaccent)':'var(--eborder)');
+      ab.querySelectorAll('[data-shpalsub]').forEach(x=>x.classList.toggle('active',x===b)); // BUILD 2026-09-15-G: padrao ML
       const t=b.dataset.shpalsub;
       this._g('shp-sub-analise').style.display=(t==='analise')?'':'none';
       this._g('shp-sub-controle').style.display=(t==='controle')?'':'none'; }); // BUILD 2026-09-15-C
