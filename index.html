@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-15-H | selecta-banco-preco | ALVO SHOPEE NO ESQUELETO DO ML (correcao Igor 17/09: "esse modelo e igual ao do ML? Sistema e um so" — o 15-G pintou de verde mas manteve ordem propria): (1) alsubbar (pilulas Analise Comercial/Controle) sobe para o TOPO do Alvo, primeira coisa da sub-aba, como no ML. (2) Card Cadastro de anuncio Shopee MOVIDO para DENTRO de shp-sub-analise, acima de Anuncios ativos — mesma posicao do Cadastro no alsub-analise do ML; estilo do card = espelho ML (borda teal, titulo esmeralda). (3) Card Anuncios ativos no padrao do "Anuncios ativos — matematica ML": borda+titulo esmeralda, botao "↻ Atualizar" a direita (margin-left:auto). Movimentacao de DOM por blocos inteiros, ids intactos (wire() liga por getElementById — indiferente a posicao); ZERO JS, zero matematica. Cards ML-especificos (Parametros comerciais, Frete oficial) NAO ganham gemeos vazios na Shopee: esqueleto igual, dados do canal (frete dif.=0 declarado no rodape do simulador). | base: 2026-09-15-G (md5 751f7c284f63762e9f25cb9ec24eb0f4) -->
 <!-- BUILD 2026-09-15-G | selecta-banco-preco | VERDE TOTAL NA SHOPEE + ALVO NO PADRAO ML (decisao Igor 17/09: "Verde total. Quero um padrao so dentro do sistema" — cai o laranja de canal do 26-V; cada tela e aberta por vez, sem diferenciador de cor): (1) token --eaccent do #tab-shopee: #f97316 -> #34d399 (mesmo do ML; propaga p/ esub b, histbox, hovers); --epanel3:#18233a adicionado ao escopo. (2) .vbtn: gradiente esmeralda->teal, texto #06231a (espelho do ML); .vbtn.sm:hover esmeralda. (3) .vinput:focus = contorno esmeralda (padrao ML). (4) .subtab.active esmeralda + .subtab.alvo.active teal; botao Alvo ganha classe alvo. (5) Barra Analise/Controle do Alvo refeita no padrao ML: CSS .alsubbar/.alsub-btn replicado no escopo #tab-shopee, botoes viram pilulas .alsub-btn com estado .active, toggle JS troca borderColor inline por classList.toggle('active') — ids, handlers e dados intactos. ZERO matematica, zero consulta: so CSS, 2 classes no HTML e 1 linha de JS. | base: 2026-09-15-F (md5 c495ee2cb4f8c349aae30ed7787dac08) -->
 <!-- BUILD 2026-09-15-F | selecta-banco-preco | PARIDADE VISUAL SHOPEE = ML (correcao Igor 15/09: "quero praticamente o APP igual nas duas plataformas"; o Painel de chips do 15-E ficou aquem): (1) Painel Shopee refeito como ESPELHO card a card do kpiHtml do ML — grid .rp-idxrow/.rp-idx replicado no escopo #tab-shopee (mesmo desenho, tokens do canal): Faturamento, Resultado amortecido (good/bad), Margem s/ receita, Devolucoes (custo preso), Custo das mercadorias, Preso no escrow, Nº de itens, Cancelamentos. (2) shopeeTab.calcMes ganha devV (custo preso em devolucao) e cancV (receita cancelada) — campos NOVOS por agregacao das mesmas linhas; nenhuma conta existente muda. (3) Historico Shopee ganha o quadrante Por mês (paridade com o ML): tabela mes a mes via calcMes, mais recente primeiro. Estrutura das duas plataformas agora identica: Alvo (cadastro+simulador+Analise/Controle internos) / Vendas / Relatorios (Termometro=Painel+termometro do canal | Historico=Por mes+busca+pedidos). Diferencas remanescentes DECLARADAS (dado, nao desenho): ML tem consulta gerencial e edicao de pedido no Historico (Shopee manual ainda nao tem editor de venda — candidata a proxima paridade); convencao de devolucao difere por desenho (Shopee v1 tira o mes inteiro). | base: 2026-09-15-E (md5 85c4c9a4343717009d1aa9e26c8ed077) -->
 <!-- BUILD 2026-09-15-E | selecta-banco-preco | RAZAO DA SELECTA NO FINANCEIRO + TERMOMETRO DE CANAL + PAINEL SHOPEE (doutrina Igor 15/09: capital preso, investidores e toda a matematica que move a operacao sao da EMPRESA, nao dos canais — centralizar no Financeiro e de la fazer todos os controles; corrige a direcao do 15-D, que devolvera o razao completo ao ML): (1) o bloco financeiro completo (Termometro com folds DESPESAS/CAPITAL/INVESTIDORES, validacoes do portal, Conta Mercado Pago com saldo e creditos previstos) MOVE do ML para #tab-financeiro (fin-empresa-body); finMacro.load chama ecomFinanceiro.load — todos os controles de investidor/capital operam de la; Realtime do saldo MP segue por getElementById; fm-capital (resumo do 15-D) REMOVIDO por redundancia. (2) ML Relatorios > Termometro = Painel (rl-kpis) + TERMOMETRO DO CANAL novo (mlCanalTermo, tabela mlrl-termo): espelho puro do calcMes — pedidos, receita, taxas, custos, imposto, PERDAS DO CANAL, RESULTADO DO CANAL (colchao retido = luc−perdas) e colchao/colchao devolvido; SEM juros/fixos/despesas op/investidores/capital (moram no Financeiro; hint declara). Zero conta nova — so campos que calcMes ja devolve. (3) SHOPEE ganha o Painel (1o quadrante do Termometro, pedido Igor): chips itens validos/receita/resultado amortecido/margem/preso no escrow, mesmos numeros do calcMes. (4) Nota do macro atualizada: doutrina aplicada; RESSALVA declarada — a fonte de receitas do razao da empresa ainda e so o ML; integrar vendas Shopee na fonte() = BUILD 15-F (muda matematica travada; com consultas de conferencia antes/depois). Nenhuma conta alterada nesta build. | base: 2026-09-15-D (md5 5c2187bc31c1d4a70281993d7a144404) -->
@@ -1821,8 +1822,16 @@
 
   <!-- ============ ALVO (cadastro + simulador) ============ -->
   <div id="shp-sub-alvo" class="shp-subpanel">
-    <div class="ecard" style="border-color:var(--eaccent)">
-      <h3 style="color:var(--eaccent)">Cadastro de anúncio Shopee</h3>
+    <!-- BUILD 2026-09-15-H: esqueleto do ML — alsubbar no TOPO do Alvo; Cadastro movido p/ DENTRO da Analise Comercial (posicao do ML) -->
+    <!-- BUILD 2026-09-15-C: padrao ML — Analise Comercial (Igor) e Controle (Alexia) moram DENTRO do Alvo -->
+    <div class="alsubbar" id="shp-alsubbar"><!-- BUILD 2026-09-15-G: pilulas .alsub-btn identicas ao alsubbar do ML -->
+      <button class="alsub-btn active" data-shpalsub="analise">📊 Análise Comercial</button>
+      <button class="alsub-btn" data-shpalsub="controle">📈 Controle de Anúncios</button>
+    </div>
+<!-- ============ ANÁLISE COMERCIAL (Igor · leitura) ============ -->
+  <div id="shp-sub-analise">
+    <div class="ecard" style="margin-bottom:12px;border-color:var(--eteal);border-width:1px">
+      <h3 style="color:var(--eemerald)">Cadastro de anúncio Shopee</h3>
       <div class="vrow3" style="margin-bottom:2px">
         <div class="efield"><label>Código Produto *</label><input class="vinput mono" id="shp-al-cod" placeholder="SSD-0001" style="text-transform:uppercase"></div>
         <div class="efield"><label>Item ID Shopee</label><input class="vinput mono" id="shp-al-item" placeholder="opcional"></div>
@@ -1854,17 +1863,10 @@
         <span class="hintline" id="shp-al-msg" style="margin:0"></span>
       </div>
     </div>
-    <!-- BUILD 2026-09-15-C: padrao ML — Analise Comercial (Igor) e Controle (Alexia) moram DENTRO do Alvo -->
-    <div class="alsubbar" id="shp-alsubbar"><!-- BUILD 2026-09-15-G: pilulas .alsub-btn identicas ao alsubbar do ML -->
-      <button class="alsub-btn active" data-shpalsub="analise">📊 Análise Comercial</button>
-      <button class="alsub-btn" data-shpalsub="controle">📈 Controle de Anúncios</button>
-    </div>
-<!-- ============ ANÁLISE COMERCIAL (Igor · leitura) ============ -->
-  <div id="shp-sub-analise">
-    <div class="ecard">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <h3 style="margin:0">Anúncios ativos <span id="shp-an-count" style="color:var(--emuted2);text-transform:none;letter-spacing:0"></span></h3>
-        <button class="vbtn sm" id="shp-an-refresh">Atualizar</button>
+    <div class="ecard" style="border-color:var(--eemerald);border-width:1px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <h3 style="margin:0;color:var(--eemerald)">Anúncios ativos <span id="shp-an-count" style="color:var(--emuted2);text-transform:none;letter-spacing:0"></span></h3>
+        <button class="vbtn sm" id="shp-an-refresh" style="margin-left:auto">↻ Atualizar</button>
       </div>
       <div class="tblwrap"><table class="rd-tbl"><thead><tr>
         <th>Nº</th><th>Cod</th><th>Item</th><th>Produto</th><th>Praticado</th><th>Margem</th><th>Histórico</th>
