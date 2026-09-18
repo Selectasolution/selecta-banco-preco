@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-15-I | selecta-banco-preco | CADASTRO DE ANUNCIO SHOPEE = ESPELHO DO ML (Igor 18/09: "porque o layout da Shopee quando vou cadastrar o anuncio nao esta igual o ML?"): (1) simbox de 7 quadrantes (heranca 26-V) REMOVIDA; entra campo Margem inline identico ao al-margem do ML (mesma caixa .vinput, mesmos estados: neutro -> "codigo nao encontrado" ambar -> "✓ produto · custo NF · digite o preco" -> margem% + R$ liq. + sufixo "tarifa R$X (faixa) · frete dif. 0" + selo LIBERADO/NEGADO; cores >=10% esmeralda / >=5% ambar / vermelho, regua do ML). (2) sim() reescrita p/ pintar a Margem inline — margemDe() INTOCADA, zero mudanca de conta. (3) hintline de echo do Alvo oculta (a Margem assume, como no ML); listener do codigo encadeia sim() apos o lookup p/ erro aparecer na caixa. (4) Botao "Salvar anuncio" -> "Cadastrar anuncio" (rotulo do ML). (5) Alerta de fronteira de faixa MANTIDO (so aparece quando ha armadilha — dado do canal, nao ornamento). Vendas/Controle/Analise/Relatorios intocados. | base: 2026-09-15-H (md5 82269235880af7f326746e4cb980050f) -->
 <!-- BUILD 2026-09-15-H | selecta-banco-preco | ALVO SHOPEE NO ESQUELETO DO ML (correcao Igor 17/09: "esse modelo e igual ao do ML? Sistema e um so" — o 15-G pintou de verde mas manteve ordem propria): (1) alsubbar (pilulas Analise Comercial/Controle) sobe para o TOPO do Alvo, primeira coisa da sub-aba, como no ML. (2) Card Cadastro de anuncio Shopee MOVIDO para DENTRO de shp-sub-analise, acima de Anuncios ativos — mesma posicao do Cadastro no alsub-analise do ML; estilo do card = espelho ML (borda teal, titulo esmeralda). (3) Card Anuncios ativos no padrao do "Anuncios ativos — matematica ML": borda+titulo esmeralda, botao "↻ Atualizar" a direita (margin-left:auto). Movimentacao de DOM por blocos inteiros, ids intactos (wire() liga por getElementById — indiferente a posicao); ZERO JS, zero matematica. Cards ML-especificos (Parametros comerciais, Frete oficial) NAO ganham gemeos vazios na Shopee: esqueleto igual, dados do canal (frete dif.=0 declarado no rodape do simulador). | base: 2026-09-15-G (md5 751f7c284f63762e9f25cb9ec24eb0f4) -->
 <!-- BUILD 2026-09-15-G | selecta-banco-preco | VERDE TOTAL NA SHOPEE + ALVO NO PADRAO ML (decisao Igor 17/09: "Verde total. Quero um padrao so dentro do sistema" — cai o laranja de canal do 26-V; cada tela e aberta por vez, sem diferenciador de cor): (1) token --eaccent do #tab-shopee: #f97316 -> #34d399 (mesmo do ML; propaga p/ esub b, histbox, hovers); --epanel3:#18233a adicionado ao escopo. (2) .vbtn: gradiente esmeralda->teal, texto #06231a (espelho do ML); .vbtn.sm:hover esmeralda. (3) .vinput:focus = contorno esmeralda (padrao ML). (4) .subtab.active esmeralda + .subtab.alvo.active teal; botao Alvo ganha classe alvo. (5) Barra Analise/Controle do Alvo refeita no padrao ML: CSS .alsubbar/.alsub-btn replicado no escopo #tab-shopee, botoes viram pilulas .alsub-btn com estado .active, toggle JS troca borderColor inline por classList.toggle('active') — ids, handlers e dados intactos. ZERO matematica, zero consulta: so CSS, 2 classes no HTML e 1 linha de JS. | base: 2026-09-15-F (md5 c495ee2cb4f8c349aae30ed7787dac08) -->
 <!-- BUILD 2026-09-15-F | selecta-banco-preco | PARIDADE VISUAL SHOPEE = ML (correcao Igor 15/09: "quero praticamente o APP igual nas duas plataformas"; o Painel de chips do 15-E ficou aquem): (1) Painel Shopee refeito como ESPELHO card a card do kpiHtml do ML — grid .rp-idxrow/.rp-idx replicado no escopo #tab-shopee (mesmo desenho, tokens do canal): Faturamento, Resultado amortecido (good/bad), Margem s/ receita, Devolucoes (custo preso), Custo das mercadorias, Preso no escrow, Nº de itens, Cancelamentos. (2) shopeeTab.calcMes ganha devV (custo preso em devolucao) e cancV (receita cancelada) — campos NOVOS por agregacao das mesmas linhas; nenhuma conta existente muda. (3) Historico Shopee ganha o quadrante Por mês (paridade com o ML): tabela mes a mes via calcMes, mais recente primeiro. Estrutura das duas plataformas agora identica: Alvo (cadastro+simulador+Analise/Controle internos) / Vendas / Relatorios (Termometro=Painel+termometro do canal | Historico=Por mes+busca+pedidos). Diferencas remanescentes DECLARADAS (dado, nao desenho): ML tem consulta gerencial e edicao de pedido no Historico (Shopee manual ainda nao tem editor de venda — candidata a proxima paridade); convencao de devolucao difere por desenho (Shopee v1 tira o mes inteiro). | base: 2026-09-15-E (md5 85c4c9a4343717009d1aa9e26c8ed077) -->
@@ -1837,7 +1838,7 @@
         <div class="efield"><label>Item ID Shopee</label><input class="vinput mono" id="shp-al-item" placeholder="opcional"></div>
         <div class="efield"><label>Data de publicação</label><input class="vinput mono" id="shp-al-pub" type="date"></div>
       </div>
-      <div class="hintline" id="shp-al-echo"></div>
+      <div class="hintline" id="shp-al-echo" style="display:none"></div>
       <div class="vrow" style="margin-bottom:2px">
         <div class="efield"><label>Título do anúncio *</label><input class="vinput" id="shp-al-tit" placeholder="como está na Shopee"></div>
         <div class="efield"><label>Campanha de destaque (+2,5%)</label><select class="vinput" id="shp-al-camp"><option value="0">Não</option><option value="1">Sim — em campanha</option></select></div>
@@ -1846,19 +1847,13 @@
         <div class="efield"><label>Preço (R$) *</label><input class="vinput mono" id="shp-al-preco" inputmode="decimal" placeholder="0,00"></div>
         <div class="efield"><label>Preço promoção (R$)</label><input class="vinput mono" id="shp-al-promo" inputmode="decimal" placeholder="vazio = sem promoção"></div>
       </div>
-      <div class="simbox" id="shp-al-sim">
-        <div class="kv"><b>Preço válido</b><span id="shp-sim-preco">—</span></div>
-        <div class="kv"><b>Faixa</b><span id="shp-sim-faixa">—</span></div>
-        <div class="kv"><b>Tarifa</b><span id="shp-sim-tarifa">—</span></div>
-        <div class="kv"><b>Colchão 6%</b><span id="shp-sim-colchao">—</span></div>
-        <div class="kv"><b>Imposto 4%</b><span id="shp-sim-imposto">—</span></div>
-        <div class="kv"><b>Lucro / item</b><span id="shp-sim-lucro">—</span></div>
-        <div class="kv"><b>Margem líquida</b><span id="shp-sim-marg">—</span> <span id="shp-sim-selo"></span></div>
+      <!-- BUILD 2026-09-15-I: simbox de 7 quadrantes (26-V) substituida pela Margem inline, espelho exato do al-margem do ML -->
+      <div class="vrow" style="margin-bottom:2px">
+        <div class="efield"><label>Margem</label><div class="vinput mono" id="shp-al-margem" style="display:flex;align-items:center;min-height:38px;gap:8px;flex-wrap:wrap"><span style="color:var(--emuted2)">digite código e preço</span></div></div>
       </div>
-      <div class="hintline" style="margin-top:6px">Simulador assume frete dif. = 0 (sem tabela de frete Shopee — diferença real entra na venda). Régua espelho do Editar ML: piso 10% LIBERADO/NEGADO.</div>
       <div class="warnline" id="shp-al-warn"></div>
       <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
-        <button class="vbtn" id="shp-al-save">Salvar anúncio</button>
+        <button class="vbtn" id="shp-al-save">Cadastrar anúncio</button>
         <button class="vbtn sm" id="shp-al-cancel" style="display:none">Cancelar edição</button>
         <span class="hintline" id="shp-al-msg" style="margin:0"></span>
       </div>
@@ -10089,22 +10084,26 @@ const shopeeTab={
   },
   precoValidoForm(){ const p=this.num(this._g('shp-al-preco').value), pr=this.num(this._g('shp-al-promo').value); return (pr>0)?pr:p; },
   sim(){
-    const g=id=>this._g(id); if(!g('shp-sim-preco')) return;
-    const camp=g('shp-al-camp').value==='1', pv=this.precoValidoForm(), warn=g('shp-al-warn');
-    warn.className='warnline'; warn.textContent='';
-    const zera=()=>['shp-sim-preco','shp-sim-faixa','shp-sim-tarifa','shp-sim-colchao','shp-sim-imposto','shp-sim-lucro','shp-sim-marg'].forEach(i=>g(i).textContent='—');
-    if(!(pv>0)){ zera(); g('shp-sim-selo').innerHTML=''; return; }
-    const t=this.tarifa(pv,camp); if(!t){ zera(); g('shp-sim-faixa').textContent='sem tabela'; g('shp-sim-selo').innerHTML=''; return; }
-    g('shp-sim-preco').textContent='R$ '+this.fmt(pv)+(this.num(g('shp-al-promo').value)>0?' (promo)':'');
-    g('shp-sim-faixa').textContent=t.rotulo;
-    g('shp-sim-tarifa').textContent=t.pct.toLocaleString('pt-BR')+'% + R$'+this.fmt(t.fixa)+' = R$ '+this.fmt(t.total);
-    g('shp-sim-colchao').textContent='R$ '+this.fmt(pv*this.FIXOS.COLCHAO);
-    g('shp-sim-imposto').textContent='R$ '+this.fmt(pv*this.FIXOS.IMPOSTO);
-    if(this.prodAl){ const m=this.margemDe(pv,camp,Number(this.prodAl.custo));
-      g('shp-sim-lucro').textContent='R$ '+this.fmt(m.lucro);
-      g('shp-sim-marg').textContent=m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
-      g('shp-sim-marg').className=m.lucro<0?'neg':''; g('shp-sim-selo').innerHTML=this.seloHtml(m); }
-    else { g('shp-sim-lucro').textContent='—'; g('shp-sim-marg').textContent='informe o código'; g('shp-sim-selo').innerHTML=''; }
+    // BUILD 2026-09-15-I: Margem inline — espelho da simAnuncio do ML (mesmos estados e cores); mesma conta margemDe de sempre
+    const g=id=>this._g(id); const box=g('shp-al-margem'); if(!box) return;
+    const F=v=>'R$ '+this.fmt(v);
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const neutro=t=>{ box.innerHTML='<span style="color:var(--emuted2)">'+t+'</span>'; };
+    const warn=g('shp-al-warn'); warn.className='warnline'; warn.textContent='';
+    const cod=(g('shp-al-cod').value||'').trim().toUpperCase();
+    if(!cod){ neutro('digite código e preço'); return; }
+    if(!this.prodAl||this.prodAl.codigo!==cod){
+      const e=g('shp-al-echo'); const msg=(e&&e.className.indexOf('err')>=0&&e.textContent)?e.textContent:'valide o código no Catálogo';
+      box.innerHTML='<span style="color:var(--eamber)">'+esc(msg)+'</span>'; return; }
+    const camp=g('shp-al-camp').value==='1', pv=this.precoValidoForm();
+    if(!(pv>0)){ box.innerHTML='<span style="color:var(--eemerald)">✓ '+esc(this.prodAl.produto||'')+'</span><span style="color:var(--emuted2)">· custo NF '+F(this.prodAl.custo)+' · digite o preço</span>'; return; }
+    const m=this.margemDe(pv,camp,Number(this.prodAl.custo));
+    if(!m){ box.innerHTML='<span style="color:var(--eamber)">sem tabela de tarifas — aplique o SQL 16</span>'; return; }
+    const cor=m.pct>=10?'var(--eemerald)':m.pct>=5?'var(--eamber)':'var(--ered)';
+    box.innerHTML='<b style="color:'+cor+';font-size:14px">'+m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%</b>'
+      +'<span style="color:'+cor+'">'+F(m.lucro)+' líq.</span>'
+      +'<span class="faint" style="font-size:11px;color:var(--emuted2)">tarifa '+F(m.t.total)+' ('+esc(m.t.rotulo)+')'+(this.num(g('shp-al-promo').value)>0?' · promo':'')+' · frete dif. 0</span>'
+      +this.seloHtml(m);
     const f=this.fronteira(pv,camp); if(f){ warn.className='warnline '+f.tipo; warn.textContent=f.msg; }
   },
   async salvarAnuncio(){
@@ -10125,7 +10124,7 @@ const shopeeTab={
   limparAnuncio(){ this.editId=null; this.prodAl=null;
     ['shp-al-cod','shp-al-item','shp-al-tit','shp-al-preco','shp-al-promo','shp-al-pub'].forEach(i=>this._g(i).value='');
     this._g('shp-al-camp').value='0'; this._g('shp-al-echo').textContent=''; this._g('shp-al-echo').className='hintline';
-    this._g('shp-al-cancel').style.display='none'; this._g('shp-al-save').textContent='Salvar anúncio'; this.sim(); },
+    this._g('shp-al-cancel').style.display='none'; this._g('shp-al-save').textContent='Cadastrar anúncio'; this.sim(); },
   async reloadAnuncios(){ const {data,error}=await sb.from('ecom_shopee_anuncios').select('*').eq('ativo',true).order('criado_em');
     if(!error){ this.anuncios=data||[]; await this.loadCustos(); await this.loadHist(); this.renderAnalise(); this.renderControle(); } },
 
@@ -10447,7 +10446,7 @@ const shopeeTab={
   wire(){
     document.querySelectorAll('#tab-shopee .subtab').forEach(b=>b.addEventListener('click',()=>this.switchSub(b.dataset.ssub)));
     const g=i=>this._g(i);
-    g('shp-al-cod').addEventListener('change',e=>this.echoProduto(e.target.value,'shp-al-echo','prodAl'));
+    g('shp-al-cod').addEventListener('change',e=>this.echoProduto(e.target.value,'shp-al-echo','prodAl').then(()=>this.sim())); // BUILD 2026-09-15-I: erro do lookup aparece na Margem inline
     ['shp-al-preco','shp-al-promo'].forEach(i=>g(i).addEventListener('input',()=>this.sim()));
     g('shp-al-camp').addEventListener('change',()=>this.sim());
     g('shp-al-save').addEventListener('click',()=>this.salvarAnuncio());
