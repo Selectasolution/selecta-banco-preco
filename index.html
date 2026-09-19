@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-15-J | selecta-banco-preco | SEGURANCA + PADRAO ML NA SHOPEE (auditoria 19/09, 34/34 jsdom; decisoes Igor 19/09 "Autorizo / Entram / um padrao so"): (1) FURO F1: tarifa vazia no lancamento gravava NULL e calcMes somava 0 (resultado inflado em silencio) — agora Tarifa Shopee e OBRIGATORIA (>0) no lancamento E calcMes trata comissao_valor NULL como PENDENTE (fora de tarifas/custos/imposto/lucro, contado em nPend, aviso ambar no termometro) = espelho do calcMes/lucroPedido do ML. (2) FURO F2: num() tratava todo ponto como milhar (99.90 -> 9990, margem inflada c/ selo LIBERADO): regra nova — com virgula, pontos sao milhar; sem virgula e UM ponto, o ponto e decimal (excecao: ponto seguido de exatamente 3 digitos no fim = milhar, 1.005 = 1005); so afeta shopeeTab.num. (3) FURO F3 (incidente "nao puxou nada" 18/09): lookup do codigo passa a disparar ENQUANTO DIGITA (input + debounce 350ms, ultimo pedido vence) no Cadastro e no Lancar venda — padrao ML; change mantido. (4) CONTROLE = ESPELHO DO ML: botoes Editar / Pausar|Reativar / Encerrar na mesma linha (min-width 74); Pausar/Reativar (colunas pausado/pausado_em — SQL 22) com confirm no texto do ML e log campo=pausado; pausado esmaecido c/ etiqueta PAUSADO, fora da contagem e FORA da Analise Comercial (rodape "N fora da analise — Reativar no Controle devolve a mesa"); Encerrar mantido (ativo=false + motivo + log; substitui o Remover do ML, que apaga sem log — decisao de seguranca declarada). (5) EDITAR = ESPELHO DO ML: linhas Preco/Campanha/Margem Liquida e Promocao/Margem Liquida com celulas .mginline (pct, lucro, selo; vigencia = promocao governa), popover "detalhes do calculo" (vigente, Custo NF, tarifa da faixa % + fixa, imposto, frete dif., colchao s/ venda), GATE DO ML: >=10% grava; 5..10% so o dono (selectasolution@gmail.com) via checkbox "Liberar abaixo do piso" (motivo prefixado ABAIXO DO PISO); <5% NEGADO absoluto (Salvar desabilitado) — substitui o confirm() do 15-A; simbox do Editar removida. CSS .mginline/.msim-det/.meta-grid/.alm-row replicado no escopo #tab-shopee. margemDe()/tarifa() INTOCADAS; fora da regiao Shopee nada muda. Requer SQL 22 (pausado/pausado_em + limpeza da venda de teste). | base: 2026-09-15-I (md5 b09495e51e3c3877705d34b052128384) -->
 <!-- BUILD 2026-09-15-I | selecta-banco-preco | CADASTRO DE ANUNCIO SHOPEE = ESPELHO DO ML (Igor 18/09: "porque o layout da Shopee quando vou cadastrar o anuncio nao esta igual o ML?"): (1) simbox de 7 quadrantes (heranca 26-V) REMOVIDA; entra campo Margem inline identico ao al-margem do ML (mesma caixa .vinput, mesmos estados: neutro -> "codigo nao encontrado" ambar -> "✓ produto · custo NF · digite o preco" -> margem% + R$ liq. + sufixo "tarifa R$X (faixa) · frete dif. 0" + selo LIBERADO/NEGADO; cores >=10% esmeralda / >=5% ambar / vermelho, regua do ML). (2) sim() reescrita p/ pintar a Margem inline — margemDe() INTOCADA, zero mudanca de conta. (3) hintline de echo do Alvo oculta (a Margem assume, como no ML); listener do codigo encadeia sim() apos o lookup p/ erro aparecer na caixa. (4) Botao "Salvar anuncio" -> "Cadastrar anuncio" (rotulo do ML). (5) Alerta de fronteira de faixa MANTIDO (so aparece quando ha armadilha — dado do canal, nao ornamento). Vendas/Controle/Analise/Relatorios intocados. | base: 2026-09-15-H (md5 82269235880af7f326746e4cb980050f) -->
 <!-- BUILD 2026-09-15-H | selecta-banco-preco | ALVO SHOPEE NO ESQUELETO DO ML (correcao Igor 17/09: "esse modelo e igual ao do ML? Sistema e um so" — o 15-G pintou de verde mas manteve ordem propria): (1) alsubbar (pilulas Analise Comercial/Controle) sobe para o TOPO do Alvo, primeira coisa da sub-aba, como no ML. (2) Card Cadastro de anuncio Shopee MOVIDO para DENTRO de shp-sub-analise, acima de Anuncios ativos — mesma posicao do Cadastro no alsub-analise do ML; estilo do card = espelho ML (borda teal, titulo esmeralda). (3) Card Anuncios ativos no padrao do "Anuncios ativos — matematica ML": borda+titulo esmeralda, botao "↻ Atualizar" a direita (margin-left:auto). Movimentacao de DOM por blocos inteiros, ids intactos (wire() liga por getElementById — indiferente a posicao); ZERO JS, zero matematica. Cards ML-especificos (Parametros comerciais, Frete oficial) NAO ganham gemeos vazios na Shopee: esqueleto igual, dados do canal (frete dif.=0 declarado no rodape do simulador). | base: 2026-09-15-G (md5 751f7c284f63762e9f25cb9ec24eb0f4) -->
 <!-- BUILD 2026-09-15-G | selecta-banco-preco | VERDE TOTAL NA SHOPEE + ALVO NO PADRAO ML (decisao Igor 17/09: "Verde total. Quero um padrao so dentro do sistema" — cai o laranja de canal do 26-V; cada tela e aberta por vez, sem diferenciador de cor): (1) token --eaccent do #tab-shopee: #f97316 -> #34d399 (mesmo do ML; propaga p/ esub b, histbox, hovers); --epanel3:#18233a adicionado ao escopo. (2) .vbtn: gradiente esmeralda->teal, texto #06231a (espelho do ML); .vbtn.sm:hover esmeralda. (3) .vinput:focus = contorno esmeralda (padrao ML). (4) .subtab.active esmeralda + .subtab.alvo.active teal; botao Alvo ganha classe alvo. (5) Barra Analise/Controle do Alvo refeita no padrao ML: CSS .alsubbar/.alsub-btn replicado no escopo #tab-shopee, botoes viram pilulas .alsub-btn com estado .active, toggle JS troca borderColor inline por classList.toggle('active') — ids, handlers e dados intactos. ZERO matematica, zero consulta: so CSS, 2 classes no HTML e 1 linha de JS. | base: 2026-09-15-F (md5 c495ee2cb4f8c349aae30ed7787dac08) -->
@@ -1810,6 +1811,32 @@
   #tab-shopee .rp-idx.bad .v{color:var(--eamber)} #tab-shopee .rp-idx.good .v{color:var(--eemerald)}
   #tab-shopee .shp-toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--epanel);border:1px solid var(--eteal);color:var(--etxt);border-radius:10px;padding:9px 16px;font-size:13px;z-index:9998;box-shadow:0 8px 30px rgba(0,0,0,.5)}
   #tab-shopee .shp-toast.err{border-color:var(--ered)}
+  /* BUILD 2026-09-15-J: espelho do Editar do ML (mginline + popover detalhes) no escopo Shopee */
+  #tab-shopee .alm-row{display:grid;grid-template-columns:1.1fr .8fr 1.4fr;gap:12px;margin-bottom:8px}
+  @media (max-width:640px){#tab-shopee .alm-row{grid-template-columns:1fr}}
+  #tab-shopee .mginline{display:flex;align-items:center;gap:9px;background:var(--epanel2);border:1px solid var(--eborder);border-radius:8px;padding:8px 11px;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;min-height:38px}
+  #tab-shopee .mginline.vigente{border-color:rgba(52,211,153,.5)}
+  #tab-shopee .mginline .mgi-pct{font-size:16px;font-weight:700}
+  #tab-shopee .mginline.v .mgi-pct{color:var(--eemerald)} #tab-shopee .mginline.a .mgi-pct{color:var(--eamber)} #tab-shopee .mginline.r .mgi-pct{color:var(--ered)} #tab-shopee .mginline.mute .mgi-pct{color:var(--emuted2)}
+  #tab-shopee .mginline .mgi-luc{font-size:12.5px;color:var(--emuted)}
+  #tab-shopee .mginline .mgi-luc b{color:var(--etxt)}
+  #tab-shopee .mginline .mgi-selo{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;margin-left:auto}
+  #tab-shopee .mginline .mgi-selo.v{background:rgba(16,185,129,.12);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
+  #tab-shopee .mginline .mgi-selo.r{background:rgba(239,68,68,.12);color:var(--ered);border:1px solid rgba(239,68,68,.4)}
+  #tab-shopee .mginline .mgi-selo.warn{background:rgba(245,158,11,.12);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
+  #tab-shopee details.msim-det{position:relative;display:inline-block;margin-left:auto}
+  #tab-shopee details.msim-det summary{font-size:11.5px;color:var(--emuted2);cursor:pointer;user-select:none;list-style:none}
+  #tab-shopee details.msim-det summary::-webkit-details-marker{display:none}
+  #tab-shopee details.msim-det[open] summary{color:var(--emuted)}
+  #tab-shopee details.msim-det .msim-meta2{position:absolute;right:0;bottom:calc(100% + 6px);z-index:30;min-width:290px;font-size:12px;color:var(--etxt);font-family:var(--emono);font-variant-numeric:tabular-nums;padding:10px 14px;background:#1a2742;border:1px solid #44568a;border-radius:8px;box-shadow:0 14px 36px rgba(0,0,0,.75),0 2px 8px rgba(0,0,0,.5)}
+  #tab-shopee .meta-grid{display:grid;grid-template-columns:auto 1fr;column-gap:16px;row-gap:4px;align-items:baseline}
+  #tab-shopee .meta-grid .k{color:var(--emuted);font-size:11.5px;white-space:nowrap}
+  #tab-shopee .meta-grid .vv{text-align:right;color:var(--etxt)}
+  #tab-shopee .meta-grid .vig{grid-column:1/-1;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--eaccent);font-weight:700;padding-bottom:2px;border-bottom:1px solid var(--eborder);margin-bottom:3px}
+  #tab-shopee .meta-grid .nf-k{color:#9fe6c6;font-size:12.5px;font-weight:700}
+  #tab-shopee .ctcard.pausado{opacity:.55;filter:grayscale(1)}
+  #tab-shopee .chip.pausado{background:rgba(245,158,11,.15);color:var(--eamber)}
+  #tab-shopee .vbtn.sm[disabled]{opacity:.45;cursor:not-allowed}
   </style>
 
   <h2 style="font-size:15px;font-weight:700;margin:0 0 2px">🛍️ Shopee</h2>
@@ -1867,6 +1894,7 @@
         <th>Nº</th><th>Cod</th><th>Item</th><th>Produto</th><th>Praticado</th><th>Margem</th><th>Histórico</th>
       </tr></thead><tbody id="shp-an-tbody"><tr><td colspan="7" style="color:var(--emuted)">Carregando…</td></tr></tbody></table></div>
       <div class="hintline">Verde + topo = alteração no histórico posterior à sua última leitura; abrir o histórico marca como lido. Ordem: última alteração primeiro.</div>
+      <div class="hintline" id="shp-an-pausados" style="color:var(--emuted2)"></div><!-- BUILD 2026-09-15-J -->
     </div>
   </div>
 
@@ -1878,7 +1906,7 @@
         <button class="vbtn sm" id="shp-ct-refresh">Atualizar</button>
       </div>
       <div id="shp-ct-list"><div style="color:var(--emuted);font-size:12.5px">Carregando…</div></div>
-      <div class="hintline">Editar exige motivo (registrado no histórico, append-only). Rito: Shopee primeiro, registro depois. Preço válido = promoção quando existe.</div>
+      <div class="hintline">Editar exige motivo (registrado no histórico, append-only). Rito: Shopee primeiro, registro depois. Preço válido = promoção quando existe. Piso 10%: entre 5% e 10% só o dono libera; abaixo de 5% não grava.</div>
     </div>
   </div>
 
@@ -9991,7 +10019,8 @@ const shopeeTab={
   _g:id=>document.getElementById(id),
   fmt:v=>Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
   esc:s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
-  num(v){ if(v==null||v==='') return NaN; return parseFloat(String(v).replace(/\./g,'').replace(',','.')); },
+  // BUILD 2026-09-15-J: com virgula -> pontos sao milhar; sem virgula e UM ponto -> ponto decimal (99.90 = 99,90, nao 9.990)
+  num(v){ if(v==null||v==='') return NaN; let x=String(v).trim(); if(x.indexOf(',')>=0){ x=x.replace(/\./g,'').replace(',','.'); } else if((x.match(/\./g)||[]).length>1||/\.\d{3}$/.test(x)){ x=x.replace(/\./g,''); } return parseFloat(x); },
   hojeLocal(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); },
   mesAtual(){ return this.hojeLocal().slice(0,7); },
   mesLabel(m){ const nm=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']; const [y,mm]=m.split('-').map(Number); return nm[mm-1]+'/'+y; },
@@ -10073,10 +10102,15 @@ const shopeeTab={
   },
 
   // ---------- ALVO (cadastro + simulador) ----------
+  _echoSeq:{}, _echoTimer:{},
+  // BUILD 2026-09-15-J: busca enquanto digita (padrao ML) — debounce 350ms; o ultimo pedido vence
+  echoDebounced(cod,elId,slot,after){ clearTimeout(this._echoTimer[slot]); this._echoTimer[slot]=setTimeout(()=>{ this.echoProduto(cod,elId,slot).then(()=>{ if(after) after(); }); },350); },
   async echoProduto(cod,elId,slot){
     const el=this._g(elId); el.className='hintline'; el.textContent='';
     this[slot]=null; cod=(cod||'').trim().toUpperCase(); if(!cod) return;
+    const seq=(this._echoSeq[slot]=(this._echoSeq[slot]||0)+1);
     const {data,error}=await sb.from('ecom_produtos').select('codigo,produto,custo').eq('codigo',cod).eq('ativo',true).maybeSingle();
+    if(seq!==this._echoSeq[slot]) return; // resposta atrasada de um codigo anterior
     if(error){ el.className='hintline err'; el.textContent=error.message; return; }
     if(!data){ el.className='hintline err'; el.textContent='Código não encontrado ou inativo no Catálogo.'; return; }
     this[slot]=data; el.className='hintline ok'; el.textContent=data.produto+' · custo NF R$ '+this.fmt(data.custo);
@@ -10132,7 +10166,7 @@ const shopeeTab={
   _anOrdenados(){
     const ult=a=>{ const h=this.histDo(a.id); return h.length?h[0].criado_em:''; };
     const verde=a=>{ const h=this.histDo(a.id); if(!h.length) return false; const l=this.lido[a.id]; return !l||h[0].criado_em>l; };
-    return this.anuncios.slice().sort((a,b)=>{
+    return this.anuncios.filter(a=>!a.pausado).sort((a,b)=>{ // BUILD 2026-09-15-J: pausado fora da analise (padrao ML)
       const va=verde(a)?1:0, vb=verde(b)?1:0; if(va!==vb) return vb-va;
       const ua=ult(a), ub=ult(b); if(ua!==ub) return ua<ub?1:-1;
       return (a.id||0)-(b.id||0);
@@ -10140,8 +10174,10 @@ const shopeeTab={
   },
   renderAnalise(){
     const tb=this._g('shp-an-tbody'); if(!tb) return;
-    this._g('shp-an-count').textContent=this.anuncios.length?('· '+this.anuncios.length):'';
-    if(!this.anuncios.length){ tb.innerHTML='<tr><td colspan="7" style="color:var(--emuted)">Nenhum anúncio ativo.</td></tr>'; return; }
+    const ativos=this.anuncios.filter(a=>!a.pausado), nPaus=this.anuncios.length-ativos.length; // BUILD 2026-09-15-J
+    this._g('shp-an-count').textContent=ativos.length?('· '+ativos.length):'';
+    const rod=this._g('shp-an-pausados'); if(rod) rod.textContent=nPaus?(nPaus+' anúncio(s) fora da análise — Reativar no Controle devolve à mesa com o histórico'):'';
+    if(!ativos.length){ tb.innerHTML='<tr><td colspan="7" style="color:var(--emuted)">Nenhum anúncio ativo.</td></tr>'; return; }
     tb.innerHTML=this._anOrdenados().map((r,i)=>{
       const a=r.a, pv=this.pvDe(a), m=this.margemDe(pv,!!a.campanha,this.custos[a.codigo]);
       const marg=m?(m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% '+this.seloHtml(m)):'—';
@@ -10183,53 +10219,102 @@ const shopeeTab={
   // ---------- CONTROLE DE ANÚNCIOS (Alexia · Editar com motivo, gate ao vivo, Encerrar) ----------
   renderControle(){
     const box=this._g('shp-ct-list'); if(!box) return;
-    this._g('shp-ct-count').textContent=this.anuncios.length?('· '+this.anuncios.length+' ativo(s)'):'';
+    const nAtv=this.anuncios.filter(a=>!a.pausado).length, nPaus=this.anuncios.length-nAtv; // BUILD 2026-09-15-J: pausado fora da contagem (padrao ML)
+    this._g('shp-ct-count').textContent=this.anuncios.length?('· '+nAtv+' ativo(s)'+(nPaus?(' · '+nPaus+' pausado(s)'):'')):'';
     if(!this.anuncios.length){ box.innerHTML='<div style="color:var(--emuted);font-size:12.5px">Nenhum anúncio ativo.</div>'; return; }
-    box.innerHTML=this.anuncios.map(a=>{
+    const lista=this.anuncios.slice().sort((a,b)=>((a.pausado?1:0)-(b.pausado?1:0))); // pausados depois, como no ML
+    box.innerHTML=lista.map(a=>{
       const pv=this.pvDe(a), m=this.margemDe(pv,!!a.campanha,this.custos[a.codigo]);
       const marg=m?(m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% '+this.seloHtml(m)):'—';
       const n=this.histDo(a.id).length;
       const edit=this.ctlEditId===a.id?this.ctlEditHtml(a):'';
-      return '<div class="ctcard" data-ctcard="'+a.id+'">'
-        +'<div class="t1"><span>'+this.esc(a.titulo)+'</span><span class="n" style="font-family:var(--emono)">R$ '+this.fmt(pv)+(a.preco_promocao?' (promo)':'')+(a.campanha?' ⚑':'')+' · '+marg+'</span></div>'
+      const btnPause=a.pausado
+        ?'<button class="vbtn sm" style="min-width:74px;border-color:rgba(52,211,153,.5);color:var(--eemerald)" onclick="shopeeTab.pausar('+a.id+',false)">Reativar</button>'
+        :'<button class="vbtn sm" style="min-width:74px" onclick="shopeeTab.pausar('+a.id+',true)">Pausar</button>';
+      return '<div class="ctcard'+(a.pausado?' pausado':'')+'" data-ctcard="'+a.id+'">'
+        +'<div class="t1"><span>'+this.esc(a.titulo)+(a.pausado?' <span class="chip pausado">PAUSADO</span>':'')+'</span><span class="n" style="font-family:var(--emono)">R$ '+this.fmt(pv)+(a.preco_promocao?' (promo)':'')+(a.campanha?' ⚑':'')+' · '+marg+'</span></div>'
         +'<div class="t2">'+this.esc(a.codigo)+' · Item '+this.esc(a.shopee_item_id||'—')+'</div>'
-        +'<div class="acts"><button class="vbtn sm" onclick="shopeeTab.ctlEditar('+a.id+')">'+(this.ctlEditId===a.id?'Fechar edição':'Editar')+'</button>'
-        +'<button class="vbtn sm" onclick="shopeeTab.toggleHist('+a.id+',\'ct\')">Histórico ('+n+')</button>'
-        +'<button class="vbtn sm danger" onclick="shopeeTab.ctlEncerrar('+a.id+')">Encerrar</button></div>'
+        +'<div class="acts"><button class="vbtn sm" style="min-width:74px" onclick="shopeeTab.ctlEditar('+a.id+')">'+(this.ctlEditId===a.id?'Fechar':'Editar')+'</button>'
+        +btnPause
+        +'<button class="vbtn sm danger" style="min-width:74px" onclick="shopeeTab.ctlEncerrar('+a.id+')">Encerrar</button>'
+        +'<button class="vbtn sm" onclick="shopeeTab.toggleHist('+a.id+',\'ct\')">Histórico ('+n+')</button></div>'
         +'<div data-cthist="'+a.id+'" style="display:none;margin-top:8px"><div class="histbox">'+this.histHtml(a)+'</div></div>'
         +edit+'</div>';
     }).join('');
     if(this.ctlEditId!=null){ this.ctlSim(); const a=this.anuncios.find(x=>x.id===this.ctlEditId); if(a) this.echoProduto(a.codigo,'shp-ct-echo','prodCt'); }
   },
   ctlEditHtml(a){
+    // BUILD 2026-09-15-J: espelho do Editar do ML — L1 Preco/Campanha/Margem, L2 Promocao/Margem, Motivo, Salvar/Cancelar + detalhes do calculo
+    const v=x=>String(x==null?'':x).replace(/"/g,'&quot;');
+    const cel=(d)=>'<div class="efield"><label>Margem Líquida</label><div class="mginline mute" '+d+'><span class="mgi-pct">—</span><span class="mgi-luc">lucro <b>R$ —</b></span><span class="mgi-selo" hidden></span></div></div>';
     return '<div class="ctedit">'
-      +'<div class="vrow3" style="margin-bottom:2px">'
-      +'<div class="efield"><label>Preço (R$)</label><input class="vinput mono" id="shp-ct-preco" inputmode="decimal" value="'+this.fmt(a.preco)+'"></div>'
-      +'<div class="efield"><label>Preço promoção (R$)</label><input class="vinput mono" id="shp-ct-promo" inputmode="decimal" value="'+(a.preco_promocao?this.fmt(a.preco_promocao):'')+'" placeholder="vazio = sem promoção"></div>'
+      +'<div class="alm-row"><div class="efield"><label>Preço (R$)</label><input class="vinput mono" id="shp-ct-preco" inputmode="decimal" value="'+v(this.fmt(a.preco))+'"></div>'
       +'<div class="efield"><label>Campanha (+2,5%)</label><select class="vinput" id="shp-ct-camp"><option value="0"'+(a.campanha?'':' selected')+'>Não</option><option value="1"'+(a.campanha?' selected':'')+'>Sim</option></select></div>'
-      +'</div>'
-      +'<div class="hintline" id="shp-ct-echo"></div>'
-      +'<div class="simbox"><div class="kv"><b>Margem no preço válido</b><span id="shp-ct-marg">—</span> <span id="shp-ct-selo"></span></div><div class="kv"><b>Lucro / item</b><span id="shp-ct-lucro">—</span></div></div>'
-      +'<div class="efield" style="margin-top:8px"><label>Motivo da alteração *</label><input class="vinput" id="shp-ct-motivo" placeholder="obrigatório — poucas palavras"></div>'
-      +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center"><button class="vbtn" id="shp-ct-save" onclick="shopeeTab.ctlSalvar()">Salvar alteração</button><span class="hintline" id="shp-ct-msg" style="margin:0"></span></div>'
+      +cel('data-shpmgc')+'</div>'
+      +'<div class="alm-row"><div class="efield"><label>Produto em promoção</label><input class="vinput mono" id="shp-ct-promo" inputmode="decimal" value="'+(a.preco_promocao?v(this.fmt(a.preco_promocao)):'')+'" placeholder="vazio = sem promoção"></div>'
+      +'<div class="efield"><label>Faixa</label><div class="vinput" id="shp-ct-faixa" style="color:var(--emuted);display:flex;align-items:center;font-size:12px">—</div></div>'
+      +cel('data-shpmgp')+'</div>'
+      +'<div class="hintline" id="shp-ct-echo" style="display:none"></div>'
+      +'<div class="efield"><label>Motivo da alteração *</label><input class="vinput" id="shp-ct-motivo" placeholder="descreva por que está alterando (obrigatório para gravar)"></div>'
+      +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap"><button class="vbtn sm" id="shp-ct-save" onclick="shopeeTab.ctlSalvar()">Salvar</button>'
+      +'<button class="vbtn sm" style="background:var(--epanel3);color:var(--emuted)" onclick="shopeeTab.ctlEditar('+a.id+')">Cancelar</button>'
+      +'<label id="shp-ct-ovrlbl" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--eamber);cursor:pointer;user-select:none"><input type="checkbox" id="shp-ct-ovr" style="accent-color:var(--eamber)"> ⚠ Liberar abaixo do piso</label>'
+      +'<span class="hintline" id="shp-ct-msg" style="margin:0"></span>'
+      +'<details class="msim-det"><summary>▸ detalhes do cálculo</summary><div class="msim-meta2" id="shp-ct-meta"><div class="meta-grid">—</div></div></details></div>'
       +'</div>';
   },
   ctlEditar(id){ this.ctlEditId=(this.ctlEditId===id)?null:id; this.prodCt=null; this.renderControle(); },
+  _ctlPaint(sel,m,vigente){
+    const cell=document.querySelector('#tab-shopee ['+sel+']'); if(!cell) return;
+    const pctEl=cell.querySelector('.mgi-pct'), lucEl=cell.querySelector('.mgi-luc'), seloEl=cell.querySelector('.mgi-selo');
+    cell.classList.remove('v','a','r','mute','vigente');
+    if(!m||!m.ok){ cell.classList.add('mute'); pctEl.textContent='—'; lucEl.innerHTML=(m&&m.reason)?'<span style="color:var(--eamber)">'+this.esc(m.reason)+'</span>':'lucro <b>R$ —</b>'; if(vigente&&m&&m.reason){ seloEl.hidden=false; seloEl.className='mgi-selo warn'; seloEl.textContent='⚠'; } else seloEl.hidden=true; return; }
+    cell.classList.add(m.pct>=10?'v':(m.pct>0?'a':'r')); if(vigente) cell.classList.add('vigente');
+    pctEl.textContent=m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
+    lucEl.innerHTML='lucro <b>R$ '+this.fmt(m.lucro)+'</b>';
+    if(vigente){ seloEl.hidden=false; const lib=m.pct>=10; seloEl.className='mgi-selo '+(lib?'v':'r'); seloEl.textContent=lib?'✔ LIBERADO':'✖ NEGADO'; } else seloEl.hidden=true;
+  },
+  // GATE = espelho do renderSim do ML: >=10 grava · 5..10 so o dono via checkbox · <5 negado absoluto. Devolve o estado usado pelo ctlSalvar.
   ctlSim(){
-    const g=i=>this._g(i); if(!g('shp-ct-preco')) return;
-    const a=this.anuncios.find(x=>x.id===this.ctlEditId); if(!a) return;
+    const g=i=>this._g(i); if(!g('shp-ct-preco')) return null;
+    const a=this.anuncios.find(x=>x.id===this.ctlEditId); if(!a) return null;
     const p=this.num(g('shp-ct-preco').value), pr=this.num(g('shp-ct-promo').value), camp=g('shp-ct-camp').value==='1';
-    const pv=(pr>0)?pr:p, custo=this.prodCt?Number(this.prodCt.custo):this.custos[a.codigo];
-    const m=(pv>0)?this.margemDe(pv,camp,custo):null;
-    g('shp-ct-marg').textContent=m?(m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%'):'—';
-    g('shp-ct-lucro').textContent=m?('R$ '+this.fmt(m.lucro)):'—';
-    g('shp-ct-selo').innerHTML=this.seloHtml(m);
+    const custo=this.prodCt?Number(this.prodCt.custo):this.custos[a.codigo];
+    const promoRaw=(g('shp-ct-promo').value||'').trim(); let promoErr=null;
+    if(promoRaw!==''&&!(pr>0)) promoErr='promoção inválida'; else if(pr>0&&p>0&&pr>=p) promoErr='promoção deve ser menor que o preço';
+    const wrap=m=>m?{ok:true,...m}:{ok:false,reason:(custo>=0)?'sem tabela de tarifas ou preço inválido':'custo NF não encontrado no Catálogo'};
+    const rC=(p>0)?wrap(this.margemDe(p,camp,custo)):{ok:false,reason:'preço inválido'};
+    const promoAtiva=(promoRaw!=='');
+    const rP=promoErr?{ok:false,reason:promoErr}:(promoAtiva?wrap(this.margemDe(pr,camp,custo)):null);
+    this._ctlPaint('data-shpmgc',rC,!promoAtiva); this._ctlPaint('data-shpmgp',rP,promoAtiva);
+    const efet=promoAtiva?rP:rC, pv=promoAtiva?pr:p;
+    const fx=g('shp-ct-faixa'); if(fx){ const t=(pv>0)?this.tarifa(pv,camp):null; fx.textContent=t?(t.rotulo+' · '+t.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% + R$ '+this.fmt(t.fixa)):'—'; }
+    const meta=g('shp-ct-meta');
+    if(meta){ if(efet&&efet.ok){ meta.innerHTML='<div class="meta-grid">'
+        +'<span class="vig">vigente: '+(promoAtiva?'promoção':'preço cheio')+'</span>'
+        +'<span class="nf-k">Custo NF</span><span class="nf-v">R$ '+this.fmt(custo)+'</span>'
+        +'<span class="k">tarifa ('+this.esc(efet.t.rotulo)+')</span><span class="vv">'+efet.t.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% + R$ '+this.fmt(efet.t.fixa)+' = R$ '+this.fmt(efet.t.total)+'</span>'
+        +'<span class="k">imposto</span><span class="vv">'+(this.FIXOS.IMPOSTO*100)+'% · R$ '+this.fmt(efet.imposto)+'</span>'
+        +'<span class="k">frete dif.</span><span class="vv">R$ 0,00</span>'
+        +'<span class="k">colchão '+(this.FIXOS.COLCHAO*100)+'% s/ venda</span><span class="vv">R$ '+this.fmt(efet.colchao)+'</span>'
+        +'</div>'; } else meta.innerHTML='<div class="meta-grid"><span class="k">'+this.esc((efet&&efet.reason)||'—')+'</span></div>'; }
+    const btn=g('shp-ct-save'), msg=g('shp-ct-msg'), ovrLbl=g('shp-ct-ovrlbl'), ovrEl=g('shp-ct-ovr');
+    if(!efet||!efet.ok){ if(msg){ msg.className='hintline err'; msg.textContent=(efet&&efet.reason)||'dado incompleto'; } if(btn) btn.setAttribute('disabled',''); if(ovrLbl) ovrLbl.style.display='none'; return {ok:false,promoAtiva,pv,camp,p,pr:promoAtiva?pr:null}; }
+    const pct=efet.pct, isOwner=String(this.quem()||'').trim().toLowerCase()==='selectasolution@gmail.com', naFaixa=pct>=5&&pct<10;
+    if(ovrLbl) ovrLbl.style.display=(isOwner&&naFaixa)?'inline-flex':'none';
+    if(ovrEl&&!(isOwner&&naFaixa)&&ovrEl.checked) ovrEl.checked=false;
+    const override=!!(isOwner&&naFaixa&&ovrEl&&ovrEl.checked), liberado=pct>=10||override;
+    if(msg){ if(pct>=10){ msg.className='hintline'; msg.textContent=''; }
+      else if(override){ msg.className='hintline'; msg.style.color='var(--eamber)'; msg.textContent='⚠ liberação abaixo do piso ativa — margem '+pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%. Será registrada como ABAIXO DO PISO.'; }
+      else { msg.className='hintline err'; msg.style.color=''; msg.textContent='NEGADO — margem vigente ('+(promoAtiva?'promoção':'preço cheio')+') abaixo do piso de 10%.'; } }
+    if(btn){ if(liberado) btn.removeAttribute('disabled'); else btn.setAttribute('disabled',''); }
+    return {ok:liberado,override,pct,promoAtiva,pv,camp,p,pr:promoAtiva?pr:null,m:efet};
   },
   async ctlSalvar(){
     const g=i=>this._g(i), msg=g('shp-ct-msg'); msg.className='hintline'; msg.textContent='';
     const a=this.anuncios.find(x=>x.id===this.ctlEditId); if(!a) return;
     const p=this.num(g('shp-ct-preco').value), pr=this.num(g('shp-ct-promo').value), camp=g('shp-ct-camp').value==='1';
-    const motivo=(g('shp-ct-motivo').value||'').trim();
+    let motivo=(g('shp-ct-motivo').value||'').trim(); // BUILD 2026-09-15-J: let (prefixo ABAIXO DO PISO)
     if(!(p>0)){ msg.className='hintline err'; msg.textContent='Preço inválido.'; return; }
     if(pr>0&&pr>=p){ msg.className='hintline err'; msg.textContent='Promoção deve ser menor que o preço cheio.'; return; }
     const mudouPreco=Math.abs(p-Number(a.preco))>0.004;
@@ -10238,8 +10323,9 @@ const shopeeTab={
     const mudouCamp=camp!==!!a.campanha;
     if(!mudouPreco&&!mudouPromo&&!mudouCamp){ msg.className='hintline err'; msg.textContent='Nada mudou.'; return; }
     if(!motivo){ msg.className='hintline err'; msg.textContent='Motivo é obrigatório.'; return; }
-    const pv=(promoNova!=null)?promoNova:p, m=this.margemDe(pv,camp,this.custos[a.codigo]);
-    if(m&&!m.libera&&!confirm('Margem '+m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% — ABAIXO do piso de 10% (NEGADO). Salvar mesmo assim?')) return;
+    const st=this.ctlSim(); // BUILD 2026-09-15-J: gate do ML — recalculado no ato de gravar
+    if(!st||!st.ok){ msg.className='hintline err'; msg.textContent=(st&&st.pct!=null)?('NEGADO — margem '+st.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% abaixo do piso de 10%.'):'dado incompleto — gravação bloqueada'; return; }
+    const m=st.m; if(st.override) motivo='ABAIXO DO PISO ('+st.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%) — '+motivo;
     try{
       const up={preco:p,preco_promocao:promoNova,campanha:camp};
       const r=await sb.from('ecom_shopee_anuncios').update(up).eq('id',a.id); if(r.error) throw r.error;
@@ -10253,6 +10339,18 @@ const shopeeTab={
         if(rl.error){ this.toast('Alteração salva, mas o histórico falhou: '+rl.error.message,true); } }
       this.toast('Alteração registrada.'); this.ctlEditId=null; this.prodCt=null; await this.reloadAnuncios();
     }catch(e){ msg.className='hintline err'; msg.textContent=e.message||String(e); }
+  },
+  // BUILD 2026-09-15-J: Pausar/Reativar = espelho do pausar() do ML (vinculo preservado; requer SQL 22: pausado/pausado_em)
+  async pausar(id,estado){ const a=this.anuncios.find(x=>x.id===id); if(!a) return;
+    const txt=estado?'Pausar este anúncio no sistema?\n\nOrdem: pause PRIMEIRO na Central Shopee, registre aqui DEPOIS.\nO vínculo com o produto é preservado (não é remoção).':'Reativar este anúncio?\n\nOrdem: reative PRIMEIRO na Central Shopee, registre aqui DEPOIS.';
+    if(!confirm(txt)) return;
+    try{ const r=await sb.from('ecom_shopee_anuncios').update({pausado:estado,pausado_em:estado?new Date().toISOString():null}).eq('id',id); if(r.error) throw r.error;
+      const mP=this.margemDe(this.pvDe(a),!!a.campanha,this.custos[a.codigo]);
+      const rl=await sb.from('ecom_shopee_anuncio_alteracao').insert({anuncio_id:id,codigo:a.codigo,shopee_item_id:a.shopee_item_id||null,por:this.quem(),
+        margem_pior_zona_pct:mP?Math.round(mP.pct*100)/100:null,campo:'pausado',preco_anterior:null,preco_novo:null,motivo:estado?'Anúncio PAUSADO (executado na Shopee antes do registro)':'Anúncio REATIVADO (executado na Shopee antes do registro)'});
+      if(rl.error) console.warn('log pausa:',rl.error.message);
+      this.toast(estado?'Anúncio pausado.':'Anúncio reativado.'); if(this.ctlEditId===id) this.ctlEditId=null; await this.reloadAnuncios();
+    }catch(e){ this.toast('Erro: '+(e.message||e)+(/pausado/.test(String(e.message))?' — aplique o SQL 22.':''),true); }
   },
   async ctlEncerrar(id){ const a=this.anuncios.find(x=>x.id===id); if(!a) return;
     const motivo=prompt('Encerrar "'+a.titulo+'"? Informe o motivo (obrigatório):');
@@ -10283,12 +10381,13 @@ const shopeeTab={
     if(!this.prodVd||this.prodVd.codigo!==cod){ msg.className='hintline err'; msg.textContent='Valide o código no Catálogo (produto ativo).'; return; }
     if(this.vendas.some(v=>v.pedido_id===ped&&v.produto_codigo===cod)&&!confirm('Já existe lançamento deste produto no pedido '+ped+'. Lançar mesmo assim?')) return;
     const tarifa=this.num(g('shp-vd-tarifa').value); const fdif=this.num(g('shp-vd-fretedif').value)||0;
+    if(!(tarifa>0)){ msg.className='hintline err'; msg.textContent='Tarifa Shopee é obrigatória (sugerida pela faixa; ajuste na conciliação).'; return; } // BUILD 2026-09-15-J: furo F1
     const custoU=Number(this.prodVd.custo), receita=Math.round(preco*qtd*100)/100;
     const an=this.anuncios.find(a=>a.codigo===cod);
     const dados={pedido_id:ped,data_solicitacao:data,status:'a_enviar',
       prazo_envio:g('shp-vd-prazo').value||null,produto_codigo:cod,produto:this.prodVd.produto,
       quantidade:qtd,preco_unitario:preco,receita_bruta:receita,
-      comissao_valor:isNaN(tarifa)?null:tarifa,frete_diferenca:fdif,
+      comissao_valor:tarifa,frete_diferenca:fdif,
       custo_unitario:custoU,custo_total:Math.round(custoU*qtd*100)/100,
       comprador:(g('shp-vd-comp').value||'').trim()||null,uf:(g('shp-vd-uf').value||'').trim().toUpperCase()||null,
       shopee_item_id:an?an.shopee_item_id:null,obs:(g('shp-vd-obs').value||'').trim()||null};
@@ -10385,16 +10484,19 @@ const shopeeTab={
     const vs=base.filter(v=>String(v.data_solicitacao||'').slice(0,7)===m);
     const ok=vs.filter(v=>v.status!=='cancelado'&&v.status!=='devolvido');
     const nCanc=vs.filter(v=>v.status==='cancelado').length, nDev=vs.filter(v=>v.status==='devolvido').length;
+    // BUILD 2026-09-15-J: item sem tarifa (comissao_valor NULL) = PENDENTE — entra na receita, fica FORA do resultado (espelho do nF/nPend do calcMes ML)
+    const okF=ok.filter(v=>v.comissao_valor!=null), nPend=ok.length-okF.length;
     const receita=ok.reduce((s,v)=>s+Number(v.receita_bruta),0);
-    const tarifas=ok.reduce((s,v)=>s+Number(v.comissao_valor||0),0);
-    const fdif=ok.reduce((s,v)=>s+Number(v.frete_diferenca||0),0);
-    const custos=ok.reduce((s,v)=>s+Number(v.custo_total||0),0);
-    const imposto=receita*this.FIXOS.IMPOSTO;
-    const lucro=receita-tarifas-fdif-custos-imposto;
-    const colchao=receita*this.FIXOS.COLCHAO;
+    const receitaF=okF.reduce((s,v)=>s+Number(v.receita_bruta),0);
+    const tarifas=okF.reduce((s,v)=>s+Number(v.comissao_valor||0),0);
+    const fdif=okF.reduce((s,v)=>s+Number(v.frete_diferenca||0),0);
+    const custos=okF.reduce((s,v)=>s+Number(v.custo_total||0),0);
+    const imposto=receitaF*this.FIXOS.IMPOSTO;
+    const lucro=receitaF-tarifas-fdif-custos-imposto;
+    const colchao=receitaF*this.FIXOS.COLCHAO;
     const devV=vs.filter(v=>v.status==='devolvido').reduce((s,v)=>s+Number(v.custo_total||0),0);   // BUILD 15-F: custo preso em devolucao
     const cancV=vs.filter(v=>v.status==='cancelado').reduce((s,v)=>s+Number(v.receita_bruta||0),0); // BUILD 15-F: receita cancelada
-    return {nOk:ok.length,nCanc,nDev,devV,cancV,receita,tarifas,fdif,custos,imposto,lucro,colchao,amortecido:lucro-colchao};
+    return {nOk:ok.length,nF:okF.length,nPend,receitaF,nCanc,nDev,devV,cancV,receita,tarifas,fdif,custos,imposto,lucro,colchao,amortecido:lucro-colchao};
   },
   renderRelatorios(){
     const trm=this._g('shp-rl-trm'); if(!trm) return;
@@ -10429,9 +10531,11 @@ const shopeeTab={
       +'<tr><td>(−) Colchão ('+COLCHAO_PCT+'% da receita · reserva da casa)</td><td class="n">'+F(colchao)+'</td></tr>'
       +'<tr class="big"><td>RESULTADO AMORTECIDO · SHOPEE</td><td class="n '+(amortecido<0?'neg':'pos')+'">'+F(amortecido)+'</td></tr>'
       +'<tr><td>Margem média s/ receita (amortecida)</td><td class="n">'+(receita>0?(amortecido/receita*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%':'—')+'</td></tr>';
-    this._g('shp-rl-nota').textContent=(nCanc||nDev)
+    const nota=this._g('shp-rl-nota');
+    nota.textContent=(nCanc||nDev)
       ?('Fora do resultado: '+nCanc+' cancelado(s), '+nDev+' devolvido(s). Convenção v1: devolvido sai do mês inteiro (custo e receita) — mais duro que o razão ML, por desenho.')
       :'Cancelados e devolvidos ficam fora do resultado (convenção v1).';
+    nota.style.color=''; if(c.nPend){ nota.style.color='var(--eamber)'; nota.textContent='⚠ '+c.nPend+' item(ns) sem tarifa registrada — na receita, FORA do resultado até conciliar (edição só por SQL nesta versão). '+nota.textContent; } // BUILD 2026-09-15-J
     // capital
     const cap=this._g('shp-rl-cap');
     const liqDe=v=>Number(v.receita_bruta)-Number(v.comissao_valor||0)-Number(v.frete_diferenca||0);
@@ -10447,6 +10551,7 @@ const shopeeTab={
     document.querySelectorAll('#tab-shopee .subtab').forEach(b=>b.addEventListener('click',()=>this.switchSub(b.dataset.ssub)));
     const g=i=>this._g(i);
     g('shp-al-cod').addEventListener('change',e=>this.echoProduto(e.target.value,'shp-al-echo','prodAl').then(()=>this.sim())); // BUILD 2026-09-15-I: erro do lookup aparece na Margem inline
+    g('shp-al-cod').addEventListener('input',e=>this.echoDebounced(e.target.value,'shp-al-echo','prodAl',()=>this.sim())); // BUILD 2026-09-15-J: busca enquanto digita (padrao ML)
     ['shp-al-preco','shp-al-promo'].forEach(i=>g(i).addEventListener('input',()=>this.sim()));
     g('shp-al-camp').addEventListener('change',()=>this.sim());
     g('shp-al-save').addEventListener('click',()=>this.salvarAnuncio());
@@ -10459,6 +10564,7 @@ const shopeeTab={
       this._g('shp-sub-controle').style.display=(t==='controle')?'':'none'; }); // BUILD 2026-09-15-C
     g('shp-ct-refresh').addEventListener('click',()=>this.reloadAnuncios());
     g('shp-vd-cod').addEventListener('change',e=>this.echoProduto(e.target.value,'shp-vd-echo','prodVd'));
+    g('shp-vd-cod').addEventListener('input',e=>this.echoDebounced(e.target.value,'shp-vd-echo','prodVd')); // BUILD 2026-09-15-J
     ['shp-vd-preco','shp-vd-qtd'].forEach(i=>g(i).addEventListener('input',()=>this.sugerirTarifa()));
     g('shp-vd-save').addEventListener('click',()=>this.lancarVenda());
     g('shp-vd-prev').addEventListener('click',()=>{ this.mes=this.shiftMes(this.mes,-1); this.renderVendas(); });
@@ -10473,7 +10579,7 @@ const shopeeTab={
       if(t==='historico') this.renderHist(); }); // BUILD 2026-09-15-D
     const hb=this._g('shp-hs-busca'); if(hb) hb.addEventListener('input',()=>this.renderHist()); // BUILD 2026-09-15-D
     document.addEventListener('input',e=>{ if(e.target&&/^shp-ct-(preco|promo)$/.test(e.target.id)) this.ctlSim(); });
-    document.addEventListener('change',e=>{ if(e.target&&e.target.id==='shp-ct-camp') this.ctlSim(); });
+    document.addEventListener('change',e=>{ if(e.target&&(e.target.id==='shp-ct-camp'||e.target.id==='shp-ct-ovr')) this.ctlSim(); }); // BUILD 2026-09-15-J: checkbox do piso
   },
   shiftMes(m,delta){ const [y,mm]=m.split('-').map(Number); const d=new Date(y,mm-1+delta,1);
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
