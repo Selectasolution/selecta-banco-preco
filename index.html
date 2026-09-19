@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-15-K | selecta-banco-preco | CONTROLE DE ANUNCIOS SHOPEE = ESQUELETO DO ML (Igor 19/09: "Novamente, o Controle de Anuncio da Shopee nao segue o padrao do ML. Quero layout igual e padrao"; o 15-J trocou botoes e Editar mas manteve o cartao .ctcard proprio): (1) card no molde do #alsub-controle do ML: .al-header (titulo em pilula "Anuncios ativos" + sub "ranking por vendas" | contador .al-hcount + "⬇ Exportar (md)" + "🔄 Atualizar" com linha de conferencia embaixo), busca por codigo do produto (input + limpar + "N de M") e lista em .vli identica: Nº | .vmain (.al-line codigo · titulo · etiqueta PAUSADO/ENCERRADO; .al-actions com link sublinhado "Historico (N)" + caixa .al-sugbox abaixo; caixa do Editar dentro do .vmain com borda superior e flag "✏ Editando anuncio") | botoes Editar / Pausar|Reativar / Encerrar (min-width 74; cores do ML: Pausar ambar, Reativar esmeralda, Encerrar no lugar do Remover em cinza). (2) Ordem do ML: vendas desde a publicacao (desc) > dias no ar (desc); pausados depois; contador "N anuncios ativos · N pausados". (3) Historico Shopee (Controle E Analise) no formato .al-sugbox do ML: banner "na" (sem conferencia automatica — canal manual), "Historico de Alteracoes · N", 1a linha "dias no ar · N venda(s)" com semaforo do fato (novo/ok/med/crit, mesma regra infoCls), linhas .al-histli data · tag · motivo · R$ de → para. (4) Exportar (md) do Controle Shopee = espelho do exportarControleMd: lista da tela com margem do motor (margemDe), custo NF, tarifa da faixa, imposto, colchao, selo — sem calculo paralelo. (5) Motivo (Editar/Encerrar) exige >= 3 caracteres no app = CHECK ecom_shopee_anuncio_alteracao_motivo_check do banco (bloco C do SQL 22, Igor 19/09). (6) CSS .al-header/.al-htitle/.al-hsub/.al-hcount/.vli/.vmain/.al-line/.al-code/.al-title/.al-info/.al-actions/.al-histlink/.al-sugbox/.al-histli/.al-editflag/.ph replicado no escopo #tab-shopee + regras do celular (@media 640) do ML para o .vli. .ctcard/.ctedit/.simbox do 26-V aposentados. margemDe()/tarifa()/calcMes INTOCADAS; fora da regiao Shopee nada muda. | base: 2026-09-15-J (md5 3a645484d38b764d3ecfeaf35de0e10a) -->
 <!-- BUILD 2026-09-15-J | selecta-banco-preco | SEGURANCA + PADRAO ML NA SHOPEE (auditoria 19/09, 34/34 jsdom; decisoes Igor 19/09 "Autorizo / Entram / um padrao so"): (1) FURO F1: tarifa vazia no lancamento gravava NULL e calcMes somava 0 (resultado inflado em silencio) — agora Tarifa Shopee e OBRIGATORIA (>0) no lancamento E calcMes trata comissao_valor NULL como PENDENTE (fora de tarifas/custos/imposto/lucro, contado em nPend, aviso ambar no termometro) = espelho do calcMes/lucroPedido do ML. (2) FURO F2: num() tratava todo ponto como milhar (99.90 -> 9990, margem inflada c/ selo LIBERADO): regra nova — com virgula, pontos sao milhar; sem virgula e UM ponto, o ponto e decimal (excecao: ponto seguido de exatamente 3 digitos no fim = milhar, 1.005 = 1005); so afeta shopeeTab.num. (3) FURO F3 (incidente "nao puxou nada" 18/09): lookup do codigo passa a disparar ENQUANTO DIGITA (input + debounce 350ms, ultimo pedido vence) no Cadastro e no Lancar venda — padrao ML; change mantido. (4) CONTROLE = ESPELHO DO ML: botoes Editar / Pausar|Reativar / Encerrar na mesma linha (min-width 74); Pausar/Reativar (colunas pausado/pausado_em — SQL 22) com confirm no texto do ML e log campo=pausado; pausado esmaecido c/ etiqueta PAUSADO, fora da contagem e FORA da Analise Comercial (rodape "N fora da analise — Reativar no Controle devolve a mesa"); Encerrar mantido (ativo=false + motivo + log; substitui o Remover do ML, que apaga sem log — decisao de seguranca declarada). (5) EDITAR = ESPELHO DO ML: linhas Preco/Campanha/Margem Liquida e Promocao/Margem Liquida com celulas .mginline (pct, lucro, selo; vigencia = promocao governa), popover "detalhes do calculo" (vigente, Custo NF, tarifa da faixa % + fixa, imposto, frete dif., colchao s/ venda), GATE DO ML: >=10% grava; 5..10% so o dono (selectasolution@gmail.com) via checkbox "Liberar abaixo do piso" (motivo prefixado ABAIXO DO PISO); <5% NEGADO absoluto (Salvar desabilitado) — substitui o confirm() do 15-A; simbox do Editar removida. CSS .mginline/.msim-det/.meta-grid/.alm-row replicado no escopo #tab-shopee. margemDe()/tarifa() INTOCADAS; fora da regiao Shopee nada muda. Requer SQL 22 (pausado/pausado_em + limpeza da venda de teste). | base: 2026-09-15-I (md5 b09495e51e3c3877705d34b052128384) -->
 <!-- BUILD 2026-09-15-I | selecta-banco-preco | CADASTRO DE ANUNCIO SHOPEE = ESPELHO DO ML (Igor 18/09: "porque o layout da Shopee quando vou cadastrar o anuncio nao esta igual o ML?"): (1) simbox de 7 quadrantes (heranca 26-V) REMOVIDA; entra campo Margem inline identico ao al-margem do ML (mesma caixa .vinput, mesmos estados: neutro -> "codigo nao encontrado" ambar -> "✓ produto · custo NF · digite o preco" -> margem% + R$ liq. + sufixo "tarifa R$X (faixa) · frete dif. 0" + selo LIBERADO/NEGADO; cores >=10% esmeralda / >=5% ambar / vermelho, regua do ML). (2) sim() reescrita p/ pintar a Margem inline — margemDe() INTOCADA, zero mudanca de conta. (3) hintline de echo do Alvo oculta (a Margem assume, como no ML); listener do codigo encadeia sim() apos o lookup p/ erro aparecer na caixa. (4) Botao "Salvar anuncio" -> "Cadastrar anuncio" (rotulo do ML). (5) Alerta de fronteira de faixa MANTIDO (so aparece quando ha armadilha — dado do canal, nao ornamento). Vendas/Controle/Analise/Relatorios intocados. | base: 2026-09-15-H (md5 82269235880af7f326746e4cb980050f) -->
 <!-- BUILD 2026-09-15-H | selecta-banco-preco | ALVO SHOPEE NO ESQUELETO DO ML (correcao Igor 17/09: "esse modelo e igual ao do ML? Sistema e um so" — o 15-G pintou de verde mas manteve ordem propria): (1) alsubbar (pilulas Analise Comercial/Controle) sobe para o TOPO do Alvo, primeira coisa da sub-aba, como no ML. (2) Card Cadastro de anuncio Shopee MOVIDO para DENTRO de shp-sub-analise, acima de Anuncios ativos — mesma posicao do Cadastro no alsub-analise do ML; estilo do card = espelho ML (borda teal, titulo esmeralda). (3) Card Anuncios ativos no padrao do "Anuncios ativos — matematica ML": borda+titulo esmeralda, botao "↻ Atualizar" a direita (margin-left:auto). Movimentacao de DOM por blocos inteiros, ids intactos (wire() liga por getElementById — indiferente a posicao); ZERO JS, zero matematica. Cards ML-especificos (Parametros comerciais, Frete oficial) NAO ganham gemeos vazios na Shopee: esqueleto igual, dados do canal (frete dif.=0 declarado no rodape do simulador). | base: 2026-09-15-G (md5 751f7c284f63762e9f25cb9ec24eb0f4) -->
@@ -1759,9 +1760,6 @@
   #tab-shopee .tblwrap{overflow-x:auto}
   #tab-shopee .hintline{font-size:12px;color:var(--emuted);margin-top:4px;min-height:16px}
   #tab-shopee .hintline.ok{color:var(--eteal)} #tab-shopee .hintline.err{color:var(--ered)}
-  #tab-shopee .simbox{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:14px;row-gap:6px}
-  #tab-shopee .simbox .kv b{display:block;font-size:10.5px;color:var(--emuted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-  #tab-shopee .simbox .kv span{font-family:var(--emono)}
   #tab-shopee .selo{display:inline-block;border-radius:6px;padding:2px 8px;font-size:10.5px;font-weight:700;letter-spacing:.03em}
   #tab-shopee .selo.lib{background:rgba(16,185,129,.16);color:var(--eemerald)}
   #tab-shopee .selo.neg{background:rgba(239,68,68,.16);color:var(--ered)}
@@ -1797,11 +1795,6 @@
   #tab-shopee .histbox .hln:last-child{border-bottom:0}
   #tab-shopee .histbox .hln .dt{font-family:var(--emono);color:var(--emuted2);font-size:11px;margin-right:6px}
   #tab-shopee .histbox .hln .cp{color:var(--eaccent);font-weight:600;margin-right:4px}
-  #tab-shopee .ctcard{border:1px solid var(--eborder);border-radius:10px;background:var(--epanel2);padding:10px 12px;margin-bottom:8px}
-  #tab-shopee .ctcard .t1{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:600}
-  #tab-shopee .ctcard .t2{font-size:12px;color:var(--emuted);font-family:var(--emono);margin:2px 0 4px}
-  #tab-shopee .ctcard .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-  #tab-shopee .ctedit{margin-top:9px;border-top:1px dashed var(--eborder);padding-top:9px}
   /* BUILD 2026-09-15-F: paridade visual — cards do Painel identicos aos do ML (.rp-idx) */
   #tab-shopee .rp-idxrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:4px}
   @media(max-width:900px){#tab-shopee .rp-idxrow{grid-template-columns:repeat(2,1fr)}}
@@ -1834,7 +1827,46 @@
   #tab-shopee .meta-grid .vv{text-align:right;color:var(--etxt)}
   #tab-shopee .meta-grid .vig{grid-column:1/-1;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--eaccent);font-weight:700;padding-bottom:2px;border-bottom:1px solid var(--eborder);margin-bottom:3px}
   #tab-shopee .meta-grid .nf-k{color:#9fe6c6;font-size:12.5px;font-weight:700}
-  #tab-shopee .ctcard.pausado{opacity:.55;filter:grayscale(1)}
+  /* BUILD 2026-09-15-K: Controle = esqueleto do ML (classes replicadas no escopo Shopee) */
+  #tab-shopee .ph{color:var(--emuted2);font-size:13px;text-align:center;padding:30px 10px}
+  #tab-shopee .al-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;margin:0 -14px 10px;background:rgba(16,185,129,.07);border-radius:10px;flex-wrap:wrap}
+  #tab-shopee .al-header-l{display:flex;flex-direction:row;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+  #tab-shopee .al-htitle{font-size:13px;font-weight:800;color:#06231a;margin:0;padding:8px 14px;border-radius:9px;background:linear-gradient(135deg,var(--eemerald),var(--eteal));letter-spacing:-.01em;text-transform:none;box-shadow:0 3px 10px -4px rgba(16,185,129,.35)}
+  #tab-shopee .al-hsub{font-size:11px;color:var(--emuted2);font-weight:500;letter-spacing:.05em;text-transform:uppercase}
+  #tab-shopee .al-hcount{font-size:12px;color:#6ee7b7;font-family:var(--emono);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.02em;font-weight:700;background:rgba(16,185,129,.14);padding:4px 10px;border-radius:6px}
+  #tab-shopee .vli{display:flex;align-items:center;gap:6px;padding:10px 0;border-bottom:1px solid var(--eborder)}
+  #tab-shopee #shp-ct-list .vli{padding:6px 0;border:0;border-bottom:1px solid var(--eborder);border-radius:0;background:none;margin:0}
+  #tab-shopee .vli .vmain{flex:1;min-width:0}
+  #tab-shopee .al-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:7px;line-height:1.35}
+  #tab-shopee .al-line > span:not(:last-child)::after{content:"·";color:var(--emuted2);margin-left:7px;font-weight:400}
+  #tab-shopee .al-code{color:var(--etxt);font-weight:600;font-size:13px;font-family:var(--emono);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+  #tab-shopee .al-title{color:var(--etxt);font-weight:600;font-size:13px}
+  #tab-shopee .al-info{font-size:11.5px;font-family:var(--emono);font-variant-numeric:tabular-nums}
+  #tab-shopee .al-info.novo{color:var(--emuted2)} #tab-shopee .al-info.ok{color:#6ee7b7} #tab-shopee .al-info.med{color:#fcd34d} #tab-shopee .al-info.crit{color:#fca5a5}
+  #tab-shopee .al-actions{display:flex;flex-direction:column;gap:2px;align-items:flex-start;margin-top:2px}
+  #tab-shopee .al-histlink{background:none;border:0;color:var(--etxt);font-size:13px;font-weight:700;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit}
+  #tab-shopee .al-histlink:hover{color:var(--eemerald)}
+  #tab-shopee .al-editflag{display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,.14);color:var(--eemerald);border:1px solid rgba(52,211,153,.3);border-radius:7px;padding:3px 9px;font-size:11px;font-weight:700;margin-bottom:11px}
+  #tab-shopee .al-histbanner{padding:8px 12px;border-radius:7px;margin-bottom:8px;font-size:13px;font-weight:600}
+  #tab-shopee .al-histbanner.na{background:rgba(138,153,180,.10);color:var(--emuted);border:1px solid var(--eborder);font-weight:500}
+  #tab-shopee .al-sugbox{background:var(--epanel2);border:1px solid var(--eborder);border-left-width:4px;border-radius:8px;padding:10px 14px;position:relative}
+  #tab-shopee .al-sugbox.n{border-left-color:var(--emuted2)}
+  #tab-shopee .al-sugp{font-size:13px;color:var(--etxt);line-height:1.6}
+  #tab-shopee .al-sugmeta{font-size:10px;color:var(--emuted2);margin-top:8px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+  #tab-shopee .al-histli{display:flex;gap:10px;align-items:center;font-size:12.5px;padding:7px 0;border-top:1px solid var(--eborder);flex-wrap:wrap}
+  #tab-shopee .al-histli:first-of-type{border-top:0}
+  #tab-shopee .al-histdt{color:var(--emuted);font-family:var(--emono);font-variant-numeric:tabular-nums;min-width:96px;font-size:12px}
+  #tab-shopee .al-histtag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.02em}
+  #tab-shopee .al-histtag.b{background:rgba(56,189,248,.15);color:#7dd3fc}
+  #tab-shopee .al-histmeta{color:var(--etxt);font-size:12.5px;flex:1}
+  #tab-shopee .faint{color:var(--emuted2)}
+  @media (max-width:640px){
+    #tab-shopee .vli{display:flex!important;flex-wrap:wrap!important;gap:8px!important;padding:12px 0!important;align-items:center!important}
+    #tab-shopee .vli .vmain{flex:1 1 100%!important;min-width:0!important}
+    #tab-shopee .vli > div[style*="display:flex"]{margin-left:auto!important}
+    #tab-shopee .vli .vbtn.sm{min-height:40px!important;padding:8px 16px!important;font-size:13.5px!important}
+    #tab-shopee .al-header{margin:0 -6px 10px}
+  }
   #tab-shopee .chip.pausado{background:rgba(245,158,11,.15);color:var(--eamber)}
   #tab-shopee .vbtn.sm[disabled]{opacity:.45;cursor:not-allowed}
   </style>
@@ -1899,14 +1931,29 @@
   </div>
 
   <!-- ============ CONTROLE DE ANÚNCIOS (Alexia) ============ -->
+  <!-- BUILD 2026-09-15-K: esqueleto do #alsub-controle do ML -->
   <div id="shp-sub-controle" style="display:none">
-    <div class="ecard">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <h3 style="margin:0">Controle de anúncios <span id="shp-ct-count" style="color:var(--emuted2);text-transform:none;letter-spacing:0"></span></h3>
-        <button class="vbtn sm" id="shp-ct-refresh">Atualizar</button>
+    <div class="ecard" style="margin-top:18px">
+      <div class="al-header">
+        <div class="al-header-l">
+          <h3 class="al-htitle">Anúncios ativos</h3>
+          <span class="al-hsub">ranking por vendas</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="shp-ct-count" class="al-hcount"></span>
+          <button class="vbtn sm" id="shp-ct-export" title="Exporta a lista da tela (com o filtro aplicado) em Markdown: preço, promoção, campanha, margem do app, custo NF, tarifa da faixa, imposto, colchão — insumo para análise externa/agente">⬇ Exportar (md)</button>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+            <button class="vbtn sm" id="shp-ct-refresh" title="Reler os anúncios e as alterações registradas">🔄 Atualizar</button>
+            <span id="shp-ct-quando" style="font-size:10.5px;color:var(--emuted2);font-family:var(--emono);white-space:nowrap"></span>
+          </div>
+        </div>
       </div>
-      <div id="shp-ct-list"><div style="color:var(--emuted);font-size:12.5px">Carregando…</div></div>
-      <div class="hintline">Editar exige motivo (registrado no histórico, append-only). Rito: Shopee primeiro, registro depois. Preço válido = promoção quando existe. Piso 10%: entre 5% e 10% só o dono libera; abaixo de 5% não grava.</div>
+      <div style="display:flex;gap:8px;align-items:center;margin:4px 0 12px;flex-wrap:wrap">
+        <input class="vinput mono" id="shp-ct-busca" type="text" placeholder="consultar por código do produto (ex.: SSD-0001)" style="flex:1;min-width:220px;max-width:360px" spellcheck="false" autocomplete="off">
+        <button class="vbtn sm" id="shp-ct-busca-clear" style="background:var(--epanel3);color:var(--emuted)">limpar</button>
+        <span class="faint" id="shp-ct-busca-msg" style="font-size:11.5px"></span>
+      </div>
+      <div id="shp-ct-list"><div class="ph">nenhum anúncio cadastrado</div></div>
     </div>
   </div>
 
@@ -10188,21 +10235,32 @@ const shopeeTab={
         +'<td class="n">R$ '+this.fmt(pv)+(a.preco_promocao?' <span style="color:var(--emuted2)">(promo)</span>':'')+(a.campanha?' <span style="color:var(--eamber)">⚑</span>':'')+'</td>'
         +'<td class="n">'+marg+'</td>'
         +'<td><button class="vbtn sm" onclick="shopeeTab.toggleHist('+a.id+',\'an\')">Histórico ('+n+')</button></td></tr>'
-        +'<tr data-anhist="'+a.id+'" style="display:none"><td colspan="7"><div class="histbox">'+this.histHtml(a)+'</div></td></tr>';
+        +'<tr data-anhist="'+a.id+'" style="display:none"><td colspan="7">'+this.histHtml(a)+'</td></tr>';
     }).join('');
   },
+  // BUILD 2026-09-15-K: semaforo do fato (dias x vendas) — mesma regra infoCls do Controle ML
+  _infoCls(dias,vendas){ if(dias==null||dias<7) return 'novo'; if(dias<0) return 'med'; if(vendas===0) return 'crit'; if(vendas/Math.max(dias,1)<0.1) return 'med'; return 'ok'; },
+  _infoAnuncio(a){
+    const dias=a.data_publicacao?Math.round((Date.parse(this.hojeLocal())-Date.parse(String(a.data_publicacao).slice(0,10)))/86400000):null;
+    const pub=a.data_publicacao?String(a.data_publicacao).slice(0,10):null;
+    const vendas=this.vendas.filter(v=>v.produto_codigo===a.codigo&&v.status!=='cancelado'&&v.status!=='devolvido'&&(!pub||String(v.data_solicitacao||'').slice(0,10)>=pub)).length;
+    const txt=(dias==null?'sem data':(dias<0?'agendado':dias+' dias no ar'))+' · '+vendas+' venda(s)';
+    return {dias,vendas,txt,cls:this._infoCls(dias,vendas)};
+  },
+  // BUILD 2026-09-15-K: caixa de historico no formato .al-sugbox do ML (Controle e Analise usam a MESMA caixa)
   histHtml(a){
-    const h=this.histDo(a.id);
-    const dias=a.data_publicacao?Math.max(0,Math.round((Date.parse(this.hojeLocal())-Date.parse(a.data_publicacao))/86400000)):null;
-    const vendas=this.vendas.filter(v=>v.produto_codigo===a.codigo&&v.status!=='cancelado'&&v.status!=='devolvido').reduce((s,v)=>s+Number(v.quantidade||0),0);
-    let out='<div class="hln" style="color:var(--emuted)">'+(dias!=null?dias+' dia(s) no ar · ':'')+vendas+' venda(s)</div>';
-    if(!h.length) return out+'<div class="hln" style="color:var(--emuted2)">Sem alterações registradas.</div>';
-    out+=h.map(x=>{ const dt=(x.criado_em||'').slice(0,16).replace('T',' ');
-      const de=x.preco_anterior!=null?('R$ '+this.fmt(x.preco_anterior)):null, pa=x.preco_novo!=null?('R$ '+this.fmt(x.preco_novo)):null;
-      return '<div class="hln"><span class="dt">'+dt+'</span><span class="cp">'+this.esc(x.campo||'')+'</span>'
-        +(de||pa?('<span class="n" style="font-family:var(--emono)">'+(de||'—')+' → '+(pa||'—')+'</span> · '):'')
-        +this.esc(x.motivo||'')+'</div>'; }).join('');
-    return out;
+    const h=this.histDo(a.id), ci=this._infoAnuncio(a);
+    const fmtDt=iso=>{ if(!iso) return '—'; try{ return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return String(iso).slice(0,16); } };
+    const banner='<div class="al-histbanner na">Sem conferência automática com a Shopee — canal manual até a API.</div>';
+    const infoLinha='<div class="al-histli" style="border-top:0;padding-top:2px"><span class="al-info '+ci.cls+'" style="font-size:12.5px">'+this.esc(ci.txt)+'</span></div>';
+    if(!h.length) return '<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações</div>'+infoLinha+'<div class="al-sugp faint">Nenhuma alteração registrada ainda para este anúncio.</div></div>';
+    const tagDe=c=>({preco:'preço',promocao:'promoção',campanha:'campanha',pausado:'pausado',encerrado:'encerrado'}[c]||c||'preço');
+    const linhas=h.map(x=>{
+      const delta=(x.preco_anterior!=null||x.preco_novo!=null)?' <span style="color:var(--emuted2)">· R$ '+(x.preco_anterior!=null?this.fmt(x.preco_anterior):'—')+' → R$ '+(x.preco_novo!=null?this.fmt(x.preco_novo):'—')+'</span>':'';
+      const mot=x.motivo?this.esc(x.motivo):'<span style="color:var(--emuted2)">sem motivo registrado</span>';
+      return '<div class="al-histli"><span class="al-histdt">'+this.esc(fmtDt(x.criado_em))+'</span><span class="al-histtag b">'+this.esc(tagDe(x.campo))+'</span><span class="al-histmeta" style="font-size:12px;color:var(--etxt)">'+mot+delta+'</span></div>';
+    }).join('');
+    return '<div class="al-sugbox n">'+banner+'<div class="al-sugmeta">Histórico de Alterações · '+h.length+'</div>'+infoLinha+linhas+'</div>';
   },
   async toggleHist(id,origem){
     const sel=origem==='an'?'[data-anhist="'+id+'"]':'[data-cthist="'+id+'"]';
@@ -10217,37 +10275,63 @@ const shopeeTab={
   },
 
   // ---------- CONTROLE DE ANÚNCIOS (Alexia · Editar com motivo, gate ao vivo, Encerrar) ----------
+  ctlFiltro:'',
   renderControle(){
+    // BUILD 2026-09-15-K: espelho do renderAnuncios do Controle ML — .vli | Nº | .vmain(.al-line, .al-actions, editbox) | Editar / Pausar|Reativar / Encerrar
     const box=this._g('shp-ct-list'); if(!box) return;
-    const nAtv=this.anuncios.filter(a=>!a.pausado).length, nPaus=this.anuncios.length-nAtv; // BUILD 2026-09-15-J: pausado fora da contagem (padrao ML)
-    this._g('shp-ct-count').textContent=this.anuncios.length?('· '+nAtv+' ativo(s)'+(nPaus?(' · '+nPaus+' pausado(s)'):'')):'';
-    if(!this.anuncios.length){ box.innerHTML='<div style="color:var(--emuted);font-size:12.5px">Nenhum anúncio ativo.</div>'; return; }
-    const lista=this.anuncios.slice().sort((a,b)=>((a.pausado?1:0)-(b.pausado?1:0))); // pausados depois, como no ML
-    box.innerHTML=lista.map(a=>{
-      const pv=this.pvDe(a), m=this.margemDe(pv,!!a.campanha,this.custos[a.codigo]);
-      const marg=m?(m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% '+this.seloHtml(m)):'—';
-      const n=this.histDo(a.id).length;
+    const cnt=this._g('shp-ct-count'), bmsg=this._g('shp-ct-busca-msg'), sq=this._g('shp-ct-quando');
+    if(sq) sq.textContent='sem conferência automática · canal manual';
+    if(!this.anuncios.length){ box.innerHTML='<div class="ph">nenhum anúncio cadastrado</div>'; if(cnt) cnt.textContent=''; if(bmsg) bmsg.textContent=''; return; }
+    const lista=this.anuncios.map(a=>{ const ci=this._infoAnuncio(a); return {an:a,dias:ci.dias,vendas:ci.vendas,ci}; });
+    lista.sort((a,b)=>((a.an.pausado?1:0)-(b.an.pausado?1:0))||(b.vendas-a.vendas)||((b.dias==null?-1:b.dias)-(a.dias==null?-1:a.dias)));
+    const flt=(this.ctlFiltro||'').trim().toLowerCase();
+    const listaF=flt?lista.filter(r=>String(r.an.codigo||'').toLowerCase().includes(flt)):lista;
+    if(bmsg) bmsg.textContent=flt?(listaF.length+' de '+lista.length):'';
+    const nPaus=lista.filter(r=>r.an.pausado).length, nAtv=lista.length-nPaus;
+    if(cnt) cnt.textContent=flt?(listaF.length+' de '+lista.length):(nAtv+' anúncio'+(nAtv===1?'':'s')+' ativo'+(nAtv===1?'':'s')+(nPaus?(' · '+nPaus+' pausado'+(nPaus===1?'':'s')):''));
+    if(flt&&!listaF.length){ box.innerHTML='<div class="ph">nenhum anúncio com o código «'+this.esc(String(this.ctlFiltro).trim())+'»</div>'; return; }
+    box.innerHTML=listaF.map((row,i)=>{ const a=row.an, n=this.histDo(a.id).length;
       const edit=this.ctlEditId===a.id?this.ctlEditHtml(a):'';
       const btnPause=a.pausado
-        ?'<button class="vbtn sm" style="min-width:74px;border-color:rgba(52,211,153,.5);color:var(--eemerald)" onclick="shopeeTab.pausar('+a.id+',false)">Reativar</button>'
-        :'<button class="vbtn sm" style="min-width:74px" onclick="shopeeTab.pausar('+a.id+',true)">Pausar</button>';
-      return '<div class="ctcard'+(a.pausado?' pausado':'')+'" data-ctcard="'+a.id+'">'
-        +'<div class="t1"><span>'+this.esc(a.titulo)+(a.pausado?' <span class="chip pausado">PAUSADO</span>':'')+'</span><span class="n" style="font-family:var(--emono)">R$ '+this.fmt(pv)+(a.preco_promocao?' (promo)':'')+(a.campanha?' ⚑':'')+' · '+marg+'</span></div>'
-        +'<div class="t2">'+this.esc(a.codigo)+' · Item '+this.esc(a.shopee_item_id||'—')+'</div>'
-        +'<div class="acts"><button class="vbtn sm" style="min-width:74px" onclick="shopeeTab.ctlEditar('+a.id+')">'+(this.ctlEditId===a.id?'Fechar':'Editar')+'</button>'
-        +btnPause
-        +'<button class="vbtn sm danger" style="min-width:74px" onclick="shopeeTab.ctlEncerrar('+a.id+')">Encerrar</button>'
-        +'<button class="vbtn sm" onclick="shopeeTab.toggleHist('+a.id+',\'ct\')">Histórico ('+n+')</button></div>'
-        +'<div data-cthist="'+a.id+'" style="display:none;margin-top:8px"><div class="histbox">'+this.histHtml(a)+'</div></div>'
-        +edit+'</div>';
+        ?'<button class="vbtn sm" style="min-width:74px;background:rgba(52,211,153,.14);color:var(--eemerald)" onclick="shopeeTab.pausar('+a.id+',false)">Reativar</button>'
+        :'<button class="vbtn sm" style="min-width:74px;background:var(--epanel3);color:var(--eamber)" onclick="shopeeTab.pausar('+a.id+',true)">Pausar</button>';
+      return '<div class="vli" style="align-items:flex-start'+(a.pausado?';opacity:.55;filter:grayscale(1)':'')+'">'
+        +'<div style="font-weight:700;color:var(--emuted2);min-width:18px;text-align:right;font-size:12.5px">'+(i+1)+'</div>'
+        +'<div class="vmain">'
+        +'<div class="al-line"><span class="al-code">'+this.esc(a.codigo)+'</span><span class="al-title">'+this.esc(a.titulo)+'</span>'
+          +(a.pausado?('<span class="al-info" style="color:var(--emuted);border:1px solid var(--eborder);border-radius:6px;padding:0 6px;font-weight:700;letter-spacing:.05em" title="Fora da análise até reativar">PAUSADO'+(a.pausado_em?(' · '+new Date(a.pausado_em).toLocaleDateString('pt-BR')):'')+'</span>'):'')
+        +'</div>'
+        +'<div class="al-actions"><button class="al-histlink" onclick="shopeeTab.toggleHist('+a.id+',\'ct\')">Histórico ('+n+')</button>'
+          +'<div data-cthist="'+a.id+'" style="display:none;margin-top:6px;width:100%;max-width:640px">'+this.histHtml(a)+'</div></div>'
+        +'<div data-cteditbox="'+a.id+'" style="'+(edit?'':'display:none;')+'margin-top:8px;padding-top:8px;border-top:1px solid var(--eborder)">'+edit+'</div>'
+        +'</div>'
+        +'<div style="display:flex;gap:6px;align-items:center;flex-shrink:0"><button class="vbtn sm" style="min-width:74px" onclick="shopeeTab.ctlEditar('+a.id+')">Editar</button>'+btnPause
+        +'<button class="vbtn sm" style="min-width:74px;background:var(--epanel3);color:var(--emuted)" onclick="shopeeTab.ctlEncerrar('+a.id+')">Encerrar</button></div>'
+        +'</div>';
     }).join('');
     if(this.ctlEditId!=null){ this.ctlSim(); const a=this.anuncios.find(x=>x.id===this.ctlEditId); if(a) this.echoProduto(a.codigo,'shp-ct-echo','prodCt'); }
+  },
+  // BUILD 2026-09-15-K: espelho do exportarControleMd do ML — lista da tela, margem do motor (margemDe), sem calculo paralelo
+  exportarControleMd(){
+    const flt=(this.ctlFiltro||'').trim().toLowerCase();
+    const lista=this.anuncios.filter(a=>!flt||String(a.codigo||'').toLowerCase().includes(flt));
+    const F=v=>'R$ '+this.fmt(v); const cel=x=>String(x==null?'':x).replace(/\|/g,'\\|').replace(/\n/g,' ');
+    const linhas=lista.map(a=>{ const pv=this.pvDe(a), custo=this.custos[a.codigo], m=this.margemDe(pv,!!a.campanha,custo), ci=this._infoAnuncio(a);
+      return '| '+[cel(a.codigo),cel(a.shopee_item_id||'—'),cel(a.titulo),(a.pausado?'pausado':'ativo'),ci.txt,F(a.preco),(a.preco_promocao?F(a.preco_promocao):'—'),(a.campanha?'sim':'não'),
+        m?(m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% · '+F(m.lucro)+' · '+(m.libera?'LIBERADO':'NEGADO')):'—',
+        (custo!=null?F(custo):'—'),m?(m.t.rotulo+' · '+m.t.pct+'% + '+F(m.t.fixa)+' = '+F(m.t.total)):'—',m?F(m.imposto):'—',m?F(m.colchao):'—'].join(' | ')+' |'; }).join('\n');
+    const md='# Controle de Anúncios — Shopee · Selecta\nExportado em: '+new Date().toLocaleString('pt-BR')+(flt?('\nFiltro: '+flt):'')+'\n\n'
+      +'- margem = motor do app (tarifa da faixa + custo NF + colchão '+(this.FIXOS.COLCHAO*100)+'% + imposto '+(this.FIXOS.IMPOSTO*100)+'%; promoção vigente governa; frete dif. = 0; piso '+this.FIXOS.PISO+'%)\n\n'
+      +'| Código | Item ID | Título | Status | No ar · vendas | Preço | Promoção | Campanha | Margem (motor) | Custo NF | Tarifa | Imposto | Colchão |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n'+(linhas||'| (nenhum) | | | | | | | | | | | | |')+'\n';
+    const blob=new Blob([md],{type:'text/markdown;charset=utf-8'}); const url=URL.createObjectURL(blob); const el=document.createElement('a');
+    el.href=url; el.download='controle_shopee_'+new Date().toISOString().slice(0,10)+'.md'; document.body.appendChild(el); el.click(); document.body.removeChild(el); URL.revokeObjectURL(url);
+    this.toast('Exportado: '+lista.length+' anúncio(s).');
   },
   ctlEditHtml(a){
     // BUILD 2026-09-15-J: espelho do Editar do ML — L1 Preco/Campanha/Margem, L2 Promocao/Margem, Motivo, Salvar/Cancelar + detalhes do calculo
     const v=x=>String(x==null?'':x).replace(/"/g,'&quot;');
     const cel=(d)=>'<div class="efield"><label>Margem Líquida</label><div class="mginline mute" '+d+'><span class="mgi-pct">—</span><span class="mgi-luc">lucro <b>R$ —</b></span><span class="mgi-selo" hidden></span></div></div>';
-    return '<div class="ctedit">'
+    return '<span class="al-editflag">✏ Editando anúncio</span>'
       +'<div class="alm-row"><div class="efield"><label>Preço (R$)</label><input class="vinput mono" id="shp-ct-preco" inputmode="decimal" value="'+v(this.fmt(a.preco))+'"></div>'
       +'<div class="efield"><label>Campanha (+2,5%)</label><select class="vinput" id="shp-ct-camp"><option value="0"'+(a.campanha?'':' selected')+'>Não</option><option value="1"'+(a.campanha?' selected':'')+'>Sim</option></select></div>'
       +cel('data-shpmgc')+'</div>'
@@ -10260,8 +10344,7 @@ const shopeeTab={
       +'<button class="vbtn sm" style="background:var(--epanel3);color:var(--emuted)" onclick="shopeeTab.ctlEditar('+a.id+')">Cancelar</button>'
       +'<label id="shp-ct-ovrlbl" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--eamber);cursor:pointer;user-select:none"><input type="checkbox" id="shp-ct-ovr" style="accent-color:var(--eamber)"> ⚠ Liberar abaixo do piso</label>'
       +'<span class="hintline" id="shp-ct-msg" style="margin:0"></span>'
-      +'<details class="msim-det"><summary>▸ detalhes do cálculo</summary><div class="msim-meta2" id="shp-ct-meta"><div class="meta-grid">—</div></div></details></div>'
-      +'</div>';
+      +'<details class="msim-det"><summary>▸ detalhes do cálculo</summary><div class="msim-meta2" id="shp-ct-meta"><div class="meta-grid">—</div></div></details></div>';
   },
   ctlEditar(id){ this.ctlEditId=(this.ctlEditId===id)?null:id; this.prodCt=null; this.renderControle(); },
   _ctlPaint(sel,m,vigente){
@@ -10322,7 +10405,7 @@ const shopeeTab={
     const mudouPromo=(promoAnt==null)!==(promoNova==null)||(promoAnt!=null&&promoNova!=null&&Math.abs(promoNova-promoAnt)>0.004);
     const mudouCamp=camp!==!!a.campanha;
     if(!mudouPreco&&!mudouPromo&&!mudouCamp){ msg.className='hintline err'; msg.textContent='Nada mudou.'; return; }
-    if(!motivo){ msg.className='hintline err'; msg.textContent='Motivo é obrigatório.'; return; }
+    if(motivo.length<3){ msg.className='hintline err'; msg.textContent='Motivo é obrigatório (mínimo 3 caracteres).'; return; } // BUILD 2026-09-15-K: = CHECK do banco
     const st=this.ctlSim(); // BUILD 2026-09-15-J: gate do ML — recalculado no ato de gravar
     if(!st||!st.ok){ msg.className='hintline err'; msg.textContent=(st&&st.pct!=null)?('NEGADO — margem '+st.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% abaixo do piso de 10%.'):'dado incompleto — gravação bloqueada'; return; }
     const m=st.m; if(st.override) motivo='ABAIXO DO PISO ('+st.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%) — '+motivo;
@@ -10354,7 +10437,7 @@ const shopeeTab={
   },
   async ctlEncerrar(id){ const a=this.anuncios.find(x=>x.id===id); if(!a) return;
     const motivo=prompt('Encerrar "'+a.titulo+'"? Informe o motivo (obrigatório):');
-    if(motivo==null) return; if(!motivo.trim()){ this.toast('Motivo é obrigatório.',true); return; }
+    if(motivo==null) return; if(motivo.trim().length<3){ this.toast('Motivo é obrigatório (mínimo 3 caracteres).',true); return; } // BUILD 2026-09-15-K
     try{
       const {error}=await sb.from('ecom_shopee_anuncios').update({ativo:false}).eq('id',id); if(error) throw error;
       const mEnc=this.margemDe(this.pvDe(a),!!a.campanha,this.custos[a.codigo]);
@@ -10563,6 +10646,9 @@ const shopeeTab={
       this._g('shp-sub-analise').style.display=(t==='analise')?'':'none';
       this._g('shp-sub-controle').style.display=(t==='controle')?'':'none'; }); // BUILD 2026-09-15-C
     g('shp-ct-refresh').addEventListener('click',()=>this.reloadAnuncios());
+    const cb=g('shp-ct-busca'); if(cb) cb.addEventListener('input',()=>{ this.ctlFiltro=cb.value; this.renderControle(); }); // BUILD 2026-09-15-K
+    const cc=g('shp-ct-busca-clear'); if(cc) cc.addEventListener('click',()=>{ this.ctlFiltro=''; if(cb) cb.value=''; this.renderControle(); });
+    const ce=g('shp-ct-export'); if(ce) ce.addEventListener('click',()=>this.exportarControleMd());
     g('shp-vd-cod').addEventListener('change',e=>this.echoProduto(e.target.value,'shp-vd-echo','prodVd'));
     g('shp-vd-cod').addEventListener('input',e=>this.echoDebounced(e.target.value,'shp-vd-echo','prodVd')); // BUILD 2026-09-15-J
     ['shp-vd-preco','shp-vd-qtd'].forEach(i=>g(i).addEventListener('input',()=>this.sugerirTarifa()));
