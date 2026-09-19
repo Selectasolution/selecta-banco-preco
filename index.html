@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-15-L | selecta-banco-preco | CUSTOS AFERIDOS DO ML NO MOTOR DE MARGEM (auditoria hard 19/09 — normas ML 2026 x motor; aprovacao Igor 19/09 nos 4 pontos: custos corrigem sozinhos, sem Editar). ACHADOS que motivaram: (a) 28 de 62 anuncios com frete da FRETE_TBL um degrau de peso fora do "A pagar" do ML (20 abaixo = margem inflada) — causa raiz: o app so conhece peso_g, o ML cobra pelo peso CONSIDERADO max(real, A*L*C/6000) da embalagem do anuncio; (b) comissao por sigla do produto, o ML cobra pela category_id do anuncio; (c) comissao "real" congelada (SEG 13% x ML 11,5% em 7 cameras; RDE 14% x 13% em 8 repetidores) — UPDATE aplicado por Igor 19/09; (d) Premium fallback 17% x 18% observado; (e) tarifa fixa <R$79 ausente (hoje inofensivo, menor preco da loja R$ 94,90). O QUE MUDA: (1) _simMargem ganha 6o parametro an (linha de ecom_anuncios): com custos do ML lidos pela ml-market v4.5 (SQL 23: com_pct_ml/com_fixa_ml/tarifa_ml/frete_ml/frete_ml_preco/frete_faixas/ml_peso_considerado_g/custos_ml_em), comissao = com_pct_ml quando o tipo simulado e o tipo lido (+ tarifa fixa no mesmo lado dos R$79), frete = frete_ml no preco lido ou frete_faixas na faixa do candidato; sem leitura valida cai na FRETE_TBL usando o peso considerado do ML quando existe, senao peso_g — e a tabela de categoria. Toda saida declara origem (comOrig/freteOrig ml|tabela). (2) Editar/popover: "comissao (ML hh:mm)" ou "(tabela · real/aferida/est.)", "frete (ML)" ou "(tabela)", linha "tarifa fixa (ML)" quando >0, linha "peso: cad. X g · ML considera Y g" quando divergem. (3) Analise Comercial, Conferir com o Controle e Exportar (md) passam o anuncio — zero conta paralela, mesmo caminho (doutrina 26-G). (4) Cadastro de anuncio (sem MLB ainda) segue na tabela, com etiqueta. (5) Realtime ja escuta ecom_anuncios: a gravacao da Edge reflete na tela sem build. Shopee margemDe()/tarifa() INTOCADAS; gate 10% inalterado; Controle da Alexia sem mudanca de fluxo. Requer SQL 23 + ml-market v4.5 (aceite 64/64 pelo SQL 23b antes de publicar). | base: 2026-09-15-K (Controle Shopee = esqueleto do ML, md5 a711619c194e39c3fd184698a0020487; rebase pedido por Igor 19/09 09:10 — o motor ML nao foi tocado pelo 15-K, diff so na regiao Shopee) -->
 <!-- BUILD 2026-09-15-K | selecta-banco-preco | CONTROLE DE ANUNCIOS SHOPEE = ESQUELETO DO ML (Igor 19/09: "Novamente, o Controle de Anuncio da Shopee nao segue o padrao do ML. Quero layout igual e padrao"; o 15-J trocou botoes e Editar mas manteve o cartao .ctcard proprio): (1) card no molde do #alsub-controle do ML: .al-header (titulo em pilula "Anuncios ativos" + sub "ranking por vendas" | contador .al-hcount + "⬇ Exportar (md)" + "🔄 Atualizar" com linha de conferencia embaixo), busca por codigo do produto (input + limpar + "N de M") e lista em .vli identica: Nº | .vmain (.al-line codigo · titulo · etiqueta PAUSADO/ENCERRADO; .al-actions com link sublinhado "Historico (N)" + caixa .al-sugbox abaixo; caixa do Editar dentro do .vmain com borda superior e flag "✏ Editando anuncio") | botoes Editar / Pausar|Reativar / Encerrar (min-width 74; cores do ML: Pausar ambar, Reativar esmeralda, Encerrar no lugar do Remover em cinza). (2) Ordem do ML: vendas desde a publicacao (desc) > dias no ar (desc); pausados depois; contador "N anuncios ativos · N pausados". (3) Historico Shopee (Controle E Analise) no formato .al-sugbox do ML: banner "na" (sem conferencia automatica — canal manual), "Historico de Alteracoes · N", 1a linha "dias no ar · N venda(s)" com semaforo do fato (novo/ok/med/crit, mesma regra infoCls), linhas .al-histli data · tag · motivo · R$ de → para. (4) Exportar (md) do Controle Shopee = espelho do exportarControleMd: lista da tela com margem do motor (margemDe), custo NF, tarifa da faixa, imposto, colchao, selo — sem calculo paralelo. (5) Motivo (Editar/Encerrar) exige >= 3 caracteres no app = CHECK ecom_shopee_anuncio_alteracao_motivo_check do banco (bloco C do SQL 22, Igor 19/09). (6) CSS .al-header/.al-htitle/.al-hsub/.al-hcount/.vli/.vmain/.al-line/.al-code/.al-title/.al-info/.al-actions/.al-histlink/.al-sugbox/.al-histli/.al-editflag/.ph replicado no escopo #tab-shopee + regras do celular (@media 640) do ML para o .vli. .ctcard/.ctedit/.simbox do 26-V aposentados. margemDe()/tarifa()/calcMes INTOCADAS; fora da regiao Shopee nada muda. | base: 2026-09-15-J (md5 3a645484d38b764d3ecfeaf35de0e10a) -->
 <!-- BUILD 2026-09-15-J | selecta-banco-preco | SEGURANCA + PADRAO ML NA SHOPEE (auditoria 19/09, 34/34 jsdom; decisoes Igor 19/09 "Autorizo / Entram / um padrao so"): (1) FURO F1: tarifa vazia no lancamento gravava NULL e calcMes somava 0 (resultado inflado em silencio) — agora Tarifa Shopee e OBRIGATORIA (>0) no lancamento E calcMes trata comissao_valor NULL como PENDENTE (fora de tarifas/custos/imposto/lucro, contado em nPend, aviso ambar no termometro) = espelho do calcMes/lucroPedido do ML. (2) FURO F2: num() tratava todo ponto como milhar (99.90 -> 9990, margem inflada c/ selo LIBERADO): regra nova — com virgula, pontos sao milhar; sem virgula e UM ponto, o ponto e decimal (excecao: ponto seguido de exatamente 3 digitos no fim = milhar, 1.005 = 1005); so afeta shopeeTab.num. (3) FURO F3 (incidente "nao puxou nada" 18/09): lookup do codigo passa a disparar ENQUANTO DIGITA (input + debounce 350ms, ultimo pedido vence) no Cadastro e no Lancar venda — padrao ML; change mantido. (4) CONTROLE = ESPELHO DO ML: botoes Editar / Pausar|Reativar / Encerrar na mesma linha (min-width 74); Pausar/Reativar (colunas pausado/pausado_em — SQL 22) com confirm no texto do ML e log campo=pausado; pausado esmaecido c/ etiqueta PAUSADO, fora da contagem e FORA da Analise Comercial (rodape "N fora da analise — Reativar no Controle devolve a mesa"); Encerrar mantido (ativo=false + motivo + log; substitui o Remover do ML, que apaga sem log — decisao de seguranca declarada). (5) EDITAR = ESPELHO DO ML: linhas Preco/Campanha/Margem Liquida e Promocao/Margem Liquida com celulas .mginline (pct, lucro, selo; vigencia = promocao governa), popover "detalhes do calculo" (vigente, Custo NF, tarifa da faixa % + fixa, imposto, frete dif., colchao s/ venda), GATE DO ML: >=10% grava; 5..10% so o dono (selectasolution@gmail.com) via checkbox "Liberar abaixo do piso" (motivo prefixado ABAIXO DO PISO); <5% NEGADO absoluto (Salvar desabilitado) — substitui o confirm() do 15-A; simbox do Editar removida. CSS .mginline/.msim-det/.meta-grid/.alm-row replicado no escopo #tab-shopee. margemDe()/tarifa() INTOCADAS; fora da regiao Shopee nada muda. Requer SQL 22 (pausado/pausado_em + limpeza da venda de teste). | base: 2026-09-15-I (md5 b09495e51e3c3877705d34b052128384) -->
 <!-- BUILD 2026-09-15-I | selecta-banco-preco | CADASTRO DE ANUNCIO SHOPEE = ESPELHO DO ML (Igor 18/09: "porque o layout da Shopee quando vou cadastrar o anuncio nao esta igual o ML?"): (1) simbox de 7 quadrantes (heranca 26-V) REMOVIDA; entra campo Margem inline identico ao al-margem do ML (mesma caixa .vinput, mesmos estados: neutro -> "codigo nao encontrado" ambar -> "✓ produto · custo NF · digite o preco" -> margem% + R$ liq. + sufixo "tarifa R$X (faixa) · frete dif. 0" + selo LIBERADO/NEGADO; cores >=10% esmeralda / >=5% ambar / vermelho, regua do ML). (2) sim() reescrita p/ pintar a Margem inline — margemDe() INTOCADA, zero mudanca de conta. (3) hintline de echo do Alvo oculta (a Margem assume, como no ML); listener do codigo encadeia sim() apos o lookup p/ erro aparecer na caixa. (4) Botao "Salvar anuncio" -> "Cadastrar anuncio" (rotulo do ML). (5) Alerta de fronteira de faixa MANTIDO (so aparece quando ha armadilha — dado do canal, nao ornamento). Vendas/Controle/Analise/Relatorios intocados. | base: 2026-09-15-H (md5 82269235880af7f326746e4cb980050f) -->
@@ -6742,7 +6743,7 @@ const ecomAlvo={
       +'- gerado: '+new Date().toLocaleString('pt-BR')+'\n'
       +'- reputa\u00e7\u00e3o: '+rep+' \u00b7 imposto '+impPct+'% \u00b7 colch\u00e3o '+colPct+'% s/ venda \u00b7 piso 10%\n'
       +'- an\u00fancios: '+lista.length+' de '+rows.length+(_flt?(' (filtro \u00ab'+String(this.anunciosFiltro).trim()+'\u00bb)'):'')+'\n'
-      +'- margem = motor do app (comiss\u00e3o da categoria \u00d7 frete FRETE_TBL \u00d7 reputa\u00e7\u00e3o; promo\u00e7\u00e3o vigente governa; estorno de campanha quando analisado)\n\n';
+      +'- margem = motor do app (comiss\u00e3o e frete AFERIDOS DO ML por an\u00fancio quando lidos — origem "ML hh:mm"; sen\u00e3o comiss\u00e3o da categoria \u00d7 FRETE_TBL \u00d7 reputa\u00e7\u00e3o — origem "tabela"; promo\u00e7\u00e3o vigente governa; estorno de campanha quando analisado)\n\n';
     lista.forEach(row=>{ const an=row.an;
       const cod=String(an.produto_codigo||'').trim().toUpperCase();
       const prod=prodMap[cod]||null;
@@ -6750,7 +6751,7 @@ const ecomAlvo={
       const praticado=temPromo?+an.preco_promocao:(an.preco!=null?+an.preco:null);
       const tipo=(an.tipo_anuncio==='premium')?'premium':'classico';
       const est=temPromo?this._estornoPromo(an,+an.preco,praticado):0;
-      const r=(prod&&praticado!=null)?this._simMargem(prod,praticado,tipo,rep,est):null;
+      const r=(prod&&praticado!=null)?this._simMargem(prod,praticado,tipo,rep,est,an):null; // BUILD 2026-09-15-L: an
       const status=an.ativo===false?'ENCERRADO NO ML':(an.pausado?'PAUSADO':'ativo');
       md+='## '+cod+' \u00b7 MLB '+(an.anuncio_mlb||'\u2014')+'\n'
         +'- t\u00edtulo: '+(an.titulo||'\u2014')+'\n'
@@ -6759,10 +6760,9 @@ const ecomAlvo={
         +(temPromo?(' \u00b7 promo\u00e7\u00e3o vigente R$ '+fR(an.preco_promocao)+(an.promo_ml_pct!=null?(' (estorno ML '+(+an.promo_ml_pct).toFixed(0)+'%)'):' (campanha sem estorno analisado)')):'')+'\n';
       if(r&&r.ok){
         const pct=r.margemPct*100;
-        const catRow=(prod&&ecom.comMap)?ecom.comMap[prod.categoria]:null;
-        const comOrigem=(catRow&&catRow.origem==='reconciliacao')?'real':(catRow&&(catRow.origem==='manual'||catRow.origem==='api_ml')?'aferida':'est.');
+        const comOrigem=this._comOrigemLabel(r,prod); // BUILD 2026-09-15-L
         md+='- margem (app): **'+pct.toFixed(1)+'%** \u00b7 lucro R$ '+fR(r.margem)+' \u00b7 '+(pct>=10?'LIBERADO':'NEGADO \u2014 abaixo do piso')+'\n'
-          +'- detalhes: custo NF R$ '+fR(prod.custo)+' \u00b7 comiss\u00e3o '+(r.comPct*100).toFixed(2)+'% ('+comOrigem+') \u00b7 frete R$ '+fR(r.frete)+' \u00b7 colch\u00e3o R$ '+fR(praticado*colPct/100)+(r.estorno>0?(' \u00b7 estorno campanha +R$ '+fR(r.estorno)):'')+'\n';
+          +'- detalhes: custo NF R$ '+fR(prod.custo)+' \u00b7 comiss\u00e3o '+(r.comPct*100).toFixed(2)+'% ('+comOrigem+')'+(r.comFixa>0?(' \u00b7 tarifa fixa R$ '+fR(r.comFixa)):'')+' \u00b7 frete R$ '+fR(r.frete)+' ('+this._freteOrigemLabel(r)+')'+(r.pesoMl!=null?(' \u00b7 peso ML '+Math.round(r.pesoMl)+' g'):'')+' \u00b7 colch\u00e3o R$ '+fR(praticado*colPct/100)+(r.estorno>0?(' \u00b7 estorno campanha +R$ '+fR(r.estorno)):'')+'\n';
         if(prod.estoque_atual!=null) md+='- estoque (cat\u00e1logo): '+prod.estoque_atual+' un.\n';
       } else {
         md+='- margem (app): sem c\u00e1lculo \u2014 '+((r&&r.reason)||(prod?'sem pre\u00e7o':'produto n\u00e3o encontrado/inativo no cat\u00e1logo'))+'\n';
@@ -6806,7 +6806,7 @@ const ecomAlvo={
     const cor=pct>=10?'var(--eemerald)':pct>=5?'var(--eamber)':'var(--ered)';
     box.innerHTML='<b style="color:'+cor+';font-size:14px">'+pct.toFixed(1).replace('.',',')+'%</b>'
       +'<span style="color:'+cor+'">'+F(r.margem)+' líq.</span>'
-      +'<span class="faint" style="font-size:11px;color:var(--emuted2)">frete '+F(r.frete)+' · comissão '+(r.comPct*100).toFixed(1).replace('.',',')+'%</span>';
+      +'<span class="faint" style="font-size:11px;color:var(--emuted2)">frete '+F(r.frete)+' · comissão '+(r.comPct*100).toFixed(1).replace('.',',')+'% (tabela — anúncio ainda sem leitura do ML)</span>'; // BUILD 2026-09-15-L
   },
   // BUILD 2026-08-26-K: estorno da campanha ML para a promocao VIGENTE do anuncio. So vale se o preco promocional avaliado for o mesmo gravado
   // (promocao redigitada = campanha nova = promo_ml_pct volta a NULL pelo trigger do SQL 10). NULL = nao analisado = 0.
@@ -6816,29 +6816,68 @@ const ecomAlvo={
     const pct=+an.promo_ml_pct; if(!(pct>0)||!(precoCheio>promoVal)) return 0;
     return Math.round((precoCheio-promoVal)*pct)/100;
   },
-  _simMargem(prod,preco,tipo,rep,estorno){
+  // BUILD 2026-09-15-L: custos aferidos do ML (SQL 23 + ml-market v4.5). 6o parametro an = linha de ecom_anuncios.
+  // Regra: comissao do ML vale quando o tipo simulado e o tipo lido (Premium/Classico) e a tarifa fixa so no mesmo lado dos R$79;
+  // frete do ML vale no preco lido (frete_ml) ou na faixa de preco sondada (frete_faixas); fora disso cai na FRETE_TBL — com o
+  // peso CONSIDERADO pelo ML (max real/volumetrico) quando existe. Tudo que sai declara a origem (ml | tabela).
+  _custosMlDe(an,preco,tipo){
+    const P=+preco; const out={com:null,comFixa:0,tarifaLida:null,frete:null,comOrig:'tabela',freteOrig:'tabela',em:null,pesoMl:null};
+    if(!an||!an.custos_ml_em) return out;
+    out.em=an.custos_ml_em;
+    if(an.ml_peso_considerado_g!=null && +an.ml_peso_considerado_g>0) out.pesoMl=+an.ml_peso_considerado_g;
+    const lido=(an.frete_ml_preco!=null)?+an.frete_ml_preco:null;
+    const mesmoLado=(lido!=null)&&((P<79)===(lido<79));
+    if(an.com_pct_ml!=null && an.ml_tipo_custos===tipo){
+      out.com=+an.com_pct_ml/100; out.comOrig='ml';
+      out.comFixa=(an.com_fixa_ml!=null&&mesmoLado)?+an.com_fixa_ml:0;
+      if(lido!=null && Math.abs(P-lido)<0.005 && an.tarifa_ml!=null) out.tarifaLida=+an.tarifa_ml;
+    }
+    if(an.frete_ml!=null && lido!=null && Math.abs(P-lido)<0.005){ out.frete=+an.frete_ml; out.freteOrig='ml'; }
+    else if(Array.isArray(an.frete_faixas)){
+      const fx=an.frete_faixas.find(f=>f&&f.valor!=null&&P>=+f.de&&(f.ate==null||P<=+f.ate));
+      if(fx){ out.frete=+fx.valor; out.freteOrig='ml'; }
+    }
+    return out;
+  },
+  _simMargem(prod,preco,tipo,rep,estorno,an){
     // Espelha ecom.calc usando FRETE_TBL para a reputação escolhida
     // BUILD 2026-08-26-K: estorno (R$, opcional) = parcela do desconto que o ML devolve em campanha comercial; entra como (+) na margem. Ausente = 0 (regua conservadora)
+    // BUILD 2026-09-15-L: an (opcional) = anuncio com custos aferidos do ML; quando validos, substituem comissao da categoria e FRETE_TBL
     const pr={ comC:13, comP:17,
       imp:(typeof ecom!=='undefined'?(ecom._n?ecom._n('ecom-imp'):4):4),
       outros:(typeof ecom!=='undefined'?(ecom._n?ecom._n('ecom-outros'):0):0),
       colchao:(typeof ecom!=='undefined'?(ecom._n?ecom._n('ecom-colchao'):6):6) };
-    const comPct=(typeof ecom!=='undefined' && ecom.comPctDe)?ecom.comPctDe(prod.categoria,tipo,pr):((tipo==='premium'?pr.comP:pr.comC)/100);
+    const ml=this._custosMlDe(an,preco,tipo);
+    const comPct=(ml.com!=null)?ml.com:((typeof ecom!=='undefined' && ecom.comPctDe)?ecom.comPctDe(prod.categoria,tipo,pr):((tipo==='premium'?pr.comP:pr.comC)/100));
     const t=comPct+pr.imp/100+pr.outros/100;
-    let lk=null;
-    if(typeof ecom!=='undefined' && ecom.freteLookup){
-      const pesoG=ecom.pesoEfetivoG(prod);
-      lk=ecom.freteLookup(pesoG,+preco,rep);
+    let fr=ml.frete, freteOrig=ml.freteOrig, pesoUsado=null;
+    if(fr==null){
+      let lk=null;
+      if(typeof ecom!=='undefined' && ecom.freteLookup){
+        let pesoG=ecom.pesoEfetivoG(prod);
+        if(ml.pesoMl!=null){ pesoG=ml.pesoMl; freteOrig='tabela·peso ML'; }
+        pesoUsado=pesoG;
+        lk=ecom.freteLookup(pesoG,+preco,rep);
+      }
+      if(!lk) return {ok:false,reason:'FRETE_TBL não carregada ou peso/preço fora do range'};
+      fr=lk.valor;
     }
-    if(!lk) return {ok:false,reason:'FRETE_TBL não carregada ou peso/preço fora do range'};
-    const fr=lk.valor;
     const P=+preco;
-    const custoML=P*t+fr;
+    const custoML=P*t+fr+ml.comFixa;
     const custo=+prod.custo; const colchao=P*pr.colchao/100; const custoTotal=custo+colchao; // BUILD 2026-08-21-A: colchão sobre a VENDA
     const est=(+estorno>0)?+estorno:0; // BUILD 2026-08-26-K
     const margem=P-custoML-custoTotal+est;
-    return {ok:true,margem,margemPct:P>0?margem/P:0,comPct,frete:fr,estorno:est};
+    return {ok:true,margem,margemPct:P>0?margem/P:0,comPct,frete:fr,estorno:est,
+      comFixa:ml.comFixa,comOrig:ml.comOrig,freteOrig,custosEm:ml.em,pesoMl:ml.pesoMl,pesoUsado,tarifaLida:ml.tarifaLida}; // BUILD 2026-09-15-L
   },
+  // BUILD 2026-09-15-L: rotulo da origem da comissao — ML (hora da leitura) ou tabela (real/aferida/est.)
+  _comOrigemLabel(r,prod){
+    if(r&&r.comOrig==='ml'){ const d=r.custosEm?new Date(r.custosEm):null; const hh=d?d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):''; return 'ML'+(hh?' '+hh:''); }
+    const catRow=(prod&&typeof ecom!=='undefined'&&ecom.comMap)?ecom.comMap[prod.categoria]:null;
+    const o=(catRow&&catRow.origem==='reconciliacao')?'real':(catRow&&(catRow.origem==='manual'||catRow.origem==='api_ml')?'aferida':'est.');
+    return 'tabela · '+o;
+  },
+  _freteOrigemLabel(r){ return (r&&r.freteOrig==='ml')?'ML':((r&&r.freteOrig)||'tabela'); },
   renderSim(id){
     const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
     const wrap=box.querySelector('[data-alsim="'+id+'"]'); if(!wrap) return;
@@ -6881,10 +6920,11 @@ const ecomAlvo={
     let promoErr=null;
     if(promoRaw!=='' && (isNaN(promoVal)||promoVal<=0)) promoErr='promoção inválida';
     else if(promoVal!=null && promoVal>=gate.preco) promoErr='promoção deve ser menor que o preço';
-    const rC=this._simMargem(gate.prod, gate.preco, gate.tipo, rep);
+    const anR=(this.anuncios||[]).find(x=>String(x.id)===String(id))||null; // BUILD 2026-09-15-L: custos aferidos do ML do anuncio
+    const rC=this._simMargem(gate.prod, gate.preco, gate.tipo, rep, 0, anR);
     let rP=null;
     if(promoErr) rP={ok:false,reason:promoErr};
-    else if(promoVal!=null){ const anK=(this.anuncios||[]).find(x=>String(x.id)===String(id)); const estK=this._estornoPromo(anK, gate.preco, promoVal); rP=this._simMargem(gate.prod, promoVal, tipoP, rep, estK); } // BUILD 2026-08-26-K
+    else if(promoVal!=null){ const anK=(this.anuncios||[]).find(x=>String(x.id)===String(id)); const estK=this._estornoPromo(anK, gate.preco, promoVal); rP=this._simMargem(gate.prod, promoVal, tipoP, rep, estK, anR); } // BUILD 2026-08-26-K · 15-L: an
     // VIGÊNCIA (regra Igor 30/07): promoção preenchida governa; apagada, volta o preço cheio.
     const promoAtiva=(promoVal!=null||promoErr!=null);
     paint('[data-mgc]',rC,!promoAtiva);
@@ -6895,17 +6935,21 @@ const ecomAlvo={
     if(elMeta){
       if(efet&&efet.ok){
         const comPct=efet.comPct*100;
-        const catRow=(typeof ecom!=='undefined' && ecom.comMap)?ecom.comMap[gate.prod.categoria]:null;
-        const comOrigem=(catRow&&catRow.origem==='reconciliacao')?'real':(catRow&&(catRow.origem==='manual'||catRow.origem==='api_ml')?'aferida':'est.');
+        const comOrigem=this._comOrigemLabel(efet,gate.prod); // BUILD 2026-09-15-L
+        const freteOrigem=this._freteOrigemLabel(efet);
+        const pesoCad=(typeof ecom!=='undefined'&&ecom.pesoEfetivoG)?ecom.pesoEfetivoG(gate.prod):null;
+        const pesoLinha=(efet.pesoMl!=null&&pesoCad!=null&&Math.abs(efet.pesoMl-pesoCad)>=1)?('<span class="k">peso</span><span class="vv">cad. '+Math.round(pesoCad)+' g \u00b7 ML considera '+Math.round(efet.pesoMl)+' g</span>'):'';
         const colchaoPct=(typeof ecom!=='undefined'&&ecom._n)?ecom._n('ecom-colchao'):6;
         const impPct=(typeof ecom!=='undefined'&&ecom._n)?ecom._n('ecom-imp'):4;
         elMeta.innerHTML='<div class="meta-grid">'
           +'<span class="vig">vigente: '+(promoAtiva?'promoção':'preço cheio')+'</span>'
           +'<span class="nf-k">Custo NF</span><span class="nf-v">R$ '+this._fmtBR(gate.prod.custo)+'</span>'
           +'<span class="k">comissão ('+comOrigem+')</span><span class="vv">'+comPct.toFixed(2)+'%</span>'
+          +((efet.comFixa>0)?'<span class="k">tarifa fixa (ML)</span><span class="vv">R$ '+this._fmtBR(efet.comFixa)+'</span>':'') // BUILD 2026-09-15-L
           +((promoAtiva&&efet.estorno>0)?'<span class="k">estorno ML (campanha)</span><span class="vv">\u2212 R$ '+this._fmtBR(efet.estorno)+'</span>':'') // BUILD 2026-08-26-K
           +'<span class="k">imposto</span><span class="vv">'+impPct+'%</span>'
-          +'<span class="k">frete</span><span class="vv">R$ '+this._fmtBR(efet.frete)+'</span>'
+          +'<span class="k">frete ('+freteOrigem+')</span><span class="vv">R$ '+this._fmtBR(efet.frete)+'</span>' // BUILD 2026-09-15-L
+          +pesoLinha
           +'<span class="k">colchão '+colchaoPct+'% s/ venda</span><span class="vv">R$ '+this._fmtBR((promoAtiva?promoVal:gate.preco)*colchaoPct/100)+'</span>'
           +'</div>';
       } else {
@@ -7213,7 +7257,7 @@ const ecomAlvo={
       const estA=temPromo?this._estornoPromo(an, +an.preco, praticado):0; // BUILD 2026-08-26-K
       const campAnalisar=temPromo && an.promo_ml_pct==null && !dim; // BUILD 2026-08-26-K: promocao vigente sem parcela do ML analisada (Igor via SQL)
       if(campAnalisar) nCamp++;
-      const r=(prod&&praticado!=null)?this._simMargem(prod,praticado,tipoPrat,((typeof ecom!=='undefined'&&ecom.reputacao)||'verde'),estA):null; // BUILD 2026-08-26-G: mesma funcao e reputacao do formulario do Controle
+      const r=(prod&&praticado!=null)?this._simMargem(prod,praticado,tipoPrat,((typeof ecom!=='undefined'&&ecom.reputacao)||'verde'),estA,an):null; // BUILD 2026-08-26-G · 15-L: an: mesma funcao e reputacao do formulario do Controle
       const marg=(r&&r.ok)?r.margemPct*100:null; // BUILD 2026-08-26-I: _simMargem devolve margemPct (fracao); r.pct era do _mlMirror — coluna ficava em "—" desde o 26-G
       this._margTabela=this._margTabela||{}; this._margTabela[mlb]={marg:marg,reason:(r&&!r.ok)?r.reason:(prod?null:'produto não encontrado no catálogo')}; // BUILD 2026-08-26-H
       const mCor=(marg==null)?'var(--emuted2)':(marg>=10?'var(--eemerald)':(marg>0?'var(--eamber)':'var(--ered)'));
@@ -7307,7 +7351,7 @@ const ecomAlvo={
       else { const promo=an.preco_promocao!=null?+an.preco_promocao:null; const tipoP=tipo; // BUILD 2026-08-26-I: herda
         if(promo!=null&&(isNaN(promo)||promo<=0)) motivo='promoção inválida';
         else if(promo!=null&&promo>=preco) motivo='promoção maior ou igual ao preço (Editar recusa)';
-        else { const estC=(promo!=null)?this._estornoPromo(an, preco, promo):0; const r=this._simMargem(prod, promo!=null?promo:preco, promo!=null?tipoP:tipo, rep, estC); if(!r.ok) motivo=r.reason||'sem cálculo'; else ctrl=r.margemPct*100; } } // BUILD 2026-08-26-K: estorno igual ao da tabela · BUILD 2026-08-26-I: margemPct*100 (r.pct nao existe em _simMargem)
+        else { const estC=(promo!=null)?this._estornoPromo(an, preco, promo):0; const r=this._simMargem(prod, promo!=null?promo:preco, promo!=null?tipoP:tipo, rep, estC, an); if(!r.ok) motivo=r.reason||'sem cálculo'; else ctrl=r.margemPct*100; } } // BUILD 2026-08-26-K: estorno igual ao da tabela · BUILD 2026-08-26-I: margemPct*100 (r.pct nao existe em _simMargem)
       // --- celula da tabela ---
       const tab=(this._margTabela&&this._margTabela[mlb])||{marg:null,reason:'não renderizado'};
       const f=x=>x==null?'—':(+x).toFixed(1)+'%';
