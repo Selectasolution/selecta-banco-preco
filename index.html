@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-15-M | selecta-banco-preco | ITEM ID = CHAVE DO ANUNCIO SHOPEE (Igor 19/09: "Obrigatorio. Certeza vai ser preciso para conciliacoes"; a pergunta dele revelou que o app reconhecia o anuncio so pelo codigo do produto e o Item ID era informativo, opcional e sem UNIQUE). REBASE: entregue antes como "15-L" (md5 a7cdea445659c452720477a092ce78d4, sobre o 15-K) e RENOMEADO porque outro chat publicou um 15-L (custos aferidos do ML) sobre o mesmo 15-K; este M reaplica o Item ID sobre o L publicado — diff so na regiao Shopee, motor ML intocado. (1) Cadastro: Item ID Shopee OBRIGATORIO e numerico (>= 6 digitos; espacos/# removidos — mesma regra do MLB no ML); duplicata recusada no app (lista carregada) e no banco (UNIQUE parcial do SQL 24, erro 23505 traduzido). (2) Lancar venda: com MAIS de um anuncio ativo para o mesmo codigo aparece o seletor "Anuncio (Item ID)" e a venda grava o Item ID escolhido (tarifa sugerida usa a campanha DESSE anuncio); com um so, automatico e oculto; sem anuncio, grava sem Item ID (venda pode existir sem anuncio, regra mantida). (3) Rotulo "Item ID Shopee *". Contagem "N venda(s)" do historico segue por codigo do produto (regra do ML). Diferenca declarada: o Editar do ML permite corrigir MLB/titulo/data; o Editar Shopee segue so preco/promocao/campanha — Item ID errado = Encerrar + recadastrar, ate a proxima paridade. margemDe()/tarifa()/calcMes INTOCADAS. Requer SQL 24 (UNIQUE parcial + NOT NULL apos conferencia; o "SQL 23" e do 15-L do motor ML). | base: 2026-09-15-L publicado (md5 a2807e20892a4fe5bb9c2e8c13ed0ad0) -->
 <!-- BUILD 2026-09-15-L | selecta-banco-preco | CUSTOS AFERIDOS DO ML NO MOTOR DE MARGEM (auditoria hard 19/09 — normas ML 2026 x motor; aprovacao Igor 19/09 nos 4 pontos: custos corrigem sozinhos, sem Editar). ACHADOS que motivaram: (a) 28 de 62 anuncios com frete da FRETE_TBL um degrau de peso fora do "A pagar" do ML (20 abaixo = margem inflada) — causa raiz: o app so conhece peso_g, o ML cobra pelo peso CONSIDERADO max(real, A*L*C/6000) da embalagem do anuncio; (b) comissao por sigla do produto, o ML cobra pela category_id do anuncio; (c) comissao "real" congelada (SEG 13% x ML 11,5% em 7 cameras; RDE 14% x 13% em 8 repetidores) — UPDATE aplicado por Igor 19/09; (d) Premium fallback 17% x 18% observado; (e) tarifa fixa <R$79 ausente (hoje inofensivo, menor preco da loja R$ 94,90). O QUE MUDA: (1) _simMargem ganha 6o parametro an (linha de ecom_anuncios): com custos do ML lidos pela ml-market v4.5 (SQL 23: com_pct_ml/com_fixa_ml/tarifa_ml/frete_ml/frete_ml_preco/frete_faixas/ml_peso_considerado_g/custos_ml_em), comissao = com_pct_ml quando o tipo simulado e o tipo lido (+ tarifa fixa no mesmo lado dos R$79), frete = frete_ml no preco lido ou frete_faixas na faixa do candidato; sem leitura valida cai na FRETE_TBL usando o peso considerado do ML quando existe, senao peso_g — e a tabela de categoria. Toda saida declara origem (comOrig/freteOrig ml|tabela). (2) Editar/popover: "comissao (ML hh:mm)" ou "(tabela · real/aferida/est.)", "frete (ML)" ou "(tabela)", linha "tarifa fixa (ML)" quando >0, linha "peso: cad. X g · ML considera Y g" quando divergem. (3) Analise Comercial, Conferir com o Controle e Exportar (md) passam o anuncio — zero conta paralela, mesmo caminho (doutrina 26-G). (4) Cadastro de anuncio (sem MLB ainda) segue na tabela, com etiqueta. (5) Realtime ja escuta ecom_anuncios: a gravacao da Edge reflete na tela sem build. Shopee margemDe()/tarifa() INTOCADAS; gate 10% inalterado; Controle da Alexia sem mudanca de fluxo. Requer SQL 23 + ml-market v4.5 (aceite 64/64 pelo SQL 23b antes de publicar). | base: 2026-09-15-K (Controle Shopee = esqueleto do ML, md5 a711619c194e39c3fd184698a0020487; rebase pedido por Igor 19/09 09:10 — o motor ML nao foi tocado pelo 15-K, diff so na regiao Shopee) -->
 <!-- BUILD 2026-09-15-K | selecta-banco-preco | CONTROLE DE ANUNCIOS SHOPEE = ESQUELETO DO ML (Igor 19/09: "Novamente, o Controle de Anuncio da Shopee nao segue o padrao do ML. Quero layout igual e padrao"; o 15-J trocou botoes e Editar mas manteve o cartao .ctcard proprio): (1) card no molde do #alsub-controle do ML: .al-header (titulo em pilula "Anuncios ativos" + sub "ranking por vendas" | contador .al-hcount + "⬇ Exportar (md)" + "🔄 Atualizar" com linha de conferencia embaixo), busca por codigo do produto (input + limpar + "N de M") e lista em .vli identica: Nº | .vmain (.al-line codigo · titulo · etiqueta PAUSADO/ENCERRADO; .al-actions com link sublinhado "Historico (N)" + caixa .al-sugbox abaixo; caixa do Editar dentro do .vmain com borda superior e flag "✏ Editando anuncio") | botoes Editar / Pausar|Reativar / Encerrar (min-width 74; cores do ML: Pausar ambar, Reativar esmeralda, Encerrar no lugar do Remover em cinza). (2) Ordem do ML: vendas desde a publicacao (desc) > dias no ar (desc); pausados depois; contador "N anuncios ativos · N pausados". (3) Historico Shopee (Controle E Analise) no formato .al-sugbox do ML: banner "na" (sem conferencia automatica — canal manual), "Historico de Alteracoes · N", 1a linha "dias no ar · N venda(s)" com semaforo do fato (novo/ok/med/crit, mesma regra infoCls), linhas .al-histli data · tag · motivo · R$ de → para. (4) Exportar (md) do Controle Shopee = espelho do exportarControleMd: lista da tela com margem do motor (margemDe), custo NF, tarifa da faixa, imposto, colchao, selo — sem calculo paralelo. (5) Motivo (Editar/Encerrar) exige >= 3 caracteres no app = CHECK ecom_shopee_anuncio_alteracao_motivo_check do banco (bloco C do SQL 22, Igor 19/09). (6) CSS .al-header/.al-htitle/.al-hsub/.al-hcount/.vli/.vmain/.al-line/.al-code/.al-title/.al-info/.al-actions/.al-histlink/.al-sugbox/.al-histli/.al-editflag/.ph replicado no escopo #tab-shopee + regras do celular (@media 640) do ML para o .vli. .ctcard/.ctedit/.simbox do 26-V aposentados. margemDe()/tarifa()/calcMes INTOCADAS; fora da regiao Shopee nada muda. | base: 2026-09-15-J (md5 3a645484d38b764d3ecfeaf35de0e10a) -->
 <!-- BUILD 2026-09-15-J | selecta-banco-preco | SEGURANCA + PADRAO ML NA SHOPEE (auditoria 19/09, 34/34 jsdom; decisoes Igor 19/09 "Autorizo / Entram / um padrao so"): (1) FURO F1: tarifa vazia no lancamento gravava NULL e calcMes somava 0 (resultado inflado em silencio) — agora Tarifa Shopee e OBRIGATORIA (>0) no lancamento E calcMes trata comissao_valor NULL como PENDENTE (fora de tarifas/custos/imposto/lucro, contado em nPend, aviso ambar no termometro) = espelho do calcMes/lucroPedido do ML. (2) FURO F2: num() tratava todo ponto como milhar (99.90 -> 9990, margem inflada c/ selo LIBERADO): regra nova — com virgula, pontos sao milhar; sem virgula e UM ponto, o ponto e decimal (excecao: ponto seguido de exatamente 3 digitos no fim = milhar, 1.005 = 1005); so afeta shopeeTab.num. (3) FURO F3 (incidente "nao puxou nada" 18/09): lookup do codigo passa a disparar ENQUANTO DIGITA (input + debounce 350ms, ultimo pedido vence) no Cadastro e no Lancar venda — padrao ML; change mantido. (4) CONTROLE = ESPELHO DO ML: botoes Editar / Pausar|Reativar / Encerrar na mesma linha (min-width 74); Pausar/Reativar (colunas pausado/pausado_em — SQL 22) com confirm no texto do ML e log campo=pausado; pausado esmaecido c/ etiqueta PAUSADO, fora da contagem e FORA da Analise Comercial (rodape "N fora da analise — Reativar no Controle devolve a mesa"); Encerrar mantido (ativo=false + motivo + log; substitui o Remover do ML, que apaga sem log — decisao de seguranca declarada). (5) EDITAR = ESPELHO DO ML: linhas Preco/Campanha/Margem Liquida e Promocao/Margem Liquida com celulas .mginline (pct, lucro, selo; vigencia = promocao governa), popover "detalhes do calculo" (vigente, Custo NF, tarifa da faixa % + fixa, imposto, frete dif., colchao s/ venda), GATE DO ML: >=10% grava; 5..10% so o dono (selectasolution@gmail.com) via checkbox "Liberar abaixo do piso" (motivo prefixado ABAIXO DO PISO); <5% NEGADO absoluto (Salvar desabilitado) — substitui o confirm() do 15-A; simbox do Editar removida. CSS .mginline/.msim-det/.meta-grid/.alm-row replicado no escopo #tab-shopee. margemDe()/tarifa() INTOCADAS; fora da regiao Shopee nada muda. Requer SQL 22 (pausado/pausado_em + limpeza da venda de teste). | base: 2026-09-15-I (md5 b09495e51e3c3877705d34b052128384) -->
@@ -1895,7 +1896,7 @@
       <h3 style="color:var(--eemerald)">Cadastro de anúncio Shopee</h3>
       <div class="vrow3" style="margin-bottom:2px">
         <div class="efield"><label>Código Produto *</label><input class="vinput mono" id="shp-al-cod" placeholder="SSD-0001" style="text-transform:uppercase"></div>
-        <div class="efield"><label>Item ID Shopee</label><input class="vinput mono" id="shp-al-item" placeholder="opcional"></div>
+        <div class="efield"><label>Item ID Shopee *</label><input class="vinput mono" id="shp-al-item" inputmode="numeric" placeholder="ex.: 26082210123"></div>
         <div class="efield"><label>Data de publicação</label><input class="vinput mono" id="shp-al-pub" type="date"></div>
       </div>
       <div class="hintline" id="shp-al-echo" style="display:none"></div>
@@ -1975,6 +1976,9 @@
         <div class="efield"><label>Preço unitário (R$) *</label><input class="vinput mono" id="shp-vd-preco" inputmode="decimal" placeholder="0,00"></div>
       </div>
       <div class="hintline" id="shp-vd-echo"></div>
+      <div class="vrow" id="shp-vd-itemwrap" style="display:none;margin-bottom:2px"><!-- BUILD 2026-09-15-M: so aparece com 2+ anuncios ativos do mesmo codigo -->
+        <div class="efield"><label>Anúncio (Item ID) *</label><select class="vinput mono" id="shp-vd-item"></select></div>
+      </div>
       <div class="vrow3" style="margin-bottom:2px">
         <div class="efield"><label>Tarifa Shopee (R$) — sugerida, edite na conciliação</label><input class="vinput mono" id="shp-vd-tarifa" inputmode="decimal"></div>
         <div class="efield"><label>Frete além do subsídio (R$)</label><input class="vinput mono" id="shp-vd-fretedif" inputmode="decimal" value="0,00"></div>
@@ -10198,15 +10202,18 @@ const shopeeTab={
   echoDebounced(cod,elId,slot,after){ clearTimeout(this._echoTimer[slot]); this._echoTimer[slot]=setTimeout(()=>{ this.echoProduto(cod,elId,slot).then(()=>{ if(after) after(); }); },350); },
   async echoProduto(cod,elId,slot){
     const el=this._g(elId); el.className='hintline'; el.textContent='';
-    this[slot]=null; cod=(cod||'').trim().toUpperCase(); if(!cod) return;
+    this[slot]=null; cod=(cod||'').trim().toUpperCase(); if(slot==='prodVd') this._montarSeletorItem(cod); if(!cod) return;
     const seq=(this._echoSeq[slot]=(this._echoSeq[slot]||0)+1);
     const {data,error}=await sb.from('ecom_produtos').select('codigo,produto,custo').eq('codigo',cod).eq('ativo',true).maybeSingle();
     if(seq!==this._echoSeq[slot]) return; // resposta atrasada de um codigo anterior
     if(error){ el.className='hintline err'; el.textContent=error.message; return; }
     if(!data){ el.className='hintline err'; el.textContent='Código não encontrado ou inativo no Catálogo.'; return; }
     this[slot]=data; el.className='hintline ok'; el.textContent=data.produto+' · custo NF R$ '+this.fmt(data.custo);
-    if(slot==='prodAl') this.sim(); if(slot==='prodVd') this.sugerirTarifa(); if(slot==='prodCt') this.ctlSim();
+    if(slot==='prodAl') this.sim(); if(slot==='prodVd'){ this._montarSeletorItem(data.codigo); this.sugerirTarifa(); } if(slot==='prodCt') this.ctlSim();
   },
+  // BUILD 2026-09-15-M: Item ID = chave do anuncio (espelho do _normMlb do ML)
+  _normItem(raw){ return String(raw||'').trim().replace(/[#\s]/g,''); },
+  _itemValido(it){ return /^\d{6,}$/.test(it); },
   precoValidoForm(){ const p=this.num(this._g('shp-al-preco').value), pr=this.num(this._g('shp-al-promo').value); return (pr>0)?pr:p; },
   sim(){
     // BUILD 2026-09-15-I: Margem inline — espelho da simAnuncio do ML (mesmos estados e cores); mesma conta margemDe de sempre
@@ -10235,16 +10242,19 @@ const shopeeTab={
     const g=id=>this._g(id), msg=g('shp-al-msg'); msg.className='hintline'; msg.textContent='';
     const cod=(g('shp-al-cod').value||'').trim().toUpperCase(), tit=(g('shp-al-tit').value||'').trim();
     const preco=this.num(g('shp-al-preco').value), promo=this.num(g('shp-al-promo').value);
-    if(!cod||!tit||!(preco>0)){ msg.className='hintline err'; msg.textContent='Código, título e preço são obrigatórios.'; return; }
+    const item=this._normItem(g('shp-al-item').value); // BUILD 2026-09-15-M
+    if(!cod||!item||!tit||!(preco>0)){ msg.className='hintline err'; msg.textContent='Código, Item ID, título e preço são obrigatórios.'; return; }
+    if(!this._itemValido(item)){ msg.className='hintline err'; msg.textContent='Item ID inválido. Use o nº do anúncio na Shopee (só dígitos, ex.: 26082210123).'; return; }
+    if(this.anuncios.some(a=>String(a.shopee_item_id||'')===item&&a.id!==this.editId)){ msg.className='hintline err'; msg.textContent='Item ID '+item+' já cadastrado em outro anúncio.'; return; }
     if(!this.prodAl||this.prodAl.codigo!==cod){ msg.className='hintline err'; msg.textContent='Valide o código no Catálogo (produto ativo).'; return; }
-    const dados={codigo:cod,shopee_item_id:(g('shp-al-item').value||'').trim()||null,titulo:tit,preco,
+    const dados={codigo:cod,shopee_item_id:item,titulo:tit,preco,
       preco_promocao:(promo>0)?promo:null,campanha:g('shp-al-camp').value==='1',
       data_publicacao:g('shp-al-pub').value||null};
     try{
       if(this.editId){ const {error}=await sb.from('ecom_shopee_anuncios').update(dados).eq('id',this.editId); if(error) throw error; this.toast('Anúncio atualizado.'); }
       else{ const {error}=await sb.from('ecom_shopee_anuncios').insert(dados); if(error) throw error; this.toast('Anúncio salvo.'); }
       this.limparAnuncio(); await this.reloadAnuncios();
-    }catch(e){ msg.className='hintline err'; msg.textContent=e.message||String(e); }
+    }catch(e){ msg.className='hintline err'; msg.textContent=(/23505|uq_shp_anuncio_item|duplicate key/i.test(String(e.message))?'Item ID já cadastrado em outro anúncio (trava do banco).':(e.message||String(e))); }
   },
   limparAnuncio(){ this.editId=null; this.prodAl=null;
     ['shp-al-cod','shp-al-item','shp-al-tit','shp-al-preco','shp-al-promo','shp-al-pub'].forEach(i=>this._g(i).value='');
@@ -10493,10 +10503,26 @@ const shopeeTab={
   },
 
   // ---------- VENDAS ----------
+  // BUILD 2026-09-15-M: anuncios ativos (nao pausados) do codigo; 2+ => seletor de Item ID visivel
+  _anunciosDoCod(cod){ return this.anuncios.filter(a=>a.codigo===cod&&!a.pausado); },
+  _montarSeletorItem(cod){
+    const wrap=this._g('shp-vd-itemwrap'), sel=this._g('shp-vd-item'); if(!wrap||!sel) return;
+    const lst=this._anunciosDoCod(cod);
+    if(lst.length<2){ wrap.style.display='none'; sel.innerHTML=''; return; }
+    const atual=sel.value;
+    sel.innerHTML='<option value="">— escolher —</option>'+lst.map(a=>'<option value="'+this.esc(a.shopee_item_id||'')+'">'+this.esc(a.shopee_item_id||'sem Item ID')+' · R$ '+this.fmt(this.pvDe(a))+(a.campanha?' ⚑':'')+' · '+this.esc(a.titulo)+'</option>').join('');
+    if(atual&&lst.some(a=>String(a.shopee_item_id)===atual)) sel.value=atual;
+    wrap.style.display='';
+  },
+  _anuncioDaVenda(cod){
+    const lst=this._anunciosDoCod(cod); if(lst.length<=1) return {an:lst[0]||null,ok:true};
+    const it=(this._g('shp-vd-item')||{}).value||''; const an=lst.find(a=>String(a.shopee_item_id)===it)||null;
+    return {an,ok:!!an};
+  },
   sugerirTarifa(){
     const g=i=>this._g(i), q=parseInt(g('shp-vd-qtd').value)||1, p=this.num(g('shp-vd-preco').value);
     const cod=(g('shp-vd-cod').value||'').trim().toUpperCase();
-    const an=this.anuncios.find(a=>a.codigo===cod);
+    const an=this._anuncioDaVenda(cod).an; // BUILD 2026-09-15-M: campanha do anuncio escolhido
     if(p>0){ const t=this.tarifa(p,!!(an&&an.campanha)); if(t) g('shp-vd-tarifa').value=this.fmt(t.total*q); }
   },
   async lancarVenda(){
@@ -10506,11 +10532,12 @@ const shopeeTab={
     const qtd=parseInt(g('shp-vd-qtd').value)||0, preco=this.num(g('shp-vd-preco').value);
     if(!ped||!data||!cod||!(qtd>0)||!(preco>0)){ msg.className='hintline err'; msg.textContent='Pedido, data, código, quantidade e preço são obrigatórios.'; return; }
     if(!this.prodVd||this.prodVd.codigo!==cod){ msg.className='hintline err'; msg.textContent='Valide o código no Catálogo (produto ativo).'; return; }
+    const esc_=this._anuncioDaVenda(cod); if(!esc_.ok){ msg.className='hintline err'; msg.textContent='Este código tem mais de um anúncio ativo — escolha o Item ID.'; return; } // BUILD 2026-09-15-M
     if(this.vendas.some(v=>v.pedido_id===ped&&v.produto_codigo===cod)&&!confirm('Já existe lançamento deste produto no pedido '+ped+'. Lançar mesmo assim?')) return;
     const tarifa=this.num(g('shp-vd-tarifa').value); const fdif=this.num(g('shp-vd-fretedif').value)||0;
     if(!(tarifa>0)){ msg.className='hintline err'; msg.textContent='Tarifa Shopee é obrigatória (sugerida pela faixa; ajuste na conciliação).'; return; } // BUILD 2026-09-15-J: furo F1
     const custoU=Number(this.prodVd.custo), receita=Math.round(preco*qtd*100)/100;
-    const an=this.anuncios.find(a=>a.codigo===cod);
+    const an=esc_.an; // BUILD 2026-09-15-M
     const dados={pedido_id:ped,data_solicitacao:data,status:'a_enviar',
       prazo_envio:g('shp-vd-prazo').value||null,produto_codigo:cod,produto:this.prodVd.produto,
       quantidade:qtd,preco_unitario:preco,receita_bruta:receita,
@@ -10522,7 +10549,7 @@ const shopeeTab={
       const {error}=await sb.from('ecom_shopee_vendas').insert(dados); if(error) throw error;
       this.toast('Venda lançada.');
       ['shp-vd-cod','shp-vd-preco','shp-vd-obs','shp-vd-tarifa'].forEach(i=>g(i).value='');
-      g('shp-vd-qtd').value='1'; g('shp-vd-fretedif').value='0,00';
+      g('shp-vd-qtd').value='1'; g('shp-vd-fretedif').value='0,00'; this._montarSeletorItem(''); // BUILD 2026-09-15-M
       g('shp-vd-echo').textContent='Pedido '+ped+' mantido — lance o próximo item ou limpe o nº do pedido.'; g('shp-vd-echo').className='hintline ok';
       this.prodVd=null; await this.reloadVendas();
     }catch(e){ msg.className='hintline err'; msg.textContent=e.message||String(e); }
@@ -10696,6 +10723,7 @@ const shopeeTab={
     g('shp-vd-cod').addEventListener('change',e=>this.echoProduto(e.target.value,'shp-vd-echo','prodVd'));
     g('shp-vd-cod').addEventListener('input',e=>this.echoDebounced(e.target.value,'shp-vd-echo','prodVd')); // BUILD 2026-09-15-J
     ['shp-vd-preco','shp-vd-qtd'].forEach(i=>g(i).addEventListener('input',()=>this.sugerirTarifa()));
+    const vi=g('shp-vd-item'); if(vi) vi.addEventListener('change',()=>this.sugerirTarifa()); // BUILD 2026-09-15-M
     g('shp-vd-save').addEventListener('click',()=>this.lancarVenda());
     g('shp-vd-prev').addEventListener('click',()=>{ this.mes=this.shiftMes(this.mes,-1); this.renderVendas(); });
     g('shp-vd-next').addEventListener('click',()=>{ this.mes=this.shiftMes(this.mes,1); this.renderVendas(); });
