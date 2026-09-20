@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-20-A | selecta-banco-preco | EDITAR DO CONTROLE SHOPEE GANHA ITEM ID (Igor 20/09: caso real do cadastro de 19/09 — SEG-0004 com Item ID do MS-0014 colado errado; o caminho "encerrar + recadastrar" do 15-J se provou errado no primeiro uso e a paridade com o Editar do ML entra). (1) Campo Item ID no editbox do Controle, validacao do cadastro (_normItem/_itemValido: numerico 6+). (2) Correcao SO de Item ID nao passa pelo gate de preco (nao ha decisao de margem) e o Salvar nao e travado pela margem vigente quando o form esta igual ao gravado (semAlt no ctlSim); mudou preco/promocao/campanha, gate integral do 15-J. (3) Historico campo='item_id' com de->para no motivo; margem registrada = a do gate ou a vigente (padrao do Encerrar). (4) Erro 23505 do indice uq_shp_anuncio_item com mensagem amigavel (mesma do cadastro). Banco fechado hoje: id16 encerrado, indice uq_shp_anuncio_item criado, shopee_item_id NOT NULL (fechamento false-1-NO-1). margemDe()/tarifa()/calcMes INTOCADAS. | base: 2026-09-15-N (md5 e2d926d994b897e6fa4b938bddc6bbd7, conferido no ar 20/09) -->
 <!-- BUILD 2026-09-15-N | selecta-banco-preco | TRAVA DE TOQUE DUPLO NAS GRAVACOES SHOPEE (achado em producao 19/09 12:07: RTR-0035 cadastrado 2x com 7 s de intervalo — ids 15/16, mesmo Item ID 22999678100; o botao nao travava durante o INSERT e a checagem de duplicata do app le a lista carregada, que so recarrega depois): (1) _busy: qualquer gravacao do modulo (Cadastrar anuncio, Lancar venda, Salvar alteracao, Encerrar, Pausar/Reativar, status da venda, Liberado na carteira) ignora um segundo acionamento enquanto a primeira nao terminou (finally libera). (2) Botoes Cadastrar/Lancar/Salvar ficam disabled durante a gravacao e voltam ao normal (inclusive em erro). (3) Erro 23505 do UNIQUE uq_shp_anuncio_item (SQL 24b) segue traduzido. Zero mudanca de matematica, de layout ou de consulta. | base: 2026-09-15-M (md5 f75d2ea47b2ee9d5dd381cc630e0a7e9) -->
 <!-- BUILD 2026-09-15-M | selecta-banco-preco | ITEM ID = CHAVE DO ANUNCIO SHOPEE (Igor 19/09: "Obrigatorio. Certeza vai ser preciso para conciliacoes"; a pergunta dele revelou que o app reconhecia o anuncio so pelo codigo do produto e o Item ID era informativo, opcional e sem UNIQUE). REBASE: entregue antes como "15-L" (md5 a7cdea445659c452720477a092ce78d4, sobre o 15-K) e RENOMEADO porque outro chat publicou um 15-L (custos aferidos do ML) sobre o mesmo 15-K; este M reaplica o Item ID sobre o L publicado — diff so na regiao Shopee, motor ML intocado. (1) Cadastro: Item ID Shopee OBRIGATORIO e numerico (>= 6 digitos; espacos/# removidos — mesma regra do MLB no ML); duplicata recusada no app (lista carregada) e no banco (UNIQUE parcial do SQL 24, erro 23505 traduzido). (2) Lancar venda: com MAIS de um anuncio ativo para o mesmo codigo aparece o seletor "Anuncio (Item ID)" e a venda grava o Item ID escolhido (tarifa sugerida usa a campanha DESSE anuncio); com um so, automatico e oculto; sem anuncio, grava sem Item ID (venda pode existir sem anuncio, regra mantida). (3) Rotulo "Item ID Shopee *". Contagem "N venda(s)" do historico segue por codigo do produto (regra do ML). Diferenca declarada: o Editar do ML permite corrigir MLB/titulo/data; o Editar Shopee segue so preco/promocao/campanha — Item ID errado = Encerrar + recadastrar, ate a proxima paridade. margemDe()/tarifa()/calcMes INTOCADAS. Requer SQL 24 (UNIQUE parcial + NOT NULL apos conferencia; o "SQL 23" e do 15-L do motor ML). | base: 2026-09-15-L publicado (md5 a2807e20892a4fe5bb9c2e8c13ed0ad0) -->
 <!-- BUILD 2026-09-15-L | selecta-banco-preco | CUSTOS AFERIDOS DO ML NO MOTOR DE MARGEM (auditoria hard 19/09 — normas ML 2026 x motor; aprovacao Igor 19/09 nos 4 pontos: custos corrigem sozinhos, sem Editar). ACHADOS que motivaram: (a) 28 de 62 anuncios com frete da FRETE_TBL um degrau de peso fora do "A pagar" do ML (20 abaixo = margem inflada) — causa raiz: o app so conhece peso_g, o ML cobra pelo peso CONSIDERADO max(real, A*L*C/6000) da embalagem do anuncio; (b) comissao por sigla do produto, o ML cobra pela category_id do anuncio; (c) comissao "real" congelada (SEG 13% x ML 11,5% em 7 cameras; RDE 14% x 13% em 8 repetidores) — UPDATE aplicado por Igor 19/09; (d) Premium fallback 17% x 18% observado; (e) tarifa fixa <R$79 ausente (hoje inofensivo, menor preco da loja R$ 94,90). O QUE MUDA: (1) _simMargem ganha 6o parametro an (linha de ecom_anuncios): com custos do ML lidos pela ml-market v4.5 (SQL 23: com_pct_ml/com_fixa_ml/tarifa_ml/frete_ml/frete_ml_preco/frete_faixas/ml_peso_considerado_g/custos_ml_em), comissao = com_pct_ml quando o tipo simulado e o tipo lido (+ tarifa fixa no mesmo lado dos R$79), frete = frete_ml no preco lido ou frete_faixas na faixa do candidato; sem leitura valida cai na FRETE_TBL usando o peso considerado do ML quando existe, senao peso_g — e a tabela de categoria. Toda saida declara origem (comOrig/freteOrig ml|tabela). (2) Editar/popover: "comissao (ML hh:mm)" ou "(tabela · real/aferida/est.)", "frete (ML)" ou "(tabela)", linha "tarifa fixa (ML)" quando >0, linha "peso: cad. X g · ML considera Y g" quando divergem. (3) Analise Comercial, Conferir com o Controle e Exportar (md) passam o anuncio — zero conta paralela, mesmo caminho (doutrina 26-G). (4) Cadastro de anuncio (sem MLB ainda) segue na tabela, com etiqueta. (5) Realtime ja escuta ecom_anuncios: a gravacao da Edge reflete na tela sem build. Shopee margemDe()/tarifa() INTOCADAS; gate 10% inalterado; Controle da Alexia sem mudanca de fluxo. Requer SQL 23 + ml-market v4.5 (aceite 64/64 pelo SQL 23b antes de publicar). | base: 2026-09-15-K (Controle Shopee = esqueleto do ML, md5 a711619c194e39c3fd184698a0020487; rebase pedido por Igor 19/09 09:10 — o motor ML nao foi tocado pelo 15-K, diff so na regiao Shopee) -->
@@ -10398,6 +10399,9 @@ const shopeeTab={
       +'<div class="alm-row"><div class="efield"><label>Produto em promoção</label><input class="vinput mono" id="shp-ct-promo" inputmode="decimal" value="'+(a.preco_promocao?v(this.fmt(a.preco_promocao)):'')+'" placeholder="vazio = sem promoção"></div>'
       +'<div class="efield"><label>Faixa</label><div class="vinput" id="shp-ct-faixa" style="color:var(--emuted);display:flex;align-items:center;font-size:12px">—</div></div>'
       +cel('data-shpmgp')+'</div>'
+      // BUILD 2026-09-20-A: paridade com o Editar do ML — Item ID editavel (corrige numero errado sem encerrar+recadastrar)
+      +'<div class="alm-row"><div class="efield"><label>Item ID Shopee *</label><input class="vinput mono" id="shp-ct-item" inputmode="numeric" value="'+v(a.shopee_item_id||'')+'"></div>'
+      +'<div class="efield" style="grid-column:2/4"><label>&nbsp;</label><div class="vinput" style="color:var(--emuted);display:flex;align-items:center;font-size:12px">nº do anúncio na Central (final do link) — altere apenas para corrigir</div></div></div>'
       +'<div class="hintline" id="shp-ct-echo" style="display:none"></div>'
       +'<div class="efield"><label>Motivo da alteração *</label><input class="vinput" id="shp-ct-motivo" placeholder="descreva por que está alterando (obrigatório para gravar)"></div>'
       +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap"><button class="vbtn sm" id="shp-ct-save" onclick="shopeeTab.ctlSalvar()">Salvar</button>'
@@ -10428,6 +10432,7 @@ const shopeeTab={
     const wrap=m=>m?{ok:true,...m}:{ok:false,reason:(custo>=0)?'sem tabela de tarifas ou preço inválido':'custo NF não encontrado no Catálogo'};
     const rC=(p>0)?wrap(this.margemDe(p,camp,custo)):{ok:false,reason:'preço inválido'};
     const promoAtiva=(promoRaw!=='');
+    const semAlt=Math.abs(p-Number(a.preco))<=0.004&&camp===!!a.campanha&&((promoRaw==='')===(a.preco_promocao==null))&&(promoRaw===''||Math.abs(pr-Number(a.preco_promocao))<=0.004); // BUILD 2026-09-20-A: form igual ao gravado — sem decisao de preco o Salvar segue habilitado (correcao de Item ID)
     const rP=promoErr?{ok:false,reason:promoErr}:(promoAtiva?wrap(this.margemDe(pr,camp,custo)):null);
     this._ctlPaint('data-shpmgc',rC,!promoAtiva); this._ctlPaint('data-shpmgp',rP,promoAtiva);
     const efet=promoAtiva?rP:rC, pv=promoAtiva?pr:p;
@@ -10442,7 +10447,7 @@ const shopeeTab={
         +'<span class="k">colchão '+(this.FIXOS.COLCHAO*100)+'% s/ venda</span><span class="vv">R$ '+this.fmt(efet.colchao)+'</span>'
         +'</div>'; } else meta.innerHTML='<div class="meta-grid"><span class="k">'+this.esc((efet&&efet.reason)||'—')+'</span></div>'; }
     const btn=g('shp-ct-save'), msg=g('shp-ct-msg'), ovrLbl=g('shp-ct-ovrlbl'), ovrEl=g('shp-ct-ovr');
-    if(!efet||!efet.ok){ if(msg){ msg.className='hintline err'; msg.textContent=(efet&&efet.reason)||'dado incompleto'; } if(btn) btn.setAttribute('disabled',''); if(ovrLbl) ovrLbl.style.display='none'; return {ok:false,promoAtiva,pv,camp,p,pr:promoAtiva?pr:null}; }
+    if(!efet||!efet.ok){ if(msg){ msg.className='hintline err'; msg.textContent=(efet&&efet.reason)||'dado incompleto'; } if(btn){ if(semAlt) btn.removeAttribute('disabled'); else btn.setAttribute('disabled',''); } if(ovrLbl) ovrLbl.style.display='none'; return {ok:false,promoAtiva,pv,camp,p,pr:promoAtiva?pr:null}; } // BUILD 2026-09-20-A: semAlt mantem Salvar
     const pct=efet.pct, isOwner=String(this.quem()||'').trim().toLowerCase()==='selectasolution@gmail.com', naFaixa=pct>=5&&pct<10;
     if(ovrLbl) ovrLbl.style.display=(isOwner&&naFaixa)?'inline-flex':'none';
     if(ovrEl&&!(isOwner&&naFaixa)&&ovrEl.checked) ovrEl.checked=false;
@@ -10450,7 +10455,7 @@ const shopeeTab={
     if(msg){ if(pct>=10){ msg.className='hintline'; msg.textContent=''; }
       else if(override){ msg.className='hintline'; msg.style.color='var(--eamber)'; msg.textContent='⚠ liberação abaixo do piso ativa — margem '+pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%. Será registrada como ABAIXO DO PISO.'; }
       else { msg.className='hintline err'; msg.style.color=''; msg.textContent='NEGADO — margem vigente ('+(promoAtiva?'promoção':'preço cheio')+') abaixo do piso de 10%.'; } }
-    if(btn){ if(liberado) btn.removeAttribute('disabled'); else btn.setAttribute('disabled',''); }
+    if(btn){ if(liberado||semAlt) btn.removeAttribute('disabled'); else btn.setAttribute('disabled',''); } // BUILD 2026-09-20-A
     return {ok:liberado,override,pct,promoAtiva,pv,camp,p,pr:promoAtiva?pr:null,m:efet};
   },
   ctlSalvar(){ return this._guard('shp-ct-save',()=>this._ctlSalvar()); }, // BUILD 2026-09-15-N
@@ -10465,24 +10470,34 @@ const shopeeTab={
     const promoAnt=a.preco_promocao?Number(a.preco_promocao):null, promoNova=(pr>0)?pr:null;
     const mudouPromo=(promoAnt==null)!==(promoNova==null)||(promoAnt!=null&&promoNova!=null&&Math.abs(promoNova-promoAnt)>0.004);
     const mudouCamp=camp!==!!a.campanha;
-    if(!mudouPreco&&!mudouPromo&&!mudouCamp){ msg.className='hintline err'; msg.textContent='Nada mudou.'; return; }
+    const itemNovo=this._normItem(g('shp-ct-item')?g('shp-ct-item').value:(a.shopee_item_id||'')); // BUILD 2026-09-20-A
+    if(!this._itemValido(itemNovo)){ msg.className='hintline err'; msg.textContent='Item ID inválido — apenas números, mínimo 6 dígitos.'; return; }
+    const mudouItem=itemNovo!==String(a.shopee_item_id||''); // BUILD 2026-09-20-A: paridade com o Editar do ML
+    if(!mudouPreco&&!mudouPromo&&!mudouCamp&&!mudouItem){ msg.className='hintline err'; msg.textContent='Nada mudou.'; return; }
     if(motivo.length<3){ msg.className='hintline err'; msg.textContent='Motivo é obrigatório (mínimo 3 caracteres).'; return; } // BUILD 2026-09-15-K: = CHECK do banco
-    const st=this.ctlSim(); // BUILD 2026-09-15-J: gate do ML — recalculado no ato de gravar
-    if(!st||!st.ok){ msg.className='hintline err'; msg.textContent=(st&&st.pct!=null)?('NEGADO — margem '+st.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% abaixo do piso de 10%.'):'dado incompleto — gravação bloqueada'; return; }
-    const m=st.m; if(st.override) motivo='ABAIXO DO PISO ('+st.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%) — '+motivo;
+    const soItem=mudouItem&&!mudouPreco&&!mudouPromo&&!mudouCamp; // BUILD 2026-09-20-A: correcao de dado, nao decisao de preco — gate nao se aplica
+    let m=null;
+    if(!soItem){
+      const st=this.ctlSim(); // BUILD 2026-09-15-J: gate do ML — recalculado no ato de gravar
+      if(!st||!st.ok){ msg.className='hintline err'; msg.textContent=(st&&st.pct!=null)?('NEGADO — margem '+st.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% abaixo do piso de 10%.'):'dado incompleto — gravação bloqueada'; return; }
+      m=st.m; if(st.override) motivo='ABAIXO DO PISO ('+st.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%) — '+motivo;
+    }
+    const mReg=m||this.margemDe(this.pvDe(a),!!a.campanha,this.custos[a.codigo]); // BUILD 2026-09-20-A: margem registrada (vigente quando só Item ID — padrão do Encerrar)
     try{
       const up={preco:p,preco_promocao:promoNova,campanha:camp};
+      if(mudouItem) up.shopee_item_id=itemNovo; // BUILD 2026-09-20-A
       const r=await sb.from('ecom_shopee_anuncios').update(up).eq('id',a.id); if(r.error) throw r.error;
-      const base={anuncio_id:a.id,codigo:a.codigo,shopee_item_id:a.shopee_item_id||null,por:this.quem(),
-        margem_pior_zona_pct:m?Math.round(m.pct*100)/100:null};
+      const base={anuncio_id:a.id,codigo:a.codigo,shopee_item_id:mudouItem?itemNovo:(a.shopee_item_id||null),por:this.quem(),
+        margem_pior_zona_pct:mReg?Math.round(mReg.pct*100)/100:null}; // BUILD 2026-09-20-A: mReg + item novo
       const rows=[];
       if(mudouPreco) rows.push({...base,campo:'preco',preco_anterior:Number(a.preco),preco_novo:p,motivo});
       if(mudouPromo) rows.push({...base,campo:'promocao',preco_anterior:promoAnt,preco_novo:promoNova,motivo});
       if(mudouCamp) rows.push({...base,campo:'campanha',preco_anterior:null,preco_novo:null,motivo:(camp?'ENTROU em campanha destaque':'SAIU de campanha destaque')+' — '+motivo});
+      if(mudouItem) rows.push({...base,campo:'item_id',preco_anterior:null,preco_novo:null,motivo:'Item ID '+(a.shopee_item_id||'—')+' → '+itemNovo+' — '+motivo}); // BUILD 2026-09-20-A
       if(rows.length){ const rl=await sb.from('ecom_shopee_anuncio_alteracao').insert(rows);
         if(rl.error){ this.toast('Alteração salva, mas o histórico falhou: '+rl.error.message,true); } }
       this.toast('Alteração registrada.'); this.ctlEditId=null; this.prodCt=null; await this.reloadAnuncios();
-    }catch(e){ msg.className='hintline err'; msg.textContent=e.message||String(e); }
+    }catch(e){ msg.className='hintline err'; msg.textContent=(/23505|uq_shp_anuncio_item|duplicate key/i.test(String(e.message))?'Item ID já cadastrado em outro anúncio ativo (trava do banco).':(e.message||String(e))); } // BUILD 2026-09-20-A: 23505 amigável
   },
   // BUILD 2026-09-15-J: Pausar/Reativar = espelho do pausar() do ML (vinculo preservado; requer SQL 22: pausado/pausado_em)
   pausar(id,estado){ return this._guard(null,()=>this._pausar(id,estado)); }, // BUILD 2026-09-15-N
