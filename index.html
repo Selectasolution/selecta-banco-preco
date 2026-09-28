@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-28-C | selecta-banco-preco | INVESTIDOR EM TABELA (Igor 28/09): (1) titulo da aba = "💰 Financeiro" (sai "· leitura macro da empresa"). (2) agenda de operacoes vira TABELA ordenada pelo vencimento mais proximo (desempate aporte e numero): colunas Nº OP / Investidor / Data aporte / Valor / Valor a ser pago / Vencimento; semaforo = ponto colorido no Nº e borda da linha; sob o vencimento, "em N d"/"vence hoje"/"venceu ha N d". Toque na linha abre o detalhe (situacao, pedidos por etapa, liberado, cobertura, reserva, fechamento) e as acoes (Pedidos, Fechar dia, PDF extrato, Marcar paga, Anular) — mesmo conteudo do 28-A, so reorganizado. Celular (<700px): cada linha vira bloco de 2 colunas com rotulo por campo. Quadrantes de totais, quitadas, PDFs e gravacoes INTOCADOS. Zero matematica, zero consulta nova. | base: 2026-09-28-B (md5 5898b2aa38376da6a1daf23ef09938b0) -->
 <!-- BUILD 2026-09-28-B | selecta-banco-preco | FINANCEIRO EM DUAS SUB-ABAS (Igor 28/09: separar para uso e leitura no celular): barra #fin-subbar logo abaixo do titulo — "🌡 Termômetro" (#fin-sub-termo: Canais do mes + Termometro + Conta Mercado Pago, conteudo INTOCADO) e "🤝 Investidor" (#fin-sub-inv: quadrante Operacoes com investidor do 28-A, movido sem mudanca). Default = Termometro; clicar em Investidor recarrega finOps.load(). Padrao .alsubbar/.alsub-btn ja escopado no Financeiro. Zero matematica, zero consulta nova. | base: 2026-09-28-A (md5 a530c6019dc61e369883ac77aa9f61bd) -->
 <!-- BUILD 2026-09-28-A | selecta-banco-preco | OPERACOES COM INVESTIDOR · FASE 1 (decisoes Igor 27-28/09): novo quadrante no Financeiro (#fop-body, modulo finOps) logo abaixo da Conta Mercado Pago. Operacao = aporte do dia = compras = postagens do dia, SO Mercado Livre (Shopee fora por decisao: captura manual x automatica nao se misturam). Devido = aporte x (1+taxa, padrao 5%); inicio = proximo dia util; vencimento = inicio + 15 corridos, fim de semana/feriado nacional (+ Sexta-feira Santa) empurra — calculado UMA vez pelo banco (ecom_fn_inv_vencimento) e congelado por trigger (SQL 25). Tela: faixa de totais (devido em aberto, vence em 7 dias, saldo MP, ja liberado das operacoes, reserva de caixa proprio, SALDO LIVRE p/ compras e saques = saldo MP - liberado reservado - reserva; vermelho se negativo), agenda por vencimento com semaforo (verde coberta / ambar no limite ou pedido em atencao / vermelho descoberta / vencida / aguardando postagem), pedidos da operacao sob demanda, 4 acoes gravaveis: Registrar (preview do vencimento pelo proprio banco), Fechar dia (custo postado + capital proprio + previsao inicial, uma vez), Marcar paga (data+valor, uma vez), Anular (motivo; nunca apaga). PDFs no padrao escuro com logo oficial: extrato (com a regra do prazo e a lista de feriados), recibo de quitacao, posicao POR INVESTIDOR (um investidor nunca ve o outro). Sem produto, pedido ou mencao a sistema nos PDFs. Investidor nao acessa nada (decisao Igor 28/09). TERMOMETRO: juro das operacoes (devido - aporte) entra em Custo financeiro no MES DO APORTE (calcMes.jurosOps soma em jurosMes; anuladas fora) — muda lucOp/lucReal/despTot do mes por desenho; Por mes e Financeiro macro herdam pela mesma funcao. Requer SQL 25 + 25b aplicados; sem eles o quadrante mostra aviso e o Termometro segue integro (fonte degrada para opsInv=null). | base: 2026-09-20-B (md5 b910851908df563ea5ed8157c7ebdd3c) -->
 <!-- BUILD 2026-09-20-B | selecta-banco-preco | REMOCAO DO SUBTITULO DA ABA SHOPEE (Igor 20/09: apagar a linha esub "Canal Shopee · Catalogo unico · tarifas por faixa de preco ... Escrow ShopeePay: liberacao a mao ate a API"). Mudanca so de UI (1 <p class=esub> removido); nenhuma logica tocada. | base: 2026-09-20-A (md5 63a44565fe91296300818f3812155a37, ainda nao publicado — publicar este no lugar) -->
@@ -2685,7 +2686,7 @@
 <!-- BUILD 2026-09-15-C: Financeiro promovido a aba principal (payload identico, ids fn-* preservados; Realtime ecom_mp_saldo continua funcionando por getElementById) -->
 <section id="tab-financeiro" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
     
-  <h2 style="font-size:15px;font-weight:700;margin:0 0 12px">💰 Financeiro · leitura macro da empresa</h2>
+  <h2 style="font-size:15px;font-weight:700;margin:0 0 12px">💰 Financeiro</h2>
   <div class="alsubbar" id="fin-subbar"><!-- BUILD 2026-09-28-B -->
     <button class="alsub-btn active" data-finsub="termo">🌡 Termômetro</button>
     <button class="alsub-btn" data-finsub="inv">🤝 Investidor</button>
@@ -10933,7 +10934,9 @@ const finOps={
     h+='<div class="fop-actions"><button class="vbtn sm" data-fop="novo">+ Nova operação</button><button class="vbtn sm" data-fop="posicao">PDF posição</button><button class="vbtn sm" data-fop="reload">Atualizar</button></div>';
     h+='<div id="fop-slot"></div>';
     if(!this.ops.length) h+='<div class="ph">Nenhuma operação aberta.</div>';
-    else h+='<div class="fop-list">'+this.ops.map(o=>this.card(o)).join('')+'</div>';
+    else{ const ord=this.ops.slice().sort((a,b)=>String(a.vencimento).localeCompare(String(b.vencimento))||String(a.data_aporte).localeCompare(String(b.data_aporte))||String(a.numero).localeCompare(String(b.numero)));
+      h+='<div class="fop-tw"><table class="fop-ops"><thead><tr><th>Nº OP</th><th>Investidor</th><th>Data aporte</th><th class="n">Valor</th><th class="n">Valor a ser pago</th><th>Vencimento</th></tr></thead><tbody>'
+        +ord.map(o=>this.row(o)).join('')+'</tbody></table></div>'; }
     if(this.quitadas.length){
       h+='<details class="fop-q"><summary>Quitadas · últimas '+this.quitadas.length+'</summary><table class="fop-tb"><thead><tr><th>Operação</th><th>Aporte</th><th class="n">Pago</th><th>Pago em</th><th>Prazo</th><th></th></tr></thead><tbody>'
         +this.quitadas.map(o=>'<tr><td>'+o.numero+' · '+this.esc(o.investidor)+'</td><td>'+this.d(o.data_aporte)+'</td><td class="n">R$ '+F(o.valor_pago)+'</td><td>'+this.d(o.quitado_em)+'</td><td style="color:'+(o.quitado_em<=o.vencimento?'var(--eemerald)':'var(--ered)')+'">'+(o.quitado_em<=o.vencimento?'no prazo':'atraso')+'</td><td><button class="vbtn sm" data-fop="recibo" data-id="'+o.operacao_id+'">Recibo</button></td></tr>').join('')
@@ -10942,14 +10945,27 @@ const finOps={
     box.innerHTML=h;
   },
 
+  _open:{},
+  row(o){
+    const F=this.F, s=this.SEM[o.semaforo]||['var(--emuted)',o.semaforo], dias=o.dias_para_vencer, id=o.operacao_id, ab=!!this._open[id];
+    const vtxt=dias<0?'venceu há '+(-dias)+' d':(dias===0?'vence hoje':'em '+dias+' d');
+    const vcor=dias<0?'var(--ered)':(dias<=3?'var(--eamber)':'var(--emuted)');
+    let h='<tr class="fop-r'+(ab?' ab':'')+'" data-fop="toggle" data-id="'+id+'" style="--sem:'+s[0]+'" title="'+s[1]+'">'
+      +'<td data-l="Nº OP"><span class="dot" style="background:'+s[0]+'"></span><b>'+o.numero+'</b> <span class="car">'+(ab?'▾':'▸')+'</span></td>'
+      +'<td data-l="Investidor">'+this.esc(o.investidor)+'</td>'
+      +'<td data-l="Data aporte" class="mono">'+this.dY(o.data_aporte)+'</td>'
+      +'<td data-l="Valor" class="n">R$ '+F(o.valor_aporte)+'</td>'
+      +'<td data-l="Valor a ser pago" class="n"><b>R$ '+F(o.valor_devido)+'</b></td>'
+      +'<td data-l="Vencimento" class="mono"><b>'+this.wd(o.vencimento)+' '+this.dY(o.vencimento)+'</b><div style="font-size:11px;color:'+vcor+'">'+vtxt+(o.vencimento_acordado?' · combinado':'')+'</div></td></tr>';
+    if(ab) h+='<tr class="fop-dr" style="--sem:'+s[0]+'"><td colspan="6">'+this.card(o)+'</td></tr>';
+    return h;
+  },
   card(o){
     const F=this.F, s=this.SEM[o.semaforo]||['var(--emuted)',o.semaforo], hoje=this.hoje();
     const dias=o.dias_para_vencer, vtxt=dias<0?'venceu há '+(-dias)+' d':(dias===0?'vence hoje':'em '+dias+' d');
     const dev=+o.valor_devido||0, lib=+o.valor_liberado||0, pct=dev>0?Math.min(100,Math.round(lib/dev*100)):0;
-    let h='<div class="fop-card" style="border-left-color:'+s[0]+'">'
-      +'<div class="fop-l1"><span><span class="dot" style="background:'+s[0]+'"></span><b>'+o.numero+'</b> · '+this.esc(o.investidor)+' <span class="tag" style="color:'+s[0]+'">'+s[1]+'</span></span>'
-      +'<span class="mono">vence <b>'+this.wd(o.vencimento)+' '+this.d(o.vencimento)+'</b> · '+vtxt+(o.vencimento_acordado?' · combinado':'')+'</span></div>'
-      +'<div class="fop-l2 mono">aporte '+this.d(o.data_aporte)+' R$ '+F(o.valor_aporte)+' → devido <b>R$ '+F(dev)+'</b> <span class="mut">(juro R$ '+F(o.juro)+')</span></div>';
+    let h='<div class="fop-det">'
+      +'<div class="fop-l1"><span>situação: <b style="color:'+s[0]+'">'+s[1]+'</b></span><span class="mono mut">juro R$ '+F(o.juro)+' · taxa '+Number(o.taxa_pct).toLocaleString('pt-BR',{maximumFractionDigits:3})+'% · início da contagem '+this.d(o.inicio_contagem)+'</span></div>';
     if(o.semaforo==='aguardando_postagem'){
       h+='<div class="fop-l3 mut">Nenhum pedido ML postado em '+this.d(o.data_aporte)+' ainda.</div>';
     }else{
@@ -11175,6 +11191,7 @@ const finOps={
   wire(){ const box=this._g('fop-body'); if(!box||box._fopWired) return; box._fopWired=true;
     box.addEventListener('click',e=>{ const b=e.target.closest('[data-fop]'); if(!b||!box.contains(b)) return;
       const a=b.getAttribute('data-fop'), id=b.getAttribute('data-id');
+      if(a==='toggle'){ if(this._open[id]) delete this._open[id]; else this._open[id]=true; this.render(); return; }
       if(a==='novo') this.novo(); else if(a==='criar') this.criar(); else if(a==='reload'){ this.msg=''; this.load(); }
       else if(a==='det') this.det(id); else if(a==='fechar') this.fechar(id);
       else if(a==='pagar') this.pagar(id); else if(a==='pagar-ok') this.pagarOk(id);
@@ -11230,6 +11247,27 @@ window.finOps = finOps;
 #fop-body .fop-tb td{padding:5px 6px;border-bottom:1px solid rgba(42,54,80,.5)}
 #fop-body .fop-tb .n{text-align:right;font-family:var(--emono);white-space:nowrap}
 #fop-body .fop-q{margin-top:12px}
+#fop-body .fop-tw{border:1px solid var(--eborder);border-radius:10px;overflow:hidden}
+#fop-body .fop-ops{width:100%;border-collapse:collapse;font-size:13px}
+#fop-body .fop-ops th{font-size:11px;font-weight:700;color:var(--etxt);text-align:left;padding:9px 10px;background:var(--epanel3);border-bottom:1px solid var(--eborder);white-space:nowrap}
+#fop-body .fop-ops th.n,#fop-body .fop-ops td.n{text-align:right;font-family:var(--emono);white-space:nowrap}
+#fop-body .fop-ops td{padding:9px 10px;border-bottom:1px solid rgba(42,54,80,.6);vertical-align:top}
+#fop-body .fop-r{cursor:pointer;background:var(--epanel2)}
+#fop-body .fop-r td:first-child{box-shadow:inset 4px 0 0 var(--sem);white-space:nowrap}
+#fop-body .fop-r:hover,#fop-body .fop-r.ab{background:var(--epanel3)}
+#fop-body .fop-r .car{color:var(--emuted2);font-size:11px}
+#fop-body .fop-dr td{background:var(--epanel);box-shadow:inset 4px 0 0 var(--sem);padding:4px 12px 10px}
+#fop-body .fop-det{padding-top:4px}
+@media(max-width:700px){
+  #fop-body .fop-ops thead{display:none}
+  #fop-body .fop-ops,#fop-body .fop-ops tbody{display:block}
+  #fop-body .fop-r{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--eborder);box-shadow:inset 4px 0 0 var(--sem)}
+  #fop-body .fop-r td{display:block;border:0;padding:6px 10px}
+  #fop-body .fop-r td:first-child{box-shadow:none}
+  #fop-body .fop-r td::before{content:attr(data-l);display:block;font-size:10px;color:var(--emuted);text-transform:uppercase;letter-spacing:.04em;font-family:inherit;font-weight:400}
+  #fop-body .fop-r td.n{text-align:left}
+  #fop-body .fop-dr,#fop-body .fop-dr td{display:block}
+}
 #fop-body .fop-q>summary{cursor:pointer;font-size:12px;color:var(--emuted)}
 </style>
 <style id="fold-css">/* BUILD 2026-08-26-Q: blocos recolhidos do Termometro */
