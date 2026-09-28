@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-28-A | selecta-banco-preco | OPERACOES COM INVESTIDOR · FASE 1 (decisoes Igor 27-28/09): novo quadrante no Financeiro (#fop-body, modulo finOps) logo abaixo da Conta Mercado Pago. Operacao = aporte do dia = compras = postagens do dia, SO Mercado Livre (Shopee fora por decisao: captura manual x automatica nao se misturam). Devido = aporte x (1+taxa, padrao 5%); inicio = proximo dia util; vencimento = inicio + 15 corridos, fim de semana/feriado nacional (+ Sexta-feira Santa) empurra — calculado UMA vez pelo banco (ecom_fn_inv_vencimento) e congelado por trigger (SQL 25). Tela: faixa de totais (devido em aberto, vence em 7 dias, saldo MP, ja liberado das operacoes, reserva de caixa proprio, SALDO LIVRE p/ compras e saques = saldo MP - liberado reservado - reserva; vermelho se negativo), agenda por vencimento com semaforo (verde coberta / ambar no limite ou pedido em atencao / vermelho descoberta / vencida / aguardando postagem), pedidos da operacao sob demanda, 4 acoes gravaveis: Registrar (preview do vencimento pelo proprio banco), Fechar dia (custo postado + capital proprio + previsao inicial, uma vez), Marcar paga (data+valor, uma vez), Anular (motivo; nunca apaga). PDFs no padrao escuro com logo oficial: extrato (com a regra do prazo e a lista de feriados), recibo de quitacao, posicao POR INVESTIDOR (um investidor nunca ve o outro). Sem produto, pedido ou mencao a sistema nos PDFs. Investidor nao acessa nada (decisao Igor 28/09). TERMOMETRO: juro das operacoes (devido - aporte) entra em Custo financeiro no MES DO APORTE (calcMes.jurosOps soma em jurosMes; anuladas fora) — muda lucOp/lucReal/despTot do mes por desenho; Por mes e Financeiro macro herdam pela mesma funcao. Requer SQL 25 + 25b aplicados; sem eles o quadrante mostra aviso e o Termometro segue integro (fonte degrada para opsInv=null). | base: 2026-09-20-B (md5 b910851908df563ea5ed8157c7ebdd3c) -->
 <!-- BUILD 2026-09-20-B | selecta-banco-preco | REMOCAO DO SUBTITULO DA ABA SHOPEE (Igor 20/09: apagar a linha esub "Canal Shopee · Catalogo unico · tarifas por faixa de preco ... Escrow ShopeePay: liberacao a mao ate a API"). Mudanca so de UI (1 <p class=esub> removido); nenhuma logica tocada. | base: 2026-09-20-A (md5 63a44565fe91296300818f3812155a37, ainda nao publicado — publicar este no lugar) -->
 <!-- BUILD 2026-09-20-A | selecta-banco-preco | EDITAR DO CONTROLE SHOPEE GANHA ITEM ID (Igor 20/09: caso real do cadastro de 19/09 — SEG-0004 com Item ID do MS-0014 colado errado; o caminho "encerrar + recadastrar" do 15-J se provou errado no primeiro uso e a paridade com o Editar do ML entra). (1) Campo Item ID no editbox do Controle, validacao do cadastro (_normItem/_itemValido: numerico 6+). (2) Correcao SO de Item ID nao passa pelo gate de preco (nao ha decisao de margem) e o Salvar nao e travado pela margem vigente quando o form esta igual ao gravado (semAlt no ctlSim); mudou preco/promocao/campanha, gate integral do 15-J. (3) Historico campo='item_id' com de->para no motivo; margem registrada = a do gate ou a vigente (padrao do Encerrar). (4) Erro 23505 do indice uq_shp_anuncio_item com mensagem amigavel (mesma do cadastro). Banco fechado hoje: id16 encerrado, indice uq_shp_anuncio_item criado, shopee_item_id NOT NULL (fechamento false-1-NO-1). margemDe()/tarifa()/calcMes INTOCADAS. | base: 2026-09-15-N (md5 e2d926d994b897e6fa4b938bddc6bbd7, conferido no ar 20/09) -->
 <!-- BUILD 2026-09-15-N | selecta-banco-preco | TRAVA DE TOQUE DUPLO NAS GRAVACOES SHOPEE (achado em producao 19/09 12:07: RTR-0035 cadastrado 2x com 7 s de intervalo — ids 15/16, mesmo Item ID 22999678100; o botao nao travava durante o INSERT e a checagem de duplicata do app le a lista carregada, que so recarrega depois): (1) _busy: qualquer gravacao do modulo (Cadastrar anuncio, Lancar venda, Salvar alteracao, Encerrar, Pausar/Reativar, status da venda, Liberado na carteira) ignora um segundo acionamento enquanto a primeira nao terminou (finally libera). (2) Botoes Cadastrar/Lancar/Salvar ficam disabled durante a gravacao e voltam ao normal (inclusive em erro). (3) Erro 23505 do UNIQUE uq_shp_anuncio_item (SQL 24b) segue traduzido. Zero mudanca de matematica, de layout ou de consulta. | base: 2026-09-15-M (md5 f75d2ea47b2ee9d5dd381cc630e0a7e9) -->
@@ -2701,6 +2702,10 @@
         <div id="fn-mp-saldo"><div class="ph">carregando…</div></div>
         <div style="font-size:11px;color:var(--emuted2);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.06em">Créditos previstos · próximos 7 dias</div>
         <div id="fn-creditos"><div class="ph">carregando…</div></div>
+      </div>
+      <div class="ecard" id="fop-card" style="margin-top:18px;border-color:var(--eteal)"><!-- BUILD 2026-09-28-A: Operacoes com investidor (finOps) -->
+        <h3>Operações com investidor</h3>
+        <div id="fop-body"><div class="ph">carregando…</div></div>
       </div>
       </div><!-- /fin-empresa-body -->
 </section>
@@ -5921,7 +5926,8 @@ const ecomFinanceiro={
     try{ const r=await sb.from('ecom_inv_funding').select('credor,data_ref,valor_declarado,status,confirmado_em,obs').in('status',['confirmado','rejeitado']).order('confirmado_em',{ascending:false}).limit(12); this._invHist=((!r.error&&r.data)||[]).filter(h=>String(h.obs||'').indexOf('[treino]')<0).slice(0,8); /* BUILD 2026-08-26-Q: linha marcada [treino] nao aparece (tabela e append-only) */ }catch(_e){ this._invHist=[]; }
     // BUILD 2026-08-25-G: saldo a amortizar por credor (liquidacao em saldo)
     try{ const r=await sb.from('ecom_vw_credor_saldo').select('credor,saldo_inicial,ajustes,amortizado,saldo_atual,ultima_amortizacao,abertura'); this._credSaldo=(!r.error&&r.data)||[]; }catch(_e){ this._credSaldo=[]; }
-    const d={vendasAll,vendas,ledger,movs,despesas,recupItens};
+    let opsInv=null; try{ const r=await sb.from('ecom_inv_operacao').select('data_aporte,valor_aporte,valor_devido,status').neq('status','anulada'); if(!r.error) opsInv=r.data||[]; }catch(_e){} // BUILD 2026-09-28-A
+    const d={vendasAll,vendas,ledger,movs,despesas,recupItens,opsInv};
     this._fonteCache={t:now,d};
     return d;
   },
@@ -5956,6 +5962,9 @@ const ecomFinanceiro={
         const db=(this.FIXOS.DIA_BASE[c.credor]!=null)?this.FIXOS.DIA_BASE[c.credor]:5;
         const vencido=(mkey<hojeK)||(mkey===hojeK&&diaHoje>=db);
         if(vencido){ const tx=(this.FIXOS.TAXA_CREDOR[c.credor]!=null)?this.FIXOS.TAXA_CREDOR[c.credor]:0.10; jurosMes+=s*tx; jurosAuto+=s*tx; } }); }
+    // BUILD 2026-09-28-A: juro das operacoes com investidor (devido - aporte) no MES DO APORTE (decisao Igor 27/09); anuladas ja vem fora
+    let jurosOps=0; (d.opsInv||[]).forEach(o=>{ if(String(o.data_aporte||'').slice(0,7)===mkey) jurosOps+=(+o.valor_devido||0)-(+o.valor_aporte||0); });
+    jurosOps=Math.round(jurosOps*100)/100; jurosMes+=jurosOps;
     let despOpMes=0,despOpItens=null;
     if(d.despesas){ despOpItens=d.despesas.filter(x=>String(x.data||'').slice(0,7)===mkey); despOpMes=despOpItens.reduce((s,x)=>s+(+x.valor||0),0); }
     const lucOp=luc-perdas-jurosMes-despOpMes;      // 21-D/E: perdas, juros e despesas op debitam
@@ -5964,7 +5973,7 @@ const ecomFinanceiro={
     const despTot=tax+cusMes+imp+perdas+jurosMes+despOpMes; // colchão FORA (21-B)
     return {mkey,n,nF,nPend:n-nF,nInt:mesAll.length,rec,recInt,recF,tax,cusMes,imp,col,luc,
       perdas,perdasPend,ocDev,ocApr,ocOut,devQ:ocDev,devV,aprQ:ocApr,aprV,
-      jurosMes,jurosAuto,despOpMes,despOpItens,lucOp,lucReal,margem,despTot,mesOc,mesV};
+      jurosMes,jurosAuto,jurosOps,despOpMes,despOpItens,lucOp,lucReal,margem,despTot,mesOc,mesV};
   },
   // BUILD 2026-08-26-N: creditos previstos pelo MP, dia a dia (Parte A do quadrante Conta MP — decisao Igor 28/08).
   // Fonte: o MESMO d.vendas do Termometro. Usa data_liberacao_mp (promessa do MP gravada pela ml-orders) e valor_recebido_ml (liquido).
@@ -6049,7 +6058,7 @@ const ecomFinanceiro={
         .map(v=>(new Date(v.data_liberacao_mp)-new Date(v.data_entrega))/86400000).filter(x=>x>=0).sort((a,b)=>a-b);
       const medLib=dias.length?(dias.length%2?dias[(dias.length-1)/2]:(dias[dias.length/2-1]+dias[dias.length/2])/2):null;
       // degradação VISÍVEL (23-A): fonte parcial nunca cala — número subestimado se declara
-      const degr=[]; if(d.movs===null) degr.push('ledger de juros'); if(d.despesas===null) degr.push('despesas operacionais'); if(d.recupItens===null) degr.push('itens a recuperar');
+      const degr=[]; if(d.movs===null) degr.push('ledger de juros'); if(d.despesas===null) degr.push('despesas operacionais'); if(d.recupItens===null) degr.push('itens a recuperar'); if(d.opsInv===null) degr.push('operações com investidor (SQL 25)');
       const degrHtml=degr.length?'<div style="padding:7px 13px;background:#241c08;font-size:11px;color:var(--eamber)">\u26a0 Fonte parcial nesta leitura: '+degr.join(' \u00b7 ')+' indispon\u00edvel \u2014 valores podem estar subestimados. Recarregue.</div>':'';
       const mp=recF-tax, F=this.fmt, F0=this.fmt0;
       const line=(k,v2,bg,kc)=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:'+(bg||'var(--epanel)')+'"><span style="font-size:12.5px'+(kc?';color:'+kc:'')+'">'+k+'</span><span style="font-family:var(--emono);font-size:12.5px;white-space:nowrap">'+v2+'</span></div>';
@@ -6132,7 +6141,7 @@ const ecomFinanceiro={
          line('Taxas do ML',nF?('– R$ '+F(tax)):'—','#241c08','var(--eamber)')
         +line('Custo dos fornecedores',cusMes>0?('– R$ '+F(cusMes)):'—','#241c08','var(--eamber)')
         +line('Imposto · 4% da receita',nF?('– R$ '+F(imp)):'—','#241c08','var(--eamber)')
-        +line('Custo financeiro · juros dos credores'+(jurosAuto>0?' · incl. incorrido s/ lançamento':''),jurosMes>0?('– R$ '+F(jurosMes)):'—','#241c08','var(--eamber)')
+        +line('Custo financeiro · juros dos credores'+(jurosAuto>0?' · incl. incorrido s/ lançamento':'')+(c.jurosOps>0?' · incl. operações R$ '+F(c.jurosOps):''),jurosMes>0?('– R$ '+F(jurosMes)):'—','#241c08','var(--eamber)')
         +'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:#241c08"><span style="font-size:12.5px;color:var(--eamber)">Despesas operacionais <button class="vbtn sm" style="margin-left:6px;padding:2px 9px" title="lançar despesa (aluguel, passagem, luz, hospedagem...)" data-despadd="1">+</button></span><span style="font-family:var(--emono);font-size:12.5px">'+(despOp===null?'<span style="color:var(--eamber)">aplicar SQL</span>':(despOpMes>0?('– R$ '+F(despOpMes)):'—'))+'</span></div>'
         +((despOp&&despOp.length)?despOp.map(x=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 13px 5px 26px;background:var(--epanel)"><span style="font-size:11.5px;color:var(--emuted)">'+String(x.data).slice(8,10)+'/'+String(x.data).slice(5,7)+' · '+String(x.descricao).replace(/</g,'&lt;')+' <button class="vbtn sm" style="padding:1px 7px;font-size:11px" title="anular (histórico preservado)" data-despanular="'+x.id+'" data-desc="'+String(x.descricao).replace(/"/g,'&quot;')+'">×</button></span><span style="font-family:var(--emono);font-size:11.5px">R$ '+F(+x.valor||0)+'</span></div>').join(''):'')
         +(mesOc.length?line('Perdas do mês · '+[ocDev?ocDev+' devolu\u00e7\u00e3o(\u00f5es)':'',ocApr?ocApr+' apreens\u00e3o(\u00f5es)':'',ocOut?ocOut+' outra(s) perda(s)':''].filter(Boolean).join(' + '),(perdas>0?'\u2013 R$ '+F(perdas):'\u2014'),'#241c08','var(--ered)'):'')
@@ -10835,7 +10844,8 @@ const finMacro={
         +'<tr class="big"><td>EMPRESA · resultado conservador</td><td class="n '+(totCons<0?'neg':'pos')+'">'+F(totCons)+'</td></tr>'
         +'<tr><td>Colchão retido no mês (reserva, os 2 canais)</td><td class="n">'+F(colTot)+'</td></tr>';
       this.loaded=true;
-      try{ ecomFinanceiro.load(); }catch(e){ console.warn('razao empresa:',e.message); } // BUILD 2026-09-15-E: Termometro da SELECTA + Conta MP + Investidores agora moram aqui
+      try{ ecomFinanceiro.load(); }catch(e){ console.warn('razao empresa:',e.message); }
+      try{ if(window.finOps) window.finOps.load(); }catch(e){ console.warn('finOps:',e.message); } // BUILD 2026-09-28-A // BUILD 2026-09-15-E: Termometro da SELECTA + Conta MP + Investidores agora moram aqui
     }catch(e){ tb.innerHTML='<tr><td class="neg">Erro: '+(e.message||e)+'</td></tr>'; }
   },
   wire(){ const p=this._g('fm-prev'), n=this._g('fm-next');
@@ -10844,8 +10854,367 @@ const finMacro={
 try{ finMacro.wire(); }catch(e){ console.error('finMacro wire',e); }
 window.finMacro = finMacro;
 
+// BUILD 2026-09-28-A · OPERACOES COM INVESTIDOR · Fase 1 (decisoes Igor 27-28/09).
+// Operacao = aporte do dia = compras = postagens do dia (so ML). Devido = aporte x (1+taxa). Vencimento
+// calculado UMA vez pelo banco (ecom_fn_inv_vencimento: proximo dia util + 15 corridos; fim de semana e
+// feriado nacional + Sexta-feira Santa empurram) e congelado por trigger. Cobertura/semaforo vem das visoes
+// ecom_vw_inv_op_resumo/_pedidos (SQL 25 + 25b). Tela so le e grava 4 acoes: criar, fechar dia, marcar paga, anular.
+// Saldo livre = saldo MP - ja liberado reservado as operacoes - reserva de caixa proprio (conservador).
+const finOps={
+  ops:[], quitadas:[], saldo:null, _logoB64:null, _det:{}, msg:'',
+  WD:['dom','seg','ter','qua','qui','sex','sáb'],
+  WDX:['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'],
+  _g:id=>document.getElementById(id),
+  F:v=>(v==null||isNaN(v))?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
+  esc:s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+  hoje(){ try{ return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }catch(e){ return new Date().toISOString().slice(0,10); } },
+  d(k){ if(!k) return '—'; const s=String(k).slice(0,10); return s.slice(8,10)+'/'+s.slice(5,7); },
+  dY(k){ if(!k) return '—'; const s=String(k).slice(0,10); return s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4); },
+  wd(k){ return this.WD[new Date(String(k).slice(0,10)+'T12:00:00Z').getUTCDay()]; },
+  wdx(k){ return this.WDX[new Date(String(k).slice(0,10)+'T12:00:00Z').getUTCDay()]; },
+  num(s){ s=String(s||'').trim().replace(/\s|R\$/g,''); if(!s) return null;
+    if(s.indexOf(',')>=0) s=s.replace(/\./g,'').replace(',','.'); const v=parseFloat(s); return isNaN(v)?null:Math.round(v*100)/100; },
+  SEM:{verde:['var(--eemerald)','coberta'],amarelo:['var(--eamber)','no limite'],vermelho:['var(--ered)','descoberta'],
+       vencida:['var(--ered)','vencida · não paga'],aguardando_postagem:['var(--emuted2)','aguardando postagem'],quitada:['var(--eteal)','quitada']},
+
+  async load(){
+    const box=this._g('fop-body'); if(!box) return;
+    try{
+      const r=await sb.from('ecom_vw_inv_op_resumo').select('*').order('vencimento').order('numero');
+      if(r.error){ const m=String(r.error.message||''); box.innerHTML='<div class="ph" style="color:var(--eamber)">'+(/does not exist|schema cache/i.test(m)?'Aplicar o SQL 25/25b para ativar as operações.':'Erro: '+this.esc(m))+'</div>'; return; }
+      const all=r.data||[];
+      this.ops=all.filter(o=>o.status==='aberta');
+      this.quitadas=all.filter(o=>o.status==='quitada').sort((a,b)=>String(b.quitado_em).localeCompare(String(a.quitado_em))).slice(0,20);
+      this.nomes=[...new Set(all.map(o=>o.investidor))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+      try{ const s=await sb.from('ecom_mp_saldo').select('capturado_em,saldo_disponivel').order('capturado_em',{ascending:false}).limit(1);
+        this.saldo=(!s.error&&s.data&&s.data[0])||null; }catch(e){ this.saldo=null; }
+      this.render();
+    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">Erro: '+this.esc(e.message||e)+'</div>'; }
+  },
+
+  totais(){
+    const t={devido:0,v7:0,reservado:0,reserva:0,aguard:0,nVerm:0,nVenc:0};
+    this.ops.forEach(o=>{ const dev=+o.valor_devido||0, lib=+o.valor_liberado||0;
+      t.devido+=dev; if(o.dias_para_vencer!=null&&o.dias_para_vencer<=7) t.v7+=dev;
+      t.reservado+=Math.min(lib,dev);
+      if(o.semaforo==='aguardando_postagem') t.aguard+=dev; else t.reserva+=(+o.reserva_necessaria||0);
+      if(o.semaforo==='vermelho') t.nVerm++; if(o.semaforo==='vencida') t.nVenc++; });
+    t.saldo=this.saldo?+this.saldo.saldo_disponivel:null;
+    t.livre=t.saldo==null?null:(t.saldo-t.reservado-t.reserva);
+    return t;
+  },
+
+  render(){
+    const box=this._g('fop-body'); if(!box) return; const F=this.F, t=this.totais();
+    const tile=(k,v,c,sub)=>'<div class="fop-tile"><div class="k">'+k+'</div><div class="v" style="color:'+(c||'var(--etxt)')+'">'+v+'</div>'+(sub?'<div class="s">'+sub+'</div>':'')+'</div>';
+    let capt=''; if(this.saldo){ const cap=new Date(this.saldo.capturado_em), min=Math.round((Date.now()-cap.getTime())/60000);
+      capt=(min>75?'<span style="color:var(--eamber)">⚠ ':'<span>')+'capturado '+cap.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'})+'</span>'; }
+    let h='<div class="fop-tiles">'
+      +tile('Devido em aberto','R$ '+F(t.devido),null,this.ops.length+' operaç'+(this.ops.length===1?'ão':'ões'))
+      +tile('Vence em 7 dias','R$ '+F(t.v7),t.v7>0?'var(--eamber)':null)
+      +tile('Saldo Mercado Pago',t.saldo==null?'—':'R$ '+F(t.saldo),'var(--eteal)',capt)
+      +tile('Já liberado · das operações','R$ '+F(t.reservado))
+      +tile('Reserva de caixa próprio','R$ '+F(t.reserva),t.reserva>0?'var(--eamber)':null,t.aguard>0?'+ R$ '+F(t.aguard)+' aguardando postagem':'')
+      +tile('Saldo livre p/ compras e saques',t.livre==null?'—':'R$ '+F(t.livre),t.livre==null?null:(t.livre<0?'var(--ered)':'var(--eemerald)'))
+      +'</div>';
+    if(t.livre!=null&&t.livre<0) h+='<div class="fop-alert r">Saldo livre negativo: faltam R$ '+F(-t.livre)+' para honrar as operações abertas com o saldo atual.</div>';
+    if(t.nVenc) h+='<div class="fop-alert r">'+t.nVenc+' operação(ões) vencida(s) sem pagamento registrado.</div>';
+    else if(t.nVerm) h+='<div class="fop-alert a">'+t.nVerm+' operação(ões) descoberta(s) no vencimento — ver reserva abaixo.</div>';
+    if(this.msg){ h+='<div class="fop-alert g">'+this.msg+'</div>'; }
+    h+='<div class="fop-actions"><button class="vbtn sm" data-fop="novo">+ Nova operação</button><button class="vbtn sm" data-fop="posicao">PDF posição</button><button class="vbtn sm" data-fop="reload">Atualizar</button></div>';
+    h+='<div id="fop-slot"></div>';
+    if(!this.ops.length) h+='<div class="ph">Nenhuma operação aberta.</div>';
+    else h+='<div class="fop-list">'+this.ops.map(o=>this.card(o)).join('')+'</div>';
+    if(this.quitadas.length){
+      h+='<details class="fop-q"><summary>Quitadas · últimas '+this.quitadas.length+'</summary><table class="fop-tb"><thead><tr><th>Operação</th><th>Aporte</th><th class="n">Pago</th><th>Pago em</th><th>Prazo</th><th></th></tr></thead><tbody>'
+        +this.quitadas.map(o=>'<tr><td>'+o.numero+' · '+this.esc(o.investidor)+'</td><td>'+this.d(o.data_aporte)+'</td><td class="n">R$ '+F(o.valor_pago)+'</td><td>'+this.d(o.quitado_em)+'</td><td style="color:'+(o.quitado_em<=o.vencimento?'var(--eemerald)':'var(--ered)')+'">'+(o.quitado_em<=o.vencimento?'no prazo':'atraso')+'</td><td><button class="vbtn sm" data-fop="recibo" data-id="'+o.operacao_id+'">Recibo</button></td></tr>').join('')
+        +'</tbody></table></details>';
+    }
+    box.innerHTML=h;
+  },
+
+  card(o){
+    const F=this.F, s=this.SEM[o.semaforo]||['var(--emuted)',o.semaforo], hoje=this.hoje();
+    const dias=o.dias_para_vencer, vtxt=dias<0?'venceu há '+(-dias)+' d':(dias===0?'vence hoje':'em '+dias+' d');
+    const dev=+o.valor_devido||0, lib=+o.valor_liberado||0, pct=dev>0?Math.min(100,Math.round(lib/dev*100)):0;
+    let h='<div class="fop-card" style="border-left-color:'+s[0]+'">'
+      +'<div class="fop-l1"><span><span class="dot" style="background:'+s[0]+'"></span><b>'+o.numero+'</b> · '+this.esc(o.investidor)+' <span class="tag" style="color:'+s[0]+'">'+s[1]+'</span></span>'
+      +'<span class="mono">vence <b>'+this.wd(o.vencimento)+' '+this.d(o.vencimento)+'</b> · '+vtxt+(o.vencimento_acordado?' · combinado':'')+'</span></div>'
+      +'<div class="fop-l2 mono">aporte '+this.d(o.data_aporte)+' R$ '+F(o.valor_aporte)+' → devido <b>R$ '+F(dev)+'</b> <span class="mut">(juro R$ '+F(o.juro)+')</span></div>';
+    if(o.semaforo==='aguardando_postagem'){
+      h+='<div class="fop-l3 mut">Nenhum pedido ML postado em '+this.d(o.data_aporte)+' ainda.</div>';
+    }else{
+      const chips=[['liberado',o.n_liberado,'var(--eteal)'],['entregue',o.n_entregue,'var(--etxt)'],['trânsito',o.n_transito,'var(--emuted)'],['⚠ atenção',o.n_atencao,'var(--eamber)'],['⛔ perdido',o.n_perdido,'var(--ered)']]
+        .filter(c=>+c[1]>0).map(c=>'<span style="color:'+c[2]+'">'+c[1]+' '+c[0]+'</span>').join(' · ');
+      h+='<div class="fop-l3">'+o.n_pedidos+' pedido'+(o.n_pedidos==1?'':'s')+': '+chips+'</div>'
+        +'<div class="fop-bar"><i style="width:'+pct+'%"></i></div>'
+        +'<div class="fop-l3 mono">liberado R$ '+F(lib)+' ('+pct+'%) · previsto até o vencimento R$ '+F(o.valor_previsto_ate_venc)+'</div>';
+      let cob;
+      if(!o.data_cobertura) cob='<span style="color:var(--ered)">sem cobertura prevista pelos pedidos</span>';
+      else if(o.folga_dias>0) cob='cobertura prevista <b>'+this.d(o.data_cobertura)+'</b> · folga '+o.folga_dias+' d';
+      else if(o.folga_dias===0) cob='<span style="color:var(--eamber)">cobertura prevista no próprio vencimento ('+this.d(o.data_cobertura)+')</span>';
+      else cob='<span style="color:var(--ered)">cobertura prevista '+this.d(o.data_cobertura)+' · '+(-o.folga_dias)+' d depois do vencimento</span>';
+      h+='<div class="fop-l3">'+cob+((+o.reserva_necessaria>0)?' · <span style="color:var(--eamber)">reserva R$ '+F(o.reserva_necessaria)+'</span>':'')+'</div>';
+      if(+o.n_sem_valor_mp>0) h+='<div class="fop-l3" style="color:var(--eamber)">'+o.n_sem_valor_mp+' pedido(s) ainda sem valor líquido do MP — cobertura subestimada</div>';
+    }
+    if(o.fechado_em){ const cp=+o.capital_proprio||0;
+      h+='<div class="fop-l3 mono mut">dia fechado · custo ML postado R$ '+F(o.custo_postado)+' · '+(cp>=0?'capital próprio R$ '+F(cp):'<span style="color:var(--eamber)">aporte acima do custo postado em R$ '+F(-cp)+'</span>')+'</div>'; }
+    const podeFechar=!o.fechado_em&&o.data_aporte<=hoje&&+o.n_pedidos>0;
+    h+='<div class="fop-actions sm">'
+      +'<button class="vbtn sm" data-fop="det" data-id="'+o.operacao_id+'">'+(this._det[o.operacao_id]?'Ocultar pedidos':'Pedidos')+'</button>'
+      +(podeFechar?'<button class="vbtn sm" data-fop="fechar" data-id="'+o.operacao_id+'">Fechar dia</button>':'')
+      +'<button class="vbtn sm" data-fop="extrato" data-id="'+o.operacao_id+'">PDF extrato</button>'
+      +'<button class="vbtn sm" data-fop="pagar" data-id="'+o.operacao_id+'">Marcar paga</button>'
+      +'<button class="vbtn sm" data-fop="anular" data-id="'+o.operacao_id+'" style="color:var(--emuted)">Anular</button></div>'
+      +'<div data-fopbox="'+o.operacao_id+'"></div>'
+      +'<div data-fopdet="'+o.operacao_id+'">'+(this._det[o.operacao_id]||'')+'</div></div>';
+    return h;
+  },
+
+  op(id){ return this.ops.find(o=>String(o.operacao_id)===String(id))||this.quitadas.find(o=>String(o.operacao_id)===String(id)); },
+  slotOf(id){ return document.querySelector('#fop-body [data-fopbox="'+id+'"]'); },
+
+  // ---------- nova operacao ----------
+  novo(){
+    const slot=this._g('fop-slot'); if(!slot) return;
+    if(slot.innerHTML){ slot.innerHTML=''; return; }
+    const dl=(this.nomes||[]).map(n=>'<option value="'+this.esc(n)+'">').join('');
+    slot.innerHTML='<div class="fop-form">'
+      +'<div class="fop-grid">'
+      +'<div class="efield"><label>Investidor</label><input class="vinput" id="fop-inv" list="fop-inv-dl" autocomplete="off"><datalist id="fop-inv-dl">'+dl+'</datalist></div>'
+      +'<div class="efield"><label>Data do aporte (= compra e postagem)</label><input class="vinput mono" id="fop-data" type="date" value="'+this.hoje()+'"></div>'
+      +'<div class="efield"><label>Valor aportado (R$)</label><input class="vinput mono" id="fop-val" inputmode="decimal" placeholder="0,00"></div>'
+      +'<div class="efield"><label>Taxa (%)</label><input class="vinput mono" id="fop-taxa" inputmode="decimal" value="5"></div>'
+      +'</div>'
+      +'<label class="fop-chk"><input type="checkbox" id="fop-acord"> vencimento combinado antes do sistema (operação anterior)</label>'
+      +'<div class="efield" id="fop-acord-f" style="display:none;max-width:240px"><label>Vencimento combinado</label><input class="vinput mono" id="fop-venc" type="date"></div>'
+      +'<div id="fop-prev" class="fop-prev">preencha os campos</div>'
+      +'<div class="fop-actions"><button class="vbtn" data-fop="criar">Registrar operação</button><button class="vbtn sm" data-fop="novo">Cancelar</button></div>'
+      +'<div id="fop-err" class="fop-err"></div></div>';
+    ['fop-inv','fop-data','fop-val','fop-taxa','fop-acord','fop-venc'].forEach(id=>{ const el=this._g(id); if(el){ el.addEventListener('input',()=>this.preview()); el.addEventListener('change',()=>this.preview()); } });
+    this.preview();
+  },
+  _pv:0,
+  async preview(){
+    const tok=++this._pv, pv=this._g('fop-prev'); if(!pv) return;
+    const ac=this._g('fop-acord').checked; this._g('fop-acord-f').style.display=ac?'':'none';
+    const data=this._g('fop-data').value, val=this.num(this._g('fop-val').value), tx=this.num(this._g('fop-taxa').value);
+    if(!data){ pv.innerHTML='informe a data do aporte'; return; }
+    const F=this.F; let partes=[];
+    try{
+      let inicio=null, venc=null;
+      const a=await sb.rpc('ecom_fn_dia_util_apos',{d:data}); if(!a.error) inicio=a.data;
+      if(ac){ venc=this._g('fop-venc').value||null; } else { const b=await sb.rpc('ecom_fn_inv_vencimento',{aporte:data}); if(!b.error) venc=b.data; }
+      // ML postado no dia (dia de Brasilia) + outras operacoes do mesmo dia
+      const ini=data+'T00:00:00-03:00', fimD=new Date(new Date(data+'T12:00:00Z').getTime()+86400000).toISOString().slice(0,10)+'T00:00:00-03:00';
+      let post=null,nPost=0; try{ const r=await sb.from('ecom_vendas').select('custo_total,status,canal').gte('data_embarque',ini).lt('data_embarque',fimD);
+        if(!r.error){ const rows=(r.data||[]).filter(v=>v.status!=='cancelado'&&(!v.canal||/^(mercado_livre|ml)$/i.test(v.canal))); nPost=rows.length; post=rows.reduce((s,v)=>s+(+v.custo_total||0),0); } }catch(e){}
+      let fila=null; if(data===this.hoje()){ try{ const r=await sb.from('ecom_vw_compras_dia').select('custo_compra_total'); if(!r.error) fila=(r.data||[]).reduce((s,x)=>s+(+x.custo_compra_total||0),0); }catch(e){} }
+      let outras=0; try{ const r=await sb.from('ecom_inv_operacao').select('valor_aporte').eq('data_aporte',data).neq('status','anulada'); if(!r.error) outras=(r.data||[]).reduce((s,x)=>s+(+x.valor_aporte||0),0); }catch(e){}
+      if(tok!==this._pv) return;
+      if(val!=null&&tx!=null) partes.push('devido <b>R$ '+F(Math.round(val*(1+tx/100)*100)/100)+'</b> (juro R$ '+F(Math.round(val*tx)/100)+')');
+      partes.push('início da contagem <b>'+(inicio?this.wd(inicio)+' '+this.dY(inicio):'—')+'</b>');
+      partes.push('vencimento <b style="color:var(--eteal)">'+(venc?this.wd(venc)+' '+this.dY(venc):'—')+'</b>');
+      let l2='ML postado em '+this.d(data)+': R$ '+F(post)+' ('+nPost+' pedido'+(nPost===1?'':'s')+')'+(fila!=null?' · fila a enviar agora: R$ '+F(fila):'')+(outras>0?' · <span style="color:var(--eamber)">outras operações neste dia: R$ '+F(outras)+'</span>':'');
+      pv.innerHTML=partes.join(' · ')+'<div class="mut" style="margin-top:4px">'+l2+'</div>';
+    }catch(e){ if(tok===this._pv) pv.innerHTML='<span style="color:var(--ered)">'+this.esc(e.message||e)+'</span>'; }
+  },
+  async criar(){
+    const err=this._g('fop-err'); err.textContent='';
+    const inv=(this._g('fop-inv').value||'').trim(), data=this._g('fop-data').value, val=this.num(this._g('fop-val').value), tx=this.num(this._g('fop-taxa').value);
+    const ac=this._g('fop-acord').checked, venc=this._g('fop-venc').value;
+    if(inv.length<2){ err.textContent='Informe o investidor.'; return; }
+    if(!data){ err.textContent='Informe a data do aporte.'; return; }
+    if(data>this.hoje()){ err.textContent='Data do aporte no futuro não é aceita.'; return; }
+    if(!(val>0)){ err.textContent='Informe o valor aportado.'; return; }
+    if(!(tx>0)){ err.textContent='Informe a taxa.'; return; }
+    if(ac&&!venc){ err.textContent='Informe o vencimento combinado.'; return; }
+    const dev=Math.round(val*(1+tx/100)*100)/100;
+    if(!confirm('Registrar operação?\n\n'+inv+'\nAporte '+this.dY(data)+' · R$ '+this.F(val)+'\nDevido R$ '+this.F(dev)+'\n\nDepois de gravada, data, valor e vencimento não podem ser alterados (só anular).')) return;
+    const row={investidor:inv,data_aporte:data,valor_aporte:val,taxa_pct:tx,vencimento_acordado:ac};
+    if(ac) row.vencimento=venc;
+    try{ const r=await sb.from('ecom_inv_operacao').insert(row).select('numero,vencimento').single(); if(r.error) throw r.error;
+      this.msg='✓ '+r.data.numero+' registrada · vence '+this.wd(r.data.vencimento)+' '+this.dY(r.data.vencimento)+' · use "PDF extrato" para enviar ao investidor';
+      try{ ecomFinanceiro._fonteCache={t:0,d:null}; }catch(e){}
+      await this.load(); try{ ecomFinanceiro.termometro(); }catch(e){}
+    }catch(e){ const m=String(e.message||e); err.textContent=/uq_inv_op_investidor_dia|duplicate key/i.test(m)?'Já existe operação deste investidor nesta data.':'Erro: '+m; }
+  },
+
+  // ---------- fechar dia ----------
+  async fechar(id){ const o=this.op(id); if(!o) return;
+    const cp=(+o.custo_postado_atual||0)-(+o.valor_aporte||0);
+    if(!confirm('Fechar o dia de '+o.numero+' ('+this.dY(o.data_aporte)+')?\n\nCusto ML postado'+((+o.participacao||1)<1?' (parte desta operação)':'')+': R$ '+this.F(o.custo_postado_atual)+'\nAporte: R$ '+this.F(o.valor_aporte)+'\n'+(cp>=0?'Capital próprio: R$ '+this.F(cp):'Aporte ACIMA do custo em R$ '+this.F(-cp))+'\nCobertura prevista hoje: '+(o.data_cobertura?this.dY(o.data_cobertura):'sem cobertura')+'\n\nO fechamento é gravado uma única vez.')) return;
+    try{ const r=await sb.from('ecom_inv_operacao').update({custo_postado:Math.round((+o.custo_postado_atual||0)*100)/100,previsao_inicial_data:o.data_cobertura||null,previsao_inicial_valor:Math.round((+o.valor_previsto_ate_venc||0)*100)/100}).eq('id',o.operacao_id);
+      if(r.error) throw r.error; this.msg='✓ dia de '+o.numero+' fechado'; this.load(); }catch(e){ alert('Erro: '+(e.message||e)); }
+  },
+
+  // ---------- marcar paga / anular (caixa inline) ----------
+  pagar(id){ const o=this.op(id), sl=this.slotOf(id); if(!o||!sl) return; if(sl.innerHTML){ sl.innerHTML=''; return; }
+    sl.innerHTML='<div class="fop-form"><div class="fop-grid">'
+      +'<div class="efield"><label>Data do pagamento</label><input class="vinput mono" data-fp="dt" type="date" value="'+this.hoje()+'"></div>'
+      +'<div class="efield"><label>Valor pago (R$)</label><input class="vinput mono" data-fp="val" inputmode="decimal" value="'+this.F(o.valor_devido)+'"></div></div>'
+      +'<div class="fop-actions"><button class="vbtn sm" data-fop="pagar-ok" data-id="'+id+'">Confirmar pagamento</button><button class="vbtn sm" data-fop="pagar" data-id="'+id+'">Cancelar</button></div></div>';
+  },
+  async pagarOk(id){ const o=this.op(id), sl=this.slotOf(id); if(!o||!sl) return;
+    const dt=sl.querySelector('[data-fp="dt"]').value, val=this.num(sl.querySelector('[data-fp="val"]').value);
+    if(!dt||!(val>0)){ alert('Informe data e valor pagos.'); return; }
+    if(dt<o.data_aporte){ alert('Pagamento antes do aporte não é aceito.'); return; }
+    const dif=Math.round((val-(+o.valor_devido))*100)/100;
+    if(!confirm('Registrar pagamento de '+o.numero+'?\n\n'+o.investidor+'\nPago R$ '+this.F(val)+' em '+this.dY(dt)+(dif!==0?'\n\nATENÇÃO: difere do devido (R$ '+this.F(o.valor_devido)+') em R$ '+this.F(dif):'')+(dt>o.vencimento?'\n\nATENÇÃO: pagamento depois do vencimento ('+this.dY(o.vencimento)+')':'')+'\n\nA quitação é gravada uma única vez.')) return;
+    const upd={status:'quitada',quitado_em:dt,valor_pago:val};
+    if(!o.fechado_em&&+o.n_pedidos>0){ upd.custo_postado=Math.round((+o.custo_postado_atual||0)*100)/100; upd.previsao_inicial_data=o.data_cobertura||null; upd.previsao_inicial_valor=Math.round((+o.valor_previsto_ate_venc||0)*100)/100; }
+    try{ const r=await sb.from('ecom_inv_operacao').update(upd).eq('id',o.operacao_id); if(r.error) throw r.error;
+      this.msg='✓ '+o.numero+' quitada · recibo disponível em "Quitadas"'; this.load(); }catch(e){ alert('Erro: '+(e.message||e)); }
+  },
+  anular(id){ const o=this.op(id), sl=this.slotOf(id); if(!o||!sl) return; if(sl.innerHTML){ sl.innerHTML=''; return; }
+    sl.innerHTML='<div class="fop-form"><div class="efield"><label>Motivo da anulação (a operação não some: fica registrada como anulada)</label><input class="vinput" data-fp="mot" placeholder="ex.: valor digitado errado"></div>'
+      +'<div class="fop-actions"><button class="vbtn sm" data-fop="anular-ok" data-id="'+id+'" style="border-color:var(--ered)">Anular '+o.numero+'</button><button class="vbtn sm" data-fop="anular" data-id="'+id+'">Cancelar</button></div></div>';
+  },
+  async anularOk(id){ const o=this.op(id), sl=this.slotOf(id); if(!o||!sl) return;
+    const mot=(sl.querySelector('[data-fp="mot"]').value||'').trim(); if(mot.length<3){ alert('Informe o motivo.'); return; }
+    if(!confirm('Anular '+o.numero+'? O juro dela sai do Termômetro.')) return;
+    try{ const r=await sb.from('ecom_inv_operacao').update({status:'anulada',motivo_anulacao:mot}).eq('id',o.operacao_id); if(r.error) throw r.error;
+      this.msg=o.numero+' anulada'; try{ ecomFinanceiro._fonteCache={t:0,d:null}; }catch(e){} await this.load(); try{ ecomFinanceiro.termometro(); }catch(e){} }catch(e){ alert('Erro: '+(e.message||e)); }
+  },
+
+  // ---------- pedidos da operacao ----------
+  ETAPA:{liberado:['var(--eteal)','liberado'],entregue:['var(--etxt)','entregue'],transito:['var(--emuted)','em trânsito'],atencao:['var(--eamber)','atenção'],perdido:['var(--ered)','perdido']},
+  async det(id){ const el=document.querySelector('#fop-body [data-fopdet="'+id+'"]'); if(!el) return;
+    if(this._det[id]){ delete this._det[id]; el.innerHTML=''; this.render(); return; }
+    el.innerHTML='<div class="ph">carregando…</div>';
+    try{ const r=await sb.from('ecom_vw_inv_op_pedidos').select('ml_pedido_id,produto_codigo,etapa,envio_substatus,ocorrencia,custo_parte,valor_previsto,data_prevista,sem_valor_mp').eq('operacao_id',id).order('data_prevista',{ascending:true,nullsFirst:false});
+      if(r.error) throw r.error; const F=this.F;
+      const rows=(r.data||[]).map(p=>{ const e=this.ETAPA[p.etapa]||['var(--emuted)',p.etapa];
+        return '<tr><td class="mono">'+this.esc(p.ml_pedido_id||'—')+'</td><td>'+this.esc(p.produto_codigo||'')+'</td><td style="color:'+e[0]+'">'+e[1]+(p.ocorrencia?' · '+this.esc(p.ocorrencia):'')+'</td><td class="n">'+F(p.custo_parte)+'</td><td class="n">'+(p.sem_valor_mp?'<span style="color:var(--eamber)">sem valor</span>':F(p.valor_previsto))+'</td><td>'+(p.data_prevista?this.d(p.data_prevista):'—')+'</td></tr>'; }).join('');
+      this._det[id]='<div style="overflow-x:auto"><table class="fop-tb"><thead><tr><th>Pedido</th><th>Cód.</th><th>Etapa</th><th class="n">Custo</th><th class="n">Líquido</th><th>Previsão</th></tr></thead><tbody>'+(rows||'<tr><td colspan="6" class="mut">sem pedidos</td></tr>')+'</tbody></table></div>';
+      this.render();
+    }catch(e){ el.innerHTML='<div class="ph" style="color:var(--ered)">'+this.esc(e.message||e)+'</div>'; }
+  },
+
+  // ---------- PDFs (marca escura, logo oficial; sem produtos, sem pedidos, sem mencao a sistema) ----------
+  async _logo(){ if(this._logoB64!==null) return this._logoB64||null;
+    try{ const r=await fetch('selecta-solution-logo.png'); if(!r.ok) throw new Error(r.status); const b=await r.blob();
+      this._logoB64=await new Promise((ok,ko)=>{ const fr=new FileReader(); fr.onload=()=>ok(fr.result); fr.onerror=ko; fr.readAsDataURL(b); });
+    }catch(e){ this._logoB64=''; }
+    return this._logoB64||null; },
+  async _doc(titulo){
+    if(!window.jspdf||!window.jspdf.jsPDF||typeof (new window.jspdf.jsPDF()).autoTable!=='function'){ alert('Biblioteca de PDF ainda carregando. Tente novamente em alguns segundos.'); return null; }
+    const logo=await this._logo(); if(!logo){ alert('Logo oficial (selecta-solution-logo.png) não carregou — PDF não gerado.'); return null; }
+    const {jsPDF}=window.jspdf, doc=new jsPDF(), W=doc.internal.pageSize.width, H=doc.internal.pageSize.height;
+    const C={NAVY:[11,18,32],PANEL:[17,26,46],LINE:[31,42,64],TXT:[232,236,243],MUTED:[136,148,168],TEAL:[45,212,191],EMER:[16,185,129]};
+    const dataPT=new Date().toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
+    const fundo=()=>{ doc.setFillColor(...C.NAVY); doc.rect(0,0,W,H,'F'); try{ doc.addImage(logo,'PNG',14,9,52,22); }catch(e){}
+      doc.setTextColor(...C.TXT); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text(titulo,W-14,18,{align:'right'});
+      doc.setTextColor(...C.TEAL); doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.text(dataPT,W-14,24,{align:'right'});
+      doc.setDrawColor(...C.EMER); doc.setLineWidth(0.8); doc.line(14,36,W-14,36);
+      doc.setDrawColor(...C.LINE); doc.setLineWidth(0.3); doc.line(14,H-14,W-14,H-14);
+      doc.setFontSize(8); doc.setTextColor(...C.MUTED); doc.text('Selecta Solution',14,H-9); doc.text('página '+doc.internal.getNumberOfPages(),W-14,H-9,{align:'right'}); };
+    fundo(); return {doc,W,H,C,fundo};
+  },
+  _kv(P,rows,startY,destaque){ const {doc,W,C,fundo}=P;
+    doc.autoTable({startY,body:rows,theme:'plain',margin:{top:44,left:14,right:14,bottom:20},
+      styles:{font:'helvetica',fontSize:10.5,cellPadding:{top:4,bottom:4,left:4,right:4},textColor:C.TXT,fillColor:C.PANEL},
+      columnStyles:{0:{cellWidth:62,textColor:C.MUTED,fontSize:9.5},1:{cellWidth:'auto'}},
+      willDrawPage:d=>{ if(d.pageNumber>1) fundo(); },
+      didParseCell:d=>{ if(d.section==='body'&&d.column.index===1&&destaque&&destaque.indexOf(d.row.index)>=0){ d.cell.styles.fontStyle='bold'; d.cell.styles.textColor=C.TEAL; d.cell.styles.fontSize=12; } },
+      didDrawCell:d=>{ if(d.column.index!==1||d.section!=='body'||d.row.index===0) return; doc.setDrawColor(...C.LINE); doc.setLineWidth(0.25); doc.line(14,d.cell.y,W-14,d.cell.y); }});
+    return doc.lastAutoTable.finalY; },
+  async _saida(doc,fname,titulo){
+    try{ if(window.matchMedia&&matchMedia('(pointer:coarse)').matches&&navigator.share&&navigator.canShare){
+      const f=new File([doc.output('blob')],fname,{type:'application/pdf'});
+      if(navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:titulo}); return; } } }catch(e){ if(e&&e.name==='AbortError') return; }
+    doc.save(fname); },
+  FERIADOS_TXT:'Feriados nacionais considerados: 01/01, Sexta-feira Santa, 21/04, 01/05, 07/09, 12/10, 02/11, 15/11, 20/11 e 25/12.',
+  async extrato(id){ const o=this.op(id); if(!o) return; const P=await this._doc('EXTRATO DE OPERAÇÃO'); if(!P) return; const F=this.F;
+    const rows=[['Operação',o.numero],['Investidor',o.investidor],['Data do aporte',this.dY(o.data_aporte)+' ('+this.wdx(o.data_aporte)+')'],
+      ['Valor aportado','R$ '+F(o.valor_aporte)],['Remuneração',String(Number(o.taxa_pct).toLocaleString('pt-BR',{maximumFractionDigits:3}))+'% · R$ '+F(o.juro)],
+      ['Valor a receber','R$ '+F(o.valor_devido)],['Início da contagem',this.dY(o.inicio_contagem)+' ('+this.wdx(o.inicio_contagem)+')'],
+      ['Vencimento',this.dY(o.vencimento)+' ('+this.wdx(o.vencimento)+')']];
+    let y=this._kv(P,rows,44,[5,7]); const {doc,W,C}=P;
+    doc.setFontSize(8.5); doc.setTextColor(...C.MUTED);
+    const regra=o.vencimento_acordado?['Vencimento conforme combinado entre as partes.']
+      :['Prazo de 15 dias corridos contados a partir do primeiro dia útil seguinte ao aporte. Vencimento em sábado, domingo ou feriado nacional é pago no primeiro dia útil seguinte.',this.FERIADOS_TXT];
+    y+=8; regra.forEach(t=>{ const ls=doc.splitTextToSize(t,W-28); doc.text(ls,14,y); y+=ls.length*4.2+2; });
+    await this._saida(doc,'extrato_'+o.numero+'_'+String(o.data_aporte).slice(0,10)+'.pdf','Extrato '+o.numero); },
+  async recibo(id){ const o=this.op(id); if(!o||o.status!=='quitada') return; const P=await this._doc('RECIBO DE QUITAÇÃO'); if(!P) return; const F=this.F;
+    const rows=[['Operação',o.numero],['Investidor',o.investidor],['Data do aporte',this.dY(o.data_aporte)],['Valor aportado','R$ '+F(o.valor_aporte)],
+      ['Vencimento',this.dY(o.vencimento)],['Valor pago','R$ '+F(o.valor_pago)],['Data do pagamento',this.dY(o.quitado_em)+' ('+this.wdx(o.quitado_em)+')'],['Situação','Quitada']];
+    this._kv(P,rows,44,[5,7]);
+    await this._saida(P.doc,'recibo_'+o.numero+'.pdf','Recibo '+o.numero); },
+  posicao(){ const slot=this._g('fop-slot'); if(!slot) return;
+    const nomes=[...new Set(this.ops.map(o=>o.investidor))];
+    if(!nomes.length){ alert('Nenhuma operação aberta.'); return; }
+    if(nomes.length===1){ this.posicaoPdf(nomes[0]); return; }
+    slot.innerHTML='<div class="fop-form"><div class="mut" style="margin-bottom:8px">Posição de qual investidor? (cada PDF mostra só as operações dele)</div><div class="fop-actions">'
+      +nomes.map(n=>'<button class="vbtn sm" data-fop="posicao-inv" data-inv="'+this.esc(n)+'">'+this.esc(n)+'</button>').join('')+'<button class="vbtn sm" data-fop="fechar-slot">Cancelar</button></div></div>'; },
+  async posicaoPdf(inv){ const ops=this.ops.filter(o=>o.investidor===inv); if(!ops.length) return;
+    const P=await this._doc('POSIÇÃO DE OPERAÇÕES'); if(!P) return; const {doc,W,C,fundo}=P, F=this.F;
+    doc.setFontSize(10); doc.setTextColor(...C.TXT); doc.text('Investidor: '+inv,14,44);
+    const tA=ops.reduce((s,o)=>s+(+o.valor_aporte||0),0), tD=ops.reduce((s,o)=>s+(+o.valor_devido||0),0);
+    doc.autoTable({startY:50,head:[['OPERAÇÃO','APORTE','VALOR APORTADO','VALOR A RECEBER','VENCIMENTO']],
+      body:ops.map(o=>[o.numero,this.dY(o.data_aporte),'R$ '+F(o.valor_aporte),'R$ '+F(o.valor_devido),this.dY(o.vencimento)+' ('+this.wd(o.vencimento)+')']),
+      foot:[['TOTAL','','R$ '+F(tA),'R$ '+F(tD),'']],
+      theme:'plain',margin:{top:44,left:14,right:14,bottom:20},
+      styles:{font:'helvetica',fontSize:10,cellPadding:{top:3.6,bottom:3.6,left:3,right:3},textColor:C.TXT,fillColor:C.PANEL},
+      headStyles:{fontSize:8,fontStyle:'bold',textColor:C.TEAL,fillColor:C.NAVY},
+      footStyles:{fontStyle:'bold',textColor:C.TEAL,fillColor:C.NAVY},
+      columnStyles:{2:{halign:'right'},3:{halign:'right',fontStyle:'bold'}},
+      willDrawPage:d=>{ if(d.pageNumber>1) fundo(); }});
+    const slot=this._g('fop-slot'); if(slot) slot.innerHTML='';
+    await this._saida(doc,'posicao_'+inv.replace(/[^\w]+/g,'_')+'_'+this.hoje()+'.pdf','Posição '+inv); },
+
+  wire(){ const box=this._g('fop-body'); if(!box||box._fopWired) return; box._fopWired=true;
+    box.addEventListener('click',e=>{ const b=e.target.closest('[data-fop]'); if(!b||!box.contains(b)) return;
+      const a=b.getAttribute('data-fop'), id=b.getAttribute('data-id');
+      if(a==='novo') this.novo(); else if(a==='criar') this.criar(); else if(a==='reload'){ this.msg=''; this.load(); }
+      else if(a==='det') this.det(id); else if(a==='fechar') this.fechar(id);
+      else if(a==='pagar') this.pagar(id); else if(a==='pagar-ok') this.pagarOk(id);
+      else if(a==='anular') this.anular(id); else if(a==='anular-ok') this.anularOk(id);
+      else if(a==='extrato') this.extrato(id); else if(a==='recibo') this.recibo(id);
+      else if(a==='posicao') this.posicao(); else if(a==='posicao-inv') this.posicaoPdf(b.getAttribute('data-inv'));
+      else if(a==='fechar-slot'){ const s=this._g('fop-slot'); if(s) s.innerHTML=''; } }); }
+};
+try{ finOps.wire(); }catch(e){ console.error('finOps wire',e); }
+window.finOps = finOps;
+
 </script>
 
+<style id="fop-css">/* BUILD 2026-09-28-A: Operacoes com investidor */
+#fop-body .fop-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px}
+@media(max-width:700px){#fop-body .fop-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#fop-body .fop-tile{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:9px 11px;min-width:0}
+#fop-body .fop-tile .k{font-size:10.5px;color:var(--emuted);text-transform:uppercase;letter-spacing:.04em}
+#fop-body .fop-tile .v{font-family:var(--emono);font-size:16px;font-weight:700;margin-top:2px;overflow-wrap:anywhere}
+#fop-body .fop-tile .s{font-size:10.5px;color:var(--emuted2);margin-top:2px}
+#fop-body .fop-alert{border-radius:9px;padding:8px 12px;font-size:12.5px;margin-bottom:8px;border:1px solid}
+#fop-body .fop-alert.r{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.4)}
+#fop-body .fop-alert.a{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.35)}
+#fop-body .fop-alert.g{background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.35);color:var(--eemerald)}
+#fop-body .fop-actions{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+#fop-body .fop-actions.sm{margin:8px 0 0}
+#fop-body .fop-list{display:flex;flex-direction:column;gap:8px}
+#fop-body .fop-card{background:var(--epanel2);border:1px solid var(--eborder);border-left:4px solid;border-radius:10px;padding:10px 12px}
+#fop-body .fop-l1{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px}
+#fop-body .fop-l2,#fop-body .fop-l3{font-size:12px;margin-top:4px}
+#fop-body .mut{color:var(--emuted)}
+#fop-body .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+#fop-body .tag{font-size:11px;margin-left:4px}
+#fop-body .fop-bar{height:5px;background:var(--epanel3);border-radius:4px;margin-top:6px;overflow:hidden}
+#fop-body .fop-bar i{display:block;height:100%;background:var(--eteal)}
+#fop-body .fop-form{background:var(--epanel3);border:1px solid var(--eborder);border-radius:10px;padding:10px 12px;margin:8px 0}
+#fop-body .fop-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media(max-width:700px){#fop-body .fop-grid{grid-template-columns:1fr 1fr}}
+#fop-body .fop-grid .efield{margin:0}
+#fop-body .fop-chk{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--emuted);margin:8px 0}
+#fop-body .fop-prev{font-size:12.5px;margin:6px 0;padding:8px 10px;background:var(--epanel2);border-radius:8px}
+#fop-body .fop-err{color:var(--ered);font-size:12px}
+#fop-body .fop-tb{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+#fop-body .fop-tb th{font-size:10.5px;color:var(--emuted);text-align:left;padding:5px 6px;border-bottom:1px solid var(--eborder);font-weight:600}
+#fop-body .fop-tb td{padding:5px 6px;border-bottom:1px solid rgba(42,54,80,.5)}
+#fop-body .fop-tb .n{text-align:right;font-family:var(--emono);white-space:nowrap}
+#fop-body .fop-q{margin-top:12px}
+#fop-body .fop-q>summary{cursor:pointer;font-size:12px;color:var(--emuted)}
+</style>
 <style id="fold-css">/* BUILD 2026-08-26-Q: blocos recolhidos do Termometro */
 .fn-fold{display:block}.fn-fold>summary{list-style:none;cursor:pointer;user-select:none}.fn-fold>summary::-webkit-details-marker{display:none}
 .fn-fold>summary .fn-chev{display:inline-block;width:12px;color:var(--emuted2);font-size:10px;transition:transform .15s}.fn-fold[open]>summary .fn-chev{transform:rotate(90deg)}
