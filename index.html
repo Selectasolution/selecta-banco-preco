@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-28-D | selecta-banco-preco | AJUSTES DE LEITURA (Igor 28/09): (1) barra principal: Catalogo · Importacao · ML · Shopee · 💰 Financeiro · ⚖️ Fiscal · 📡 Radar (Financeiro ao lado da Shopee; Radar ao final). (2) tabela de operacoes: coluna Vencimento so com a data (sem dia da semana e sem contagem de dias); todas as colunas alinhadas a esquerda. (3) "Quitadas" vira "Pagas" na tela (lista, situacao, mensagem) e "Situacao: Paga" no recibo. Zero matematica, zero consulta nova. | base: 2026-09-28-C (md5 3ec7db0c3ff428e86fdcce416227c748) -->
 <!-- BUILD 2026-09-28-C | selecta-banco-preco | INVESTIDOR EM TABELA (Igor 28/09): (1) titulo da aba = "💰 Financeiro" (sai "· leitura macro da empresa"). (2) agenda de operacoes vira TABELA ordenada pelo vencimento mais proximo (desempate aporte e numero): colunas Nº OP / Investidor / Data aporte / Valor / Valor a ser pago / Vencimento; semaforo = ponto colorido no Nº e borda da linha; sob o vencimento, "em N d"/"vence hoje"/"venceu ha N d". Toque na linha abre o detalhe (situacao, pedidos por etapa, liberado, cobertura, reserva, fechamento) e as acoes (Pedidos, Fechar dia, PDF extrato, Marcar paga, Anular) — mesmo conteudo do 28-A, so reorganizado. Celular (<700px): cada linha vira bloco de 2 colunas com rotulo por campo. Quadrantes de totais, quitadas, PDFs e gravacoes INTOCADOS. Zero matematica, zero consulta nova. | base: 2026-09-28-B (md5 5898b2aa38376da6a1daf23ef09938b0) -->
 <!-- BUILD 2026-09-28-B | selecta-banco-preco | FINANCEIRO EM DUAS SUB-ABAS (Igor 28/09: separar para uso e leitura no celular): barra #fin-subbar logo abaixo do titulo — "🌡 Termômetro" (#fin-sub-termo: Canais do mes + Termometro + Conta Mercado Pago, conteudo INTOCADO) e "🤝 Investidor" (#fin-sub-inv: quadrante Operacoes com investidor do 28-A, movido sem mudanca). Default = Termometro; clicar em Investidor recarrega finOps.load(). Padrao .alsubbar/.alsub-btn ja escopado no Financeiro. Zero matematica, zero consulta nova. | base: 2026-09-28-A (md5 a530c6019dc61e369883ac77aa9f61bd) -->
 <!-- BUILD 2026-09-28-A | selecta-banco-preco | OPERACOES COM INVESTIDOR · FASE 1 (decisoes Igor 27-28/09): novo quadrante no Financeiro (#fop-body, modulo finOps) logo abaixo da Conta Mercado Pago. Operacao = aporte do dia = compras = postagens do dia, SO Mercado Livre (Shopee fora por decisao: captura manual x automatica nao se misturam). Devido = aporte x (1+taxa, padrao 5%); inicio = proximo dia util; vencimento = inicio + 15 corridos, fim de semana/feriado nacional (+ Sexta-feira Santa) empurra — calculado UMA vez pelo banco (ecom_fn_inv_vencimento) e congelado por trigger (SQL 25). Tela: faixa de totais (devido em aberto, vence em 7 dias, saldo MP, ja liberado das operacoes, reserva de caixa proprio, SALDO LIVRE p/ compras e saques = saldo MP - liberado reservado - reserva; vermelho se negativo), agenda por vencimento com semaforo (verde coberta / ambar no limite ou pedido em atencao / vermelho descoberta / vencida / aguardando postagem), pedidos da operacao sob demanda, 4 acoes gravaveis: Registrar (preview do vencimento pelo proprio banco), Fechar dia (custo postado + capital proprio + previsao inicial, uma vez), Marcar paga (data+valor, uma vez), Anular (motivo; nunca apaga). PDFs no padrao escuro com logo oficial: extrato (com a regra do prazo e a lista de feriados), recibo de quitacao, posicao POR INVESTIDOR (um investidor nunca ve o outro). Sem produto, pedido ou mencao a sistema nos PDFs. Investidor nao acessa nada (decisao Igor 28/09). TERMOMETRO: juro das operacoes (devido - aporte) entra em Custo financeiro no MES DO APORTE (calcMes.jurosOps soma em jurosMes; anuladas fora) — muda lucOp/lucReal/despTot do mes por desenho; Por mes e Financeiro macro herdam pela mesma funcao. Requer SQL 25 + 25b aplicados; sem eles o quadrante mostra aviso e o Termometro segue integro (fonte degrada para opsInv=null). | base: 2026-09-20-B (md5 b910851908df563ea5ed8157c7ebdd3c) -->
@@ -300,10 +301,10 @@
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="importacao">📦 Importação</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="ecommerce">🛒 Mercado Livre</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="shopee">🛍️ Shopee</button>
-          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="radar">📡 Radar</button>
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="financeiro">💰 Financeiro</button>
           <!-- BUILD 2026-09-15-C: Instagram OCULTO (nao apagado — payload, JS e dados intactos; reativar = descomentar): <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="instagram">📸 Instagram</button> -->
           <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="fiscal">⚖️ Fiscal</button>
+          <button class="tab-btn px-4 py-1.5 rounded-md font-medium text-sm transition-colors" data-tab="radar">📡 Radar</button><!-- BUILD 2026-09-28-D: Radar ao final -->
         </nav>
       </div>
       <div class="flex items-center gap-3 text-sm">
@@ -10885,7 +10886,7 @@ const finOps={
   num(s){ s=String(s||'').trim().replace(/\s|R\$/g,''); if(!s) return null;
     if(s.indexOf(',')>=0) s=s.replace(/\./g,'').replace(',','.'); const v=parseFloat(s); return isNaN(v)?null:Math.round(v*100)/100; },
   SEM:{verde:['var(--eemerald)','coberta'],amarelo:['var(--eamber)','no limite'],vermelho:['var(--ered)','descoberta'],
-       vencida:['var(--ered)','vencida · não paga'],aguardando_postagem:['var(--emuted2)','aguardando postagem'],quitada:['var(--eteal)','quitada']},
+       vencida:['var(--ered)','vencida · não paga'],aguardando_postagem:['var(--emuted2)','aguardando postagem'],quitada:['var(--eteal)','paga']},
 
   async load(){
     const box=this._g('fop-body'); if(!box) return;
@@ -10935,11 +10936,11 @@ const finOps={
     h+='<div id="fop-slot"></div>';
     if(!this.ops.length) h+='<div class="ph">Nenhuma operação aberta.</div>';
     else{ const ord=this.ops.slice().sort((a,b)=>String(a.vencimento).localeCompare(String(b.vencimento))||String(a.data_aporte).localeCompare(String(b.data_aporte))||String(a.numero).localeCompare(String(b.numero)));
-      h+='<div class="fop-tw"><table class="fop-ops"><thead><tr><th>Nº OP</th><th>Investidor</th><th>Data aporte</th><th class="n">Valor</th><th class="n">Valor a ser pago</th><th>Vencimento</th></tr></thead><tbody>'
+      h+='<div class="fop-tw"><table class="fop-ops"><thead><tr><th>Nº OP</th><th>Investidor</th><th>Data aporte</th><th>Valor</th><th>Valor a ser pago</th><th>Vencimento</th></tr></thead><tbody>'
         +ord.map(o=>this.row(o)).join('')+'</tbody></table></div>'; }
     if(this.quitadas.length){
-      h+='<details class="fop-q"><summary>Quitadas · últimas '+this.quitadas.length+'</summary><table class="fop-tb"><thead><tr><th>Operação</th><th>Aporte</th><th class="n">Pago</th><th>Pago em</th><th>Prazo</th><th></th></tr></thead><tbody>'
-        +this.quitadas.map(o=>'<tr><td>'+o.numero+' · '+this.esc(o.investidor)+'</td><td>'+this.d(o.data_aporte)+'</td><td class="n">R$ '+F(o.valor_pago)+'</td><td>'+this.d(o.quitado_em)+'</td><td style="color:'+(o.quitado_em<=o.vencimento?'var(--eemerald)':'var(--ered)')+'">'+(o.quitado_em<=o.vencimento?'no prazo':'atraso')+'</td><td><button class="vbtn sm" data-fop="recibo" data-id="'+o.operacao_id+'">Recibo</button></td></tr>').join('')
+      h+='<details class="fop-q"><summary>Pagas · últimas '+this.quitadas.length+'</summary><table class="fop-tb"><thead><tr><th>Nº OP</th><th>Investidor</th><th>Data aporte</th><th>Valor pago</th><th>Pago em</th><th>Prazo</th><th></th></tr></thead><tbody>'
+        +this.quitadas.map(o=>'<tr><td>'+o.numero+'</td><td>'+this.esc(o.investidor)+'</td><td class="mono">'+this.dY(o.data_aporte)+'</td><td class="mono">R$ '+F(o.valor_pago)+'</td><td class="mono">'+this.dY(o.quitado_em)+'</td><td style="color:'+(o.quitado_em<=o.vencimento?'var(--eemerald)':'var(--ered)')+'">'+(o.quitado_em<=o.vencimento?'no prazo':'atraso')+'</td><td><button class="vbtn sm" data-fop="recibo" data-id="'+o.operacao_id+'">Recibo</button></td></tr>').join('')
         +'</tbody></table></details>';
     }
     box.innerHTML=h;
@@ -10954,9 +10955,9 @@ const finOps={
       +'<td data-l="Nº OP"><span class="dot" style="background:'+s[0]+'"></span><b>'+o.numero+'</b> <span class="car">'+(ab?'▾':'▸')+'</span></td>'
       +'<td data-l="Investidor">'+this.esc(o.investidor)+'</td>'
       +'<td data-l="Data aporte" class="mono">'+this.dY(o.data_aporte)+'</td>'
-      +'<td data-l="Valor" class="n">R$ '+F(o.valor_aporte)+'</td>'
-      +'<td data-l="Valor a ser pago" class="n"><b>R$ '+F(o.valor_devido)+'</b></td>'
-      +'<td data-l="Vencimento" class="mono"><b>'+this.wd(o.vencimento)+' '+this.dY(o.vencimento)+'</b><div style="font-size:11px;color:'+vcor+'">'+vtxt+(o.vencimento_acordado?' · combinado':'')+'</div></td></tr>';
+      +'<td data-l="Valor" class="mono">R$ '+F(o.valor_aporte)+'</td>'
+      +'<td data-l="Valor a ser pago" class="mono"><b>R$ '+F(o.valor_devido)+'</b></td>'
+      +'<td data-l="Vencimento" class="mono"><b>'+this.dY(o.vencimento)+'</b></td></tr>';
     if(ab) h+='<tr class="fop-dr" style="--sem:'+s[0]+'"><td colspan="6">'+this.card(o)+'</td></tr>';
     return h;
   },
@@ -11089,7 +11090,7 @@ const finOps={
     const upd={status:'quitada',quitado_em:dt,valor_pago:val};
     if(!o.fechado_em&&+o.n_pedidos>0){ upd.custo_postado=Math.round((+o.custo_postado_atual||0)*100)/100; upd.previsao_inicial_data=o.data_cobertura||null; upd.previsao_inicial_valor=Math.round((+o.valor_previsto_ate_venc||0)*100)/100; }
     try{ const r=await sb.from('ecom_inv_operacao').update(upd).eq('id',o.operacao_id); if(r.error) throw r.error;
-      this.msg='✓ '+o.numero+' quitada · recibo disponível em "Quitadas"'; this.load(); }catch(e){ alert('Erro: '+(e.message||e)); }
+      this.msg='✓ '+o.numero+' paga · recibo disponível em "Pagas"'; this.load(); }catch(e){ alert('Erro: '+(e.message||e)); }
   },
   anular(id){ const o=this.op(id), sl=this.slotOf(id); if(!o||!sl) return; if(sl.innerHTML){ sl.innerHTML=''; return; }
     sl.innerHTML='<div class="fop-form"><div class="efield"><label>Motivo da anulação (a operação não some: fica registrada como anulada)</label><input class="vinput" data-fp="mot" placeholder="ex.: valor digitado errado"></div>'
@@ -11163,7 +11164,7 @@ const finOps={
     await this._saida(doc,'extrato_'+o.numero+'_'+String(o.data_aporte).slice(0,10)+'.pdf','Extrato '+o.numero); },
   async recibo(id){ const o=this.op(id); if(!o||o.status!=='quitada') return; const P=await this._doc('RECIBO DE QUITAÇÃO'); if(!P) return; const F=this.F;
     const rows=[['Operação',o.numero],['Investidor',o.investidor],['Data do aporte',this.dY(o.data_aporte)],['Valor aportado','R$ '+F(o.valor_aporte)],
-      ['Vencimento',this.dY(o.vencimento)],['Valor pago','R$ '+F(o.valor_pago)],['Data do pagamento',this.dY(o.quitado_em)+' ('+this.wdx(o.quitado_em)+')'],['Situação','Quitada']];
+      ['Vencimento',this.dY(o.vencimento)],['Valor pago','R$ '+F(o.valor_pago)],['Data do pagamento',this.dY(o.quitado_em)+' ('+this.wdx(o.quitado_em)+')'],['Situação','Paga']];
     this._kv(P,rows,44,[5,7]);
     await this._saida(P.doc,'recibo_'+o.numero+'.pdf','Recibo '+o.numero); },
   posicao(){ const slot=this._g('fop-slot'); if(!slot) return;
