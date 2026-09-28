@@ -1,3 +1,4 @@
+<!-- BUILD 2026-09-28-B | selecta-banco-preco | FINANCEIRO EM DUAS SUB-ABAS (Igor 28/09: separar para uso e leitura no celular): barra #fin-subbar logo abaixo do titulo — "🌡 Termômetro" (#fin-sub-termo: Canais do mes + Termometro + Conta Mercado Pago, conteudo INTOCADO) e "🤝 Investidor" (#fin-sub-inv: quadrante Operacoes com investidor do 28-A, movido sem mudanca). Default = Termometro; clicar em Investidor recarrega finOps.load(). Padrao .alsubbar/.alsub-btn ja escopado no Financeiro. Zero matematica, zero consulta nova. | base: 2026-09-28-A (md5 a530c6019dc61e369883ac77aa9f61bd) -->
 <!-- BUILD 2026-09-28-A | selecta-banco-preco | OPERACOES COM INVESTIDOR · FASE 1 (decisoes Igor 27-28/09): novo quadrante no Financeiro (#fop-body, modulo finOps) logo abaixo da Conta Mercado Pago. Operacao = aporte do dia = compras = postagens do dia, SO Mercado Livre (Shopee fora por decisao: captura manual x automatica nao se misturam). Devido = aporte x (1+taxa, padrao 5%); inicio = proximo dia util; vencimento = inicio + 15 corridos, fim de semana/feriado nacional (+ Sexta-feira Santa) empurra — calculado UMA vez pelo banco (ecom_fn_inv_vencimento) e congelado por trigger (SQL 25). Tela: faixa de totais (devido em aberto, vence em 7 dias, saldo MP, ja liberado das operacoes, reserva de caixa proprio, SALDO LIVRE p/ compras e saques = saldo MP - liberado reservado - reserva; vermelho se negativo), agenda por vencimento com semaforo (verde coberta / ambar no limite ou pedido em atencao / vermelho descoberta / vencida / aguardando postagem), pedidos da operacao sob demanda, 4 acoes gravaveis: Registrar (preview do vencimento pelo proprio banco), Fechar dia (custo postado + capital proprio + previsao inicial, uma vez), Marcar paga (data+valor, uma vez), Anular (motivo; nunca apaga). PDFs no padrao escuro com logo oficial: extrato (com a regra do prazo e a lista de feriados), recibo de quitacao, posicao POR INVESTIDOR (um investidor nunca ve o outro). Sem produto, pedido ou mencao a sistema nos PDFs. Investidor nao acessa nada (decisao Igor 28/09). TERMOMETRO: juro das operacoes (devido - aporte) entra em Custo financeiro no MES DO APORTE (calcMes.jurosOps soma em jurosMes; anuladas fora) — muda lucOp/lucReal/despTot do mes por desenho; Por mes e Financeiro macro herdam pela mesma funcao. Requer SQL 25 + 25b aplicados; sem eles o quadrante mostra aviso e o Termometro segue integro (fonte degrada para opsInv=null). | base: 2026-09-20-B (md5 b910851908df563ea5ed8157c7ebdd3c) -->
 <!-- BUILD 2026-09-20-B | selecta-banco-preco | REMOCAO DO SUBTITULO DA ABA SHOPEE (Igor 20/09: apagar a linha esub "Canal Shopee · Catalogo unico · tarifas por faixa de preco ... Escrow ShopeePay: liberacao a mao ate a API"). Mudanca so de UI (1 <p class=esub> removido); nenhuma logica tocada. | base: 2026-09-20-A (md5 63a44565fe91296300818f3812155a37, ainda nao publicado — publicar este no lugar) -->
 <!-- BUILD 2026-09-20-A | selecta-banco-preco | EDITAR DO CONTROLE SHOPEE GANHA ITEM ID (Igor 20/09: caso real do cadastro de 19/09 — SEG-0004 com Item ID do MS-0014 colado errado; o caminho "encerrar + recadastrar" do 15-J se provou errado no primeiro uso e a paridade com o Editar do ML entra). (1) Campo Item ID no editbox do Controle, validacao do cadastro (_normItem/_itemValido: numerico 6+). (2) Correcao SO de Item ID nao passa pelo gate de preco (nao ha decisao de margem) e o Salvar nao e travado pela margem vigente quando o form esta igual ao gravado (semAlt no ctlSim); mudou preco/promocao/campanha, gate integral do 15-J. (3) Historico campo='item_id' com de->para no motivo; margem registrada = a do gate ou a vigente (padrao do Encerrar). (4) Erro 23505 do indice uq_shp_anuncio_item com mensagem amigavel (mesma do cadastro). Banco fechado hoje: id16 encerrado, indice uq_shp_anuncio_item criado, shopee_item_id NOT NULL (fechamento false-1-NO-1). margemDe()/tarifa()/calcMes INTOCADAS. | base: 2026-09-15-N (md5 e2d926d994b897e6fa4b938bddc6bbd7, conferido no ar 20/09) -->
@@ -2685,6 +2686,11 @@
 <section id="tab-financeiro" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
     
   <h2 style="font-size:15px;font-weight:700;margin:0 0 12px">💰 Financeiro · leitura macro da empresa</h2>
+  <div class="alsubbar" id="fin-subbar"><!-- BUILD 2026-09-28-B -->
+    <button class="alsub-btn active" data-finsub="termo">🌡 Termômetro</button>
+    <button class="alsub-btn" data-finsub="inv">🤝 Investidor</button>
+  </div>
+  <div id="fin-sub-termo">
   <div class="ecard" style="border-color:var(--eteal)">
     <div class="vd-messel"><button id="fm-prev">‹</button><span class="vd-mes" id="fm-mes">—</span><button id="fm-next">›</button></div>
     <h3>Canais · competência do mês</h3>
@@ -2703,11 +2709,14 @@
         <div style="font-size:11px;color:var(--emuted2);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.06em">Créditos previstos · próximos 7 dias</div>
         <div id="fn-creditos"><div class="ph">carregando…</div></div>
       </div>
-      <div class="ecard" id="fop-card" style="margin-top:18px;border-color:var(--eteal)"><!-- BUILD 2026-09-28-A: Operacoes com investidor (finOps) -->
+      </div><!-- /fin-empresa-body -->
+  </div><!-- /fin-sub-termo -->
+  <div id="fin-sub-inv" style="display:none"><!-- BUILD 2026-09-28-B: sub-aba Investidor -->
+      <div class="ecard" id="fop-card" style="border-color:var(--eteal)"><!-- BUILD 2026-09-28-A: Operacoes com investidor (finOps) -->
         <h3>Operações com investidor</h3>
         <div id="fop-body"><div class="ph">carregando…</div></div>
       </div>
-      </div><!-- /fin-empresa-body -->
+  </div><!-- /fin-sub-inv -->
 </section>
 
 <!-- BUILD 2026-09-15-C: Radar de Nicho promovido a aba principal (rastreador de oportunidades; fonte atual = ML via Edge ml-radar) -->
@@ -11175,6 +11184,14 @@ const finOps={
       else if(a==='fechar-slot'){ const s=this._g('fop-slot'); if(s) s.innerHTML=''; } }); }
 };
 try{ finOps.wire(); }catch(e){ console.error('finOps wire',e); }
+// BUILD 2026-09-28-B: sub-abas do Financeiro (Termometro | Investidor)
+try{ const bar=document.getElementById('fin-subbar');
+  if(bar) bar.addEventListener('click',e=>{ const b=e.target.closest('[data-finsub]'); if(!b) return; const k=b.getAttribute('data-finsub');
+    bar.querySelectorAll('[data-finsub]').forEach(x=>x.classList.toggle('active',x===b));
+    document.getElementById('fin-sub-termo').style.display=k==='termo'?'':'none';
+    document.getElementById('fin-sub-inv').style.display=k==='inv'?'':'none';
+    if(k==='inv'){ try{ finOps.load(); }catch(err){ console.warn('finOps:',err.message); } } });
+}catch(e){ console.error('fin subbar',e); }
 window.finOps = finOps;
 
 </script>
