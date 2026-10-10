@@ -1,3 +1,4 @@
+<!-- BUILD 2026-10-10-A | selecta-banco-preco | VENDAS POR DIA DE ENVIO (Igor 10/10: o ML passou a agendar as postagens e o app somava a fila inteira como compra de hoje). (1) faixa Compras vira UMA LINHA POR DIA DE ENVIO (prazo_postagem em America/Sao_Paulo): pedidos, unidades, custo de compra, lucro previsto e botao PDF da linha; total da fila no cabecalho; dia vencido em vermelho, hoje em ambar, sem data em linha propria. (2) PDF compra passa a ser POR DIA (botao global #vd-pdf-compra removido); documento identico, so o nome do arquivo leva o dia de envio. (3) Pedidos a fechar e Lancadas agrupados sob cabecalho do dia de envio; enviados em bloco proprio no fim. (4) quantidade visivel em Pedidos a fechar (N x) e contagem em unidades no totalizador. Faixa deixa de ler ecom_vw_compras_dia e passa a ser calculada da mesma lista de Pedidos a fechar (uma fonte so). Zero SQL, zero Edge. Base: 2026-09-28-D. -->
 <!-- BUILD 2026-09-28-D | selecta-banco-preco | AJUSTES DE LEITURA (Igor 28/09): (1) barra principal: Catalogo · Importacao · ML · Shopee · 💰 Financeiro · ⚖️ Fiscal · 📡 Radar (Financeiro ao lado da Shopee; Radar ao final). (2) tabela de operacoes: coluna Vencimento so com a data (sem dia da semana e sem contagem de dias); todas as colunas alinhadas a esquerda. (3) "Quitadas" vira "Pagas" na tela (lista, situacao, mensagem) e "Situacao: Paga" no recibo. Zero matematica, zero consulta nova. | base: 2026-09-28-C (md5 3ec7db0c3ff428e86fdcce416227c748) -->
 <!-- BUILD 2026-09-28-C | selecta-banco-preco | INVESTIDOR EM TABELA (Igor 28/09): (1) titulo da aba = "💰 Financeiro" (sai "· leitura macro da empresa"). (2) agenda de operacoes vira TABELA ordenada pelo vencimento mais proximo (desempate aporte e numero): colunas Nº OP / Investidor / Data aporte / Valor / Valor a ser pago / Vencimento; semaforo = ponto colorido no Nº e borda da linha; sob o vencimento, "em N d"/"vence hoje"/"venceu ha N d". Toque na linha abre o detalhe (situacao, pedidos por etapa, liberado, cobertura, reserva, fechamento) e as acoes (Pedidos, Fechar dia, PDF extrato, Marcar paga, Anular) — mesmo conteudo do 28-A, so reorganizado. Celular (<700px): cada linha vira bloco de 2 colunas com rotulo por campo. Quadrantes de totais, quitadas, PDFs e gravacoes INTOCADOS. Zero matematica, zero consulta nova. | base: 2026-09-28-B (md5 5898b2aa38376da6a1daf23ef09938b0) -->
 <!-- BUILD 2026-09-28-B | selecta-banco-preco | FINANCEIRO EM DUAS SUB-ABAS (Igor 28/09: separar para uso e leitura no celular): barra #fin-subbar logo abaixo do titulo — "🌡 Termômetro" (#fin-sub-termo: Canais do mes + Termometro + Conta Mercado Pago, conteudo INTOCADO) e "🤝 Investidor" (#fin-sub-inv: quadrante Operacoes com investidor do 28-A, movido sem mudanca). Default = Termometro; clicar em Investidor recarrega finOps.load(). Padrao .alsubbar/.alsub-btn ja escopado no Financeiro. Zero matematica, zero consulta nova. | base: 2026-09-28-A (md5 a530c6019dc61e369883ac77aa9f61bd) -->
@@ -2361,9 +2362,8 @@
     <!-- ===== SUBPASTA: VENDAS ===== -->
     <div id="ecom-sub-vendas" class="ecom-subpanel" style="display:none">
       <!-- BUILD 2026-08-21-D: Compras do dia + Pedidos a fechar migraram do Painel (Igor 21/08) — o quadro de fechamento (fn-form) mora no fn-list; a fila lista mas nao fecha margem, por isso o bloco veio junto em vez de morrer -->
-      <div class="ecard" style="margin-bottom:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><!-- BUILD 2026-08-25-B: faixa vira flex para abrigar o botao de PDF -->
-        <div id="fn-compras-dia" style="font-size:15px;flex:1;min-width:0"><span class="ph">carregando…</span></div>
-        <button class="vbtn sm" id="vd-pdf-compra" title="PDF para o fornecedor: descrição completa + quantidade dos itens a enviar (sem preço)">📄 PDF compra</button>
+      <div class="ecard" style="margin-bottom:14px;padding:12px 16px"><!-- BUILD 2026-10-10-A: uma linha por dia de envio, PDF por linha -->
+        <div id="fn-compras-dia" style="font-size:15px"><span class="ph">carregando…</span></div>
       </div>
       <div class="ecard" style="margin-bottom:14px">
         <h3>Pedidos a fechar</h3>
@@ -5541,6 +5541,20 @@ const ecomVendas={
   },
   // ===== SEMÁFORO DE ENVIO (BUILD 2026-07-16-B) — compara HOJE com a data local de "Postar até" =====
   _dkey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); },
+  // BUILD 2026-10-10-A: dia de envio = data local (America/Sao_Paulo) do prazo_postagem; '' = sem data
+  _spKey(d){ const o={}; new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).forEach(x=>{ o[x.type]=x.value; }); return o.year+'-'+o.month+'-'+o.day; },
+  diaEnvio(v){ if(!v||!v.prazo_postagem) return ''; const d=new Date(v.prazo_postagem); return isNaN(d.getTime())?'':this._spKey(d); },
+  hojeSP(){ return this._spKey(new Date()); },
+  diaLabel(k){ if(!k) return 'sem data de envio'; const d=new Date(k+'T12:00:00'); return ['dom','seg','ter','qua','qui','sex','s\u00e1b'][d.getDay()]+' '+k.slice(8,10)+'/'+k.slice(5,7); },
+  diaCor(k){ if(!k) return 'var(--eamber)'; const h=this.hojeSP(); return k<h?'var(--ered)':(k===h?'var(--eamber)':'var(--eteal)'); },
+  diaTag(k){ if(!k) return ''; const h=this.hojeSP(); return k<h?' <span class="vpill err">atrasado</span>':(k===h?' <span class="vpill warn">hoje</span>':''); },
+  // agrupa por dia de envio, ordem crescente, sem data por ultimo; a ordem interna de cada dia e a da lista recebida
+  porDia(itens){ const m=new Map(); (itens||[]).forEach(v=>{ const k=this.diaEnvio(v); if(!m.has(k)) m.set(k,[]); m.get(k).push(v); });
+    return [...m.keys()].sort((a,b)=>a===b?0:(a===''?1:(b===''?-1:(a<b?-1:1)))).map(k=>({k:k,itens:m.get(k)})); },
+  unid(arr){ return (arr||[]).reduce((s,v)=>s+Math.max(1,Math.round(+v.quantidade||1)),0); },
+  nPed(arr){ return new Set((arr||[]).map(v=>String(v.ml_pedido_id||v.id))).size; },
+  diaHead(k,arr,extra){ const n=this.nPed(arr), u=this.unid(arr);
+    return '<div class="vd-dia" style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:12px 0 5px;border-bottom:1px solid var(--eborder);font-size:12.5px;color:var(--emuted)"><span style="font-weight:700;font-size:13.5px;color:'+this.diaCor(k)+'">'+this.diaLabel(k)+'</span>'+this.diaTag(k)+'<span>'+n+' pedido'+(n===1?'':'s')+' \u00b7 '+u+' un.'+(extra||'')+'</span></div>'; },
   semaforo(v){
     if(v.status!=='a_enviar') return {bucket:null, pill:'<span class="vpill mut">'+(v.status==='enviado'?'enviado · cronômetro parado':v.status)+'</span>'};
     if(!v.prazo_postagem) return {bucket:'sem', pill:'<span class="vpill mut">sem prazo</span>'};
@@ -5571,7 +5585,8 @@ const ecomVendas={
     const nA=vivos.filter(v=>v.status==='a_enviar').length, nE=vivos.filter(v=>v.status==='enviado').length;
     const soma=vivos.reduce((s,v)=>s+((+v.preco_venda||0)*(+v.quantidade||1)),0);
     const somaOc=oc.reduce((s,v)=>s+((+v.preco_venda||0)*(+v.quantidade||1)),0);
-    let txt=itens.length?(nA+' a enviar · '+nE+' enviado'+(nE===1?'':'s')+' · R$ '+this.fmt(soma)+' aguardando entrega'):'';
+    const uA=this.unid(vivos.filter(v=>v.status==='a_enviar')); // BUILD 2026-10-10-A: unidades a enviar
+    let txt=itens.length?(nA+' a enviar ('+uA+' un.) · '+nE+' enviado'+(nE===1?'':'s')+' · R$ '+this.fmt(soma)+' aguardando entrega'):'';
     if(oc.length) txt+=(txt?' · ':'')+'\u26d4 '+oc.length+' com ocorr\u00eancia · R$ '+this.fmt(somaOc)+' em risco';
     tt.textContent=txt;
   },
@@ -5626,7 +5641,12 @@ const ecomVendas={
   render(itens){ const box=this._g('vd-list'); this.itens=itens;
     if(!itens.length){ box.innerHTML='<div class="ph">nenhuma entrega pendente — tudo com o cliente</div>'; return; }
     const stp={a_enviar:['st-aenv','a enviar'],enviado:['st-env','enviado'],entregue:['st-ent','entregue'],concluido:['st-ent','concluído'],cancelado:['st-can','cancelado'],perda:['st-per','perda']};
-    box.innerHTML=itens.map((v,ix)=>{
+    // BUILD 2026-10-10-A: a enviar agrupado por dia de envio; enviados em bloco proprio no fim
+    const aEnv=itens.filter(v=>v.status==='a_enviar'), outros=itens.filter(v=>v.status!=='a_enviar');
+    const blocos=this.porDia(aEnv).map(g=>({head:this.diaHead(g.k,g.itens),itens:g.itens}));
+    if(outros.length) blocos.push({head:'<div class="vd-dia" style="padding:12px 0 5px;border-bottom:1px solid var(--eborder);font-size:12.5px;color:var(--emuted)"><span style="font-weight:700;font-size:13.5px;color:var(--etxt)">enviados</span> \u00b7 '+outros.length+' aguardando entrega</div>',itens:outros});
+    let ix=-1;
+    const linha=(v)=>{ ix++;
       const dt=new Date(v.data_solicitacao).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       const st=stp[v.status]||['mut',v.status];
       const sem=(v.status==='a_enviar')?this.semaforo(v).pill:'';
@@ -5641,7 +5661,8 @@ const ecomVendas={
         +'<span class="vm" style="margin:0">#'+v.ml_pedido_id+' · '+(v.produto_codigo||'')+' · '+dt+' · '+qtxt+'R$ '+this.fmt(v.preco_venda)+'</span>'
         +(rast?'<span class="vm" style="margin:0;display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">'+rast+'</span>':'')
         +'</div><span class="vpill '+st[0]+'">'+st[1]+'</span>'+sem+selOc+btnPost+'</div></div>';
-    }).join('');
+    };
+    box.innerHTML=blocos.map(b=>b.head+b.itens.map(linha).join('')).join('');
   },
   // BUILD 2026-08-25-B: LISTA DE COMPRA para o fornecedor, no padrao do ORCAMENTO (logo, titulo, linha verde, data, tabela, rodape).
   // Itens A_ENVIAR sem ocorrencia, descricao COMPLETA (nome canonico do catalogo), agrupados por produto com soma de quantidade.
@@ -5653,10 +5674,12 @@ const ecomVendas={
     }catch(e){ this._logoB64=''; }
     return this._logoB64||null;
   },
-  async pdfCompra(){
+  async pdfCompra(dia){ // BUILD 2026-10-10-A: dia = 'AAAA-MM-DD' | 'sem' (sem data de envio) | undefined (fila inteira)
     if(!window.jspdf||!window.jspdf.jsPDF||typeof (new window.jspdf.jsPDF()).autoTable!=='function'){ alert('Biblioteca de PDF ainda carregando. Tente novamente em alguns segundos.'); return; }
-    const base=(this.itens||[]).filter(v=>v.status==='a_enviar'&&!v.ocorrencia);
-    if(!base.length){ alert('Nenhum item a enviar na fila \u2014 nada a comprar.'); return; }
+    const fonte=(typeof ecomFinanceiro!=='undefined'&&Array.isArray(ecomFinanceiro._fila))?ecomFinanceiro._fila:(this.itens||[]);
+    const kDia=(dia===undefined||dia===null)?null:(dia==='sem'?'':String(dia));
+    const base=fonte.filter(v=>(v.status==null||v.status==='a_enviar')&&!v.ocorrencia&&(kDia===null||this.diaEnvio(v)===kDia));
+    if(!base.length){ alert(kDia===null?'Nenhum item a enviar na fila \u2014 nada a comprar.':'Nenhum item a enviar em '+this.diaLabel(kDia)+'.'); return; }
     // descricao completa: nome canonico do catalogo (mesma regra do catNome); fallback = campos da propria venda; SEM_CADASTRO = titulo ML
     const cat={}; const cods=[...new Set(base.map(v=>v.produto_codigo).filter(Boolean))];
     if(cods.length){ try{ const r=await sb.from('ecom_produtos').select('codigo,produto,interface,marca,modelo,capacidade').in('codigo',cods);
@@ -5686,7 +5709,7 @@ const ecomVendas={
       willDrawPage:d=>{ if(d.pageNumber>1) fundo(); },
       // separador desenhado na ULTIMA coluna, no TOPO da linha (as celulas ja estao pintadas; desenhar embaixo seria coberto pelo painel da linha seguinte)
       didDrawCell:d=>{ if(d.column.index!==2||d.section!=='body'||d.row.index===0) return; const y=d.cell.y; doc.setDrawColor(...LINE); doc.setLineWidth(0.25); doc.line(14,y,W-14,y); }});
-    const fname='orcamento_compra_'+dataFile+'.pdf';
+    const fname=kDia===null?('orcamento_compra_'+dataFile+'.pdf'):('orcamento_compra_envio_'+(kDia||'sem-data')+'.pdf');
     // BUILD 2026-08-25-E: em tela de toque, folha nativa de compartilhar (WhatsApp etc.) com o PDF anexado; cancelou ou nao suporta = download normal
     try{ if(window.matchMedia&&matchMedia('(pointer:coarse)').matches&&navigator.share&&navigator.canShare){
       const f=new File([doc.output('blob')],fname,{type:'application/pdf'});
@@ -5725,47 +5748,53 @@ const ecomFinanceiro={
     if(f) f.style.display='none';
     document.querySelectorAll('#fn-list .vli.fn-open').forEach(el=>el.classList.remove('fn-open'));
   },
-  async load(){ this.cur=null; await this.comprasDia(); await this.loadList(); this.termometro(); }, // BUILD 2026-08-25-H: aguarda a faixa antes da lista (lucro previsto e anexado nela)
+  async load(){ this.cur=null; await this.loadList(); this.termometro(); }, // BUILD 2026-10-10-A: a faixa nasce da propria lista // BUILD 2026-08-25-H: aguarda a faixa antes da lista (lucro previsto e anexado nela)
   // BUILD 2026-08-17-A: quadrante de leitura rapida — capital do dia (ecom_vw_compras_dia, somente leitura)
-  async comprasDia(){ const box=this._g('fn-compras-dia'); if(!box) return;
-    try{ const r=await sb.from('ecom_vw_compras_dia').select('pedidos,custo_compra_total,pedidos_sem_custo');
-      if(r.error) throw r.error; const rows=r.data||[];
-      const ped=rows.reduce((s,x)=>s+Number(x.pedidos||0),0);
-      const cap=rows.reduce((s,x)=>s+Number(x.custo_compra_total||0),0);
-      const sc=rows.reduce((s,x)=>s+Number(x.pedidos_sem_custo||0),0);
-      box.innerHTML='<b>Compras do dia:</b> <span class="mono" style="color:var(--eteal);font-size:18px;font-weight:600">R$ '+this.fmt(cap)+'</span> · '+ped+' pedido'+(ped===1?'':'s')+(sc>0?' <span style="color:var(--eamber);font-size:12px">* '+sc+' sem custo (valor subestimado)</span>':'');
-    }catch(e){ box.innerHTML='<span style="color:var(--ered)">erro: '+e.message+'</span>'; }
+  // BUILD 2026-10-10-A: faixa por DIA DE ENVIO, calculada da lista de pedidos a enviar (mesma fonte de Pedidos a fechar e do PDF)
+  comprasDia(itens){ const box=this._g('fn-compras-dia'); if(!box) return;
+    const V=ecomVendas, vivos=(itens||[]).filter(v=>!v.ocorrencia);
+    if(!vivos.length){ box.innerHTML='<b>Compras por dia de envio:</b> <span style="color:var(--emuted)">nenhum pedido a enviar</span>'; return; }
+    const soma=arr=>{ let custo=0, sc=0, luc=0, pend=0; arr.forEach(v=>{ const q=Math.max(1,Math.round(+v.quantidade||1));
+        if(v.custo_unitario==null) sc++; else custo+=(v.custo_total!=null?Number(v.custo_total):Number(v.custo_unitario)*q);
+        const l=this.lucroPedido(v); if(l==null) pend++; else luc+=l; });
+      return {custo:custo,sc:sc,luc:luc,pend:pend,n:V.nPed(arr),u:V.unid(arr)}; };
+    const T=soma(vivos);
+    const lucTxt=x=>'<span class="mono" style="color:'+(x.luc>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(x.luc)+'</span>'+(x.pend>0?' <span style="color:var(--eamber)">* '+x.pend+' sem fechamento</span>':'');
+    let h='<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding-bottom:8px"><b>Compras por dia de envio</b><span style="color:var(--emuted);font-size:12.5px">fila: '+T.n+' pedido'+(T.n===1?'':'s')+' \u00b7 '+T.u+' un. \u00b7 <span class="mono">R$ '+this.fmt(T.custo)+'</span> \u00b7 lucro previsto '+lucTxt(T)+'</span></div>';
+    h+=V.porDia(vivos).map(g=>{ const x=soma(g.itens);
+      return '<div class="fn-dia" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--eborder)">'
+        +'<span style="min-width:92px;font-weight:700;color:'+V.diaCor(g.k)+'">'+V.diaLabel(g.k)+'</span>'+V.diaTag(g.k)
+        +'<span class="mono" style="color:var(--eteal);font-size:17px;font-weight:600">R$ '+this.fmt(x.custo)+'</span>'
+        +'<span style="flex:1;min-width:150px;color:var(--emuted);font-size:12.5px">'+x.n+' pedido'+(x.n===1?'':'s')+' \u00b7 '+x.u+' un. \u00b7 lucro '+lucTxt(x)+(x.sc>0?' <span style="color:var(--eamber)">* '+x.sc+' sem custo (valor subestimado)</span>':'')+'</span>'
+        +'<button class="vbtn sm" data-pdfdia="'+(g.k||'sem')+'" title="PDF para o fornecedor: s\u00f3 os itens deste dia de envio (descri\u00e7\u00e3o + quantidade, sem pre\u00e7o)">\ud83d\udcc4 PDF</button></div>'; }).join('');
+    box.innerHTML=h;
   },
   async loadList(){ const box=this._g('fn-list');
-    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,marca,modelo,preco_venda,quantidade,comissao_valor,tarifa_fixa_valor,frete_valor,frete_onus,custo_unitario').eq('status','a_enviar').order('data_solicitacao',{ascending:false});
-      if(r.error) throw r.error; const itens=r.data||[];
+    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,marca,modelo,preco_venda,quantidade,comissao_valor,tarifa_fixa_valor,frete_valor,frete_onus,custo_unitario,custo_total,prazo_postagem,ocorrencia,data_solicitacao').eq('status','a_enviar').order('data_solicitacao',{ascending:false});
+      if(r.error) throw r.error; const itens=r.data||[]; this._fila=itens; // BUILD 2026-10-10-A: fonte unica da faixa, da lista e do PDF por dia
       // BUILD 2026-08-25-H: descricao canonica do catalogo (mesma regra do pdfCompra) para leitura/cotacao
       this._cat={}; const cods=[...new Set(itens.map(v=>v.produto_codigo).filter(Boolean))];
       if(cods.length){ try{ const q=await sb.from('ecom_produtos').select('codigo,produto,interface,marca,modelo,capacidade').in('codigo',cods);
         if(!q.error) (q.data||[]).forEach(p=>{ if(p.codigo) this._cat[p.codigo]=[p.produto,p.interface,p.marca,p.modelo,p.capacidade].filter(Boolean).join(' '); }); }catch(_e){} }
-      this.renderList(itens); this.lucroDia(itens);
-    }catch(e){ this.parkForm(); box.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
+      this.renderList(itens); this.comprasDia(itens);
+    }catch(e){ this.parkForm(); box.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; const fx=this._g('fn-compras-dia'); if(fx) fx.innerHTML='<span style="color:var(--ered)">erro: '+e.message+'</span>'; }
   },
   // BUILD 2026-08-25-H: lucro real de UM pedido — copia fiel do recalc() (receita - taxas ML - custo - colchao 6% - imposto 4%); null se faltar comissao ou custo
   lucroPedido(v){ const com=v.comissao_valor!=null?Number(v.comissao_valor):null, cus=v.custo_unitario!=null?Number(v.custo_unitario):null; if(com==null||cus==null||isNaN(com)||isNaN(cus)) return null;
     const P=Number(v.preco_venda)||0, Q=Number(v.quantidade)||1, tar=Number(v.tarifa_fixa_valor)||0, fre=((v.frete_onus||'vendedor')==='vendedor')?(Number(v.frete_valor)||0):0;
     const r2=x=>Math.round(x*100)/100; const rec=P*Q, tax=com+tar+fre, cusT=cus*Q, imp=r2(rec*this.FIXOS.IMPOSTO), colch=r2(rec*this.FIXOS.COLCHAO); // BUILD 2026-08-26-K: FIXOS em vez de literais
     return r2(rec-tax-cusT-colch-imp); },
-  // BUILD 2026-08-25-H: soma do lucro real dos pedidos a_enviar, anexada a faixa Compras do dia
-  lucroDia(itens){ const box=this._g('fn-compras-dia'); if(!box) return; const old=box.querySelector('#fn-lucro-dia'); if(old) old.remove();
-    let soma=0, n=0, pend=0; (itens||[]).forEach(v=>{ const l=this.lucroPedido(v); if(l==null){ pend++; return; } soma+=l; n++; });
-    if(!n&&!pend) return; const sp=document.createElement('span'); sp.id='fn-lucro-dia';
-    sp.innerHTML=' · lucro previsto <span class="mono" style="color:'+(soma>=0?'var(--eemerald)':'var(--ered)')+';font-size:18px;font-weight:600">R$ '+this.fmt(soma)+'</span>'+(pend>0?' <span style="color:var(--eamber);font-size:12px">* '+pend+' sem fechamento (fora da soma)</span>':'');
-    box.appendChild(sp); },
   renderList(itens){ this.parkForm(); const box=this._g('fn-list');
     if(!itens.length){ box.innerHTML='<div class="ph">sem pedidos a fechar</div>'; return; }
     const cat=this._cat||{};
-    box.innerHTML=itens.map(v=>{ const ok=v.comissao_valor!=null&&v.custo_unitario!=null;
+    // BUILD 2026-10-10-A: agrupado por dia de envio + quantidade visivel
+    const linha=v=>{ const ok=v.comissao_valor!=null&&v.custo_unitario!=null; const q=Math.max(1,Math.round(+v.quantidade||1)); const qtxt=q>1?'<b style="color:var(--eamber)">'+q+'\u00d7</b> ':'';
       // BUILD 2026-08-25-H: SKU ao lado do MLB + descricao canonica de compra
       const sku=v.produto_codigo?'<span style="color:var(--eteal)">'+v.produto_codigo+'</span>':'<span style="color:var(--eamber)">sem SKU</span>';
       const desc=(v.produto_codigo&&cat[v.produto_codigo])||[v.produto,v.marca,v.modelo].filter(Boolean).join(' ')||'';
-      return '<div data-fwrap="'+v.id+'"><div class="vli" style="cursor:pointer" data-fid="'+v.id+'"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · '+sku+' · R$ '+this.fmt(v.preco_venda)+'</div>'+(desc?'<div class="vm" style="color:var(--emuted);font-size:12px">compra: '+desc+'</div>':'')+'</div><span class="vpill '+(ok?'ok':'warn')+'">'+(ok?'completo':'pendente')+'</span></div></div>';
-    }).join('');
+      return '<div data-fwrap="'+v.id+'"><div class="vli" style="cursor:pointer" data-fid="'+v.id+'"><div class="vmain"><div class="vp">'+v.produto+'</div><div class="vm">#'+v.ml_pedido_id+' · '+sku+' · '+qtxt+'R$ '+this.fmt(v.preco_venda)+'</div>'+(desc?'<div class="vm" style="color:var(--emuted);font-size:12px">compra: '+qtxt+desc+'</div>':'')+'</div><span class="vpill '+(ok?'ok':'warn')+'">'+(ok?'completo':'pendente')+'</span></div></div>';
+    };
+    box.innerHTML=ecomVendas.porDia(itens).map(g=>ecomVendas.diaHead(g.k,g.itens)+g.itens.map(linha).join('')).join('');
   },
   async selecionar(id){
     const f=this._g('fn-form');
@@ -8295,6 +8324,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   if(list) list.addEventListener('click',e=>{ const it=e.target.closest('[data-fid]'); if(it) ecomFinanceiro.selecionar(it.dataset.fid); });
   ['fn-com','fn-tar','fn-fre','fn-cus','fn-onus'].forEach(id=>{ const el=ecomFinanceiro._g(id); if(el){ el.addEventListener('input',()=>ecomFinanceiro.recalc()); el.addEventListener('change',()=>ecomFinanceiro.recalc()); } });
   const sv=ecomFinanceiro._g('fn-save'); if(sv) sv.addEventListener('click',()=>ecomFinanceiro.fechar());
+  const fx=ecomFinanceiro._g('fn-compras-dia'); if(fx) fx.addEventListener('click',e=>{ const b=e.target.closest('[data-pdfdia]'); if(b) ecomVendas.pdfCompra(b.dataset.pdfdia); }); // BUILD 2026-10-10-A
 })();
 (function(){
   const cod=ecomVendas._g('vd-cod'); if(cod) cod.addEventListener('input',()=>ecomVendas.lookup());
