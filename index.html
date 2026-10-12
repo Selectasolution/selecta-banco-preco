@@ -1,3 +1,4 @@
+<!-- BUILD 2026-10-12-A | selecta-banco-preco | VENDAS REORGANIZADA (Igor 12/10, sobre 10-A): (1) aba Vendas abre com o quadro "Vendas dia" (#vd-dia): Vendas / Unidades / Faturamento / Lucro / Margem media das vendas feitas HOJE (data da venda em America/Sao_Paulo, zera a meia-noite; cancelado fora; venda = pack do ML quando houver, como o painel do ML conta). (2) segundo quadro "Compras / envio dia": linhas numeradas por dia de envio com unidades, valor de compra, lucro do dia e PDF da linha (itens so no PDF). (3) quadros "Pedidos a fechar" e "Lancar venda" ocultos (Igor: tudo vem do ML; ids preservados, fechamento manual sai da tela). (4) NOVA sub-aba Rastreios (Alvo / Vendas / Rastreios / Relatorios) recebe o quadro Lancadas como estava. (5) ao voltar ao app (visibilitychange) a aba aberta recarrega, para o "hoje" virar sozinho. Zero SQL, zero Edge. -->
 <!-- BUILD 2026-10-10-A | selecta-banco-preco | VENDAS POR DIA DE ENVIO (Igor 10/10: o ML passou a agendar as postagens e o app somava a fila inteira como compra de hoje). (1) faixa Compras vira UMA LINHA POR DIA DE ENVIO (prazo_postagem em America/Sao_Paulo): pedidos, unidades, custo de compra, lucro previsto e botao PDF da linha; total da fila no cabecalho; dia vencido em vermelho, hoje em ambar, sem data em linha propria. (2) PDF compra passa a ser POR DIA (botao global #vd-pdf-compra removido); documento identico, so o nome do arquivo leva o dia de envio. (3) Pedidos a fechar e Lancadas agrupados sob cabecalho do dia de envio; enviados em bloco proprio no fim. (4) quantidade visivel em Pedidos a fechar (N x) e contagem em unidades no totalizador. Faixa deixa de ler ecom_vw_compras_dia e passa a ser calculada da mesma lista de Pedidos a fechar (uma fonte so). Zero SQL, zero Edge. Base: 2026-09-28-D. -->
 <!-- BUILD 2026-09-28-D | selecta-banco-preco | AJUSTES DE LEITURA (Igor 28/09): (1) barra principal: Catalogo · Importacao · ML · Shopee · 💰 Financeiro · ⚖️ Fiscal · 📡 Radar (Financeiro ao lado da Shopee; Radar ao final). (2) tabela de operacoes: coluna Vencimento so com a data (sem dia da semana e sem contagem de dias); todas as colunas alinhadas a esquerda. (3) "Quitadas" vira "Pagas" na tela (lista, situacao, mensagem) e "Situacao: Paga" no recibo. Zero matematica, zero consulta nova. | base: 2026-09-28-C (md5 3ec7db0c3ff428e86fdcce416227c748) -->
 <!-- BUILD 2026-09-28-C | selecta-banco-preco | INVESTIDOR EM TABELA (Igor 28/09): (1) titulo da aba = "💰 Financeiro" (sai "· leitura macro da empresa"). (2) agenda de operacoes vira TABELA ordenada pelo vencimento mais proximo (desempate aporte e numero): colunas Nº OP / Investidor / Data aporte / Valor / Valor a ser pago / Vencimento; semaforo = ponto colorido no Nº e borda da linha; sob o vencimento, "em N d"/"vence hoje"/"venceu ha N d". Toque na linha abre o detalhe (situacao, pedidos por etapa, liberado, cobertura, reserva, fechamento) e as acoes (Pedidos, Fechar dia, PDF extrato, Marcar paga, Anular) — mesmo conteudo do 28-A, so reorganizado. Celular (<700px): cada linha vira bloco de 2 colunas com rotulo por campo. Quadrantes de totais, quitadas, PDFs e gravacoes INTOCADOS. Zero matematica, zero consulta nova. | base: 2026-09-28-B (md5 5898b2aa38376da6a1daf23ef09938b0) -->
@@ -2298,6 +2299,36 @@
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vbtn.sm[disabled]{opacity:.45;cursor:not-allowed;border-color:var(--eborder)}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vbtn.sm[disabled]:hover{border-color:var(--eborder)}
 .ecom-subpanel .ecard>h3{color:var(--eemerald)}
+/* BUILD 2026-10-12-A: Vendas dia + Compras/envio dia */
+.vd-tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.vd-tile{background:var(--epanel2);border:1px solid var(--eborder);border-radius:10px;padding:10px 12px;min-width:0}
+.vd-tile .k{font-size:11px;color:var(--emuted);text-transform:uppercase;letter-spacing:.04em}
+.vd-tile .v{font-family:var(--emono);font-size:22px;font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vd-tile .n{font-size:11px;color:var(--eamber);margin-top:2px}
+.fn-dia,.fn-dia-head{display:grid;grid-template-columns:30px 200px 70px 150px 150px 1fr;gap:12px;align-items:center}
+.fn-dia{padding:8px 0;border-top:1px solid var(--eborder);font-size:14px}
+.fn-dia-head{padding:0 0 6px;font-size:11px;color:var(--emuted);text-transform:uppercase;letter-spacing:.04em}
+.fn-dia-head span:nth-child(3),.fn-dia-head span:nth-child(4),.fn-dia-head span:nth-child(5){text-align:right}
+.fn-dia .ix{color:var(--emuted2);font-family:var(--emono);font-size:13px}
+.fn-dia .un,.fn-dia .cp,.fn-dia .lc{font-family:var(--emono);text-align:right;white-space:nowrap}
+.fn-dia .pdf{justify-self:end}
+.fn-dia .k{display:none}
+@media (max-width:760px){
+  .vd-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .vd-tiles .vd-tile:last-child{grid-column:1 / -1}
+  .vd-tile .v{font-size:20px}
+  .fn-dia-head{display:none}
+  .fn-dia{grid-template-columns:22px 44px 1fr 1fr;grid-template-areas:"ix dia dia pdf" ". un cp lc";gap:2px 8px;padding:8px 0;font-size:13px}
+  .fn-dia .ix{grid-area:ix}
+  .fn-dia .dia{grid-area:dia}
+  .fn-dia .pdf{grid-area:pdf;padding:4px 10px}
+  .fn-dia .un{grid-area:un}
+  .fn-dia .cp{grid-area:cp}
+  .fn-dia .lc{grid-area:lc}
+  .fn-dia .un,.fn-dia .cp,.fn-dia .lc{text-align:left}
+  .fn-dia .k{display:block;font-family:inherit;font-size:10px;color:var(--emuted);text-transform:uppercase;letter-spacing:.03em}
+}
+
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rp-idxrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
     @media(max-width:900px){:is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rp-idxrow{grid-template-columns:repeat(2,1fr)}}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rp-idx{background:var(--epanel);border:1px solid var(--eborder);border-radius:10px;padding:13px}
@@ -2342,6 +2373,7 @@
     <div class="ecom-subnav">
       <button class="ecom-subtab alvo active" data-sub="alvo">🎯 Alvo</button>
       <button class="ecom-subtab" data-sub="vendas">Vendas</button>
+      <button class="ecom-subtab" data-sub="rastreios">Rastreios</button><!-- BUILD 2026-10-12-A -->
       <button class="ecom-subtab" data-sub="relatorios">Relatórios</button>
     </div>
     <!-- BUILD 2026-08-21-E: modal unico padrao Selecta (recuperavel + despesas op). DENTRO do #tab-ecommerce de proposito: o CSS da casa (.vinput/.vbtn/.efield) e escopado por aba — o modal do 21-C nascia em document.body, FORA do escopo, por isso saiu sem estilo e com input quebrado. -->
@@ -2362,10 +2394,15 @@
     <!-- ===== SUBPASTA: VENDAS ===== -->
     <div id="ecom-sub-vendas" class="ecom-subpanel" style="display:none">
       <!-- BUILD 2026-08-21-D: Compras do dia + Pedidos a fechar migraram do Painel (Igor 21/08) — o quadro de fechamento (fn-form) mora no fn-list; a fila lista mas nao fecha margem, por isso o bloco veio junto em vez de morrer -->
-      <div class="ecard" style="margin-bottom:14px;padding:12px 16px"><!-- BUILD 2026-10-10-A: uma linha por dia de envio, PDF por linha -->
+      <div class="ecard" style="margin-bottom:14px"><!-- BUILD 2026-10-12-A: vendas feitas hoje, zera a meia-noite -->
+        <h3>Vendas dia <span id="vd-dia-data" style="color:var(--emuted);font-weight:400;font-size:12px;text-transform:none;letter-spacing:0"></span></h3>
+        <div id="vd-dia" class="vd-tiles"><div class="ph">carregando…</div></div>
+      </div>
+      <div class="ecard" style="margin-bottom:14px"><!-- BUILD 2026-10-10-A / 12-A: uma linha por dia de envio, PDF por linha -->
+        <h3>Compras / envio dia</h3>
         <div id="fn-compras-dia" style="font-size:15px"><span class="ph">carregando…</span></div>
       </div>
-      <div class="ecard" style="margin-bottom:14px">
+      <div class="ecard" style="margin-bottom:14px;display:none"><!-- BUILD 2026-10-12-A: oculto (Igor: tudo vem do ML); a lista segue alimentando a faixa e o PDF -->
         <h3>Pedidos a fechar</h3>
         <div id="fn-list"><div class="ph">carregando…</div></div>
       </div>
@@ -2387,7 +2424,7 @@
           <div class="vmsg" id="fn-msg"></div>
         </div>
       </div>
-      <div class="ecard vform" style="margin-bottom:14px">
+      <div class="ecard vform" style="margin-bottom:14px;display:none"><!-- BUILD 2026-10-12-A: oculto — nao existe venda manual, tudo vem do ML (ids preservados) -->
         <!-- BUILD 2026-08-17-C: Lancar venda COLAPSADO por padrao (lancamento manual = excecao; automatico via ml-orders) -->
         <h3 id="vd-form-toggle" style="cursor:pointer;user-select:none;margin-bottom:0">Lançar venda <span id="vd-form-caret" style="color:var(--emuted);font-weight:400;font-size:12px;text-transform:none;letter-spacing:0">▸ manual — clique para abrir</span></h3>
         <div id="vd-form-body" style="display:none;margin-top:12px">
@@ -2420,6 +2457,10 @@
         <div class="vmsg" id="vd-msg"></div>
         </div><!-- /vd-form-body -->
       </div>
+    </div>
+
+    <!-- BUILD 2026-10-12-A: SUBPASTA RASTREIOS — recebe o quadro Lancadas como estava (a enviar, enviados, em transito) -->
+    <div id="ecom-sub-rastreios" class="ecom-subpanel" style="display:none">
       <div class="ecard">
         <h3>Lançadas</h3>
         <div class="vd-messel"><!-- BUILD 2026-08-17-D: fila de PENDENTES DE ENTREGA — seletor de mes oculto (ids preservados), historico mensal vive em Relatorios -->
@@ -5750,24 +5791,41 @@ const ecomFinanceiro={
   },
   async load(){ this.cur=null; await this.loadList(); this.termometro(); }, // BUILD 2026-10-10-A: a faixa nasce da propria lista // BUILD 2026-08-25-H: aguarda a faixa antes da lista (lucro previsto e anexado nela)
   // BUILD 2026-08-17-A: quadrante de leitura rapida — capital do dia (ecom_vw_compras_dia, somente leitura)
-  // BUILD 2026-10-10-A: faixa por DIA DE ENVIO, calculada da lista de pedidos a enviar (mesma fonte de Pedidos a fechar e do PDF)
+  // BUILD 2026-10-10-A / 12-A: Compras / envio dia — linha numerada por dia de envio: unidades, compra, lucro do dia, PDF (itens so no PDF)
   comprasDia(itens){ const box=this._g('fn-compras-dia'); if(!box) return;
     const V=ecomVendas, vivos=(itens||[]).filter(v=>!v.ocorrencia);
-    if(!vivos.length){ box.innerHTML='<b>Compras por dia de envio:</b> <span style="color:var(--emuted)">nenhum pedido a enviar</span>'; return; }
+    if(!vivos.length){ box.innerHTML='<div class="ph">nenhum pedido a enviar</div>'; return; }
     const soma=arr=>{ let custo=0, sc=0, luc=0, pend=0; arr.forEach(v=>{ const q=Math.max(1,Math.round(+v.quantidade||1));
         if(v.custo_unitario==null) sc++; else custo+=(v.custo_total!=null?Number(v.custo_total):Number(v.custo_unitario)*q);
         const l=this.lucroPedido(v); if(l==null) pend++; else luc+=l; });
-      return {custo:custo,sc:sc,luc:luc,pend:pend,n:V.nPed(arr),u:V.unid(arr)}; };
-    const T=soma(vivos);
-    const lucTxt=x=>'<span class="mono" style="color:'+(x.luc>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(x.luc)+'</span>'+(x.pend>0?' <span style="color:var(--eamber)">* '+x.pend+' sem fechamento</span>':'');
-    let h='<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding-bottom:8px"><b>Compras por dia de envio</b><span style="color:var(--emuted);font-size:12.5px">fila: '+T.n+' pedido'+(T.n===1?'':'s')+' \u00b7 '+T.u+' un. \u00b7 <span class="mono">R$ '+this.fmt(T.custo)+'</span> \u00b7 lucro previsto '+lucTxt(T)+'</span></div>';
-    h+=V.porDia(vivos).map(g=>{ const x=soma(g.itens);
-      return '<div class="fn-dia" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--eborder)">'
-        +'<span style="min-width:92px;font-weight:700;color:'+V.diaCor(g.k)+'">'+V.diaLabel(g.k)+'</span>'+V.diaTag(g.k)
-        +'<span class="mono" style="color:var(--eteal);font-size:17px;font-weight:600">R$ '+this.fmt(x.custo)+'</span>'
-        +'<span style="flex:1;min-width:150px;color:var(--emuted);font-size:12.5px">'+x.n+' pedido'+(x.n===1?'':'s')+' \u00b7 '+x.u+' un. \u00b7 lucro '+lucTxt(x)+(x.sc>0?' <span style="color:var(--eamber)">* '+x.sc+' sem custo (valor subestimado)</span>':'')+'</span>'
-        +'<button class="vbtn sm" data-pdfdia="'+(g.k||'sem')+'" title="PDF para o fornecedor: s\u00f3 os itens deste dia de envio (descri\u00e7\u00e3o + quantidade, sem pre\u00e7o)">\ud83d\udcc4 PDF</button></div>'; }).join('');
+      return {custo:custo,sc:sc,luc:luc,pend:pend,u:V.unid(arr)}; };
+    let h='<div class="fn-dia-head"><span>#</span><span>envio</span><span>un.</span><span>compra</span><span>lucro do dia</span><span></span></div>';
+    h+=V.porDia(vivos).map((g,ix)=>{ const x=soma(g.itens);
+      return '<div class="fn-dia">'
+        +'<span class="ix">'+(ix+1)+'.</span>'
+        +'<span class="dia" style="font-weight:700;color:'+V.diaCor(g.k)+'">'+V.diaLabel(g.k)+V.diaTag(g.k)+'</span>'
+        +'<span class="un"><span class="k">un.</span><span>'+x.u+'</span></span>'
+        +'<span class="cp"><span class="k">compra</span><span style="color:var(--eteal);font-weight:600">R$ '+this.fmt(x.custo)+(x.sc>0?' <span style="color:var(--eamber)" title="'+x.sc+' item(ns) sem custo no cat\u00e1logo \u2014 valor subestimado">*</span>':'')+'</span></span>'
+        +'<span class="lc"><span class="k">lucro do dia</span><span style="color:'+(x.luc>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(x.luc)+(x.pend>0?' <span style="color:var(--eamber)" title="'+x.pend+' item(ns) sem comiss\u00e3o ou custo \u2014 fora da soma">*</span>':'')+'</span></span>'
+        +'<button class="vbtn sm pdf" data-pdfdia="'+(g.k||'sem')+'" title="PDF para o fornecedor: itens deste dia de envio (descri\u00e7\u00e3o + quantidade, sem pre\u00e7o)">\ud83d\udcc4 PDF</button></div>'; }).join('');
     box.innerHTML=h;
+  },
+  // BUILD 2026-10-12-A: Vendas dia — vendas feitas HOJE (data da venda em Brasilia); zera a meia-noite; cancelado fora
+  async vendasDia(){ const box=this._g('vd-dia'); if(!box) return; const V=ecomVendas; const hoje=V.hojeSP();
+    const lb=this._g('vd-dia-data'); if(lb) lb.textContent=V.diaLabel(hoje);
+    try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,ml_pack_id,preco_venda,quantidade,comissao_valor,tarifa_fixa_valor,frete_valor,frete_onus,custo_unitario,status,data_solicitacao')
+        .gte('data_solicitacao',hoje+'T00:00:00-03:00').order('data_solicitacao',{ascending:false});
+      if(r.error) throw r.error;
+      const itens=(r.data||[]).filter(v=>v.status!=='cancelado'&&V._spKey(new Date(v.data_solicitacao))===hoje);
+      const vendas=new Set(itens.map(v=>String(v.ml_pack_id||v.ml_pedido_id||v.id))).size, un=V.unid(itens);
+      let fat=0, fatL=0, luc=0, pend=0; itens.forEach(v=>{ const rec=(Number(v.preco_venda)||0)*(Number(v.quantidade)||1); fat+=rec; const l=this.lucroPedido(v); if(l==null){ pend++; return; } luc+=l; fatL+=rec; });
+      const mar=fatL>0?luc/fatL*100:null;
+      const tile=(k,v,cor,nota)=>'<div class="vd-tile"><div class="k">'+k+'</div><div class="v"'+(cor?' style="color:'+cor+'"':'')+'>'+v+'</div>'+(nota?'<div class="n">'+nota+'</div>':'')+'</div>';
+      const nP=pend>0?'* '+pend+' sem custo/comiss\u00e3o':'';
+      box.innerHTML=tile('Vendas',String(vendas))+tile('Unidades',String(un))+tile('Faturamento','R$ '+this.fmt(fat),'var(--eteal)')
+        +tile('Lucro','R$ '+this.fmt(luc),luc>=0?'var(--eemerald)':'var(--ered)',nP)
+        +tile('Margem m\u00e9dia',mar==null?'\u2014':mar.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%',mar==null?null:(mar>=10?'var(--eemerald)':'var(--eamber)'),nP);
+    }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; }
   },
   async loadList(){ const box=this._g('fn-list');
     try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,marca,modelo,preco_venda,quantidade,comissao_valor,tarifa_fixa_valor,frete_valor,frete_onus,custo_unitario,custo_total,prazo_postagem,ocorrencia,data_solicitacao').eq('status','a_enviar').order('data_solicitacao',{ascending:false});
@@ -8262,7 +8320,8 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   $$('.ecom-subtab').forEach(x=>x.classList.toggle('active',x===b));
   const sub=b.dataset.sub;
   $$('#tab-ecommerce .ecom-subpanel').forEach(p=>{ p.style.display=(p.id==='ecom-sub-'+sub)?'':'none'; }); // BUILD 2026-08-08-C: escopo restrito — Consulta Produto vive na aba Catálogo
-  if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value){ dt.value=ecomVendas.nowLocal(); } ecomVendas.calcPostarAte(); ecomVendas.loaded=true; ecomVendas.load(); ecomFinanceiro.load(); } // BUILD 2026-08-21-D: Compras do dia + Pedidos a fechar moram em Vendas
+  if(sub==='vendas'){ const dt=ecomVendas._g('vd-dt'); if(dt&&!dt.value){ dt.value=ecomVendas.nowLocal(); } ecomVendas.calcPostarAte(); ecomVendas.loaded=true; ecomVendas.load(); ecomFinanceiro.load(); ecomFinanceiro.vendasDia(); } // BUILD 2026-08-21-D / 2026-10-12-A: Vendas dia + Compras/envio dia
+  if(sub==='rastreios'){ ecomVendas.loaded=true; ecomVendas.load(); } // BUILD 2026-10-12-A: Lancadas mora em Rastreios
   if(sub==='relatorios'){ ecomRelatorios.load(); mlCanalTermo.render(); } // BUILD 2026-09-15-E // BUILD 2026-08-21-D: Painel = so resumo do mes; operacao diaria mora em Vendas
   if(sub==='alvo'){ ecomAlvo.load(); }
 }));
@@ -8325,6 +8384,11 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   ['fn-com','fn-tar','fn-fre','fn-cus','fn-onus'].forEach(id=>{ const el=ecomFinanceiro._g(id); if(el){ el.addEventListener('input',()=>ecomFinanceiro.recalc()); el.addEventListener('change',()=>ecomFinanceiro.recalc()); } });
   const sv=ecomFinanceiro._g('fn-save'); if(sv) sv.addEventListener('click',()=>ecomFinanceiro.fechar());
   const fx=ecomFinanceiro._g('fn-compras-dia'); if(fx) fx.addEventListener('click',e=>{ const b=e.target.closest('[data-pdfdia]'); if(b) ecomVendas.pdfCompra(b.dataset.pdfdia); }); // BUILD 2026-10-10-A
+  // BUILD 2026-10-12-A: ao voltar ao app, a sub-aba aberta recarrega (o "hoje" vira sozinho apos a meia-noite)
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible') return;
+    const pv=document.getElementById('ecom-sub-vendas'), pr=document.getElementById('ecom-sub-rastreios');
+    if(pv&&pv.style.display!=='none'&&pv.offsetParent!==null){ ecomFinanceiro.load(); ecomFinanceiro.vendasDia(); }
+    if(pr&&pr.style.display!=='none'&&pr.offsetParent!==null){ ecomVendas.load(); } });
 })();
 (function(){
   const cod=ecomVendas._g('vd-cod'); if(cod) cod.addEventListener('input',()=>ecomVendas.lookup());
