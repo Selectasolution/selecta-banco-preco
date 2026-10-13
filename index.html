@@ -1,3 +1,4 @@
+<!-- BUILD 2026-10-13-A | selecta-banco-preco | RASTREIOS EM DUAS SUB-ABAS (Igor 13/10, sobre 12-A): barra #vd-rastbar "A enviar" (status a_enviar, agrupado por dia de envio, botao postado) e "Enviadas" (status enviado: rastreio, ocorrencia, ordem pela data de postagem mais recente); contador em cada botao; pedido postado (botao postado ou sincronizacao do ML) sai de A enviar e entra em Enviadas no mesmo recarregamento; entregue continua saindo para o Historico. Um so #vd-list (handlers de postado/ocorrencia intocados), filtrado por ecomVendas.modo. Zero SQL, zero Edge. -->
 <!-- BUILD 2026-10-12-A | selecta-banco-preco | VENDAS REORGANIZADA (Igor 12/10, sobre 10-A): (1) aba Vendas abre com o quadro "Vendas dia" (#vd-dia): Vendas / Unidades / Faturamento / Lucro / Margem media das vendas feitas HOJE (data da venda em America/Sao_Paulo, zera a meia-noite; cancelado fora; venda = pack do ML quando houver, como o painel do ML conta). (2) segundo quadro "Compras / envio dia": linhas numeradas por dia de envio com unidades, valor de compra, lucro do dia e PDF da linha (itens so no PDF). (3) quadros "Pedidos a fechar" e "Lancar venda" ocultos (Igor: tudo vem do ML; ids preservados, fechamento manual sai da tela). (4) NOVA sub-aba Rastreios (Alvo / Vendas / Rastreios / Relatorios) recebe o quadro Lancadas como estava. (5) ao voltar ao app (visibilitychange) a aba aberta recarrega, para o "hoje" virar sozinho. Zero SQL, zero Edge. -->
 <!-- BUILD 2026-10-10-A | selecta-banco-preco | VENDAS POR DIA DE ENVIO (Igor 10/10: o ML passou a agendar as postagens e o app somava a fila inteira como compra de hoje). (1) faixa Compras vira UMA LINHA POR DIA DE ENVIO (prazo_postagem em America/Sao_Paulo): pedidos, unidades, custo de compra, lucro previsto e botao PDF da linha; total da fila no cabecalho; dia vencido em vermelho, hoje em ambar, sem data em linha propria. (2) PDF compra passa a ser POR DIA (botao global #vd-pdf-compra removido); documento identico, so o nome do arquivo leva o dia de envio. (3) Pedidos a fechar e Lancadas agrupados sob cabecalho do dia de envio; enviados em bloco proprio no fim. (4) quantidade visivel em Pedidos a fechar (N x) e contagem em unidades no totalizador. Faixa deixa de ler ecom_vw_compras_dia e passa a ser calculada da mesma lista de Pedidos a fechar (uma fonte so). Zero SQL, zero Edge. Base: 2026-09-28-D. -->
 <!-- BUILD 2026-09-28-D | selecta-banco-preco | AJUSTES DE LEITURA (Igor 28/09): (1) barra principal: Catalogo · Importacao · ML · Shopee · 💰 Financeiro · ⚖️ Fiscal · 📡 Radar (Financeiro ao lado da Shopee; Radar ao final). (2) tabela de operacoes: coluna Vencimento so com a data (sem dia da semana e sem contagem de dias); todas as colunas alinhadas a esquerda. (3) "Quitadas" vira "Pagas" na tela (lista, situacao, mensagem) e "Situacao: Paga" no recibo. Zero matematica, zero consulta nova. | base: 2026-09-28-C (md5 3ec7db0c3ff428e86fdcce416227c748) -->
@@ -2461,8 +2462,12 @@
 
     <!-- BUILD 2026-10-12-A: SUBPASTA RASTREIOS — recebe o quadro Lancadas como estava (a enviar, enviados, em transito) -->
     <div id="ecom-sub-rastreios" class="ecom-subpanel" style="display:none">
+      <div class="alsubbar" id="vd-rastbar" style="margin:0 0 14px"><!-- BUILD 2026-10-13-A -->
+        <button class="alsub-btn active" data-vrast="aenviar">📦 A enviar <span id="vd-cnt-aenv" class="mono"></span></button>
+        <button class="alsub-btn" data-vrast="enviadas">🚚 Enviadas <span id="vd-cnt-env" class="mono"></span></button>
+      </div>
       <div class="ecard">
-        <h3>Lançadas</h3>
+        <h3 id="vd-rast-titulo">A enviar</h3>
         <div class="vd-messel"><!-- BUILD 2026-08-17-D: fila de PENDENTES DE ENTREGA — seletor de mes oculto (ids preservados), historico mensal vive em Relatorios -->
           <button id="vd-mes-prev" title="mês anterior" style="display:none">◀</button>
           <span class="vd-mes" id="vd-mes-label" style="display:none">—</span>
@@ -5610,25 +5615,25 @@ const ecomVendas={
   // Cancelado/perda: consultaveis na Consulta gerencial (Relatorios > Historico).
   async load(){ const box=this._g('vd-list');
     try{ const r=await sb.from('ecom_vendas')
-        .select('id,ml_pedido_id,produto,marca,modelo,produto_codigo,preco_venda,quantidade,status,data_solicitacao,prazo_postagem,envio_substatus,envio_atualizado_em,codigo_rastreio,ocorrencia,ocorrencia_em,custo_total,taxas_ml_total,prejuizo_valor')
+        .select('id,ml_pedido_id,produto,marca,modelo,produto_codigo,preco_venda,quantidade,status,data_solicitacao,data_embarque,prazo_postagem,envio_substatus,envio_atualizado_em,codigo_rastreio,ocorrencia,ocorrencia_em,custo_total,taxas_ml_total,prejuizo_valor')
         .in('status',['a_enviar','enviado'])
         .order('data_solicitacao',{ascending:false});
       if(r.error) throw r.error;
       // BUILD 2026-08-20-G: familia PERDA e venda finalizada — sai da aba Vendas, vive no Historico
       const itens=(r.data||[]).filter(v=>!v.ocorrencia||v.ocorrencia==='retido_doc'||v.ocorrencia==='outro');
-      this.render(itens); this.totalizador(itens);
+      this.render(itens);
     }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar: '+e.message+'</div>'; const tt=this._g('vd-mes-tot'); if(tt) tt.textContent=''; }
   },
   // BUILD 2026-08-17-D: totalizador da fila pendente — quanto ja foi vendido e ainda nao chegou ao cliente
-  totalizador(itens){ const tt=this._g('vd-mes-tot'); if(!tt) return;
-    // BUILD 2026-08-18-B: item com ocorrencia marcada NAO e capital em transito — sai do "aguardando entrega" e entra no alerta proprio
-    const vivos=itens.filter(v=>!v.ocorrencia), oc=itens.filter(v=>v.ocorrencia);
-    const nA=vivos.filter(v=>v.status==='a_enviar').length, nE=vivos.filter(v=>v.status==='enviado').length;
-    const soma=vivos.reduce((s,v)=>s+((+v.preco_venda||0)*(+v.quantidade||1)),0);
-    const somaOc=oc.reduce((s,v)=>s+((+v.preco_venda||0)*(+v.quantidade||1)),0);
-    const uA=this.unid(vivos.filter(v=>v.status==='a_enviar')); // BUILD 2026-10-10-A: unidades a enviar
-    let txt=itens.length?(nA+' a enviar ('+uA+' un.) · '+nE+' enviado'+(nE===1?'':'s')+' · R$ '+this.fmt(soma)+' aguardando entrega'):'';
-    if(oc.length) txt+=(txt?' · ':'')+'\u26d4 '+oc.length+' com ocorr\u00eancia · R$ '+this.fmt(somaOc)+' em risco';
+  // BUILD 2026-10-13-A: totalizador da sub-aba aberta (A enviar | Enviadas) + contadores dos botoes
+  totalizador(itens){ const tt=this._g('vd-mes-tot'); itens=itens||[];
+    const aEnv=itens.filter(v=>v.status==='a_enviar'), env=itens.filter(v=>v.status!=='a_enviar');
+    const ca=this._g('vd-cnt-aenv'), ce=this._g('vd-cnt-env'); if(ca) ca.textContent='('+this.nPed(aEnv)+')'; if(ce) ce.textContent='('+this.nPed(env)+')';
+    if(!tt) return; const rec=a=>a.reduce((s,v)=>s+((+v.preco_venda||0)*(+v.quantidade||1)),0);
+    if((this.modo||'aenviar')==='aenviar'){ const n=this.nPed(aEnv); tt.textContent=n?(n+' pedido'+(n===1?'':'s')+' \u00b7 '+this.unid(aEnv)+' un. \u00b7 R$ '+this.fmt(rec(aEnv))+' a postar'):''; return; }
+    const vivos=env.filter(v=>!v.ocorrencia), oc=env.filter(v=>v.ocorrencia);
+    let txt=vivos.length?(this.nPed(vivos)+' em tr\u00e2nsito \u00b7 R$ '+this.fmt(rec(vivos))+' aguardando entrega'):'';
+    if(oc.length) txt+=(txt?' \u00b7 ':'')+'\u26d4 '+oc.length+' com ocorr\u00eancia \u00b7 R$ '+this.fmt(rec(oc))+' em risco';
     tt.textContent=txt;
   },
   // BUILD 2026-08-18-B: catalogo de ocorrencias manuais (verdade do Igor por cima do substatus ML)
@@ -5679,13 +5684,17 @@ const ecomVendas={
     }
     return bits.join(' ');
   },
-  render(itens){ const box=this._g('vd-list'); this.itens=itens;
-    if(!itens.length){ box.innerHTML='<div class="ph">nenhuma entrega pendente — tudo com o cliente</div>'; return; }
+  render(itens){ const box=this._g('vd-list'); this.itens=itens; const modo=this.modo||'aenviar'; // BUILD 2026-10-13-A
+    const ttl=this._g('vd-rast-titulo'); if(ttl) ttl.textContent=modo==='aenviar'?'A enviar':'Enviadas';
+    this.totalizador(itens);
     const stp={a_enviar:['st-aenv','a enviar'],enviado:['st-env','enviado'],entregue:['st-ent','entregue'],concluido:['st-ent','concluído'],cancelado:['st-can','cancelado'],perda:['st-per','perda']};
-    // BUILD 2026-10-10-A: a enviar agrupado por dia de envio; enviados em bloco proprio no fim
-    const aEnv=itens.filter(v=>v.status==='a_enviar'), outros=itens.filter(v=>v.status!=='a_enviar');
-    const blocos=this.porDia(aEnv).map(g=>({head:this.diaHead(g.k,g.itens),itens:g.itens}));
-    if(outros.length) blocos.push({head:'<div class="vd-dia" style="padding:12px 0 5px;border-bottom:1px solid var(--eborder);font-size:12.5px;color:var(--emuted)"><span style="font-weight:700;font-size:13.5px;color:var(--etxt)">enviados</span> \u00b7 '+outros.length+' aguardando entrega</div>',itens:outros});
+    // BUILD 2026-10-10-A / 13-A: A enviar = agrupado por dia de envio; Enviadas = postagem mais recente primeiro
+    const aEnv=itens.filter(v=>v.status==='a_enviar');
+    const tEmb=v=>{ const t=new Date(v.data_embarque||v.data_solicitacao).getTime(); return isNaN(t)?0:t; };
+    const outros=itens.filter(v=>v.status!=='a_enviar').sort((a,b)=>tEmb(b)-tEmb(a));
+    const alvo=modo==='aenviar'?aEnv:outros;
+    if(!alvo.length){ box.innerHTML='<div class="ph">'+(modo==='aenviar'?'nenhum pedido a postar':'nenhum envio em tr\u00e2nsito \u2014 tudo com o cliente')+'</div>'; return; }
+    const blocos=modo==='aenviar'?this.porDia(aEnv).map(g=>({head:this.diaHead(g.k,g.itens),itens:g.itens})):[{head:'',itens:outros}];
     let ix=-1;
     const linha=(v)=>{ ix++;
       const dt=new Date(v.data_solicitacao).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -8402,6 +8411,10 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
   const mp=ecomVendas._g('vd-mes-prev'); if(mp) mp.addEventListener('click',()=>ecomVendas.mesShift(-1));
   const mn=ecomVendas._g('vd-mes-next'); if(mn) mn.addEventListener('click',()=>ecomVendas.mesShift(1));
   const bpc=ecomVendas._g('vd-pdf-compra'); if(bpc) bpc.addEventListener('click',()=>ecomVendas.pdfCompra()); // BUILD 2026-08-25-A
+  // BUILD 2026-10-13-A: sub-abas de Rastreios (A enviar | Enviadas) — so refiltra o que ja foi lido
+  const rbar=document.getElementById('vd-rastbar'); if(rbar) rbar.addEventListener('click',e=>{ const b=e.target.closest('[data-vrast]'); if(!b) return;
+    rbar.querySelectorAll('.alsub-btn').forEach(x=>x.classList.toggle('active',x===b)); ecomVendas.modo=b.dataset.vrast;
+    if(Array.isArray(ecomVendas.itens)) ecomVendas.render(ecomVendas.itens); else ecomVendas.load(); });
   const list=ecomVendas._g('vd-list');
   if(list) list.addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return; const id=b.dataset.id;
     if(b.dataset.act==='postar') ecomVendas.openPostar(id);
