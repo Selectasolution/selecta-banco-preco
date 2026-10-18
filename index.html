@@ -1,3 +1,4 @@
+<!-- BUILD 2026-10-16-A | selecta-banco-preco | DOUTRINA DE MARGEM = PRECO PRATICADO (auditoria Igor 16/10, sobre 13-A md5 00e3a9175b861917693ec2d5de70c080): (1) PRODUTO = Categoria/Marca/Modelo/Peso/Custo NF (+ Capacidade/Interface/KIT): saem do Catalogo Meu preco, Media e Minimo mercado e Tipo de anuncio; apagados calc/breakeven/veredito/itemVer/freteDe/updateFormBreakeven/inlineEdit; nada mais le nem grava ecom_produtos.preco/media/menor/tipo_anuncio (prepara o DROP do SQL 25). (2) Controle ML: Editar deixa de copiar preco para o produto (fim do sync 07-15-A). (3) V1: alinhamento ao ML — quando o form reproduz exatamente o estado do ML lido pela ultima varredura (preco/promocao/tipo divergentes), grava mesmo abaixo do piso (2 cliques se <10%), selo NEGADO visivel, log campo +alinhamento_ml. (4) V2: faixa vermelha no topo do Alvo quando a ultima varredura sync falhou ou tem mais de 60 min. (5) V3: margem com aviso REGISTRO != ML na Analise Comercial e no Export do Controle. (6) Cadastro de anuncio ML com a MESMA trava do Editar (>=10 grava; 5-10 so o dono com checkbox + motivo + 2 cliques, log cadastro+abaixo_piso; <5 negado) + preco obrigatorio + trava de toque duplo + confirmacao/recarga que estavam comentadas por engano desde 08-08-I. (7) EXPORTS: Exportar cenario APOSENTADO; gerarMdControle = fonte unica (Export do Controle e Pacote do agente); Radar do pacote calcula margem por MLB no mesmo motor (sem ecom_fn_margem_alvo); texto do comando atualizado. Shopee intocada. Zero SQL obrigatorio para publicar alem do SQL 25a. -->
 <!-- BUILD 2026-10-13-A | selecta-banco-preco | RASTREIOS EM DUAS SUB-ABAS (Igor 13/10, sobre 12-A): barra #vd-rastbar "A enviar" (status a_enviar, agrupado por dia de envio, botao postado) e "Enviadas" (status enviado: rastreio, ocorrencia, ordem pela data de postagem mais recente); contador em cada botao; pedido postado (botao postado ou sincronizacao do ML) sai de A enviar e entra em Enviadas no mesmo recarregamento; entregue continua saindo para o Historico. Um so #vd-list (handlers de postado/ocorrencia intocados), filtrado por ecomVendas.modo. Zero SQL, zero Edge. -->
 <!-- BUILD 2026-10-12-A | selecta-banco-preco | VENDAS REORGANIZADA (Igor 12/10, sobre 10-A): (1) aba Vendas abre com o quadro "Vendas dia" (#vd-dia): Vendas / Unidades / Faturamento / Lucro / Margem media das vendas feitas HOJE (data da venda em America/Sao_Paulo, zera a meia-noite; cancelado fora; venda = pack do ML quando houver, como o painel do ML conta). (2) segundo quadro "Compras / envio dia": linhas numeradas por dia de envio com unidades, valor de compra, lucro do dia e PDF da linha (itens so no PDF). (3) quadros "Pedidos a fechar" e "Lancar venda" ocultos (Igor: tudo vem do ML; ids preservados, fechamento manual sai da tela). (4) NOVA sub-aba Rastreios (Alvo / Vendas / Rastreios / Relatorios) recebe o quadro Lancadas como estava. (5) ao voltar ao app (visibilitychange) a aba aberta recarrega, para o "hoje" virar sozinho. Zero SQL, zero Edge. -->
 <!-- BUILD 2026-10-10-A | selecta-banco-preco | VENDAS POR DIA DE ENVIO (Igor 10/10: o ML passou a agendar as postagens e o app somava a fila inteira como compra de hoje). (1) faixa Compras vira UMA LINHA POR DIA DE ENVIO (prazo_postagem em America/Sao_Paulo): pedidos, unidades, custo de compra, lucro previsto e botao PDF da linha; total da fila no cabecalho; dia vencido em vermelho, hoje em ambar, sem data em linha propria. (2) PDF compra passa a ser POR DIA (botao global #vd-pdf-compra removido); documento identico, so o nome do arquivo leva o dia de envio. (3) Pedidos a fechar e Lancadas agrupados sob cabecalho do dia de envio; enviados em bloco proprio no fim. (4) quantidade visivel em Pedidos a fechar (N x) e contagem em unidades no totalizador. Faixa deixa de ler ecom_vw_compras_dia e passa a ser calculada da mesma lista de Pedidos a fechar (uma fonte so). Zero SQL, zero Edge. Base: 2026-09-28-D. -->
@@ -885,7 +886,7 @@
     <div id="csec-consulta">
     <!-- CADASTRO -->
     <div class="ecard">
-      <h3 id="ecom-form-title">Cadastrar / simular produto</h3>
+      <h3 id="ecom-form-title">Cadastrar produto</h3>
       <div class="addform">
         <input type="hidden" id="ecom-f-produto">
         <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="KIT">Kit</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="PLR">Placa de rede</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option><option value="RBL">Robô de Limpeza</option><option value="ALX">Alexa</option><option value="PWB">Power Bank</option><option value="CXS">Caixa de Som</option><option value="CAM">Câmera Digital</option><option value="CPS">Controle PS5</option><option value="FLM">Filamento Imp. 3D</option><option value="GBL">Câmera Estabilizadora</option><option value="MPD">Mouse Pad</option><option value="PDR">Pen Drive</option><option value="SPM">Suporte Monitor</option><option value="TAB">Tablet</option><option value="PTE">Porteiro Eletrônico</option><option value="DVR">CCTV / DVR</option><option value="RDE">Repetidor de Sinal</option><option value="CMP">Compressor Portátil</option><option value="ANT">Antena / Rádio de Rede</option></select></div>
@@ -894,14 +895,7 @@
         <div class="efield" id="ecom-f-capacidade-wrap" style="display:none"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px"></div>
         <div class="efield" id="ecom-f-interface-wrap" style="display:none"><label>Interface</label><select class="ainput" id="ecom-f-interface" style="width:110px"><option value="">—</option><option value="SATA III">SATA III</option><option value="NVMe">NVMe</option></select></div>
         <div class="efield pesofield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px"><span id="ecom-f-faixa-msg" class="ffaixa"></span><select id="ecom-f-peso" style="display:none"></select><span id="ecom-f-peso-warn" style="display:none"></span></div>
-        <div class="efield" style="display:none"><label>Anúncio <span class="req">*</span></label><select class="ainput" id="ecom-f-tipo" style="width:110px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
         <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
-        <div class="efield" style="display:none"><label>Mínimo mercado</label><input class="ainput mono" id="ecom-f-menor" type="number" style="width:90px"></div>
-        <div class="efield"><label>Média mercado</label><input class="ainput mono" id="ecom-f-media" type="number" style="width:90px"></div>
-        <div class="efield" style="display:none"><label>Break-even <span style="color:var(--emuted2);font-weight:400">(ref.)</span></label><input class="ainput mono" id="ecom-f-breakeven" type="text" style="width:90px" readonly tabindex="-1"></div>
-        <div class="efield"><label>Meu preço <span class="req">*</span></label><input class="ainput mono" id="ecom-f-preco" type="number" style="width:90px"></div>
-        <div class="efield simfield" style="display:none"><label>Margem R$ <span class="hsim">sim.</span></label><input class="ainput mono robe" id="ecom-f-mgrs" type="text" style="width:84px" readonly tabindex="-1"></div>
-        <div class="efield simfield" style="display:none"><label>Margem % <span class="hsim">sim.</span></label><input class="ainput mono robe mgsimf" id="ecom-f-mgpct" type="text" style="width:72px" readonly tabindex="-1"></div>
         <button class="addbtn" id="ecom-add">+ Adicionar</button>
         <button class="addbtn" id="ecom-add-gerar" title="Grava o produto e pré-preenche o Cadastro de anúncio abaixo" style="display:none;background:none;border:1px solid var(--eaccent);color:var(--eaccent)">+ Gravar e gerar anúncio</button>
         <button class="cancelbtn hidden-section" id="ecom-cancel">Cancelar</button>
@@ -930,9 +924,7 @@
     <div class="tbl-wrap">
       <table class="emain">
         <thead><tr><!-- BUILD 2026-08-08-F: layout neutro — Codigo/Produto/Preco Venda/Mercado/vs/Custo NF/Acoes -->
-          <th>Código</th><th class="l">Produto</th><th>Preço Venda</th>
-          <th>Mercado<br><span style="font-weight:400;text-transform:none;color:var(--emuted2)">média</span></th>
-          <th>vs</th><th>Custo NF</th>
+          <th>Código</th><th class="l">Produto</th><th>Custo NF</th><!-- BUILD 2026-10-16-A: produto = Categoria/Marca/Modelo/Peso/Custo NF; preco e margem vivem no anuncio de cada plataforma -->
           <th style="text-align:center">Ações</th>
         </tr></thead>
         <tbody id="ecom-tbody"></tbody>
@@ -2571,6 +2563,7 @@
         <!-- BUILD -L 09/07/2026: aba Estratégia de Anúncios DESATIVADA — fundida à Análise Comercial (Ato único). Painel e código dormentes; expurgo previsto no BUILD -M após 2–3 ciclos. -->
         <button class="alsub-btn" data-alsub="controle">📈 Controle de Anúncios</button>
       </div>
+      <div id="al-vig-alerta" style="display:none;margin:0 0 12px;padding:9px 12px;border:1px solid var(--ered);border-radius:9px;background:rgba(239,68,68,.10);color:var(--ered);font-size:12.5px;line-height:1.45"></div><!-- BUILD 2026-10-16-A · V2: vigilancia cega/parada -->
 
       <div id="alsub-analise" class="alsub">
       <!-- BUILD 30/07-B: cards vindos da ex-aba Simulador (ids preservados) -->
@@ -2591,6 +2584,10 @@
         <div class="vrow" style="margin-bottom:2px">
           <div class="efield"><label>Preço anunciado</label><input class="vinput mono" id="al-preco" type="number" step="0.01" placeholder="0,00"></div>
           <div class="efield"><label>Margem</label><div class="vinput mono" id="al-margem" style="display:flex;align-items:center;min-height:38px;gap:8px;flex-wrap:wrap"><span style="color:var(--emuted2)">digite código, tipo e preço</span></div></div>
+        </div>
+        <div id="al-ovr-wrap" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px"><!-- BUILD 2026-10-16-A: trava do piso no cadastro = mesma do Editar (5–10% so o dono, com motivo) -->
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--eamber)"><input type="checkbox" id="al-ovr"> Liberar abaixo do piso</label>
+          <input class="vinput" id="al-ovr-motivo" placeholder="motivo da liberação (obrigatório)" style="flex:1;min-width:220px">
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-top:4px"><button class="vbtn" id="al-cadastrar" style="padding:8px 18px">Cadastrar anúncio</button><div class="vmsg" id="al-amsg" style="margin:0"></div></div>
 
@@ -2643,7 +2640,6 @@
           <h3 style="margin:0;color:var(--eemerald)">Anúncios ativos — matemática ML</h3>
           <span class="vmsg" id="al-atv-count" style="margin:0"></span>
           <button class="vbtn sm" id="al-atv-refresh" style="margin-left:auto">↻ Atualizar</button>
-          <button class="vbtn sm" id="ecom-export" title="Exporta o cenário atual (parâmetros, produtos, matriz e vereditos) em .md">⬇ Exportar cenário (.md)</button><!-- BUILD 2026-08-26-E: veio do quadrante Comando -->
           <button class="vbtn sm" id="al-atv-audit" title="Recalcula a margem de cada anúncio pelo caminho do Editar do Controle e compara com esta tabela">✓ Conferir com o Controle</button><!-- BUILD 2026-08-26-H -->
         </div>
         <div id="al-atv-audit-out" style="display:none;font-size:12px;margin:-4px 0 10px;padding:8px 10px;border:1px solid var(--eborder);border-radius:7px;background:var(--epanel2)"></div>
@@ -4159,30 +4155,7 @@ const ecom = {
     return {valor:val, obs:row.observacao||null};
   },
 
-  freteDe(it){
-    const pesoG=this.pesoEfetivoG(it);
-    const r=this.freteLookup(pesoG, +it.preco, this.reputacao);
-    return r?r.valor:0;
-  },
-
-  breakeven(custo,t,fr,pr){ return (custo+fr)/(1-t); },
-
-  calc(it){ const pr=this.params(); const P=+it.preco;
-    const comPct=this.comPctDe(it.categoria,it.tipo_anuncio,pr);
-    const t=comPct+pr.imp/100+pr.outros/100;
-    const fr=this.freteDe(it);
-    const custoML=P*t+fr;
-    const custo=+it.custo; const colchao=P*pr.colchao/100; const custoTotal=custo+colchao; // BUILD 2026-08-21-A: colchão sobre a VENDA
-    const margem=P-custoML-custoTotal; const mordida=P>0?custoML/P:0;
-    const be=this.breakeven(custo,t+pr.colchao/100,fr,pr); // BUILD 2026-08-21-A: colchão migra p/ dentro de t no break-even
-    return {regime:'tbl',freteItem:fr,custoFixo:0,custoML,margem,margemPct:P>0?margem/P:0,mordida,breakeven:be,zona:null}; },
-  veredito(regime,m,pct,vsMin){
-    // RÉGUA NOVA (BUILD -B 12/07/2026): piso 10% · ≥10% Priorizar/verde · >0 e <10% Analisar/amarelo · ≤0 Excluir/vermelho (decisão Igor 12/07 — prejuízo nunca fica amarelo)
-    if(m<=0) return {k:'excluir',t:'Excluir'};
-    if(regime==='fixa') return {k:'analisar',t:'Analisar'};
-    if(pct<0.10) return {k:'analisar',t:'Analisar'};
-    return {k:'priorizar',t:'Priorizar'}; },
-  itemVer(it){ const r=this.calc(it); const vs=it.menor?(it.preco-it.menor)/it.menor:null; return this.veredito(r.regime,r.margem,r.margemPct,vs).k; },
+  // BUILD 2026-10-16-A: calc/breakeven/veredito/itemVer/freteDe APAGADOS — o Catalogo nao calcula margem; motor unico do ML = ecomAlvo._simMargem (preco praticado do anuncio)
   isVis(it){ if(this.fCod && String(it.codigo||'').toUpperCase().indexOf(this.fCod)<0) return false; if(this.fCat && it.categoria!==this.fCat) return false; return true; }, // BUILD 2026-08-08-F
 
   async onEnter(){
@@ -4220,26 +4193,23 @@ const ecom = {
     const gDest=g('ecom-dest'); if(gDest) gDest.innerHTML='<span class="faint" style="font-size:11px">Zona geográfica aposentada — frete ML é nacional, varia só por peso × faixa de preço × reputação.</span>';
     g('ecom-f-peso').innerHTML=this.PESOS.map(p=>`<option value="${p[0]}">${p[1]}</option>`).join('');
     const gMod=g('ecom-modtog'); if(gMod) gMod.querySelectorAll('.tg').forEach(t=>t.addEventListener('click',()=>{ this.modalidade=t.dataset.mod; gMod.querySelectorAll('.tg').forEach(x=>x.classList.remove('active')); t.classList.add('active'); const w=g('ecom-modwarn'); if(w) w.textContent=''; this.render(); }));
-    ['ecom-com-classico','ecom-com-premium','ecom-imp','ecom-outros','ecom-colchao'].forEach(id=>{ const el=g(id); if(el) el.addEventListener('input',()=>{ this.render(); this.updateFormBreakeven(); }); });
+    ['ecom-com-classico','ecom-com-premium','ecom-imp','ecom-outros','ecom-colchao'].forEach(id=>{ const el=g(id); if(el) el.addEventListener('input',()=>{ this.render(); }); }); // BUILD 2026-10-16-A: sem simulacao no Catalogo
     g('ecom-flt-cod').addEventListener('input',e=>{ this.fCod=e.target.value.trim().toUpperCase(); this.render(); }); // BUILD 2026-08-08-F
     g('ecom-flt-cat').addEventListener('change',e=>{ this.fCat=e.target.value; this.render(); });
     g('ecom-flt-clear').addEventListener('click',()=>{ this.fCod=''; this.fCat=''; g('ecom-flt-cod').value=''; g('ecom-flt-cat').value=''; this.render(); });
     g('ecom-add').addEventListener('click',()=>this.save());
     { const bg=g('ecom-add-gerar'); if(bg) bg.addEventListener('click',()=>{ this.gerarAposSalvar=true; this.save(); }); }
     g('ecom-cancel').addEventListener('click',()=>this.cancelEdit());
-    ['ecom-f-preco','ecom-f-custo','ecom-f-peso','ecom-f-tipo'].forEach(id=>{ const el=g(id); if(el) el.addEventListener('input',()=>this.updateFormBreakeven()); });
-    { const pe=g('ecom-f-pesog'); if(pe) pe.addEventListener('input',()=>{ this.applyPesoG(); this.updateFormBreakeven(); }); }
-    { const cat=g('ecom-f-categoria'); if(cat) cat.addEventListener('change',()=>{ this.toggleCapInterface(); this.toggleKit(); this.updateFormBreakeven(); }); }
+    { const pe=g('ecom-f-pesog'); if(pe) pe.addEventListener('input',()=>{ this.applyPesoG(); }); }
+    { const cat=g('ecom-f-categoria'); if(cat) cat.addEventListener('change',()=>{ this.toggleCapInterface(); this.toggleKit(); }); }
     { const kb=g('ecom-kit-add'); if(kb) kb.addEventListener('click',()=>this.kitAdd()); }
     { const cu=g('ecom-f-custo'); if(cu) cu.addEventListener('input',()=>this.kitSomaShow()); }
-    { const tp=g('ecom-f-tipo'); if(tp) tp.addEventListener('change',()=>this.updateFormBreakeven()); }
-    { const eb=this._g('ecom-export'); if(eb) eb.addEventListener('click',()=>this.exportarCenario()); }
   },
   updateCtx(){
     const rep=this.reputacao;
     const pillHtml='<span class="rep-pill '+rep+'">Reputação '+this.repLabel(rep)+'</span> · lookup FRETE_TBL oficial ML';
     const a=this._g('ecom-frete-ctx'), b=this._g('ecom-frete-ctxtop');
-    if(a) a.innerHTML=pillHtml; if(b) b.innerHTML=pillHtml; this.updateFormBreakeven(); },
+    if(a) a.innerHTML=pillHtml; if(b) b.innerHTML=pillHtml; },
 
   // Substitui buildMtx: renderiza a tabela oficial ML da reputação vigente (só leitura)
   buildFreteRef(){ const t=this._g('ecom-mtx'); if(!t) return;
@@ -4420,7 +4390,6 @@ const ecom = {
   render(){ this.midiaWire(); this.midiaPark(); this.populateCatFilter(); this.sentinela(); const tb=this._g('ecom-tbody');
     if(!this.itens.length){ tb.innerHTML=''; show('#ecom-vazio'); this.updateCount(); return; }
     hide('#ecom-vazio');
-    const vsCell=(p,ref)=>{ if(!ref||ref<=0) return '<span class="vsnull">—</span>'; const d=(p-ref)/ref*100; return `<span class="${d>0?'vsacima':'vsabaixo'}">${d>0?'+':''}${d.toFixed(1)}%</span>`; };
     const rows=this.itens.map(it=>{ if(!this.isVis(it)) return '';
       // BUILD 2026-08-08-F: linha NEUTRA de cadastro — sem frete/mordida/margem/veredito (matematica vive no cadastro de anuncio de cada plataforma)
       // BUILD 2026-08-08-H: inversao (pedido Igor) — descricao (marca/modelo/capacidade) e a linha principal em branco forte; o tipo de produto desce como sub-linha
@@ -4431,14 +4400,10 @@ const ecom = {
       return `<tr data-cod="${it.codigo||''}">
         <td>${codCell}</td>
         <td class="l"><span class="eprod">${linhaPrincipal}</span>${modeloSub}<div class="emodel">${this.pesoLabel(it.peso_faixa)}</div></td>
-        <td><input class="cellInput me" type="text" inputmode="decimal" data-id="${it.id}" data-f="preco" value="${this.fmt(it.preco)}"></td>
-        <td><input class="cellInput mkt" type="text" inputmode="decimal" data-id="${it.id}" data-f="media" placeholder="méd" value="${it.media==null?'':this.fmt(it.media)}"></td>
-        <td>${vsCell(it.preco,it.media)}</td>
         <td>${this.fmt(it.custo)}</td>
         <td><div class="acts"><button class="rowbtn ecom-midia-btn" data-cod="${it.codigo||''}">Mídia${this.midiaBadge(it.codigo)}</button><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
       </tr>`; }).join('');
-    tb.innerHTML=rows||'<tr><td class="l" colspan="7" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
-    tb.querySelectorAll('.cellInput').forEach(inp=>inp.addEventListener('change',e=>this.inlineEdit(e.target)));
+    tb.innerHTML=rows||'<tr><td class="l" colspan="4" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
     tb.querySelectorAll('.ecom-edit').forEach(b=>b.addEventListener('click',()=>this.edit(b.dataset.id)));
     tb.querySelectorAll('.ecom-del').forEach(b=>b.addEventListener('click',()=>this.del(b.dataset.id)));
     tb.querySelectorAll('.ecom-midia-btn').forEach(b=>b.addEventListener('click',()=>this.midiaOpen(b.dataset.cod)));
@@ -4457,51 +4422,26 @@ const ecom = {
     const crit=probs.some(p=>p.sev==='crit'); box.className='ecom-sentinela '+(crit?'crit':'warn');
     box.innerHTML='<div class="sent-h">'+(crit?'🔴':'🟠')+' Integridade do catálogo — '+probs.length+' ponto(s) a revisar</div><ul>'+probs.map(p=>'<li>'+(p.sev==='crit'?'🔴':'🟠')+' '+p.txt+'</li>').join('')+'</ul>'; },
 
-  async inlineEdit(el){ const id=el.dataset.id, f=el.dataset.f; const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
-    const prev=it[f]; const raw=String(el.value).trim().replace(/[R$\s]/g,''); let v=raw==='' ? NaN : (raw.indexOf(',')>=0 ? parseFloat(raw.replace(/\./g,'').replace(',','.')) : parseFloat(raw)); if(isNaN(v)) v=(f==='preco'?it.preco:null); it[f]=v;
-    try{ const r=await sb.from('ecom_produtos').update({[f]:v,atualizado_em:new Date().toISOString()}).eq('id',id); if(r.error) throw r.error; this.render(); }
-    catch(e){ it[f]=prev; console.error('inline:',e.message); alert('Não foi possível salvar: '+e.message); this.render(); } },
-
-  updateFormBreakeven(){
-    const P=parseFloat(this._g('ecom-f-preco').value);
-    const custo=parseFloat(this._g('ecom-f-custo').value);
-    const out=this._g('ecom-f-breakeven');
-    const mr=this._g('ecom-f-mgrs'), mp=this._g('ecom-f-mgpct');
-    const pesoG=parseInt(this._g('ecom-f-pesog').value,10);
-    const peso=this.faixaFromPeso(pesoG)||'ate300';
-    if(isNaN(P)||isNaN(custo)){ if(out)out.value=''; if(mr)mr.value=''; if(mp){ mp.value=''; mp.className='ainput mono robe mgsimf'; } return; }
-    const pr=this.params();
-    const catForm=this._g('ecom-f-categoria').value||null;
-    const comPct=this.comPctDe(catForm,this._g('ecom-f-tipo').value,pr);
-    const t=comPct+pr.imp/100+pr.outros/100;
-    // Frete via FRETE_TBL, usando peso_g direto do form
-    const pseudo={preco:P,peso_g:isNaN(pesoG)?null:pesoG,peso_faixa:peso};
-    const fr=this.freteDe(pseudo);
-    if(out) out.value=this.fmt(this.breakeven(custo,t+pr.colchao/100,fr,pr)); // BUILD 2026-08-21-A: colchão sobre a VENDA
-    const r=this.calc({preco:P,custo:custo,tipo_anuncio:this._g('ecom-f-tipo').value,peso_faixa:peso,peso_g:isNaN(pesoG)?null:pesoG,categoria:catForm});
-    if(mr) mr.value=this.fmt(r.margem);
-    if(mp){ const pct=r.margemPct*100; mp.value=this.fmtPct(pct); mp.className='ainput mono robe mgsimf '+(pct>=10?'v':pct>0?'a':'r'); }
-  },
-  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-capacidade','ecom-f-mgrs','ecom-f-preco','ecom-f-custo','ecom-f-media','ecom-f-menor'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const m=this._g('ecom-f-faixa-msg'); if(m){ m.textContent=''; m.className='ffaixa'; } } { const mp=this._g('ecom-f-mgpct'); if(mp){ mp.value=''; mp.className='ainput mono robe mgsimf'; } } this._g('ecom-f-tipo').value='classico'; this._g('ecom-f-interface').value=''; this._g('ecom-f-categoria').value=''; this.toggleCapInterface(); this.kitRows=[]; this.toggleKit(); { const fm=this._g('ecom-formmsg'); fm.textContent=''; fm.style.color=''; } this.updateFormBreakeven(); },
+  // BUILD 2026-10-16-A: inlineEdit (preco/media na celula) e updateFormBreakeven APAGADOS
+  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-capacidade','ecom-f-custo'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const m=this._g('ecom-f-faixa-msg'); if(m){ m.textContent=''; m.className='ffaixa'; } } this._g('ecom-f-interface').value=''; this._g('ecom-f-categoria').value=''; this.toggleCapInterface(); this.kitRows=[]; this.toggleKit(); { const fm=this._g('ecom-formmsg'); fm.textContent=''; fm.style.color=''; } },
   edit(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
     this._g('ecom-f-produto').value=it.produto||''; this._g('ecom-f-marca').value=it.marca||''; this._g('ecom-f-modelo').value=it.modelo||''; this._g('ecom-f-capacidade').value=it.capacidade||''; this._g('ecom-f-interface').value=it.interface||'';
-    this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-tipo').value=it.tipo_anuncio||'classico'; this._g('ecom-f-categoria').value=it.categoria||''; this.toggleCapInterface(); this.toggleKit(); if(it.categoria==='KIT'&&it.codigo) this.kitLoad(it.codigo); // BUILD 2026-08-15-R
-    this._g('ecom-f-preco').value=it.preco; this._g('ecom-f-custo').value=it.custo; this._g('ecom-f-media').value=it.media==null?'':it.media; this._g('ecom-f-menor').value=it.menor==null?'':it.menor;
-    this.updateFormBreakeven();
+    this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-categoria').value=it.categoria||''; this.toggleCapInterface(); this.toggleKit(); if(it.categoria==='KIT'&&it.codigo) this.kitLoad(it.codigo); // BUILD 2026-08-15-R
+    this._g('ecom-f-custo').value=it.custo;
     this.editId=id; this._g('ecom-add').textContent='Salvar alteração'; show('#ecom-cancel'); this._g('ecom-f-marca').focus(); },
   cancelEdit(){ this.editId=null; this.clearForm(); this._g('ecom-add').textContent='+ Adicionar'; hide('#ecom-cancel'); },
 
   async save(){ const num=id=>{ const v=parseFloat(this._g(id).value); return isNaN(v)?null:v; };
     const catSel=this._g('ecom-f-categoria'); const categoria=catSel.value||null;
     const produto=categoria?(((catSel.options[catSel.selectedIndex]||{}).text)||'').trim():''; this._g('ecom-f-produto').value=produto;
-    const preco=num('ecom-f-preco'), custo=num('ecom-f-custo');
-    if(!categoria||preco==null||custo==null){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='Categoria, Meu preço e Custo são obrigatórios.'; fm.style.color='var(--eamber)'; return; }
+    const custo=num('ecom-f-custo');
+    if(!categoria||custo==null){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='Categoria e Custo (NF) são obrigatórios.'; fm.style.color='var(--eamber)'; return; }
     if(categoria==='KIT'){ const val=this.kitRows.filter(r=>r.eco&&r.codigo); if(!val.length){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='Kit precisa de ao menos 1 componente válido do Catálogo.'; fm.style.color='var(--eamber)'; return; } } // BUILD 2026-08-15-R
     this._g('ecom-formmsg').textContent='';
     const pesog=(()=>{ const v=parseInt(this._g('ecom-f-pesog').value,10); return isNaN(v)?null:v; })();
     const dados={ produto, categoria, marca:this._g('ecom-f-marca').value.trim()||null, modelo:this._g('ecom-f-modelo').value.trim()||null,
       capacidade:this._g('ecom-f-capacidade').value.trim()||null, interface:this._g('ecom-f-interface').value||null,
-      preco, custo, media:num('ecom-f-media'), menor:num('ecom-f-menor'), peso_g:pesog, peso_faixa:(pesog!=null?this.faixaFromPeso(pesog):this._g('ecom-f-peso').value), tipo_anuncio:this._g('ecom-f-tipo').value };
+      custo, peso_g:pesog, peso_faixa:(pesog!=null?this.faixaFromPeso(pesog):this._g('ecom-f-peso').value) }; // BUILD 2026-10-16-A: sem preco/media/menor/tipo_anuncio no produto
     if(this.editId){ this.gerarAposSalvar=false; const idx=this.itens.findIndex(x=>String(x.id)===String(this.editId)); const prev=idx>=0?Object.assign({},this.itens[idx]):null;
       if(idx>=0) this.itens[idx]=Object.assign({},this.itens[idx],dados);
       try{ const r=await sb.from('ecom_produtos').update(Object.assign({},dados,{atualizado_em:new Date().toISOString()})).eq('id',this.editId).select().single(); if(r.error) throw r.error; if(categoria==='KIT'&&r.data&&r.data.codigo) await this.kitPersist(r.data.codigo); /* BUILD 2026-08-15-R: antes do cancelEdit, que limpa o montador */ if(idx>=0&&r.data) this.itens[idx]=r.data; this.cancelEdit(); this.render(); }
@@ -4516,8 +4456,7 @@ const ecom = {
       const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v==null?'':v; };
       set('al-cod', p.codigo);
       set('al-tit', [p.produto,p.marca,p.modelo,p.capacidade].filter(Boolean).join(' '));
-      set('al-preco', p.preco!=null?p.preco:'');
-      const tp=document.getElementById('al-tipo'); if(tp) tp.value=(p.tipo_anuncio==='premium')?'premium':'classico';
+      set('al-preco', ''); // BUILD 2026-10-16-A: preco e tipo nascem no anuncio (regras da plataforma), nao no produto
       set('al-pub', new Date().toISOString().slice(0,10));
       const am=document.getElementById('al-amsg'); if(am){ am.className='vmsg'; am.style.color='var(--eteal)'; am.textContent='Pré-preenchido de '+p.codigo+' — confira/edite, cole o MLB (anúncio nasce no ML primeiro) e cadastre.'; }
       const codEl=document.getElementById('al-cod'); if(codEl&&codEl.scrollIntoView) codEl.scrollIntoView({behavior:'smooth',block:'center'});
@@ -4561,84 +4500,7 @@ const ecom = {
     }
     catch(e){ console.error('excluir:',e.message); alert('Não foi possível excluir: '+e.message); } },
 
-  // BUILD -L · seção Mercado do lote atual embutida no export (insumo único do Ato único)
-  async loadMercado(){ this.mercado=null; this.mercadoQuando=null;
-    const s1=await sb.from('ecom_mercado_snapshot').select('lote,capturado_em').order('capturado_em',{ascending:false}).limit(1);
-    if(s1.error||!s1.data||!s1.data[0]) return;
-    const lt=s1.data[0].lote;
-    try{ this.mercadoQuando=new Date(s1.data[0].capturado_em).toLocaleString('pt-BR'); }catch(_e){}
-    const s2=await sb.from('ecom_mercado_snapshot').select('anuncio_mlb,produto_codigo,preco,winner_price,price_to_win,visitas,comp_status,status_ml').eq('lote',lt);
-    if(s2.error) return;
-    this.mercado={}; (s2.data||[]).forEach(r=>{ const c=String(r.produto_codigo==null?'':r.produto_codigo).trim().toUpperCase();
-      if(c) this.mercado[c]=r; else this.mercado['@'+r.anuncio_mlb]=r; });
-  },
-  _mdMercado(){
-    if(!this.mercado) return '\n## Mercado — lote atual\n> SEÇÃO MUDA: snapshot ilegível ou sem capturas. PARADA OBRIGATÓRIA — verificar cron (04h50/14h50 BRT) e permissões antes de qualquer análise.\n';
-    const cel=x=>String(x==null?'':x).replace(/\|/g,'/').replace(/\n/g,' ');
-    let semCad=0; const rows=[];
-    (this.itens||[]).forEach(it=>{ const m=this.mercado[String(it.codigo==null?'':it.codigo).trim().toUpperCase()]; if(!m) return;
-      rows.push('| '+[cel(it.codigo),cel(m.anuncio_mlb),(m.preco!=null?this.fmt(+m.preco):'—'),(m.winner_price!=null?this.fmt(+m.winner_price):'—'),(m.price_to_win!=null?this.fmt(+m.price_to_win):'—'),(m.visitas!=null?m.visitas:'—'),cel(m.comp_status||'—'),cel(m.status_ml||'—')].join(' | ')+' |'); });
-    Object.keys(this.mercado).forEach(k=>{ if(k.charAt(0)==='@' && String(this.mercado[k].status_ml)==='active') semCad++; });
-    return '\n## Mercado — lote atual (capturado em '+(this.mercadoQuando||'—')+')\n'
-      +'| Código | MLB | Preço publicado | Winner | Price-to-win | Visitas | Competição | Status |\n|---|---|---|---|---|---|---|---|\n'
-      +(rows.join('\n')||'| (nenhum produto do catálogo presente no lote atual) | | | | | | | |')+'\n'
-      +(semCad>0?('\n> ⚠ ZUMBI-2: '+semCad+' anúncio(s) ATIVO(s) no lote SEM cadastro no sistema — ordem de exclusão via Alexia antes de qualquer análise.\n'):'')
-      +'> Preços/visitas = último lote (04h50/14h50 BRT), não tempo real absoluto.\n';
-  },
-  gerarMdCenario(){
-    const pr=this.params();
-    const agora=new Date();
-    const ts=agora.toLocaleString('pt-BR');
-    const repTxt=this.repLabel(this.reputacao);
-    const modTxt=this.modalidade==='full'?'Full':'Flex / Correios';
-    let cP=0,cA=0,cE=0;
-    const linhas=this.itens.map(it=>{
-      const r=this.calc(it);
-      const vsMedFrac=it.media?(it.preco-it.media)/it.media:null;
-      const vsMinFrac=it.menor?(it.preco-it.menor)/it.menor:null;
-      const v=this.veredito(r.regime,r.margem,r.margemPct,vsMinFrac);
-      if(v.k==='priorizar')cP++; else if(v.k==='analisar')cA++; else cE++;
-      const frTxt=this.fmt(r.freteItem);
-      const vsMedTxt=vsMedFrac==null?'\u2014':((vsMedFrac>0?'+':'')+(vsMedFrac*100).toFixed(1)+'%');
-      const vsMinTxt=vsMinFrac==null?'\u2014':((vsMinFrac>0?'+':'')+(vsMinFrac*100).toFixed(1)+'%');
-      const cel=s=>String(s==null?'':s).replace(/\|/g,'/').replace(/\n/g,' ');
-      return '| '+[cel(it.codigo||'\u2014'),cel(it.produto),cel(it.marca||'\u2014'),cel(it.modelo||'\u2014'),this.pesoLabel(it.peso_faixa),
-        (it.tipo_anuncio==='premium'?'Premium':'Cl\u00e1ssico'),this.fmt(it.preco),this.fmt(it.custo),
-        (it.media==null?'\u2014':this.fmt(it.media)),(it.menor==null?'\u2014':this.fmt(it.menor)),
-        vsMedTxt,vsMinTxt,frTxt,this.fmtPct(r.mordida*100),this.fmt(r.breakeven),
-        this.fmt(r.margem),this.fmtPct(r.margemPct*100),v.t].join(' | ')+' |';
-    }).join('\n');
-    const md=
-'# Cen\u00e1rio E-commerce ML \u2014 Selecta\n'+
-'Exportado em: '+ts+'\n\n'+
-'## Cen\u00e1rio aplicado (define os vereditos abaixo)\n'+
-'- Fonte de frete: **FRETE_TBL oficial ML** (lookup peso \u00d7 faixa de pre\u00e7o \u00d7 reputa\u00e7\u00e3o)\n'+
-'- Reputa\u00e7\u00e3o: **'+repTxt+'**\n'+
-'- Modalidade de envio: **'+modTxt+'**\n'+
-'- Comiss\u00e3o fallback \u2014 Cl\u00e1ssico: '+pr.comC+'% \u00b7 Premium: '+pr.comP+'% (categorias com al\u00edquota pr\u00f3pria usam ecom_categoria_comissao)\n'+
-'- Imposto (regime): '+pr.imp+'%\n'+
-'- Outros custos: '+pr.outros+'%\n'+
-'- Colch\u00e3o (sobre a VENDA \u00b7 reserva p/ perdas): '+pr.colchao+'%\n\n'+
-'## Resumo\n'+
-'- Itens no banco: '+this.itens.length+'\n'+
-'- Priorizar: '+cP+' \u00b7 Analisar: '+cA+' \u00b7 Excluir: '+cE+'\n\n'+
-'## Produtos\n'+
-'| C\u00f3digo | Produto | Marca | Modelo | Peso | An\u00fancio | Meu pre\u00e7o | Custo NF | M\u00e9d merc | M\u00edn merc | VS m\u00e9d | VS m\u00edn | Frete | Mordida | Break-even | Margem R$ | Margem % | Veredito |\n'+
-'|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n'+
-(linhas||'| (sem itens cadastrados) |')+'\n\n'+
-'> Frete nacional pelo lookup FRETE_TBL (peso do produto \u00d7 faixa de pre\u00e7o do an\u00fancio \u00d7 reputa\u00e7\u00e3o). Zonas geogr\u00e1ficas foram aposentadas em 02/07/2026. Trocar reputa\u00e7\u00e3o muda os vereditos.\n'+this._mdMercado();
-    return md;
-  },
-  async exportarCenario(){
-    try{ await this.loadMercado(); }catch(_e){ this.mercado=null; }
-    const md=this.gerarMdCenario();
-    const blob=new Blob([md],{type:'text/markdown;charset=utf-8'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download='cenario_ecommerce_'+new Date().toISOString().slice(0,10)+'.md';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  },
+  // BUILD 2026-10-16-A: Exportar cenario APOSENTADO (loadMercado/_mdMercado/gerarMdCenario/exportarCenario) — fonte unica de margem para export = Export (md) do Controle
 };
 
 function switchTab(tabName) {
@@ -4702,27 +4564,11 @@ async function lookupEcomProduto(sku) {
   if (!sku) return null;
   const codigo = sku.trim().toUpperCase();
   const { data, error } = await sb.from('ecom_produtos')
-    .select('codigo, produto, marca, modelo, categoria, tipo_anuncio, custo, preco, peso_g, frete_banda_efetiva, capacidade, interface')
+    .select('codigo, produto, marca, modelo, categoria, custo, peso_g, frete_banda_efetiva, capacidade, interface')
     .eq('codigo', codigo).eq('ativo', true).maybeSingle();
   if (error || !data) return null;
-  // Calcula break-even usando o motor do simulador (mesma matemática, fonte única).
-  let breakeven = null;
-  try {
-    await ensureEcomLoaded();
-    const it = {
-      preco: Number(data.preco) || 0,
-      custo: Number(data.custo) || 0,
-      categoria: data.categoria,
-      tipo_anuncio: data.tipo_anuncio || 'classico',
-      peso_g: data.peso_g,
-      frete_banda_efetiva: data.frete_banda_efetiva,
-    };
-    const r = ecom.calc(it);
-    breakeven = Number(r.breakeven) || null;
-  } catch (e) {
-    console.warn('break-even não pôde ser calculado:', e.message);
-  }
-  return { ...data, breakeven };
+  // BUILD 2026-10-16-A: aba legada (oculta) — break-even dependia do "Meu preço" do produto, que deixou de existir. Sem preco no produto, sem break-even aqui.
+  return { ...data, breakeven: null };
 }
 
 function switchAppleSubtab(name) {
@@ -4757,8 +4603,8 @@ async function loadAppleProdutos() {
     const codigos = produtos.map(p => p.modelo_sku).filter(Boolean);
     if (codigos.length > 0) {
       const { data: ecomRows } = await sb.from('ecom_produtos')
-        .select('codigo, categoria, produto, marca, modelo, custo, preco')
-        .in('codigo', codigos);
+        .select('codigo, categoria, produto, marca, modelo, custo')
+        .in('codigo', codigos); // BUILD 2026-10-16-A: sem preco
       const ecomMap = new Map((ecomRows || []).map(r => [r.codigo, r]));
       produtos = produtos.map(p => {
         const e = ecomMap.get(p.modelo_sku);
@@ -4769,7 +4615,7 @@ async function loadAppleProdutos() {
           ecom_marca: e?.marca || null,
           ecom_modelo: e?.modelo || null,
           ecom_custo: e?.custo != null ? Number(e.custo) : null,
-          ecom_preco: e?.preco != null ? Number(e.preco) : null,
+          ecom_preco: null, // BUILD 2026-10-16-A: produto sem preco
         };
       });
     }
@@ -6466,10 +6312,10 @@ const ecomAlvo={
     try{ if(typeof ecom!=='undefined' && !ecom.loaded){ await ecom.loadFreteTbl(); await ecom.loadComissoes(); await ecom.loadProdutos(); ecom.loaded=true; } }catch(_e){}
     try{ const rv=await sb.from('ecom_vendas').select('produto,produto_codigo,anuncio_mlb,uf,receita_bruta,resultado_liquido,status,data_solicitacao');
       const ra=await sb.from('ecom_anuncios').select('*').order('data_publicacao',{ascending:false});
-      const rp=await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,preco,capacidade,interface,ativo');
+      const rp=await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,capacidade,interface,ativo'); // BUILD 2026-10-16-A: sem preco
       if(rv.error) throw rv.error; if(ra.error) throw ra.error;
       this.vendas=(rv.data||[]).filter(v=>v.status!=='cancelado'); this.anuncios=ra.data||[];
-      this.catNome={}; this.catPreco={}; this.catAtivo={}; (rp.data||[]).forEach(p=>{ if(p.codigo){ this.catNome[p.codigo]=[p.produto,p.interface,p.marca,p.modelo,p.capacidade].filter(Boolean).join(' '); this.catPreco[p.codigo]=p.preco; this.catAtivo[p.codigo]=(p.ativo!==false); } });
+      this.catNome={}; this.catPreco={}; this.catAtivo={}; /* BUILD 2026-10-16-A: catPreco fica vazio (produto sem preco) */ (rp.data||[]).forEach(p=>{ if(p.codigo){ this.catNome[p.codigo]=[p.produto,p.interface,p.marca,p.modelo,p.capacidade].filter(Boolean).join(' '); this.catAtivo[p.codigo]=(p.ativo!==false); } });
       await this.loadResultados();
       await this._autoSugestaoDivergencia();
       this.renderImport(); this.renderAnuncios(); this.fillComando(); this.fillComandoResultado(); this.renderAtivos(); this.renderMesa(); this.radar();
@@ -6516,12 +6362,26 @@ const ecomAlvo={
     try{ const hl=await sb.from('ecom_anuncio_hist_lido').select('mlb,lido_em'); if(!hl.error) (hl.data||[]).forEach(x=>{ if(x.mlb) this.histLido[x.mlb]=x.lido_em; }); }catch(e){ console.warn('histLido:',e.message); }
     this.syncOk=null; this.syncDiv={};
     try{ const sr=await sb.from('ecom_sync_run').select('executado_em,modo,ok,erro,resumo').eq('modo','sync').order('executado_em',{ascending:false}).limit(1); // BUILD 2026-08-26-J: so o sync ve o catalogo inteiro; o full varre 25 por vez e zerava o semaforo dos demais
-      if(!sr.error&&sr.data&&sr.data[0]){ const r0=sr.data[0]; this.syncQuandoIso=r0.executado_em; this.syncQuando=new Date(r0.executado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); this.syncOk=r0.ok!==false;
+      if(!sr.error&&sr.data&&sr.data[0]){ const r0=sr.data[0]; this.syncQuandoIso=r0.executado_em; this.syncErro=r0.erro||null; /* BUILD 2026-10-16-A · V2 */ this.syncQuando=new Date(r0.executado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); this.syncOk=r0.ok!==false;
         // BUILD 2026-08-26-C: estado atual gravado pela varredura (v4.3): resumo.divergentes (sync) ou resumo.sync.divergentes (full)
         const rs=r0.resumo||{}; const dv=Array.isArray(rs.divergentes)?rs.divergentes:(rs.sync&&Array.isArray(rs.sync.divergentes)?rs.sync.divergentes:[]);
         dv.forEach(d=>{ const k=this._normMlb(d.mlb); if(k) (this.syncDiv[k]=this.syncDiv[k]||[]).push(d); }); }
     }catch(e){ console.warn('syncRun:',e.message); }
+    this.renderVigilancia(); // BUILD 2026-10-16-A · V2
   },
+  // BUILD 2026-10-16-A · V2: faixa vermelha no topo do Alvo quando a vigilancia app x ML esta cega (ultima varredura com erro) ou parada (> 60 min; o sync roda a cada 30)
+  VIG_MAX_MIN:60,
+  renderVigilancia(){ const box=this._g('al-vig-alerta'); if(!box) return;
+    const fH=iso=>{ try{ return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(_e){ return String(iso||''); } };
+    const ea=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    let txt=null;
+    if(!this.syncQuandoIso) txt='<b>Vigilância app × ML sem nenhuma conferência registrada.</b> O Histórico não pinta divergência e as margens não estão sendo vigiadas.';
+    else if(this.syncOk===false) txt='<b>Vigilância app × ML CEGA</b> — a última varredura ('+fH(this.syncQuandoIso)+') terminou com erro'+(this.syncErro?(': '+ea(String(this.syncErro).slice(0,160))):'')+'. Enquanto isso, nenhum anúncio fica vermelho no Histórico, mesmo que o ML tenha mudado.';
+    else { const min=Math.round((Date.now()-new Date(this.syncQuandoIso).getTime())/60000);
+      if(isFinite(min)&&min>this.VIG_MAX_MIN) txt='<b>Vigilância app × ML PARADA</b> — última varredura há '+(min>=120?(Math.floor(min/60)+' h '+(min%60)+' min'):(min+' min'))+' ('+fH(this.syncQuandoIso)+'; o normal é a cada 30 min). Os vermelhos do Histórico mostram o estado daquela hora, não o de agora.'; }
+    if(txt){ box.innerHTML='⛔ '+txt+' Use 🔄 Atualizar no Controle para conferir na hora; se persistir, verificar o job do ml-market.'; box.style.display='block'; }
+    else { box.innerHTML=''; box.style.display='none'; }
+    if(!this._vigTimer){ this._vigTimer=setInterval(()=>{ try{ this.renderVigilancia(); }catch(_e){} },5*60*1000); } },
   // BUILD -M · verificação AUTOMÁTICA registro × publicado. Divergência gera sugestão 'CORRIGIR REGISTRO'
   // para a Alexia (histórico datado no Controle) com DE-DUP: se a última sugestão do MLB já é a mesma
   // (mesma ação + mesmo preço publicado), NÃO grava de novo — evita histórico inútil.
@@ -6583,15 +6443,20 @@ const ecomAlvo={
         if(r.lote===atualId) atual[r.anuncio_mlb]=r;
         else if(antId && r.lote===antId) ant[r.anuncio_mlb]=r;
       });
-      let marg={};
-      try{ const m=await sb.rpc('ecom_fn_margem_alvo'); if(!m.error) (m.data||[]).forEach(x=>{ marg[x.codigo]=x; }); }catch(_e){}
+      let marg={}; // BUILD 2026-10-16-A: margem por MLB = motor do Controle sobre o preco praticado (fim da chamada a ecom_fn_margem_alvo, funcao do banco fora do index)
+      try{ const prodMap={}; ((typeof ecom!=='undefined'&&ecom.itens)||[]).forEach(p=>{ prodMap[String(p.codigo||'').toUpperCase()]=p; });
+        (this.anuncios||[]).forEach(an=>{ const k=this._normMlb(an.anuncio_mlb); const prod=prodMap[String(an.produto_codigo||'').toUpperCase()]; if(!k||!prod) return;
+          const temPromo=an.preco_promocao!=null; const prat=temPromo?+an.preco_promocao:(an.preco!=null?+an.preco:null); if(prat==null||isNaN(prat)) return;
+          const est=temPromo?this._estornoPromo(an,+an.preco,prat):0;
+          const r=this._simMargem(prod,prat,(an.tipo_anuncio==='premium')?'premium':'classico',((typeof ecom!=='undefined'&&ecom.reputacao)||'verde'),est,an);
+          if(r&&r.ok) marg[k]={margem_pct:r.margemPct,passa_piso:r.margemPct>=0.10}; }); }catch(_e){}
       let inativos={};
       try{ const p=await sb.from('ecom_produtos').select('codigo').eq('ativo',false); if(!p.error) (p.data||[]).forEach(x=>{ inativos[x.codigo]=true; }); }catch(_e){}
       const num=v=>(v==null?null:+v);
       const eventos=[], parados=[];
       Object.keys(atual).forEach(mlb=>{
         const a=atual[mlb], b=ant?ant[mlb]:null;
-        const m=marg[a.produto_codigo]||{};
+        const m=marg[this._normMlb(mlb)]||{}; // BUILD 2026-10-16-A: por MLB
         const evs=[];
         if(b){
           const wA=num(a.winner_price), wB=num(b.winner_price);
@@ -6608,7 +6473,7 @@ const ecomAlvo={
       });
       const sumiram=antId?Object.keys(ant).filter(m=>!atual[m]).map(m=>ant[m]):[];
       const codigos={}; Object.keys(atual).forEach(m=>{ codigos[atual[m].produto_codigo]=1; });
-      const foraPiso=Object.keys(codigos).filter(c=>marg[c]&&marg[c].passa_piso===false).length;
+      const foraPiso=Object.keys(atual).filter(m=>{ const x=marg[this._normMlb(m)]; return x&&x.passa_piso===false; }).length; // BUILD 2026-10-16-A: por MLB
       const zumbis=eventos.filter(e=>e.zumbi).length;
       eventos.sort((x,y)=>((y.zumbi?1:0)-(x.zumbi?1:0))||(y.evs.length-x.evs.length)||(y.visitas-x.visitas));
       parados.sort((x,y)=>y.visitas-x.visitas);
@@ -6844,12 +6709,13 @@ const ecomAlvo={
     this.renderSim(id);
   },
   // BUILD 2026-09-10-A: Exportar (md) do Controle — mesma matematica da tela (_simMargem + estorno; promocao vigente governa). Nenhum calculo paralelo.
-  exportarControleMd(){
-    if(typeof ecom==='undefined'||!ecom.loaded){ alert('Cat\u00e1logo ainda n\u00e3o carregado \u2014 tente de novo em instantes.'); return; }
+  // BUILD 2026-10-16-A: gerarMdControle = FONTE UNICA do export de margem (botao Exportar do Controle e Pacote do agente). usarFiltro=false ignora a busca da tela.
+  gerarMdControle(usarFiltro){
+    if(typeof ecom==='undefined'||!ecom.loaded) return {erro:'Cat\u00e1logo ainda n\u00e3o carregado \u2014 tente de novo em instantes.'};
     const rep=(ecom.reputacao||'verde');
     const fR=v=>(+v).toFixed(2).replace('.',',');
     const anns=this.anuncios||[];
-    const _flt=(this.anunciosFiltro||'').trim().toLowerCase();
+    const _flt=(usarFiltro===false)?'':(this.anunciosFiltro||'').trim().toLowerCase();
     const hoje0=new Date(); hoje0.setHours(0,0,0,0);
     const diasDe=s=>{ const p=String(s||'').slice(0,10).split('-').map(Number); if(p.length<3||!p[0]) return null; return Math.round((hoje0-new Date(p[0],p[1]-1,p[2]))/864e5); };
     const rows=anns.map(an=>{ const dias=diasDe(an.data_publicacao);
@@ -6859,7 +6725,7 @@ const ecomAlvo={
     const enc=a=>(a.ativo===false?2:(a.pausado?1:0));
     rows.sort((a,b)=> (enc(a.an)-enc(b.an)) || (b.vendas-a.vendas) || ((b.dias==null?-1:b.dias)-(a.dias==null?-1:a.dias)) );
     const lista=_flt?rows.filter(r=>String(r.an.produto_codigo||'').toLowerCase().includes(_flt)):rows;
-    if(!lista.length){ alert('nenhum an\u00fancio para exportar'+(_flt?(' com o filtro \u00ab'+String(this.anunciosFiltro).trim()+'\u00bb'):'')); return; }
+    if(!lista.length) return {erro:'nenhum an\u00fancio para exportar'+(_flt?(' com o filtro \u00ab'+String(this.anunciosFiltro).trim()+'\u00bb'):'')};
     const prodMap={}; (ecom.itens||[]).forEach(p=>{ prodMap[String(p.codigo).toUpperCase()]=p; });
     const impPct=(ecom._n?ecom._n('ecom-imp'):4), colPct=(ecom._n?ecom._n('ecom-colchao'):6);
     let md='# Controle de An\u00fancios \u2014 export\n\n'
@@ -6876,6 +6742,7 @@ const ecomAlvo={
       const est=temPromo?this._estornoPromo(an,+an.preco,praticado):0;
       const r=(prod&&praticado!=null)?this._simMargem(prod,praticado,tipo,rep,est,an):null; // BUILD 2026-09-15-L: an
       const status=an.ativo===false?'ENCERRADO NO ML':(an.pausado?'PAUSADO':'ativo');
+      const dvX=this.divergencia(an); // BUILD 2026-10-16-A · V3
       md+='## '+cod+' \u00b7 MLB '+(an.anuncio_mlb||'\u2014')+'\n'
         +'- t\u00edtulo: '+(an.titulo||'\u2014')+'\n'
         +'- status: '+status+' \u00b7 '+(row.dias==null?'sem data':(row.dias<0?'agendado':row.dias+' dias no ar'))+' \u00b7 '+row.vendas+' venda(s) desde a publica\u00e7\u00e3o\n'
@@ -6885,6 +6752,7 @@ const ecomAlvo={
         const pct=r.margemPct*100;
         const comOrigem=this._comOrigemLabel(r,prod); // BUILD 2026-09-15-L
         md+='- margem (app): **'+pct.toFixed(1)+'%** \u00b7 lucro R$ '+fR(r.margem)+' \u00b7 '+(pct>=10?'LIBERADO':'NEGADO \u2014 abaixo do piso')+'\n'
+          +(dvX.estado==='div'?('- \u26a0 REGISTRO \u2260 ML: margem calculada sobre o registro do app, n\u00e3o sobre o pre\u00e7o do ML ('+dvX.itens.map(d=>String(d.tipo).toLowerCase()+' no ML '+(d.ml==null?'\u2014':d.ml)+' \u00b7 no app '+(d.app==null?'\u2014':d.app)).join(' / ')+') \u2014 n\u00e3o usar para decis\u00e3o at\u00e9 corrigir pelo Editar\n'):'')
           +'- detalhes: custo NF R$ '+fR(prod.custo)+' \u00b7 comiss\u00e3o '+(r.comPct*100).toFixed(2)+'% ('+comOrigem+')'+(r.comFixa>0?(' \u00b7 tarifa fixa R$ '+fR(r.comFixa)):'')+' \u00b7 frete R$ '+fR(r.frete)+' ('+this._freteOrigemLabel(r)+')'+(r.pesoMl!=null?(' \u00b7 peso ML '+Math.round(r.pesoMl)+' g'):'')+' \u00b7 colch\u00e3o R$ '+fR(praticado*colPct/100)+(r.estorno>0?(' \u00b7 estorno campanha +R$ '+fR(r.estorno)):'')+'\n';
         if(prod.estoque_atual!=null) md+='- estoque (cat\u00e1logo): '+prod.estoque_atual+' un.\n';
       } else {
@@ -6893,7 +6761,10 @@ const ecomAlvo={
       }
       md+='\n';
     });
-    const blob=new Blob([md],{type:'text/markdown;charset=utf-8'});
+    return {md};
+  },
+  exportarControleMd(){ const g=this.gerarMdControle(true); if(g.erro){ alert(g.erro); return; }
+    const blob=new Blob([g.md],{type:'text/markdown;charset=utf-8'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a');
     a.href=url; a.download='controle_anuncios_'+new Date().toISOString().slice(0,10)+'.md';
     document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
@@ -6915,21 +6786,39 @@ const ecomAlvo={
     const box=this._g('al-margem'); if(!box) return;
     const F=v=>'R$ '+(+v).toFixed(2).replace('.',',');
     const neutro=t=>{ box.innerHTML='<span style="color:var(--emuted2)">'+t+'</span>'; };
-    const cod=this._g('al-cod').value.trim().toUpperCase();
-    if(!cod){ neutro('digite código, tipo e preço'); return; }
-    if(typeof ecom==='undefined'||!ecom.loaded){ neutro('carregando catálogo…'); return; }
-    const prod=(ecom.itens||[]).find(x=>x.codigo===cod);
-    if(!prod){ neutro('código não encontrado no Catálogo'); return; }
-    const tipo=this._g('al-tipo').value;
-    const preco=parseFloat(this._g('al-preco').value);
-    if(!(preco>0)){ box.innerHTML='<span style="color:var(--eemerald)">✓ '+(prod.produto||'')+'</span><span style="color:var(--emuted2)">· custo NF '+F(prod.custo)+' · digite o preço</span>'; return; }
-    const r=this._simMargem(prod, preco, tipo, (ecom.reputacao||'verde'));
-    if(!r.ok){ box.innerHTML='<span style="color:var(--eamber)">'+r.reason+'</span>'; return; }
-    const pct=r.margemPct*100;
+    const st=this._cadGate(); this._cadState=st; this._cadConfirm=false; // BUILD 2026-10-16-A: trava do piso no cadastro
+    const btn=this._g('al-cadastrar'), ow=this._g('al-ovr-wrap'), ov=this._g('al-ovr');
+    const setBtn=on=>{ if(btn){ if(on) btn.removeAttribute('disabled'); else btn.setAttribute('disabled',''); } };
+    if(ow) ow.style.display=st.naFaixaDono?'flex':'none'; if(ov&&!st.naFaixaDono) ov.checked=false;
+    if(st.status==='vazio'){ neutro(st.reason); setBtn(true); return; } // formulario vazio: clicar mostra o que falta
+    if(st.status==='prod'){ box.innerHTML='<span style="color:var(--eemerald)">✓ '+(st.prod.produto||'')+'</span><span style="color:var(--emuted2)">· custo NF '+F(st.prod.custo)+' · digite o preço</span>'; setBtn(false); return; }
+    if(st.status==='warn'){ box.innerHTML='<span style="color:var(--eamber)">'+st.reason+'</span>'; setBtn(false); return; }
+    const r=st.r, pct=st.pct;
     const cor=pct>=10?'var(--eemerald)':pct>=5?'var(--eamber)':'var(--ered)';
+    const selo=pct>=10?'<b style="color:var(--eemerald)">✔ LIBERADO</b>':(st.override?'<b style="color:var(--eamber)">⚠ LIBERAÇÃO ABAIXO DO PISO</b>':'<b style="color:var(--ered)">✖ NEGADO</b>');
     box.innerHTML='<b style="color:'+cor+';font-size:14px">'+pct.toFixed(1).replace('.',',')+'%</b>'
-      +'<span style="color:'+cor+'">'+F(r.margem)+' líq.</span>'
+      +'<span style="color:'+cor+'">'+F(r.margem)+' líq.</span>'+selo
       +'<span class="faint" style="font-size:11px;color:var(--emuted2)">frete '+F(r.frete)+' · comissão '+(r.comPct*100).toFixed(1).replace('.',',')+'% (tabela — anúncio ainda sem leitura do ML)</span>'; // BUILD 2026-09-15-L
+    setBtn(st.ok);
+  },
+  // BUILD 2026-10-16-A: trava do piso no Cadastro de anuncio — MESMAS zonas do Editar do Controle: >=10 grava · 5..10 so o dono (checkbox + motivo + 2 cliques) · <5 negado absoluto
+  _cadGate(){
+    const cod=(this._g('al-cod')||{value:''}).value.trim().toUpperCase(); const tipo=(this._g('al-tipo')||{value:'classico'}).value; const preco=parseFloat((this._g('al-preco')||{value:''}).value);
+    if(!cod) return {status:'vazio',ok:false,reason:'digite código, tipo e preço'};
+    if(typeof ecom==='undefined'||!ecom.loaded) return {status:'vazio',ok:false,reason:'carregando catálogo…'};
+    const prod=(ecom.itens||[]).find(x=>String(x.codigo||'').toUpperCase()===cod);
+    if(!prod) return {status:'warn',ok:false,reason:'código não encontrado no Catálogo'};
+    if(prod.custo==null||isNaN(+prod.custo)||+prod.custo<=0) return {status:'warn',ok:false,prod,reason:'custo NF ausente no cadastro do produto — piso não verificável'};
+    if((ecom.pesoEfetivoG?ecom.pesoEfetivoG(prod):null)==null) return {status:'warn',ok:false,prod,reason:'peso ausente no cadastro do produto — piso não verificável'};
+    if(!(preco>0)) return {status:'prod',ok:false,prod};
+    const r=this._simMargem(prod, preco, tipo, (ecom.reputacao||'verde'));
+    if(!r.ok) return {status:'warn',ok:false,prod,reason:r.reason};
+    const pct=r.margemPct*100;
+    const ownerEmail='selectasolution@gmail.com';
+    const isOwner=(typeof state!=='undefined'&&state.user&&String(state.user.email||'').trim().toLowerCase()===ownerEmail);
+    const naFaixaDono=isOwner&&pct>=5&&pct<10;
+    const ov=this._g('al-ovr'); const override=!!(naFaixaDono&&ov&&ov.checked);
+    return {status:'calc',ok:(pct>=10||override),override,naFaixaDono,prod,preco,tipo,r,pct};
   },
   // BUILD 2026-08-26-K: estorno da campanha ML para a promocao VIGENTE do anuncio. So vale se o preco promocional avaliado for o mesmo gravado
   // (promocao redigitada = campanha nova = promo_ml_pct volta a NULL pelo trigger do SQL 10). NULL = nao analisado = 0.
@@ -7001,6 +6890,15 @@ const ecomAlvo={
     return 'tabela · '+o;
   },
   _freteOrigemLabel(r){ return (r&&r.freteOrig==='ml')?'ML':((r&&r.freteOrig)||'tabela'); },
+  // BUILD 2026-10-16-A · V1: estado do anuncio NO ML segundo a ultima varredura sync (registro do app sobrescrito pelos itens divergentes); null = sem divergencia/sem leitura
+  _estadoMl(an){ if(!an) return null; const dv=this.divergencia(an); if(dv.estado!=='div') return null;
+    const st={preco:(an.preco!=null?+an.preco:null), promo:(an.preco_promocao!=null?+an.preco_promocao:null), tipo:(an.tipo_anuncio==='premium')?'premium':'classico'};
+    (dv.itens||[]).forEach(d=>{ if(d.tipo==='PRECO') st.preco=(d.ml==null?null:+d.ml); else if(d.tipo==='PROMOCAO') st.promo=(d.ml==null?null:+d.ml); else if(d.tipo==='TIPO') st.tipo=String(d.ml); });
+    return st; },
+  // V1: o formulario reproduz exatamente o que o ML ja pratica = registro da realidade (alinhamento), nao preco novo
+  _ehAlinhamento(an,preco,promo,tipo){ const st=this._estadoMl(an); if(!st) return false;
+    const eq=(a,b)=>((a==null&&b==null)||(a!=null&&b!=null&&!isNaN(+a)&&!isNaN(+b)&&Math.abs(+a-+b)<0.005));
+    return eq(preco,st.preco)&&eq(promo,st.promo)&&String(tipo)===String(st.tipo); },
   renderSim(id){
     const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
     const wrap=box.querySelector('[data-alsim="'+id+'"]'); if(!wrap) return;
@@ -7111,14 +7009,17 @@ const ecomAlvo={
     if(ovrLbl) ovrLbl.style.display=(isOwner&&naFaixa)?'inline-flex':'none';
     if(ovrEl&&!(isOwner&&naFaixa)&&ovrEl.checked) ovrEl.checked=false;
     const override=!!(isOwner&&naFaixa&&ovrEl&&ovrEl.checked);
-    const liberado=pctEf>=10||override;
+    const anAl=(this.anuncios||[]).find(x=>String(x.id)===String(id))||null; // BUILD 2026-10-16-A · V1
+    const alinha=!promoErr&&this._ehAlinhamento(anAl,gate.preco,promoVal,gate.tipo);
+    const liberado=pctEf>=10||override||alinha;
     if(msg){
-      if(pctEf>=10){ msg.className='vmsg'; msg.textContent=''; }
+      if(pctEf>=10){ msg.className='vmsg'; msg.style.color=alinha?'var(--eteal)':''; msg.textContent=alinha?'⚖ alinhamento ao ML — o registro passa a ser o preço que o ML já pratica.':''; }
+      else if(alinha){ msg.className='vmsg'; msg.style.color='var(--eamber)'; msg.textContent='⚖ ALINHAMENTO AO ML — o ML já pratica este preço. Grava o registro da realidade; margem '+pctEf.toFixed(1)+'% abaixo do piso fica visível e logada (alinhamento_ml).'; }
       else if(override){ msg.className='vmsg'; msg.style.color='var(--eamber)'; msg.textContent='⚠ liberação abaixo do piso ativa — margem '+pctEf.toFixed(1)+'%. Será registrada como ABAIXO_PISO.'; }
       else { msg.className='vmsg err'; msg.style.color=''; msg.textContent='NEGADO — margem vigente ('+(promoAtiva?'promoção':'preço cheio')+') abaixo do piso de 10%.'; }
     }
     if(btnSave){ if(liberado) btnSave.removeAttribute('disabled'); else btnSave.setAttribute('disabled',''); }
-    wrap._simState={ok:liberado, override, piorPct:pctEf, comPct:efet.comPct*100, promoAtiva:promoVal!=null, promoVal, tipoP};
+    wrap._simState={ok:liberado, override, alinhamento:alinha, piorPct:pctEf, comPct:efet.comPct*100, promoAtiva:promoVal!=null, promoVal, tipoP}; // BUILD 2026-10-16-A: alinhamento
   },
   _fmtBR(n){ const v=Number(n); if(isNaN(v)) return '—'; return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); },
   async salvarEdicao(id){ const box=document.querySelector('[data-aleditbox="'+id+'"]'); if(!box) return;
@@ -7136,10 +7037,10 @@ const ecomAlvo={
     const wrap=box.querySelector('[data-alsim="'+id+'"]');
     const st=wrap&&wrap._simState;
     if(!st||!st.ok){ if(msg){ msg.className='vmsg err'; msg.textContent='Gravação bloqueada: piso 10% não atendido ou dado incompleto.'; } return; }
-    if(st.override){
+    if(st.override||(st.alinhamento&&st.piorPct!=null&&st.piorPct<10)){ // BUILD 2026-10-16-A: alinhamento abaixo do piso tambem confirma 2x
       // BUILD 01/08-A: dupla confirmação DENTRO da página (imune a bloqueio de diálogos do navegador)
       if(wrap&&!wrap._ovrConfirm){ wrap._ovrConfirm=true;
-        if(msg){ msg.className='vmsg'; msg.style.color='var(--eamber)'; msg.textContent='⚠ Margem '+(st.piorPct!=null?st.piorPct.toFixed(1):'?')+'% — clique Salvar NOVAMENTE para confirmar a gravação ABAIXO DO PISO.'; }
+        if(msg){ msg.className='vmsg'; msg.style.color='var(--eamber)'; msg.textContent='⚠ Margem '+(st.piorPct!=null?st.piorPct.toFixed(1):'?')+'% — clique Salvar NOVAMENTE para confirmar a gravação '+(st.override?'ABAIXO DO PISO':'do ALINHAMENTO AO ML (abaixo do piso)')+'.'; }
         return; }
       if(wrap) wrap._ovrConfirm=false; }
     try{ const chk=await sb.from('ecom_produtos').select('codigo').eq('codigo',cod).maybeSingle(); if(chk.error) throw chk.error; if(!chk.data){ if(msg){ msg.className='vmsg err'; msg.textContent='Código não existe no catálogo.'; } return; }
@@ -7152,21 +7053,12 @@ const ecomAlvo={
       const r=await sb.from('ecom_anuncios').update({produto_codigo:cod,anuncio_mlb:mlb,titulo:tit,preco:precoNovo,data_publicacao:pub,tipo_anuncio:tipo,preco_promocao:promoNovo,tipo_promocao:promoNovo!=null?tipoPromo:null}).eq('id',id); if(r.error) throw r.error;
       // Log em ecom_anuncio_alteracao (imutável) — só quando houver de fato mudança de preço ou tipo
       const houvePreco=(Number(precoAnterior)||0)!==(Number(precoNovo)||0);
-      // SYNC CONTROLE→SIMULADOR (BUILD 2026-07-15-A · decisão Igor 15/07): preço registrado pela Alexia
-      // vira o preço do produto no Simulador (ecom_produtos.preco) — fonte única em tempo real.
-      // Roda ANTES do log para que anúncio e produto nunca fiquem inconsistentes se o log falhar.
-      // O piso 10% já foi validado acima (st.ok) — o sync herda a mesma proteção da cláusula pétrea.
-      if(houvePreco && precoNovo!=null){
-        const rs=await sb.from('ecom_produtos').update({preco:precoNovo,atualizado_em:new Date().toISOString()}).eq('codigo',cod);
-        if(rs.error){ if(msg){ msg.className='vmsg err'; msg.textContent='Anúncio salvo, mas o sync do Simulador falhou: '+rs.error.message; } this.load(); return; }
-        // Reflete no estado local do Simulador sem exigir refresh (tempo real na mesma sessão)
-        try{ if(typeof ecom!=='undefined' && ecom.itens){ const pit=ecom.itens.find(x=>x&&x.codigo===cod); if(pit){ pit.preco=precoNovo; if(typeof ecom.render==='function') ecom.render(); } } }catch(_){/* sync visual é best-effort; o banco é a verdade */}
-      }
+      // BUILD 2026-10-16-A: sync Controle→produto (07-15-A) REMOVIDO — produto nao tem preco; o preco praticado vive so no anuncio
       const houveTipo=(anAtual&&anAtual.tipo_anuncio||'classico')!==tipo;
       // Promoção: entrada (null->valor), alteração (valor->valor), saída (valor->null) e troca de tipo da promoção
       const houvePromo=((Number(promoAnterior)||0)!==(Number(promoNovo)||0)) || (promoNovo!=null && tipoPromoAnterior!==tipoPromo);
       if(houvePreco||houveTipo||houvePromo){
-        const partes=[]; if(houvePreco) partes.push('preco'); if(houveTipo) partes.push('tipo_anuncio'); if(houvePromo) partes.push('promocao'); if(st.override) partes.push('abaixo_piso');
+        const partes=[]; if(houvePreco) partes.push('preco'); if(houveTipo) partes.push('tipo_anuncio'); if(houvePromo) partes.push('promocao'); if(st.override) partes.push('abaixo_piso'); if(st.alinhamento) partes.push('alinhamento_ml'); // BUILD 2026-10-16-A
         const logRow={ anuncio_sku:cod, mlb:mlb, campo:partes.join('+'),
           preco_anterior:houvePreco?precoAnterior:(houvePromo?promoAnterior:null),
           preco_novo:houvePreco?precoNovo:(houvePromo?promoNovo:null),
@@ -7271,9 +7163,11 @@ const ecomAlvo={
   },
   async exportarPacote(){ const msg=this._g('al-cmdr-msg'); if(msg){ msg.className='vmsg'; msg.textContent='gerando…'; }
     try{
-      if(typeof ecom!=='undefined' && !ecom.loaded){ await ecom.loadFreteTbl(); await ecom.loadProdutos(); ecom.loaded=true; }
+      if(typeof ecom!=='undefined' && !ecom.loaded){ await ecom.loadFreteTbl(); await ecom.loadComissoes(); await ecom.loadProdutos(); ecom.loaded=true; } // BUILD 2026-10-16-A: + comissoes (sem elas a conta caia no fallback 13/17%)
+      if(!this.anuncios||!this.anuncios.length){ try{ const ra=await sb.from('ecom_anuncios').select('*').order('data_publicacao',{ascending:false}); if(!ra.error) this.anuncios=ra.data||[]; }catch(_e){} }
       try{ await this.radar(); }catch(_e){}
-      const cenario=(typeof ecom!=='undefined' && ecom.gerarMdCenario)?ecom.gerarMdCenario():'> (Simulador indisponível — cenário não incluído)\n';
+      const gc=this.gerarMdControle(false); // BUILD 2026-10-16-A: o pacote embute o Export do Controle (motor unico, preco praticado) no lugar do cenario aposentado
+      const cenario=gc.erro?('> (Controle indisponível — '+gc.erro+')\n'):gc.md;
       const hoje0=new Date(); hoje0.setHours(0,0,0,0);
       const diasDe=s=>{ const p=String(s||'').slice(0,10).split('-').map(Number); if(p.length<3||!p[0]) return null; return Math.round((hoje0-new Date(p[0],p[1]-1,p[2]))/864e5); };
       const cel=s=>String(s==null?'':s).replace(/\|/g,'/').replace(/\n/g,' ');
@@ -7287,7 +7181,7 @@ const ecomAlvo={
         +'## Publicações ativas (quadro de anúncios)\n'
         +'| MLB | Código | Título | Preço anunciado | Dias no ar | Vendas |\n|---|---|---|---|---|---|\n'
         +(linhas||'| (nenhum anúncio cadastrado) | | | | | |')+'\n\n'
-        +'> Cruze por **Código**: a margem de cada SKU está na tabela "Produtos" do cenário abaixo. Visitas e status de competição vêm do dossiê (ecom_vw_dossie), capturado automaticamente às 04h50/14h50 — cole a query padrão do comando geral.\n\n'
+        +'> Cruze por **MLB**: a margem de cada anúncio está no bloco "Controle de Anúncios" abaixo — mesma conta da tela, sobre o preço praticado; ⚠ REGISTRO ≠ ML = não usar a margem até corrigir. Visitas e status de competição vêm do dossiê (ecom_vw_dossie), capturado automaticamente às 04h50/14h50 — cole a query padrão do comando geral.\n\n'
         +(this._radarMd||'')
         +'---\n\n'+cenario;
       const blob=new Blob([pacote],{type:'text/markdown;charset=utf-8'});
@@ -7298,13 +7192,30 @@ const ecomAlvo={
     }catch(e){ if(msg){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; } }
   },
   _normMlb(raw){ const m=String(raw||'').trim().toUpperCase().replace(/[#\s]/g,'').replace(/^(MLB)+/,''); return m||''; },
-  async cadastrar(){ const cod=this._g('al-cod').value.trim().toUpperCase(), mlb=this._normMlb(this._g('al-mlb').value), tit=this._g('al-tit').value.trim(), preco=parseFloat(this._g('al-preco').value), pub=this._g('al-pub').value, tipo=this._g('al-tipo').value; const msg=this._g('al-amsg'); msg.className='vmsg';
+  async cadastrar(){ const cod=this._g('al-cod').value.trim().toUpperCase(), mlb=this._normMlb(this._g('al-mlb').value), tit=this._g('al-tit').value.trim(), preco=parseFloat(this._g('al-preco').value), pub=this._g('al-pub').value, tipo=this._g('al-tipo').value; const msg=this._g('al-amsg'); msg.className='vmsg'; msg.style.color='';
+    if(this._cadBusy) return; // BUILD 2026-10-16-A: toque duplo grava 1
     if(!cod||!mlb||!tit||!pub){ msg.className='vmsg err'; msg.textContent='Código, MLB, título e data de publicação são obrigatórios.'; return; }
     if(!/^(MLB)?\d{6,}$/.test(mlb)){ msg.className='vmsg err'; msg.textContent='MLB inválido. Use o nº do anúncio (ex.: MLB4811359527 ou 4811359527).'; return; }
+    if(!(preco>0)){ msg.className='vmsg err'; msg.textContent='Preço anunciado é obrigatório (a trava do piso avalia a margem nele).'; return; }
+    // BUILD 2026-10-16-A: trava do piso reavaliada no clique (nao confia no botao)
+    const st=this._cadGate();
+    if(st.status!=='calc'){ msg.className='vmsg err'; msg.textContent='Gravação bloqueada: '+(st.reason||'dado incompleto')+'.'; return; }
+    if(!st.ok){ msg.className='vmsg err'; msg.textContent='NEGADO — margem '+st.pct.toFixed(1)+'% abaixo do piso de 10%'+(st.pct<5?' (abaixo de 5%: negado para qualquer usuário).':(st.naFaixaDono?'. Para liberar: marque "Liberar abaixo do piso" e informe o motivo.':' (5–10%: só o dono libera).'))+' Corrija o preço no ML antes de cadastrar.'; return; }
+    let motivoOvr=null;
+    if(st.override){ const mo=(this._g('al-ovr-motivo').value||'').trim();
+      if(mo.length<3){ msg.className='vmsg err'; msg.textContent='Informe o motivo da liberação abaixo do piso (mínimo 3 caracteres).'; return; }
+      if(!this._cadConfirm){ this._cadConfirm=true; msg.className='vmsg'; msg.style.color='var(--eamber)'; msg.textContent='⚠ Margem '+st.pct.toFixed(1)+'% — clique Cadastrar NOVAMENTE para confirmar a gravação ABAIXO DO PISO.'; return; }
+      motivoOvr='ABAIXO DO PISO ('+st.pct.toFixed(1)+'%) — '+mo; }
+    this._cadConfirm=false; this._cadBusy=true; const btn=this._g('al-cadastrar'); if(btn) btn.setAttribute('disabled','');
     try{ const chk=await sb.from('ecom_produtos').select('codigo').eq('codigo',cod).maybeSingle(); if(chk.error) throw chk.error; if(!chk.data){ msg.className='vmsg err'; msg.textContent='Código não existe no catálogo.'; return; }
-      const r=await sb.from('ecom_anuncios').insert({produto_codigo:cod,anuncio_mlb:mlb,titulo:tit,preco:isNaN(preco)?null:preco,data_publicacao:pub,tipo_anuncio:tipo,ativo:true}).select().single(); if(r.error) throw r.error;
-      ['al-cod','al-mlb','al-tit','al-preco','al-pub'].forEach(i=>this._g(i).value=''); this._g('al-tipo').value='classico'; this.simAnuncio(); // BUILD 2026-08-08-I msg.className='vmsg ok'; msg.textContent='✓ Anúncio cadastrado'; setTimeout(()=>msg.textContent='',2500); this.load();
+      const r=await sb.from('ecom_anuncios').insert({produto_codigo:cod,anuncio_mlb:mlb,titulo:tit,preco:preco,data_publicacao:pub,tipo_anuncio:tipo,ativo:true}).select().single(); if(r.error) throw r.error;
+      let aviso='';
+      if(motivoOvr){ const rl=await sb.from('ecom_anuncio_alteracao').insert({anuncio_sku:cod,mlb:mlb,campo:'cadastro+abaixo_piso',preco_anterior:null,preco_novo:preco,margem_pior_zona_pct:Number(st.pct.toFixed(2)),motivo:motivoOvr});
+        if(rl.error) aviso=' — mas o log da liberação falhou: '+rl.error.message; }
+      ['al-cod','al-mlb','al-tit','al-preco','al-pub','al-ovr-motivo'].forEach(i=>{ const el=this._g(i); if(el) el.value=''; }); this._g('al-tipo').value='classico'; { const ov=this._g('al-ovr'); if(ov) ov.checked=false; } this.simAnuncio(); // BUILD 2026-08-08-I
+      msg.className=aviso?'vmsg err':'vmsg ok'; msg.textContent='✓ Anúncio cadastrado'+aviso; if(!aviso) setTimeout(()=>{ if(msg.textContent.indexOf('✓ Anúncio cadastrado')===0) msg.textContent=''; },2500); this.load(); // BUILD 2026-10-16-A: confirmacao e recarga estavam comentadas por engano desde 08-08-I
     }catch(e){ msg.className='vmsg err'; msg.textContent='Erro: '+e.message; }
+    finally{ this._cadBusy=false; this.simAnuncio(); }
   },
   // BUILD 2026-07-13-A · Pausar preserva o VÍNCULO anúncio×produto (Remover apagava o registro e criou os
   // falsos ZUMBI-2 de 12–13/07). Rito: Alexia pausa/reativa NO ML PRIMEIRO, registra aqui DEPOIS. Ação logada.
@@ -7390,7 +7301,8 @@ const ecomAlvo={
           +(temPromo?' <span style="color:var(--eteal);font-size:9px;font-weight:700;letter-spacing:.03em">PROMO</span>':'')+'</span>';
       const margCell=(marg==null)
         ? '<span style="color:var(--emuted2)" title="'+ea((r&&r.reason)||(prod?'sem preço':'produto inativo/órfão no catálogo'))+'">—</span>'
-        : '<span style="color:'+mCor+';font-weight:700">'+marg.toFixed(1)+'%</span>';
+        : '<span style="color:'+mCor+';font-weight:700">'+marg.toFixed(1)+'%</span>'
+          +(this.divergencia(an).estado==='div'?' <span style="color:var(--ered);font-weight:700;cursor:help" title="REGISTRO \u2260 ML \u2014 margem calculada sobre o registro do app, n\u00e3o sobre o pre\u00e7o do ML. Corrija pelo Editar (veja o Hist\u00f3rico).">\u26a0</span>':''); // BUILD 2026-10-16-A · V3
       const campCell=campAnalisar?' <span style="color:var(--eamber);font-size:10px;font-weight:700;cursor:help" title="Campanha ML sem estorno analisado \u2014 margem conservadora (estorno = 0). Traga a linha da campanha do painel Promo\u00e7\u00f5es do ML para calibrar via SQL.">\u2691 campanha</span>'
         :((temPromo&&an.promo_ml_pct!=null&&+an.promo_ml_pct>0)?' <span style="color:var(--emuted2);font-size:10px;cursor:help" title="Estorno ML de '+(+an.promo_ml_pct).toFixed(0)+'% do desconto j\u00e1 na margem">\u21ba '+(+an.promo_ml_pct).toFixed(0)+'%</span>':''); // BUILD 2026-08-26-K
       const hist=(this.altHist&&this.altHist[mlb])||[]; const dv=this.divergencia(an);
@@ -7566,8 +7478,8 @@ const ecomAlvo={
     const catPrecoN={}; Object.keys(this.catPreco||{}).forEach(k=>{ const n=norm(k); if(n) catPrecoN[n]=this.catPreco[k]; });
     const anByCod={}; (this.analise||[]).forEach(x=>{ const c=norm(x.codigo); if(c && !anByCod[c]) anByCod[c]=x; });
     const simByCod={}; if(typeof ecom!=='undefined'&&ecom.itens) ecom.itens.forEach(pd=>{ const c=norm(pd.codigo); if(c) simByCod[c]=pd; });
-    const margemNoPreco=(cod,preco)=>{ const pd=simByCod[cod]; if(!pd||preco==null||isNaN(+preco)||+preco<=0||typeof ecom==='undefined'||!ecom.calc) return null;
-      try{ return ecom.calc(Object.assign({},pd,{preco:+preco})).margemPct*100; }catch(_e){ return null; } };
+    const margemNoPreco=(cod,preco,an)=>{ const pd=simByCod[cod]; if(!pd||preco==null||isNaN(+preco)||+preco<=0) return null; // BUILD 2026-10-16-A: mesmo motor do Controle (_simMargem), nao mais o calc do Catalogo
+      try{ const r=this._simMargem(pd,+preco,(an&&an.tipo_anuncio==='premium')?'premium':'classico',((typeof ecom!=='undefined'&&ecom.reputacao)||'verde'),0,an||null); return (r&&r.ok)?r.margemPct*100:null; }catch(_e){ return null; } };
     const ativosReg=(this.anuncios||[]).filter(a=>a.ativo!==false && !a.pausado && a.anuncio_mlb && ativoN[norm(a.produto_codigo)]!==false);
     const pausReg=(this.anuncios||[]).filter(a=>a.ativo!==false && a.pausado && a.anuncio_mlb);
     const pausMlbs=new Set(pausReg.map(a=>this._normMlb(a.anuncio_mlb)).filter(Boolean));
@@ -7592,7 +7504,7 @@ const ecomAlvo={
       const sn=snap[mlbN]||null; const x=anByCod[cod]||null; const sug=this.resultados[mlbN]||null;
       const precoPub=(sn&&sn.preco!=null)?+sn.preco:null; const precoMl=(a.preco!=null)?+a.preco:null;
       const precoSim=(catPrecoN[cod]!=null)?+catPrecoN[cod]:null;
-      const marg=margemNoPreco(cod,(precoPub!=null?precoPub:precoMl));
+      const marg=margemNoPreco(cod,(precoPub!=null?precoPub:precoMl),a);
       const diverge=(precoPub!=null&&precoMl!=null&&Math.abs(precoPub-precoMl)>=0.005);
       return {a,cod,mlbN,x,sug,precoPub,precoMl,precoSim,marg,diverge,noLote:!!sn,ind:(x&&x.indice!=null)?+x.indice:null};
     }).sort((p1,p2)=>(((p2.ind==null?-1e9:p2.ind)-(p1.ind==null?-1e9:p1.ind)))||String(p1.cod).localeCompare(String(p2.cod)));
@@ -7781,11 +7693,11 @@ const ecomAlvo={
     try{ const r=await sb.from('ecom_analise_alvo').delete().not('id','is',null); if(r.error) throw r.error; this.loadAnalise(); }
     catch(e){ alert('Erro: '+e.message); }
   },
-  cmdTexto:"AN\u00c1LISE INDIVIDUAL DE AN\u00daNCIO \u2014 Selecta Solution \u00b7 v2.0 (30/07/2026)\nSubstitui o Manual Geral v1.9 (APOSENTADO). Um an\u00fancio por an\u00e1lise. Um JSON por an\u00e1lise.\n\n[PAPEL] Voc\u00ea \u00e9 o especialista comercial de e-commerce da Selecta no Mercado Livre. Sua fun\u00e7\u00e3o: posicionar e ranquear ESTE an\u00fancio. Voc\u00ea decide e assina \u2014 (depende) n\u00e3o \u00e9 entrega.\n\n[INSUMO] O Igor cola nesta conversa o quadro do an\u00fancio no painel ML (concorr\u00eancia, an\u00fancio ganhador, condi\u00e7\u00f5es, pre\u00e7o para ganhar) e o que mais julgar necess\u00e1rio. Falta dado essencial = pergunte UMA vez, objetivo. NUNCA invente n\u00famero, MLB ou c\u00f3digo.\n\n[MATEM\u00c1TICA \u2014 N\u00c3O RECALCULAR] Margem e (voc\u00ea recebe) s\u00e3o do app (espelho ML: comiss\u00e3o real da categoria \u00d7 frete oficial por peso\u00d7faixa\u00d7reputa\u00e7\u00e3o \u00d7 imposto \u00d7 custo NF). Piso 10% \u00e9 cl\u00e1usula p\u00e9trea: NUNCA sugerir pre\u00e7o que resulte em margem <10%. Bandas de frete (ex.: R$79, R$200): cruzar a borda muda o frete \u2014 todo preco_sugerido deve ser validado na banda (precedente KTM-0001: 69,90\u219280 derrubou 21,1%\u21928,5%).\n\n[AN\u00c1LISE \u2014 nesta ordem]\n1. EXPOSI\u00c7\u00c3O: visitas. Zero visita = problema \u00e9 invisibilidade, n\u00e3o pre\u00e7o.\n2. COMPETI\u00c7\u00c3O: o que o GANHADOR tem que eu n\u00e3o tenho \u2014 Envios Full, mesmo dia, coleta, sem juros, publicidade. GAP DE CONDI\u00c7\u00d5ES pesa tanto quanto pre\u00e7o; metade das disputas n\u00e3o se resolve baixando pre\u00e7o. Trava Decola (price_to_win = meu pre\u00e7o) = alavanca de pre\u00e7o MORTA, n\u00e3o queimar margem contra parede administrativa.\n3. CONVERS\u00c3O: visita alta + venda zero = MELHORAR AN\u00daNCIO, n\u00e3o pre\u00e7o.\n4. MARGEM (VETO): o piso decide o permitido, nunca o desej\u00e1vel.\nDois an\u00fancios do mesmo produto (cl\u00e1ssico + premium, promo\u00e7\u00f5es distintas) \u00e9 ESTRAT\u00c9GIA da casa \u2014 analisar o an\u00fancio recebido nos DOIS cen\u00e1rios (cheio e promo\u00e7\u00e3o). Baixar pre\u00e7o \u00e9 o \u00daLTIMO recurso, nunca o primeiro.\n\n[ENTREGA] 1\u00ba: leitura de mercado no chat \u2014 fato com n\u00famero \u2192 proje\u00e7\u00e3o \u2192 a\u00e7\u00e3o, curta e decidida. 2\u00ba: ap\u00f3s OK do Igor, o JSON individual (nada al\u00e9m dele):\n{\"mlb\":\"7046959466\",\"veredito\":\"MELHORAR CONDICOES\",\"cls\":\"a\",\"diagnostico\":\"2 a 4 frases: fato, proje\u00e7\u00e3o, porqu\u00ea da a\u00e7\u00e3o. Citar o gap de condi\u00e7\u00f5es.\",\"acao\":\"t\u00edtulo curto e execut\u00e1vel\",\"preco_sugerido\":null,\"condicoes_gap\":[\"envios_full\",\"mesmo_dia\"],\"visitas\":10,\"status_ml\":\"active\"}\nRegras: mlb SEM prefixo, copiado do insumo; cls o|a|c (nunca n com criticidade); veredito come\u00e7a por MANTER \u00b7 AJUSTAR PRE\u00c7O \u00b7 MELHORAR AN\u00daNCIO \u00b7 MELHORAR CONDI\u00c7\u00d5ES \u00b7 SEGURAR \u00b7 CORTAR; preco_sugerido null ou validado no piso E na banda; objetivo \u2014 esse texto entra direto como sugest\u00e3o no Comercial da Alexia.\n\n[M\u00c9TODO] PT-BR sempre. Escrever (fornecedor), nunca o nome. Gate manual absoluto: propor, nunca executar. Na d\u00favida: pare, informe, resolvam juntos.",
+  cmdTexto:"AN\u00c1LISE INDIVIDUAL DE AN\u00daNCIO \u2014 Selecta Solution \u00b7 v2.0 (30/07/2026)\nSubstitui o Manual Geral v1.9 (APOSENTADO). Um an\u00fancio por an\u00e1lise. Um JSON por an\u00e1lise.\n\n[PAPEL] Voc\u00ea \u00e9 o especialista comercial de e-commerce da Selecta no Mercado Livre. Sua fun\u00e7\u00e3o: posicionar e ranquear ESTE an\u00fancio. Voc\u00ea decide e assina \u2014 (depende) n\u00e3o \u00e9 entrega.\n\n[INSUMO] O Igor cola nesta conversa o quadro do an\u00fancio no painel ML (concorr\u00eancia, an\u00fancio ganhador, condi\u00e7\u00f5es, pre\u00e7o para ganhar) e o que mais julgar necess\u00e1rio. Falta dado essencial = pergunte UMA vez, objetivo. NUNCA invente n\u00famero, MLB ou c\u00f3digo.\n\n[MATEM\u00c1TICA \u2014 N\u00c3O RECALCULAR] A margem (voc\u00ea recebe) \u00e9 do app, calculada SOBRE O PRE\u00c7O PRATICADO de cada an\u00fancio (comiss\u00e3o e frete aferidos do ML por an\u00fancio quando lidos; sen\u00e3o tabela da categoria \u00d7 frete oficial \u00d7 reputa\u00e7\u00e3o) \u00d7 imposto \u00d7 custo NF. An\u00fancio marcado \u26a0 REGISTRO \u2260 ML: a margem n\u00e3o serve para decis\u00e3o at\u00e9 a corre\u00e7\u00e3o. Piso 10% \u00e9 cl\u00e1usula p\u00e9trea: NUNCA sugerir pre\u00e7o que resulte em margem <10%. Bandas de frete (ex.: R$79, R$200): cruzar a borda muda o frete \u2014 todo preco_sugerido deve ser validado na banda (precedente KTM-0001: 69,90\u219280 derrubou 21,1%\u21928,5%).\n\n[AN\u00c1LISE \u2014 nesta ordem]\n1. EXPOSI\u00c7\u00c3O: visitas. Zero visita = problema \u00e9 invisibilidade, n\u00e3o pre\u00e7o.\n2. COMPETI\u00c7\u00c3O: o que o GANHADOR tem que eu n\u00e3o tenho \u2014 Envios Full, mesmo dia, coleta, sem juros, publicidade. GAP DE CONDI\u00c7\u00d5ES pesa tanto quanto pre\u00e7o; metade das disputas n\u00e3o se resolve baixando pre\u00e7o. Trava Decola (price_to_win = meu pre\u00e7o) = alavanca de pre\u00e7o MORTA, n\u00e3o queimar margem contra parede administrativa.\n3. CONVERS\u00c3O: visita alta + venda zero = MELHORAR AN\u00daNCIO, n\u00e3o pre\u00e7o.\n4. MARGEM (VETO): o piso decide o permitido, nunca o desej\u00e1vel.\nDois an\u00fancios do mesmo produto (cl\u00e1ssico + premium, promo\u00e7\u00f5es distintas) \u00e9 ESTRAT\u00c9GIA da casa \u2014 analisar o an\u00fancio recebido nos DOIS cen\u00e1rios (cheio e promo\u00e7\u00e3o). Baixar pre\u00e7o \u00e9 o \u00daLTIMO recurso, nunca o primeiro.\n\n[ENTREGA] 1\u00ba: leitura de mercado no chat \u2014 fato com n\u00famero \u2192 proje\u00e7\u00e3o \u2192 a\u00e7\u00e3o, curta e decidida. 2\u00ba: ap\u00f3s OK do Igor, o JSON individual (nada al\u00e9m dele):\n{\"mlb\":\"7046959466\",\"veredito\":\"MELHORAR CONDICOES\",\"cls\":\"a\",\"diagnostico\":\"2 a 4 frases: fato, proje\u00e7\u00e3o, porqu\u00ea da a\u00e7\u00e3o. Citar o gap de condi\u00e7\u00f5es.\",\"acao\":\"t\u00edtulo curto e execut\u00e1vel\",\"preco_sugerido\":null,\"condicoes_gap\":[\"envios_full\",\"mesmo_dia\"],\"visitas\":10,\"status_ml\":\"active\"}\nRegras: mlb SEM prefixo, copiado do insumo; cls o|a|c (nunca n com criticidade); veredito come\u00e7a por MANTER \u00b7 AJUSTAR PRE\u00c7O \u00b7 MELHORAR AN\u00daNCIO \u00b7 MELHORAR CONDI\u00c7\u00d5ES \u00b7 SEGURAR \u00b7 CORTAR; preco_sugerido null ou validado no piso E na banda; objetivo \u2014 esse texto entra direto como sugest\u00e3o no Comercial da Alexia.\n\n[M\u00c9TODO] PT-BR sempre. Escrever (fornecedor), nunca o nome. Gate manual absoluto: propor, nunca executar. Na d\u00favida: pare, informe, resolvam juntos.",
   fillComando(){ const t=this._g('al-cmd-text'); if(t && !t.value) t.value=this.cmdTexto;
     const d=this._g('al-cmd-data'); if(d && !d.value) d.value=new Date().toISOString().slice(0,10);
     const b=this._g('al-cmd-copy'); if(b && !b._bound){ b._bound=true; b.addEventListener('click',()=>this.copiarComando()); }
-    const ex=this._g('al-cmd-export'); if(ex && !ex._bound){ ex._bound=true; ex.addEventListener('click',async()=>{ try{ if(typeof ecom!=='undefined'){ if(!ecom.loaded){ await ecom.loadFreteTbl(); await ecom.loadProdutos(); ecom.loaded=true; } ecom.exportarCenario(); } else alert('Simulador indisponível.'); }catch(e){ alert('Erro: '+e.message); } }); } },
+    const ex=this._g('al-cmd-export'); if(ex && !ex._bound){ ex._bound=true; ex.addEventListener('click',async()=>{ try{ if(typeof ecom!=='undefined'){ if(!ecom.loaded){ await ecom.loadFreteTbl(); await ecom.loadComissoes(); await ecom.loadProdutos(); ecom.loaded=true; } /* BUILD 2026-10-16-A: cenario aposentado — mesma fonte do Controle */ this.exportarControleMd(); } else alert('Simulador indisponível.'); }catch(e){ alert('Erro: '+e.message); } }); } },
   copiarComando(){ const t=this._g('al-cmd-text'), m=this._g('al-cmd-msg'); const dEl=this._g('al-cmd-data'); const data=dEl?dEl.value:new Date().toISOString().slice(0,10);
     const head='# Comando gerado em '+ (data||'(sem data)') +'\n\n'; const full=head+t.value;
     const done=()=>{ if(m){ m.className='vmsg ok'; m.textContent='✓ Copiado — cole no chat com os anexos'; setTimeout(()=>m.textContent='',3000); } };
@@ -8348,6 +8260,7 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
 })();
 (function(){ const c=ecomAlvo._g('al-cadastrar'); if(c) c.addEventListener('click',()=>ecomAlvo.cadastrar());
   ['al-cod','al-preco'].forEach(i=>{ const el=ecomAlvo._g(i); if(el) el.addEventListener('input',()=>ecomAlvo.simAnuncio()); }); const tp=ecomAlvo._g('al-tipo'); if(tp) tp.addEventListener('change',()=>ecomAlvo.simAnuncio()); // BUILD 2026-08-08-I
+  { const ov=ecomAlvo._g('al-ovr'); if(ov) ov.addEventListener('change',()=>ecomAlvo.simAnuncio()); } // BUILD 2026-10-16-A
   const imp=ecomAlvo._g('al-import'); if(imp) imp.addEventListener('click',e=>{ if(e.target.closest('[data-alimport]')) alert('Leva à Mesa de Análise / Import OS para estudar fornecedor e tributação da importação direta (DUIMP).'); });
   const an=ecomAlvo._g('al-anuncios'); if(an) an.addEventListener('click',e=>{
     const d=e.target.closest('[data-aldel]'); if(d){ ecomAlvo.remover(d.dataset.aldel); return; }
