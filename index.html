@@ -1,3 +1,4 @@
+<!-- BUILD 2026-10-16-B | selecta-banco-preco | PESO NO CATALOGO + MARGEM NO PRICE_TO_WIN (Igor 18/10, sobre 16-A publicado md5 229cba4afdff960f1faae2507c07da46; decisao (a) do dossie): (1) Catalogo ganha coluna Peso (peso_g em gramas; sem peso_g mostra a faixa antiga em cinza ou "sem peso" em ambar); a sub-linha de faixa sob o produto saiu. (2) Export do Controle (e portanto o Pacote do agente) ganha, por anuncio com price_to_win no lote atual, a linha "price_to_win R$ X · vencedor · status -> margem no ptw Y% LIBERADO/NEGADO" calculada pelo MESMO motor (_simMargem, preco cheio, sem estorno, frete da faixa declarada pelo ML quando houver) — substitui margem_alvo_pct/alvo_passa_piso que saem da ecom_vw_dossie no SQL 25b. Leitura do snapshot no Alvo passa a trazer price_to_win, winner_price e comp_status. Nada mais muda. -->
 <!-- BUILD 2026-10-16-A | selecta-banco-preco | DOUTRINA DE MARGEM = PRECO PRATICADO (auditoria Igor 16/10, sobre 13-A md5 00e3a9175b861917693ec2d5de70c080): (1) PRODUTO = Categoria/Marca/Modelo/Peso/Custo NF (+ Capacidade/Interface/KIT): saem do Catalogo Meu preco, Media e Minimo mercado e Tipo de anuncio; apagados calc/breakeven/veredito/itemVer/freteDe/updateFormBreakeven/inlineEdit; nada mais le nem grava ecom_produtos.preco/media/menor/tipo_anuncio (prepara o DROP do SQL 25). (2) Controle ML: Editar deixa de copiar preco para o produto (fim do sync 07-15-A). (3) V1: alinhamento ao ML — quando o form reproduz exatamente o estado do ML lido pela ultima varredura (preco/promocao/tipo divergentes), grava mesmo abaixo do piso (2 cliques se <10%), selo NEGADO visivel, log campo +alinhamento_ml. (4) V2: faixa vermelha no topo do Alvo quando a ultima varredura sync falhou ou tem mais de 60 min. (5) V3: margem com aviso REGISTRO != ML na Analise Comercial e no Export do Controle. (6) Cadastro de anuncio ML com a MESMA trava do Editar (>=10 grava; 5-10 so o dono com checkbox + motivo + 2 cliques, log cadastro+abaixo_piso; <5 negado) + preco obrigatorio + trava de toque duplo + confirmacao/recarga que estavam comentadas por engano desde 08-08-I. (7) EXPORTS: Exportar cenario APOSENTADO; gerarMdControle = fonte unica (Export do Controle e Pacote do agente); Radar do pacote calcula margem por MLB no mesmo motor (sem ecom_fn_margem_alvo); texto do comando atualizado. Shopee intocada. Zero SQL obrigatorio para publicar alem do SQL 25a. -->
 <!-- BUILD 2026-10-13-A | selecta-banco-preco | RASTREIOS EM DUAS SUB-ABAS (Igor 13/10, sobre 12-A): barra #vd-rastbar "A enviar" (status a_enviar, agrupado por dia de envio, botao postado) e "Enviadas" (status enviado: rastreio, ocorrencia, ordem pela data de postagem mais recente); contador em cada botao; pedido postado (botao postado ou sincronizacao do ML) sai de A enviar e entra em Enviadas no mesmo recarregamento; entregue continua saindo para o Historico. Um so #vd-list (handlers de postado/ocorrencia intocados), filtrado por ecomVendas.modo. Zero SQL, zero Edge. -->
 <!-- BUILD 2026-10-12-A | selecta-banco-preco | VENDAS REORGANIZADA (Igor 12/10, sobre 10-A): (1) aba Vendas abre com o quadro "Vendas dia" (#vd-dia): Vendas / Unidades / Faturamento / Lucro / Margem media das vendas feitas HOJE (data da venda em America/Sao_Paulo, zera a meia-noite; cancelado fora; venda = pack do ML quando houver, como o painel do ML conta). (2) segundo quadro "Compras / envio dia": linhas numeradas por dia de envio com unidades, valor de compra, lucro do dia e PDF da linha (itens so no PDF). (3) quadros "Pedidos a fechar" e "Lancar venda" ocultos (Igor: tudo vem do ML; ids preservados, fechamento manual sai da tela). (4) NOVA sub-aba Rastreios (Alvo / Vendas / Rastreios / Relatorios) recebe o quadro Lancadas como estava. (5) ao voltar ao app (visibilitychange) a aba aberta recarrega, para o "hoje" virar sozinho. Zero SQL, zero Edge. -->
@@ -924,7 +925,7 @@
     <div class="tbl-wrap">
       <table class="emain">
         <thead><tr><!-- BUILD 2026-08-08-F: layout neutro — Codigo/Produto/Preco Venda/Mercado/vs/Custo NF/Acoes -->
-          <th>Código</th><th class="l">Produto</th><th>Custo NF</th><!-- BUILD 2026-10-16-A: produto = Categoria/Marca/Modelo/Peso/Custo NF; preco e margem vivem no anuncio de cada plataforma -->
+          <th>Código</th><th class="l">Produto</th><th>Peso</th><th>Custo NF</th><!-- BUILD 2026-10-16-B: + coluna Peso (Igor 18/10) · BUILD 2026-10-16-A: produto = Categoria/Marca/Modelo/Peso/Custo NF; preco e margem vivem no anuncio de cada plataforma -->
           <th style="text-align:center">Ações</th>
         </tr></thead>
         <tbody id="ecom-tbody"></tbody>
@@ -4081,6 +4082,11 @@ const ecom = {
   fmt(v){ return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); },
   fmtPct(v){ return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'; },
   pesoLabel(c){ const f=this.PESOS.find(p=>p[0]===c); return f?f[1]:c; },
+  // BUILD 2026-10-16-B: coluna Peso do Catalogo — peso real em gramas; sem peso_g mostra a faixa antiga (cinza) ou "sem peso" (ambar)
+  pesoCell(it){ const g=(it&&it.peso_g!=null&&!isNaN(+it.peso_g)&&+it.peso_g>0)?Math.round(+it.peso_g):null;
+    if(g!=null) return '<span style="font-family:var(--emono);font-variant-numeric:tabular-nums">'+g.toLocaleString('pt-BR')+' g</span>';
+    if(it&&it.peso_faixa) return '<span style="color:var(--emuted2)" title="sem peso em gramas — só a faixa antiga">'+this.pesoLabel(it.peso_faixa)+'</span>';
+    return '<span style="color:var(--eamber)">sem peso</span>'; },
   faixaFromPeso(g){ g=parseInt(g,10); if(isNaN(g)||g<=0) return null; if(g<=300) return 'ate300'; if(g<=500) return 'f301_500'; if(g<=1000) return 'f501_1000'; return 'f1001_2000'; },
   applyPesoG(){ const g=parseInt(this._g('ecom-f-pesog').value,10); const sel=this._g('ecom-f-peso'); const msg=this._g('ecom-f-faixa-msg'); const fx=this.faixaFromPeso(g); if(fx&&sel){ sel.value=fx; } if(msg){ if(isNaN(g)||g<=0){ msg.textContent=''; msg.className='ffaixa'; } else if(g>2000){ msg.textContent='⚠ >2kg: faixa travada em 1–2kg'; msg.className='ffaixa warn'; } else { msg.textContent='→ '+this.pesoLabel(fx); msg.className='ffaixa'; } } },
   toggleCapInterface(){ const ssd=this._g('ecom-f-categoria').value==='SSD'; const cw=this._g('ecom-f-capacidade-wrap'), iw=this._g('ecom-f-interface-wrap'); if(cw) cw.style.display=ssd?'flex':'none'; if(iw) iw.style.display=ssd?'flex':'none'; if(!ssd){ const c=this._g('ecom-f-capacidade'), i=this._g('ecom-f-interface'); if(c)c.value=''; if(i)i.value=''; } },
@@ -4399,11 +4405,12 @@ const ecom = {
       const codCell=it.codigo?`<span style="font-family:var(--emono);font-size:12px;color:var(--eteal);background:var(--epanel2);border:1px solid var(--eborder);border-radius:5px;padding:2px 7px;white-space:nowrap">${it.codigo}</span>`:`<span style="font-size:10px;color:var(--eamber)">sem código</span>`;
       return `<tr data-cod="${it.codigo||''}">
         <td>${codCell}</td>
-        <td class="l"><span class="eprod">${linhaPrincipal}</span>${modeloSub}<div class="emodel">${this.pesoLabel(it.peso_faixa)}</div></td>
+        <td class="l"><span class="eprod">${linhaPrincipal}</span>${modeloSub}</td>
+        <td style="white-space:nowrap">${this.pesoCell(it)}</td>
         <td>${this.fmt(it.custo)}</td>
         <td><div class="acts"><button class="rowbtn ecom-midia-btn" data-cod="${it.codigo||''}">Mídia${this.midiaBadge(it.codigo)}</button><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
       </tr>`; }).join('');
-    tb.innerHTML=rows||'<tr><td class="l" colspan="4" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
+    tb.innerHTML=rows||'<tr><td class="l" colspan="5" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
     tb.querySelectorAll('.ecom-edit').forEach(b=>b.addEventListener('click',()=>this.edit(b.dataset.id)));
     tb.querySelectorAll('.ecom-del').forEach(b=>b.addEventListener('click',()=>this.del(b.dataset.id)));
     tb.querySelectorAll('.ecom-midia-btn').forEach(b=>b.addEventListener('click',()=>this.midiaOpen(b.dataset.cod)));
@@ -6343,7 +6350,7 @@ const ecomAlvo={
     try{ const s1=await sb.from('ecom_mercado_snapshot').select('lote,capturado_em').order('capturado_em',{ascending:false}).limit(1);
       const l0=(!s1.error && s1.data && s1.data[0])?s1.data[0]:null; const lt=l0?l0.lote:null;
       if(l0&&l0.capturado_em){ try{ this.snapQuando=new Date(l0.capturado_em).toLocaleString('pt-BR'); }catch(_e){} }
-      if(lt){ const s2=await sb.from('ecom_mercado_snapshot').select('anuncio_mlb,titulo,produto_codigo,preco,visitas,status_ml').eq('lote',lt);
+      if(lt){ const s2=await sb.from('ecom_mercado_snapshot').select('anuncio_mlb,titulo,produto_codigo,preco,visitas,status_ml,price_to_win,winner_price,comp_status').eq('lote',lt); /* BUILD 2026-10-16-B: + price_to_win p/ margem no ptw do Export */
         if(!s2.error){ this.loteAtualMlbs=new Set(); (s2.data||[]).forEach(a=>{ if(a.anuncio_mlb){ const k=this._normMlb(a.anuncio_mlb); this.loteAtualMlbs.add(a.anuncio_mlb); if(k) this.loteAtualMlbs.add(k); if(k) this.snapAtual[k]=a; if(!this.mesaAnuncios[a.anuncio_mlb]) this.mesaAnuncios[a.anuncio_mlb]={titulo:a.titulo,produto_codigo:a.produto_codigo}; } }); }
       }
     }catch(e){ console.warn('mesaAnuncios fallback snapshot:',e.message); }
@@ -6755,6 +6762,11 @@ const ecomAlvo={
           +(dvX.estado==='div'?('- \u26a0 REGISTRO \u2260 ML: margem calculada sobre o registro do app, n\u00e3o sobre o pre\u00e7o do ML ('+dvX.itens.map(d=>String(d.tipo).toLowerCase()+' no ML '+(d.ml==null?'\u2014':d.ml)+' \u00b7 no app '+(d.app==null?'\u2014':d.app)).join(' / ')+') \u2014 n\u00e3o usar para decis\u00e3o at\u00e9 corrigir pelo Editar\n'):'')
           +'- detalhes: custo NF R$ '+fR(prod.custo)+' \u00b7 comiss\u00e3o '+(r.comPct*100).toFixed(2)+'% ('+comOrigem+')'+(r.comFixa>0?(' \u00b7 tarifa fixa R$ '+fR(r.comFixa)):'')+' \u00b7 frete R$ '+fR(r.frete)+' ('+this._freteOrigemLabel(r)+')'+(r.pesoMl!=null?(' \u00b7 peso ML '+Math.round(r.pesoMl)+' g'):'')+' \u00b7 colch\u00e3o R$ '+fR(praticado*colPct/100)+(r.estorno>0?(' \u00b7 estorno campanha +R$ '+fR(r.estorno)):'')+'\n';
         if(prod.estoque_atual!=null) md+='- estoque (cat\u00e1logo): '+prod.estoque_atual+' un.\n';
+        // BUILD 2026-10-16-B: margem no price_to_win (substitui margem_alvo do dossie SQL) — mesmo motor _simMargem, preco cheio, sem estorno; frete da faixa do ptw quando o ML ja declarou
+        { const sn=(this.snapAtual||{})[this._normMlb(an.anuncio_mlb)]||null; const ptw=(sn&&sn.price_to_win!=null)?+sn.price_to_win:null;
+          if(ptw!=null&&ptw>0){ const rw=this._simMargem(prod,ptw,tipo,rep,0,an);
+            md+='- price_to_win R$ '+fR(ptw)+(sn.winner_price!=null?(' \u00b7 vencedor R$ '+fR(+sn.winner_price)):'')+(sn.comp_status?(' \u00b7 '+sn.comp_status):'')+' \u2192 '
+              +((rw&&rw.ok)?('margem no ptw **'+(rw.margemPct*100).toFixed(1)+'%** \u00b7 '+(rw.margemPct>=0.10?'LIBERADO':'NEGADO \u2014 abaixo do piso')+' (frete '+this._freteOrigemLabel(rw)+')'):('sem c\u00e1lculo \u2014 '+((rw&&rw.reason)||'dado incompleto')))+'\n'; } }
       } else {
         md+='- margem (app): sem c\u00e1lculo \u2014 '+((r&&r.reason)||(prod?'sem pre\u00e7o':'produto n\u00e3o encontrado/inativo no cat\u00e1logo'))+'\n';
         if(prod&&prod.custo!=null) md+='- custo NF R$ '+fR(prod.custo)+'\n';
