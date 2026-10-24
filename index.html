@@ -1,3 +1,4 @@
+<!-- BUILD 2026-10-24-A | selecta-banco-preco | ORFAOS DO ML NO APP (caso RTR-0034, Igor 24/10: anuncio 7839026382 cadastrado em 18/10 foi encerrado pelo ML no mesmo dia; o ativo 7838387024 nunca entrou no app e ficou 6 dias sem margem vigiada — a ml-market ja logava SEM_CADASTRO desde 18/10 21:05 UTC, o app nao lia), sobre 16-C publicado md5 691a29ec1b37a8dc2df80966254bbb51: (1) le resumo.sem_cadastro da ultima varredura sync (exige ml-market v4.6; sem ela a faixa nao aparece — nada e inventado do log deduplicado). (2) faixa AMBAR no topo do Alvo, abaixo da vermelha de vigilancia: anuncio ativo no ML sem registro no app = margem nao vigiada; sem botao ignorar (regra ativo no ML = ativo no app, decisao Igor 24/10); filtro no app tira o que ja foi cadastrado/trocado desde a varredura. (3) SUBSTITUTO (mesmo SKU de registro encerrado): botao Trocar MLB = UPDATE com trava anuncio_mlb=antigo, titulo do ML, ativo=true, data_publicacao mantida (decisao 3) + linha no Historico (campo mlb). (4) SEM substituto (inclui 2o anuncio do mesmo SKU, Classico+Premium — decisao 2): botao Cadastrar = pre-preenche o Cadastro de anuncio com SKU/MLB/titulo/preco cheio/tipo/data do ML e passa pela trava do piso; promocao do ML vira aviso (registrar pelo Editar). (5) sem SKU no ML ou SKU fora do Catalogo: aviso, sem atalho de substituto (decisao 4). (6) Realtime e Trocar/Cadastrar redesenham a faixa. Zero SQL. -->
 <!-- BUILD 2026-10-16-C | selecta-banco-preco | FAIXA DE VIGILANCIA SEM ALARME FALSO (Igor 18/10 17h24, print "Vigilancia PARADA ha 6 h 48 min", sobre 16-B publicado md5 619bf595ab5991e74d432dbcbfe119b4): defeito do 16-B — o timer de 5 min so recontava a idade do dado carregado na abertura da pagina; com o app aberto horas, a faixa acusava PARADA mesmo com o ml-market rodando. Agora _vigCheck() rele a ultima varredura sync no banco a cada 5 min e ao voltar ao app (visibilitychange); havendo varredura nova, recarrega o Alvo (vermelhos/aviso REGISTRO != ML atualizados), exceto com um Editar aberto. Nada mais muda. -->
 <!-- BUILD 2026-10-16-B | selecta-banco-preco | PESO NO CATALOGO + MARGEM NO PRICE_TO_WIN (Igor 18/10, sobre 16-A publicado md5 229cba4afdff960f1faae2507c07da46; decisao (a) do dossie): (1) Catalogo ganha coluna Peso (peso_g em gramas; sem peso_g mostra a faixa antiga em cinza ou "sem peso" em ambar); a sub-linha de faixa sob o produto saiu. (2) Export do Controle (e portanto o Pacote do agente) ganha, por anuncio com price_to_win no lote atual, a linha "price_to_win R$ X · vencedor · status -> margem no ptw Y% LIBERADO/NEGADO" calculada pelo MESMO motor (_simMargem, preco cheio, sem estorno, frete da faixa declarada pelo ML quando houver) — substitui margem_alvo_pct/alvo_passa_piso que saem da ecom_vw_dossie no SQL 25b. Leitura do snapshot no Alvo passa a trazer price_to_win, winner_price e comp_status. Nada mais muda. -->
 <!-- BUILD 2026-10-16-A | selecta-banco-preco | DOUTRINA DE MARGEM = PRECO PRATICADO (auditoria Igor 16/10, sobre 13-A md5 00e3a9175b861917693ec2d5de70c080): (1) PRODUTO = Categoria/Marca/Modelo/Peso/Custo NF (+ Capacidade/Interface/KIT): saem do Catalogo Meu preco, Media e Minimo mercado e Tipo de anuncio; apagados calc/breakeven/veredito/itemVer/freteDe/updateFormBreakeven/inlineEdit; nada mais le nem grava ecom_produtos.preco/media/menor/tipo_anuncio (prepara o DROP do SQL 25). (2) Controle ML: Editar deixa de copiar preco para o produto (fim do sync 07-15-A). (3) V1: alinhamento ao ML — quando o form reproduz exatamente o estado do ML lido pela ultima varredura (preco/promocao/tipo divergentes), grava mesmo abaixo do piso (2 cliques se <10%), selo NEGADO visivel, log campo +alinhamento_ml. (4) V2: faixa vermelha no topo do Alvo quando a ultima varredura sync falhou ou tem mais de 60 min. (5) V3: margem com aviso REGISTRO != ML na Analise Comercial e no Export do Controle. (6) Cadastro de anuncio ML com a MESMA trava do Editar (>=10 grava; 5-10 so o dono com checkbox + motivo + 2 cliques, log cadastro+abaixo_piso; <5 negado) + preco obrigatorio + trava de toque duplo + confirmacao/recarga que estavam comentadas por engano desde 08-08-I. (7) EXPORTS: Exportar cenario APOSENTADO; gerarMdControle = fonte unica (Export do Controle e Pacote do agente); Radar do pacote calcula margem por MLB no mesmo motor (sem ecom_fn_margem_alvo); texto do comando atualizado. Shopee intocada. Zero SQL obrigatorio para publicar alem do SQL 25a. -->
@@ -2566,6 +2567,7 @@
         <button class="alsub-btn" data-alsub="controle">📈 Controle de Anúncios</button>
       </div>
       <div id="al-vig-alerta" style="display:none;margin:0 0 12px;padding:9px 12px;border:1px solid var(--ered);border-radius:9px;background:rgba(239,68,68,.10);color:var(--ered);font-size:12.5px;line-height:1.45"></div><!-- BUILD 2026-10-16-A · V2: vigilancia cega/parada -->
+      <div id="al-orfao-alerta" style="display:none;margin:0 0 12px;padding:9px 12px;border:1px solid var(--eamber);border-radius:9px;background:rgba(245,158,11,.08);color:var(--etxt);font-size:12.5px;line-height:1.5"></div><!-- BUILD 2026-10-24-A: anuncios ativos no ML sem registro no app -->
 
       <div id="alsub-analise" class="alsub">
       <!-- BUILD 30/07-B: cards vindos da ex-aba Simulador (ids preservados) -->
@@ -6368,12 +6370,13 @@ const ecomAlvo={
     // BUILD 2026-08-26-E: marcador de leitura do historico (Analise Comercial)
     this.histLido={};
     try{ const hl=await sb.from('ecom_anuncio_hist_lido').select('mlb,lido_em'); if(!hl.error) (hl.data||[]).forEach(x=>{ if(x.mlb) this.histLido[x.mlb]=x.lido_em; }); }catch(e){ console.warn('histLido:',e.message); }
-    this.syncOk=null; this.syncDiv={};
+    this.syncOk=null; this.syncDiv={}; this.syncOrfaos=null; // BUILD 2026-10-24-A
     try{ const sr=await sb.from('ecom_sync_run').select('executado_em,modo,ok,erro,resumo').eq('modo','sync').order('executado_em',{ascending:false}).limit(1); // BUILD 2026-08-26-J: so o sync ve o catalogo inteiro; o full varre 25 por vez e zerava o semaforo dos demais
       if(!sr.error&&sr.data&&sr.data[0]){ const r0=sr.data[0]; this.syncQuandoIso=r0.executado_em; this.syncErro=r0.erro||null; /* BUILD 2026-10-16-A · V2 */ this.syncQuando=new Date(r0.executado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); this.syncOk=r0.ok!==false;
         // BUILD 2026-08-26-C: estado atual gravado pela varredura (v4.3): resumo.divergentes (sync) ou resumo.sync.divergentes (full)
         const rs=r0.resumo||{}; const dv=Array.isArray(rs.divergentes)?rs.divergentes:(rs.sync&&Array.isArray(rs.sync.divergentes)?rs.sync.divergentes:[]);
-        dv.forEach(d=>{ const k=this._normMlb(d.mlb); if(k) (this.syncDiv[k]=this.syncDiv[k]||[]).push(d); }); }
+        dv.forEach(d=>{ const k=this._normMlb(d.mlb); if(k) (this.syncDiv[k]=this.syncDiv[k]||[]).push(d); });
+        this.syncOrfaos=Array.isArray(rs.sem_cadastro)?rs.sem_cadastro:null; /* BUILD 2026-10-24-A: lista de orfaos (ml-market v4.6); null = Edge anterior */ }
     }catch(e){ console.warn('syncRun:',e.message); }
     this.renderVigilancia(); // BUILD 2026-10-16-A · V2
   },
@@ -6389,8 +6392,62 @@ const ecomAlvo={
       if(isFinite(min)&&min>this.VIG_MAX_MIN) txt='<b>Vigilância app × ML PARADA</b> — última varredura há '+(min>=120?(Math.floor(min/60)+' h '+(min%60)+' min'):(min+' min'))+' ('+fH(this.syncQuandoIso)+'; o normal é a cada 30 min). Os vermelhos do Histórico mostram o estado daquela hora, não o de agora.'; }
     if(txt){ box.innerHTML='⛔ '+txt+' Use 🔄 Atualizar no Controle para conferir na hora; se persistir, verificar o job do ml-market.'; box.style.display='block'; }
     else { box.innerHTML=''; box.style.display='none'; }
+    try{ this.renderOrfaos(); }catch(e){ console.warn('orfaos:',e.message); } // BUILD 2026-10-24-A
     if(!this._vigTimer){ this._vigTimer=setInterval(()=>{ this._vigCheck(); },5*60*1000); // BUILD 2026-10-16-C: timer RELE o banco (no 16-B so recontava a idade do dado carregado — alarme falso com a pagina aberta)
       document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') this._vigCheck(); }); } },
+
+  // BUILD 2026-10-24-A: ORFAOS — anuncio ativo no ML sem registro no app (resumo.sem_cadastro da ml-market v4.6).
+  // Doutrina: a varredura informa, o humano decide. Sem "ignorar": ativo no ML = ativo no app (Igor 24/10).
+  _orfaosVivos(){ const lst=Array.isArray(this.syncOrfaos)?this.syncOrfaos:null; if(!lst) return null;
+    const noApp=new Set((this.anuncios||[]).map(a=>this._normMlb(a.anuncio_mlb)).filter(Boolean)); // ja cadastrado/trocado desde a varredura sai da faixa
+    return lst.filter(o=>o&&o.mlb&&!noApp.has(this._normMlb(o.mlb))); },
+  _orfaoSub(o){ if(!o||!o.substitui) return null; // valido so se o registro ainda aponta o MLB encerrado e segue encerrado
+    return (this.anuncios||[]).find(a=>String(a.id)===String(o.substitui.id)&&this._normMlb(a.anuncio_mlb)===this._normMlb(o.substitui.mlb)&&a.ativo===false)||null; },
+  renderOrfaos(){ const box=this._g('al-orfao-alerta'); if(!box) return;
+    const vivos=(this.syncOk===false)?null:this._orfaosVivos(); // varredura cega: a faixa vermelha ja avisa, a lista seria velha
+    if(!vivos||!vivos.length){ box.innerHTML=''; box.style.display='none'; return; }
+    const ea=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const fR=v=>(v==null||isNaN(+v))?'—':'R$ '+(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const btn='font-size:11.5px;padding:3px 10px;border-radius:6px;border:1px solid var(--eamber);background:none;color:var(--eamber);cursor:pointer;font-family:inherit;margin-left:6px';
+    const linhas=vivos.map(o=>{ const sub=this._orfaoSub(o);
+      const tp=o.tipo==='premium'?'Premium':(o.tipo==='classico'?'Clássico':(o.tipo||'—'));
+      let acao;
+      if(sub) acao='<span style="color:var(--eamber)">provável substituto de <b>'+ea(sub.produto_codigo)+'</b> (MLB '+ea(this._normMlb(sub.anuncio_mlb))+', encerrado no ML)</span><button data-orf="trocar" data-mlb="'+ea(o.mlb)+'" data-id="'+ea(sub.id)+'" style="'+btn+'">Trocar MLB</button>';
+      else if(!o.sku) acao='<span style="color:var(--emuted)">sem SKU no ML — preencha o código no anúncio do ML ou cadastre informando o código</span><button data-orf="cad" data-mlb="'+ea(o.mlb)+'" style="'+btn+'">Cadastrar</button>';
+      else if(o.sku_catalogo===false) acao='<span style="color:var(--emuted)">SKU '+ea(o.sku)+' não existe ativo no Catálogo — cadastre o produto primeiro</span>';
+      else acao='<button data-orf="cad" data-mlb="'+ea(o.mlb)+'" style="'+btn+'">Cadastrar</button>';
+      const promo=(o.promo!=null)?' · <span style="color:var(--eamber)">em promoção '+fR(o.promo)+' — após cadastrar, registre a promoção pelo Editar</span>':'';
+      return '<div style="padding:5px 0;border-top:1px solid rgba(245,158,11,.25)"><span style="font-family:var(--emono)">MLB '+ea(o.mlb)+'</span>'+(o.sku?' · <b style="font-family:var(--emono)">'+ea(o.sku)+'</b>':'')
+        +' · '+ea(o.titulo||'(sem título)')+' · '+fR(o.preco)+' · '+ea(tp)+(o.catalogo?' · catálogo':'')+promo+'<br>'+acao+'</div>'; }).join('');
+    box.innerHTML='<b style="color:var(--eamber)">⚠ '+vivos.length+' anúncio'+(vivos.length===1?'':'s')+' ativo'+(vivos.length===1?'':'s')+' no ML sem registro no app — margem não vigiada.</b> <span style="color:var(--emuted)">Regra: ativo no ML = ativo no app — cadastre ou encerre no ML. Lido na conferência '+ea(this.syncQuando||'—')+'.</span>'+linhas;
+    box.style.display='block';
+    if(!box._b){ box._b=true; box.addEventListener('click',e=>{ const b=e.target.closest('[data-orf]'); if(!b) return;
+      if(b.dataset.orf==='trocar') this.trocarMlbOrfao(b.dataset.id,b.dataset.mlb); else if(b.dataset.orf==='cad') this.cadastrarOrfao(b.dataset.mlb); }); } },
+  async trocarMlbOrfao(id,mlb){ if(this._orfBusy) return;
+    const o=(this._orfaosVivos()||[]).find(x=>this._normMlb(x.mlb)===this._normMlb(mlb)); const an=o?this._orfaoSub(o):null;
+    if(!o||!an||String(an.id)!==String(id)){ alert('O registro ou o anúncio mudou desde a última conferência — clique 🔄 Atualizar no Controle.'); return; }
+    const antigo=this._normMlb(an.anuncio_mlb), novo=this._normMlb(o.mlb);
+    if(!/^\d{6,}$/.test(novo)){ alert('MLB do ML inválido: '+o.mlb); return; }
+    if(!confirm('Trocar o MLB de '+an.produto_codigo+'?\n\nencerrado no ML: '+antigo+'\nativo no ML: '+novo+'\ntítulo passa a: '+(o.titulo||an.titulo)+'\n\nPreço, tipo e promoção não mudam aqui. Se divergirem do ML, o Histórico fica vermelho e a correção é pelo Editar (trava de margem).')) return;
+    this._orfBusy=true;
+    try{ const r=await sb.from('ecom_anuncios').update({anuncio_mlb:novo,titulo:o.titulo||an.titulo,ativo:true}).eq('id',an.id).eq('anuncio_mlb',an.anuncio_mlb).select('id');
+      if(r.error) throw r.error;
+      if(!r.data||!r.data.length){ alert('Nada foi alterado: o registro mudou desde a última leitura. Clique 🔄 Atualizar no Controle.'); return; }
+      const rl=await sb.from('ecom_anuncio_alteracao').insert({anuncio_sku:an.produto_codigo||null,mlb:novo,campo:'mlb',preco_anterior:null,preco_novo:null,motivo:'MLB '+antigo+' (encerrado no ML) → '+novo+' (ativo no ML) — substituição apontada pela vigilância'});
+      if(rl.error) alert('MLB trocado, mas o registro no Histórico falhou: '+rl.error.message);
+      await this.load();
+    }catch(e){ alert('Erro ao trocar o MLB: '+(e.message||e)); }
+    finally{ this._orfBusy=false; } },
+  cadastrarOrfao(mlb){ const o=(this._orfaosVivos()||[]).find(x=>this._normMlb(x.mlb)===this._normMlb(mlb)); if(!o){ alert('Anúncio não está mais na lista — clique 🔄 Atualizar no Controle.'); return; }
+    const bt=document.querySelector('#alsubbar .alsub-btn[data-alsub="analise"]'); if(bt) bt.click(); // o Cadastro mora na Analise Comercial
+    const set=(i,v)=>{ const el=this._g(i); if(el) el.value=(v==null?'':v); };
+    set('al-cod',o.sku||''); set('al-mlb',this._normMlb(o.mlb)); set('al-tit',o.titulo||'');
+    set('al-preco',(o.preco!=null&&!isNaN(+o.preco))?(+o.preco).toFixed(2):'');
+    set('al-tipo',o.tipo==='premium'?'premium':'classico');
+    set('al-pub',(o.publicado&&/^\d{4}-\d{2}-\d{2}/.test(o.publicado))?String(o.publicado).slice(0,10):new Date().toISOString().slice(0,10));
+    this.simAnuncio();
+    const am=this._g('al-amsg'); if(am){ am.className='vmsg'; am.style.color='var(--eteal)'; am.textContent='Pré-preenchido do ML (MLB '+this._normMlb(o.mlb)+')'+(o.sku?'':' — informe o Código Produto')+'. Confira e cadastre: a trava do piso avalia a margem no preço cheio.'+(o.promo!=null?' Em promoção no ML: depois de cadastrar, registre a promoção pelo Editar.':''); }
+    const el=this._g(o.sku?'al-preco':'al-cod'); if(el&&el.scrollIntoView) el.scrollIntoView({behavior:'smooth',block:'center'}); },
   // BUILD 2026-10-16-C: confere a ultima varredura sync direto no banco (consulta leve) e redesenha a faixa.
   // Se houver varredura mais nova que a carregada, recarrega o Alvo para os vermelhos/⚠ refletirem o agora — exceto com um Editar aberto (nao apaga o que esta sendo digitado).
   async _vigCheck(){ if(this._vigBusy) return; this._vigBusy=true;
@@ -9802,7 +9859,8 @@ checkSession();
         if(doA){ const r=await sb.from('ecom_anuncios').select('*');
           if(!r.error && typeof ecomAlvo!=='undefined'){ ecomAlvo.anuncios=r.data||[];
             if(ecomAlvo.renderAnuncios) ecomAlvo.renderAnuncios();
-            if(ecomAlvo.renderAtivos) ecomAlvo.renderAtivos(); } }
+            if(ecomAlvo.renderAtivos) ecomAlvo.renderAtivos();
+            if(ecomAlvo.renderOrfaos) ecomAlvo.renderOrfaos(); /* BUILD 2026-10-24-A */ } }
         if(doP){ if(typeof ecom!=='undefined' && ecom.loaded){ await ecom.loadProdutos(); if(ecom.render) ecom.render(); }
           if(!doA && typeof ecomAlvo!=='undefined' && ecomAlvo.renderAtivos) ecomAlvo.renderAtivos(); }
         setLive('· ao vivo · sincronizado '+new Date().toLocaleTimeString('pt-BR'));
