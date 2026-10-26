@@ -1,3 +1,4 @@
+<!-- BUILD 2026-10-26-A | selecta-banco-preco | SHOPEE PELA PLANILHA DA CENTRAL (Igor 26/10: "nunca lancei nada no APP"; sobre 24-A publicado md5 8f86cca9c4f48a67162bb9fc5e62a302; requer SQL SHP-01): (1) Vendas Shopee ganha "Importar pedidos da Central": le o .xlsx de Meus Pedidos no navegador (JSZip ja carregado), por NOME de coluna; dados do comprador (nome, usuario, CPF, telefone, endereco, CEP, observacao) NUNCA lidos nem gravados; previa antes de gravar (novos/atualizados/sem mudanca, nao pagos ignorados, SKU sem custo, tarifa planilha != tabela, multi-item, SKU corrigido); confirmar grava. (2) Regras: linha = pedido|SKU|variacao (chave_import, indice unico); status Central -> app (A Enviar/Enviado/Entregue/Concluido/Cancelado; Nao pago fica fora; devolucao aprovada ou quantidade devolvida = devolvido); status so avanca, cancelado/devolvido finais; Concluido = liberado na carteira (data = Hora completa); tarifa = comissao+servico BRUTOS da planilha (= tabela do app, conservador), liquidos guardados em tarifa_liquida; pedido multi-item = tarifa pela tabela e frete na 1a linha; frete dif = estimado - pago pelo comprador - desconto Shopee (>=0, provisorio ate o Detalhes da renda); custo NF do Catalogo no momento da importacao, nunca sobrescrito; codigo/produto/obs nunca sobrescritos; WAD-0007 com "Powerline" no nome = RDE-0005 (decisao Igor 26/10). (3) fila "A enviar" SEM MES, por dia de envio (atrasado vermelho / hoje ambar), + linha "Postagens fora do prazo nos ultimos 30 dias". (4) cartoes de pedido: rastreio, postado DD/MM (+N d do prazo), motivo do cancelamento, devolucao; CSS .vli.vped corrige o cartao deitado pela regra .vli flex do Controle. (5) calcMes: item sem custo (custo_total NULL) = PENDENTE, como sem tarifa (espelho do lucroPedido ML). (6) Lancar venda manual oculto (ids preservados, padrao ML 12-A). (7) cartao cancelado nao mostra Liquido. Fora da regiao Shopee nada muda. -->
 <!-- BUILD 2026-10-24-A | selecta-banco-preco | ORFAOS DO ML NO APP (caso RTR-0034, Igor 24/10: anuncio 7839026382 cadastrado em 18/10 foi encerrado pelo ML no mesmo dia; o ativo 7838387024 nunca entrou no app e ficou 6 dias sem margem vigiada — a ml-market ja logava SEM_CADASTRO desde 18/10 21:05 UTC, o app nao lia), sobre 16-C publicado md5 691a29ec1b37a8dc2df80966254bbb51: (1) le resumo.sem_cadastro da ultima varredura sync (exige ml-market v4.6; sem ela a faixa nao aparece — nada e inventado do log deduplicado). (2) faixa AMBAR no topo do Alvo, abaixo da vermelha de vigilancia: anuncio ativo no ML sem registro no app = margem nao vigiada; sem botao ignorar (regra ativo no ML = ativo no app, decisao Igor 24/10); filtro no app tira o que ja foi cadastrado/trocado desde a varredura. (3) SUBSTITUTO (mesmo SKU de registro encerrado): botao Trocar MLB = UPDATE com trava anuncio_mlb=antigo, titulo do ML, ativo=true, data_publicacao mantida (decisao 3) + linha no Historico (campo mlb). (4) SEM substituto (inclui 2o anuncio do mesmo SKU, Classico+Premium — decisao 2): botao Cadastrar = pre-preenche o Cadastro de anuncio com SKU/MLB/titulo/preco cheio/tipo/data do ML e passa pela trava do piso; promocao do ML vira aviso (registrar pelo Editar). (5) sem SKU no ML ou SKU fora do Catalogo: aviso, sem atalho de substituto (decisao 4). (6) Realtime e Trocar/Cadastrar redesenham a faixa. Zero SQL. -->
 <!-- BUILD 2026-10-16-C | selecta-banco-preco | FAIXA DE VIGILANCIA SEM ALARME FALSO (Igor 18/10 17h24, print "Vigilancia PARADA ha 6 h 48 min", sobre 16-B publicado md5 619bf595ab5991e74d432dbcbfe119b4): defeito do 16-B — o timer de 5 min so recontava a idade do dado carregado na abertura da pagina; com o app aberto horas, a faixa acusava PARADA mesmo com o ml-market rodando. Agora _vigCheck() rele a ultima varredura sync no banco a cada 5 min e ao voltar ao app (visibilitychange); havendo varredura nova, recarrega o Alvo (vermelhos/aviso REGISTRO != ML atualizados), exceto com um Editar aberto. Nada mais muda. -->
 <!-- BUILD 2026-10-16-B | selecta-banco-preco | PESO NO CATALOGO + MARGEM NO PRICE_TO_WIN (Igor 18/10, sobre 16-A publicado md5 229cba4afdff960f1faae2507c07da46; decisao (a) do dossie): (1) Catalogo ganha coluna Peso (peso_g em gramas; sem peso_g mostra a faixa antiga em cinza ou "sem peso" em ambar); a sub-linha de faixa sob o produto saiu. (2) Export do Controle (e portanto o Pacote do agente) ganha, por anuncio com price_to_win no lote atual, a linha "price_to_win R$ X · vencedor · status -> margem no ptw Y% LIBERADO/NEGADO" calculada pelo MESMO motor (_simMargem, preco cheio, sem estorno, frete da faixa declarada pelo ML quando houver) — substitui margem_alvo_pct/alvo_passa_piso que saem da ecom_vw_dossie no SQL 25b. Leitura do snapshot no Alvo passa a trazer price_to_win, winner_price e comp_status. Nada mais muda. -->
@@ -1867,8 +1868,13 @@
   #tab-shopee .al-histtag.b{background:rgba(56,189,248,.15);color:#7dd3fc}
   #tab-shopee .al-histmeta{color:var(--etxt);font-size:12.5px;flex:1}
   #tab-shopee .faint{color:var(--emuted2)}
+  /* BUILD 2026-10-26-A: cartao de pedido em bloco (a regra .vli flex do Controle deitava o cartao) + cabecalho do dia + linha de logistica */
+  #tab-shopee .vli.vped{display:block;padding:10px 12px;border:1px solid var(--eborder);border-radius:10px;margin-bottom:8px;background:var(--epanel2)}
+  #tab-shopee .shp-dia{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:12px 0 6px;margin-bottom:6px;border-bottom:1px solid var(--eborder);font-size:12.5px;color:var(--emuted)}
+  #tab-shopee .vli .meta2{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--emuted);font-family:var(--emono);margin-top:3px}
   @media (max-width:640px){
     #tab-shopee .vli{display:flex!important;flex-wrap:wrap!important;gap:8px!important;padding:12px 0!important;align-items:center!important}
+    #tab-shopee .vli.vped{display:block!important;padding:10px 12px!important}
     #tab-shopee .vli .vmain{flex:1 1 100%!important;min-width:0!important}
     #tab-shopee .vli > div[style*="display:flex"]{margin-left:auto!important}
     #tab-shopee .vli .vbtn.sm{min-height:40px!important;padding:8px 16px!important;font-size:13.5px!important}
@@ -1968,7 +1974,22 @@
 
   <!-- ============ VENDAS ============ -->
   <div id="shp-sub-vendas" class="shp-subpanel" style="display:none">
+    <!-- BUILD 2026-10-26-A: importacao da Central + fila A enviar (sem mes); Lancar venda manual oculto (padrao ML 12-A: tudo vem da plataforma; ids preservados) -->
     <div class="ecard" style="border-color:var(--eaccent)">
+      <h3 style="color:var(--eaccent)">Importar pedidos da Central</h3>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <label class="vbtn" for="shp-imp-file" style="cursor:pointer;display:inline-flex;align-items:center">Escolher planilha (.xlsx)</label>
+        <input type="file" id="shp-imp-file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none">
+        <span class="hintline" id="shp-imp-msg" style="margin:0"></span>
+      </div>
+      <div id="shp-imp-res"></div>
+    </div>
+    <div class="ecard">
+      <h3>A enviar <span id="shp-ae-count" style="color:var(--emuted2);text-transform:none;letter-spacing:0"></span></h3>
+      <div class="hintline" id="shp-ae-atraso" style="margin:0 0 4px"></div>
+      <div id="shp-ae-list"><div style="color:var(--emuted);font-size:12.5px">Carregando…</div></div>
+    </div>
+    <div class="ecard" id="shp-vd-lancar" style="border-color:var(--eaccent);display:none">
       <h3 style="color:var(--eaccent)">Lançar venda Shopee <span style="color:var(--emuted2);text-transform:none;letter-spacing:0;font-weight:400">· pedido com vários itens = um lançamento por item, mesmo nº do pedido</span></h3>
       <div class="vrow3" style="margin-bottom:2px">
         <div class="efield"><label>Nº do pedido *</label><input class="vinput mono" id="shp-vd-ped" placeholder="como na Central"></div>
@@ -10322,7 +10343,7 @@ const shopeeTab={
     }catch(e){ console.warn('shopee lido:',e.message||e); }
   },
   histDo(id){ return this.alteracoes.filter(h=>h.anuncio_id===id); },
-  renderAll(){ this.renderAnalise(); this.renderControle(); this.renderVendas(); this.renderRelatorios(); this.renderHist(); this.sim(); },
+  renderAll(){ this.renderAnalise(); this.renderControle(); this.renderAEnviar(); this.renderImpInfo(); this.renderVendas(); this.renderRelatorios(); this.renderHist(); this.sim(); },
 
   // ---------- subnav ----------
   switchSub(s){ this.subtab=s;
@@ -10708,7 +10729,7 @@ const shopeeTab={
     }catch(e){ msg.className='hintline err'; msg.textContent=e.message||String(e); }
   },
   async reloadVendas(){ const {data,error}=await sb.from('ecom_shopee_vendas').select('*').order('data_solicitacao',{ascending:false});
-    if(!error){ this.vendas=data||[]; this.renderVendas(); this.renderRelatorios(); this.renderHist(); this.renderAnalise(); } },
+    if(!error){ this.vendas=data||[]; this.renderAEnviar(); this.renderImpInfo(); this.renderVendas(); this.renderRelatorios(); this.renderHist(); this.renderAnalise(); } },
   setStatus(id,st){ return this._guard(null,()=>this._setStatus(id,st)); }, // BUILD 2026-09-15-N
   async _setStatus(id,st){ const lbl={enviado:'ENVIADO',entregue:'ENTREGUE',cancelado:'CANCELADO',devolvido:'DEVOLVIDO'};
     if((st==='cancelado'||st==='devolvido')&&!confirm('Marcar este item como '+lbl[st]+'?')) return;
@@ -10762,15 +10783,26 @@ const shopeeTab={
           +'<div class="money"><span>Receita <b>R$ '+this.fmt(v.receita_bruta)+'</b></span>'
           +'<span>Tarifa <b>R$ '+this.fmt(v.comissao_valor||0)+'</b></span>'
           +(Number(v.frete_diferenca)>0?'<span>Frete dif. <b>R$ '+this.fmt(v.frete_diferenca)+'</b></span>':'')
-          +'<span>Líquido <b>R$ '+this.fmt(liq)+'</b></span></div>'
+          +(v.status==='cancelado'?'':'<span>Líquido <b>R$ '+this.fmt(liq)+'</b></span>')+'</div>'
+          +this._metaItem(v)
           +(acts.length?'<div class="acts">'+acts.join(' ')+'</div>':'')+'</div>';
       }).join('');
-      return '<div class="vli"><div class="top"><span class="ped">#'+this.esc(gp.ped)+'</span>'
+      return '<div class="vli vped"><div class="top"><span class="ped">#'+this.esc(gp.ped)+'</span>'
         +'<span>'+prazo+' <span style="color:var(--emuted);font-size:12px">'+(v0.data_solicitacao?v0.data_solicitacao.slice(8,10)+'/'+v0.data_solicitacao.slice(5,7):'')+(v0.uf?' · '+this.esc(v0.uf):'')+'</span></span></div>'
         +(gp.itens.length>1?'<div class="mid">'+gp.itens.length+' itens · Receita R$ '+this.fmt(tot)+' · Líquido R$ '+this.fmt(totLiq)+'</div>':'')
         +linhas+'</div>';
     }).join('');
   },
+  // BUILD 2026-10-26-A: linha de logistica do item (dados da importacao): rastreio, postagem (+N d fora do prazo), motivo do cancelamento, devolucao
+  _metaItem(v){ const meta=[];
+    if(v.codigo_rastreio) meta.push('<span>'+this.esc(v.codigo_rastreio)+'</span>');
+    if(v.data_embarque){ const pk=this._spKey(new Date(v.data_embarque)), pz=String(v.prazo_envio||'').slice(0,10);
+      const dd=pz?Math.round((new Date(pk+'T12:00:00')-new Date(pz+'T12:00:00'))/86400000):0;
+      meta.push('<span>postado '+pk.slice(8,10)+'/'+pk.slice(5,7)+(dd>0?' <span class="chip prazo-atrasado">+'+dd+' d do prazo</span>':'')+'</span>'); }
+    if(v.status==='cancelado'&&v.motivo_cancelamento){ const t=String(v.motivo_cancelamento), q=/comprador/i.test(t)?'pelo comprador':(/sistema/i.test(t)?'pela Shopee':(/voc[eê]/i.test(t)?'por você':''));
+      const mo=(t.match(/Motivo\s*:\s*(.*)$/i)||[])[1]||t; meta.push('<span>cancelado '+q+(q?' · ':'')+this.esc(mo)+'</span>'); }
+    if(v.devolucao_status) meta.push('<span class="chip st-devolvido">devolução: '+this.esc(v.devolucao_status)+'</span>');
+    return meta.length?'<div class="meta2">'+meta.join('')+'</div>':''; },
   // BUILD 2026-09-15-D: Historico Shopee — todos os pedidos, busca em memoria (espelho enxuto do hs-busca ML)
   renderHist(){
     const list=this._g('shp-hs-list'); if(!list) return;
@@ -10787,6 +10819,197 @@ const shopeeTab={
     list.innerHTML=grupos.length?this._cardsPedidos(grupos):'<div style="color:var(--emuted);font-size:12.5px">Nada encontrado.</div>';
   },
 
+  // ---------- IMPORTAÇÃO DA CENTRAL (BUILD 2026-10-26-A) ----------
+  // Lê o .xlsx de "Meus Pedidos" no navegador (JSZip ja carregado p/ PDF). So as colunas abaixo sao lidas;
+  // dados do comprador (nome, usuario, CPF, telefone, endereco, CEP, observacao) NUNCA sao lidos nem gravados.
+  IMP_COLS:{ped:'ID do pedido',st:'Status do pedido',canc:'Cancelar Motivo',dev:'Status da Devolução / Reembolso',rast:'Número de rastreamento',
+    prazo:'Data prevista de envio',post:'Tempo de Envio',cria:'Data de criação do pedido',skuP:'Nº de referência do SKU principal',
+    nome:'Nome do Produto',sku:'Número de referência SKU',vari:'Nome da variação',pa:'Preço acordado',qtd:'Quantidade',ret:'Returned quantity',
+    sub:'Subtotal do produto',cb:'Taxa de comissão bruta',cl:'Taxa de comissão líquida',sbr:'Taxa de serviço bruta',sl:'Taxa de serviço líquida',
+    fe:'Valor estimado do frete',fc:'Taxa de envio pagas pelo comprador',fd:'Desconto de Frete Aproximado',uf:'UF',fim:'Hora completa do pedido'},
+  IMP_OBRIG:['ped','st','cria','prazo','nome','sku','pa','qtd','sub','cb','sbr'],
+  // SKU antigo usado no anuncio errado (decisao Igor 26/10): Powerline vendido sob WAD-0007 = RDE-0005
+  SKU_ALIAS:[{de:'WAD-0007',re:/powerline/i,para:'RDE-0005'}],
+  UF_SIGLA:{'acre':'AC','alagoas':'AL','amapa':'AP','amazonas':'AM','bahia':'BA','ceara':'CE','distrito federal':'DF','espirito santo':'ES','goias':'GO',
+    'maranhao':'MA','mato grosso':'MT','mato grosso do sul':'MS','minas gerais':'MG','para':'PA','paraiba':'PB','parana':'PR','pernambuco':'PE','piaui':'PI',
+    'rio de janeiro':'RJ','rio grande do norte':'RN','rio grande do sul':'RS','rondonia':'RO','roraima':'RR','santa catarina':'SC','sao paulo':'SP','sergipe':'SE','tocantins':'TO'},
+  _imp:null,
+  _sem(s){ return String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').trim().toLowerCase(); },
+  _r2(x){ return Math.round((Number(x)||0)*100)/100; },
+  _n(x){ x=String(x==null?'':x).trim(); if(!x) return 0; if(/,\d{1,2}$/.test(x)) x=x.replace(/\./g,'').replace(',','.'); else x=x.replace(/,/g,''); const n=parseFloat(x); return isNaN(n)?0:n; },
+  // devolve 'AAAA-MM-DD HH:MM' (hora de Brasilia, como a Central escreve) ou null
+  _dt(x){ x=String(x==null?'':x).trim(); if(!x) return null;
+    if(/^\d+(\.\d+)?$/.test(x)){ const d=new Date(Math.round((parseFloat(x)-25569)*86400000)); return isNaN(d.getTime())?null:d.toISOString().slice(0,16).replace('T',' '); } // serial do Excel (planilha re-salva)
+    let m=x.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/); if(m) return m[1]+'-'+m[2]+'-'+m[3]+' '+(m[4]||'00')+':'+(m[5]||'00');
+    m=x.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/); if(m) return m[3]+'-'+m[2]+'-'+m[1]+' '+(m[4]||'00')+':'+(m[5]||'00');
+    return null; },
+  _isoSP(s){ return s?s.replace(' ','T')+':00-03:00':null; },
+  _spKey(d){ const o={}; new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).forEach(x=>{ o[x.type]=x.value; }); return o.year+'-'+o.month+'-'+o.day; },
+  _colIdx(L){ if(!L) return -1; let n=0; for(const ch of L) n=n*26+(ch.charCodeAt(0)-64); return n-1; },
+  async _lerXlsx(file){
+    if(typeof JSZip==='undefined') throw new Error('Leitor de planilha ainda carregando — tente de novo em alguns segundos.');
+    let zip; try{ zip=await JSZip.loadAsync(file); }catch(e){ throw new Error('Arquivo não é uma planilha .xlsx.'); }
+    const P=new DOMParser(); const xml=async p=>{ const f=zip.file(String(p).replace(/^\//,'')); return f?P.parseFromString(await f.async('string'),'application/xml'):null; };
+    const wb=await xml('xl/workbook.xml'); if(!wb) throw new Error('Arquivo não é uma planilha .xlsx.');
+    const sh=wb.getElementsByTagName('sheet')[0]; const rid=sh?sh.getAttribute('r:id'):null;
+    let alvo=null; const rels=await xml('xl/_rels/workbook.xml.rels');
+    if(rels&&rid){ const rr=[...rels.getElementsByTagName('Relationship')].find(r=>r.getAttribute('Id')===rid);
+      if(rr){ const t=rr.getAttribute('Target')||''; alvo=t.startsWith('/')?t.slice(1):('xl/'+t.replace(/^\.\//,'')); } }
+    if(!alvo||!zip.file(alvo)) alvo=Object.keys(zip.files).find(n=>/^xl\/worksheets\/sheet\d*\.xml$/.test(n));
+    if(!alvo) throw new Error('Aba de pedidos não encontrada no arquivo.');
+    const ss=[]; const sst=await xml('xl/sharedStrings.xml');
+    if(sst) [...sst.getElementsByTagName('si')].forEach(si=>ss.push([...si.getElementsByTagName('t')].map(t=>t.textContent).join('')));
+    const doc=await xml(alvo); const linhas=[];
+    [...doc.getElementsByTagName('row')].forEach(row=>{ const arr=[];
+      [...row.getElementsByTagName('c')].forEach(c=>{ const col=this._colIdx(String(c.getAttribute('r')||'').replace(/\d+/g,'')); const t=c.getAttribute('t'); let v='';
+        if(t==='inlineStr') v=[...c.getElementsByTagName('t')].map(x=>x.textContent).join('');
+        else { const ve=c.getElementsByTagName('v')[0]; v=ve?ve.textContent:''; if(t==='s') v=ss[+v]||''; }
+        arr[col>=0?col:arr.length]=v; });
+      linhas.push(Array.from(arr,x=>x==null?'':String(x))); });
+    return linhas;
+  },
+  _stMap(s){ const k=this._sem(s);
+    if(k==='a enviar') return 'a_enviar'; if(k==='enviado') return 'enviado'; if(k==='entregue'||k==='concluido') return 'entregue';
+    if(k==='cancelado') return 'cancelado'; if(k==='nao pago') return 'nao_pago'; return null; },
+  // status so avanca (a_enviar -> enviado -> entregue); cancelado/devolvido sao finais; nunca regride o que ja foi marcado
+  _stAvanca(cur,nov){ const R={a_enviar:0,enviado:1,entregue:2};
+    if(cur==='cancelado'||cur==='devolvido') return cur; if(nov==='cancelado'||nov==='devolvido') return nov;
+    if(R[nov]==null) return cur; if(R[cur]==null) return nov; return R[nov]>=R[cur]?nov:cur; },
+  _montarImport(linhas){
+    const H=linhas[0]||[]; const ix={}; H.forEach((h,i)=>{ const k=String(h).trim(); if(ix[k]==null) ix[k]=i; });
+    const C=this.IMP_COLS; const falta=this.IMP_OBRIG.filter(k=>ix[C[k]]==null&&!(k==='sku'&&ix[C.skuP]!=null));
+    if(falta.length) throw new Error('Planilha fora do formato de Meus Pedidos — faltam as colunas: '+falta.map(k=>C[k]).join(', ')+'.');
+    const g=(r,k)=>{ const i=ix[C[k]]; return i==null?'':String(r[i]==null?'':r[i]).trim(); };
+    const corpo=linhas.slice(1).filter(r=>g(r,'ped'));
+    const nLin={}; corpo.forEach(r=>{ const p=g(r,'ped'); nLin[p]=(nLin[p]||0)+1; });
+    const out=[], ign=[], div=[], multi=new Set(), alias=[], visto=new Set(); let naoPago=0, dMin=null, dMax=null;
+    corpo.forEach(r=>{
+      const ped=g(r,'ped'), stRaw=g(r,'st'); let st=this._stMap(stRaw);
+      if(st==null){ ign.push(ped+' ('+(stRaw||'sem status')+')'); return; }
+      if(st==='nao_pago'){ naoPago++; return; }
+      const skuRaw=(g(r,'sku')||g(r,'skuP')).toUpperCase().replace(/\s+/g,''), nome=g(r,'nome'), vari=g(r,'vari');
+      let cod=skuRaw||null; const al=this.SKU_ALIAS.find(a=>a.de===cod&&a.re.test(nome)); if(al){ alias.push(ped+': '+cod+' → '+al.para); cod=al.para; }
+      const q=Math.max(1,Math.round(this._n(g(r,'qtd')))), pa=this._n(g(r,'pa')), sub=this._r2(this._n(g(r,'sub'))||pa*q);
+      const bruta=this._r2(this._n(g(r,'cb'))+this._n(g(r,'sbr'))), liq=this._r2(this._n(g(r,'cl'))+this._n(g(r,'sl')));
+      const ehMulti=nLin[ped]>1; if(ehMulti) multi.add(ped);
+      const retQ=this._n(g(r,'ret')), devS=g(r,'dev'), devolvido=(retQ>0||/aprovad|reembols/.test(this._sem(devS)))&&st!=='cancelado';
+      if(devolvido) st='devolvido';
+      let com;
+      if(st==='cancelado') com=0;
+      else if(ehMulti){ const t=this.tarifa(pa,false); com=t?this._r2(t.total*q):null; } // pedido com varios itens: tarifa pela tabela (a planilha pode repetir taxa do pedido em cada linha)
+      else { com=bruta>0?bruta:null; const t=this.tarifa(pa,false); if(t&&com!=null&&Math.abs(t.total*q-com)>0.01) div.push(ped+' '+(cod||'')+': planilha R$ '+this.fmt(com)+' × tabela R$ '+this.fmt(t.total*q)); }
+      const fe=this._n(g(r,'fe')), fc=this._n(g(r,'fc')), fd=this._n(g(r,'fd'));
+      const fdif=(st==='cancelado'||(ehMulti&&visto.has(ped)))?0:this._r2(Math.max(0,fe-fc-fd)); visto.add(ped); // frete do pedido entra uma vez; cancelado nao tem frete
+      const cria=this._dt(g(r,'cria')), prazo=this._dt(g(r,'prazo')), post=this._dt(g(r,'post')), fim=this._dt(g(r,'fim'));
+      if(cria){ const d=cria.slice(0,10); if(!dMin||d<dMin) dMin=d; if(!dMax||d>dMax) dMax=d; }
+      const lib=this._sem(stRaw)==='concluido'&&!devolvido;
+      out.push({pedido_id:ped,chave_import:ped+'|'+(skuRaw||nome.slice(0,60))+'|'+vari,origem:'import_central',
+        status:st,status_shopee:stRaw||null,data_solicitacao:cria?cria.slice(0,10):null,prazo_envio:prazo?prazo.slice(0,10):null,
+        produto_codigo:cod,produto:nome||null,quantidade:q,preco_unitario:this._r2(pa),receita_bruta:sub,
+        comissao_valor:com,tarifa_liquida:st==='cancelado'?0:liq,frete_diferenca:fdif,
+        codigo_rastreio:g(r,'rast')||null,data_embarque:this._isoSP(post),motivo_cancelamento:g(r,'canc')||null,devolucao_status:devS||null,
+        uf:this.UF_SIGLA[this._sem(g(r,'uf'))]||null,liberado_carteira:lib,data_liberacao:(lib&&fim)?fim.slice(0,10):null});
+    });
+    return {linhas:out,ign,naoPago,div,multi:[...multi],alias,dMin,dMax};
+  },
+  async _probeImport(){ const r=await sb.from('ecom_shopee_vendas').select('id,origem,chave_import,status_shopee,codigo_rastreio,data_embarque,motivo_cancelamento,devolucao_status,tarifa_liquida,importado_em').limit(1);
+    if(r.error) throw new Error('Banco sem as colunas da importação — rode o SQL SHP-01 antes ('+r.error.message+').'); },
+  async importarArquivo(file){
+    const msg=this._g('shp-imp-msg'), res=this._g('shp-imp-res'); this._imp=null; res.innerHTML=''; msg.className='hintline'; msg.textContent='Lendo '+file.name+'…';
+    try{
+      await this._probeImport();
+      const m=this._montarImport(await this._lerXlsx(file));
+      if(!m.linhas.length) throw new Error('Nenhum pedido aproveitável no arquivo.');
+      // custo NF do Catalogo (unica fonte de custo do app); sem cadastro = custo pendente (fora do resultado)
+      const cods=[...new Set(m.linhas.map(l=>l.produto_codigo).filter(Boolean))], cat={};
+      if(cods.length){ const r=await sb.from('ecom_produtos').select('codigo,produto,custo').in('codigo',cods); if(r.error) throw r.error; (r.data||[]).forEach(p=>{ cat[p.codigo]=p; }); }
+      const semCat=new Set();
+      m.linhas.forEach(l=>{ const p=l.produto_codigo&&cat[l.produto_codigo];
+        if(p){ l.produto=p.produto||l.produto; if(p.custo!=null){ l.custo_unitario=Number(p.custo); l.custo_total=this._r2(Number(p.custo)*l.quantidade); } }
+        if(!p||p.custo==null){ l.custo_unitario=null; l.custo_total=null; if(l.status!=='cancelado') semCat.add(l.produto_codigo||'(sem SKU) '+String(l.produto||'').slice(0,40)); } });
+      // banco atual (fresco) para o diff
+      const vr=await sb.from('ecom_shopee_vendas').select('*'); if(vr.error) throw vr.error; const atuais=vr.data||[];
+      const porChave={}; atuais.forEach(v=>{ if(v.chave_import) porChave[v.chave_import]=v; });
+      const novos=[], upd=[]; let iguais=0;
+      m.linhas.forEach(l=>{ let e=porChave[l.chave_import];
+        if(!e) e=atuais.find(v=>!v.chave_import&&v.pedido_id===l.pedido_id&&v.produto_codigo===l.produto_codigo&&!upd.some(u=>u.id===v.id)); // vincula lancamento manual antigo
+        if(!e){ novos.push(l); return; }
+        const up=this._diffImport(e,l); if(Object.keys(up).length) upd.push({id:e.id,ped:l.pedido_id,up}); else iguais++; });
+      this._imp={arquivo:file.name,novos,upd};
+      const nPed=a=>new Set(a.map(x=>x.pedido_id||x.ped)).size;
+      const lista=(t,arr,cor)=>arr.length?'<div style="margin-top:6px;font-size:12px;color:'+cor+'"><b>'+t+'</b><br>'+arr.map(x=>this.esc(x)).join('<br>')+'</div>':'';
+      const dl=d=>d?d.slice(8,10)+'/'+d.slice(5,7):'—';
+      msg.textContent='';
+      res.innerHTML='<div style="border:1px solid var(--eborder);border-radius:10px;padding:10px 12px;margin-top:8px;background:var(--epanel2);font-size:13px">'
+        +'<div style="font-family:var(--emono);font-size:12px;color:var(--emuted)">'+this.esc(file.name)+' · criados de '+dl(m.dMin)+' a '+dl(m.dMax)+'</div>'
+        +'<div style="margin-top:4px">Novos: <b>'+nPed(novos)+'</b> pedido(s) · Atualizados: <b>'+nPed(upd)+'</b> · Sem mudança: <b>'+iguais+'</b>'
+        +(m.naoPago?' · Não pagos ignorados: <b>'+m.naoPago+'</b>':'')+'</div>'
+        +lista('Sem custo no Catálogo (resultado pendente):',[...semCat],'var(--eamber)')
+        +lista('Tarifa da planilha ≠ tabela do app:',m.div,'var(--eamber)')
+        +lista('Pedido com vários itens (tarifa pela tabela, frete na 1ª linha):',m.multi,'var(--eamber)')
+        +lista('SKU corrigido:',m.alias,'var(--emuted)')
+        +lista('Status desconhecido (ignorado):',m.ign,'var(--ered)')
+        +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
+        +((novos.length||upd.length)?'<button class="vbtn sm" id="shp-imp-ok" onclick="shopeeTab.importarConfirmar()">Confirmar importação</button>':'<span style="color:var(--emuted)">Nada a gravar — o app já está igual à planilha.</span>')
+        +'<button class="vbtn sm" style="background:var(--epanel3);color:var(--emuted)" onclick="shopeeTab.importarCancelar()">Cancelar</button></div></div>';
+    }catch(e){ msg.className='hintline err'; msg.textContent=e.message||String(e); }
+    finally{ const f=this._g('shp-imp-file'); if(f) f.value=''; }
+  },
+  // o que a planilha pode mudar numa linha existente: dados da Shopee sempre; dinheiro so em linha importada (manual: so preenche vazio);
+  // custo, codigo, produto e obs nunca sao sobrescritos; liberado so vai de nao para sim; status nunca regride
+  _diffImport(e,l){ const up={};
+    const igual=(a,v)=>{ if(a==null&&v==null) return true; if(a==null||v==null) return false; if(typeof v==='number') return Math.abs(Number(a)-v)<0.005;
+      const sv=String(v); return /^\d{4}-\d{2}-\d{2}$/.test(sv)?String(a).slice(0,10)===sv:String(a)===sv; };
+    const set=(k,v)=>{ if(v!=null&&!igual(e[k],v)) up[k]=v; }; // planilha sem o dado nao apaga o que o app ja tem
+    if(!e.chave_import) up.chave_import=l.chave_import;
+    const st=this._stAvanca(e.status,l.status); if(st!==e.status) up.status=st;
+    ['status_shopee','prazo_envio','codigo_rastreio','motivo_cancelamento','devolucao_status'].forEach(k=>set(k,l[k]));
+    if(l.data_embarque&&!(e.data_embarque&&new Date(e.data_embarque).getTime()===new Date(l.data_embarque).getTime())) up.data_embarque=l.data_embarque;
+    if(e.origem==='import_central'){ ['quantidade','preco_unitario','receita_bruta','comissao_valor','tarifa_liquida','frete_diferenca'].forEach(k=>set(k,l[k])); }
+    else { ['comissao_valor','tarifa_liquida'].forEach(k=>{ if(e[k]==null&&l[k]!=null) up[k]=l[k]; }); }
+    if(e.custo_unitario==null&&l.custo_unitario!=null){ up.custo_unitario=l.custo_unitario; up.custo_total=l.custo_total; }
+    if(!e.uf&&l.uf) up.uf=l.uf;
+    if(l.liberado_carteira&&!e.liberado_carteira){ up.liberado_carteira=true; if(!e.data_liberacao&&l.data_liberacao) up.data_liberacao=l.data_liberacao; }
+    return up; },
+  importarCancelar(){ this._imp=null; this._g('shp-imp-res').innerHTML=''; const m=this._g('shp-imp-msg'); m.className='hintline'; m.textContent=''; this.renderImpInfo(); },
+  importarConfirmar(){ return this._guard('shp-imp-ok',()=>this._importarConfirmar()); },
+  async _importarConfirmar(){ const imp=this._imp; if(!imp) return; const msg=this._g('shp-imp-msg'); const agora=new Date().toISOString();
+    let ins=0, at=0; const erros=[];
+    try{
+      if(imp.novos.length){ const r=await sb.from('ecom_shopee_vendas').insert(imp.novos.map(l=>Object.assign({},l,{importado_em:agora}))); if(r.error) throw r.error; ins=imp.novos.length; }
+      for(const u of imp.upd){ const r=await sb.from('ecom_shopee_vendas').update(Object.assign({},u.up,{importado_em:agora})).eq('id',u.id);
+        if(r.error) erros.push(u.ped+': '+r.error.message); else at++; }
+    }catch(e){ erros.push((e.code==='23505'||/duplicate|unique/i.test(e.message||''))?'Linha já importada por outra gravação — importe o arquivo de novo.':(e.message||String(e))); }
+    this._imp=null; this._g('shp-imp-res').innerHTML='';
+    await this.reloadVendas();
+    msg.className=erros.length?'hintline err':'hintline ok';
+    msg.textContent=(erros.length?'⚠ '+erros.join(' · ')+' — ':'✓ ')+ins+' linha(s) nova(s), '+at+' atualizada(s).';
+  },
+  renderImpInfo(){ const m=this._g('shp-imp-msg'); if(!m||this._imp||m.className.indexOf('err')>=0||m.className.indexOf('ok')>=0) return;
+    const ts=this.vendas.map(v=>v.importado_em).filter(Boolean).sort().pop();
+    if(!ts){ m.className='hintline'; m.textContent='nenhuma importação ainda'; return; }
+    const d=new Date(ts); m.className='hintline'; m.textContent='última importação '+d.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); },
+
+  // ---------- A ENVIAR (fila sem mês, por dia de envio · BUILD 2026-10-26-A) ----------
+  _diaLabel(k){ if(!k) return 'sem prazo de envio'; const d=new Date(k+'T12:00:00'); return ['dom','seg','ter','qua','qui','sex','sáb'][d.getDay()]+' '+k.slice(8,10)+'/'+k.slice(5,7); },
+  renderAEnviar(){ const box=this._g('shp-ae-list'); if(!box) return; const hoje=this.hojeLocal();
+    const ae=this.vendas.filter(v=>v.status==='a_enviar');
+    const un=a=>a.reduce((s,v)=>s+Math.max(1,Math.round(+v.quantidade||1)),0), np=a=>new Set(a.map(v=>v.pedido_id||v.id)).size;
+    const cnt=this._g('shp-ae-count'); if(cnt) cnt.textContent=ae.length?('· '+np(ae)+' pedido(s) · '+un(ae)+' un.'):'';
+    // postagens fora do prazo nos ultimos 30 dias (data da postagem em Brasilia > data prevista de envio)
+    const at=this._g('shp-ae-atraso'); if(at){ const lim=new Date(Date.now()-30*86400000).toISOString().slice(0,10);
+      const post=this.vendas.filter(v=>v.data_embarque&&v.prazo_envio&&String(v.data_solicitacao||'')>=lim);
+      const tarde=post.filter(v=>this._spKey(new Date(v.data_embarque))>String(v.prazo_envio).slice(0,10));
+      at.className='hintline'+(tarde.length?' err':''); at.textContent=post.length?('Postagens fora do prazo nos últimos 30 dias: '+np(tarde)+' de '+np(post)+' pedidos'):''; }
+    if(!ae.length){ box.innerHTML='<div style="color:var(--emuted);font-size:12.5px">Nenhum pedido a enviar.</div>'; return; }
+    const m=new Map(); ae.forEach(v=>{ const k=String(v.prazo_envio||'').slice(0,10); if(!m.has(k)) m.set(k,[]); m.get(k).push(v); });
+    const ks=[...m.keys()].sort((a,b)=>a===b?0:(a===''?1:(b===''?-1:(a<b?-1:1))));
+    box.innerHTML=ks.map(k=>{ const arr=m.get(k); const cor=!k?'var(--eamber)':(k<hoje?'var(--ered)':(k===hoje?'var(--eamber)':'var(--eteal)'));
+      const tag=!k?'':(k<hoje?' <span class="chip prazo-atrasado">ATRASADO</span>':(k===hoje?' <span class="chip prazo-hoje">HOJE</span>':''));
+      return '<div class="shp-dia"><span style="font-weight:700;font-size:13.5px;color:'+cor+'">'+this._diaLabel(k)+'</span>'+tag+'<span>'+np(arr)+' pedido'+(np(arr)===1?'':'s')+' · '+un(arr)+' un.</span></div>'
+        +this._cardsPedidos(this._grupos(arr)); }).join('');
+  },
+
   // ---------- RELATÓRIOS ----------
   // BUILD 2026-09-15-D: calcMes = UNICA conta do mes Shopee (usada pelo termometro e pelo Financeiro macro)
   calcMes(m,arr){ const base=arr||this.vendas;
@@ -10794,7 +11017,7 @@ const shopeeTab={
     const ok=vs.filter(v=>v.status!=='cancelado'&&v.status!=='devolvido');
     const nCanc=vs.filter(v=>v.status==='cancelado').length, nDev=vs.filter(v=>v.status==='devolvido').length;
     // BUILD 2026-09-15-J: item sem tarifa (comissao_valor NULL) = PENDENTE — entra na receita, fica FORA do resultado (espelho do nF/nPend do calcMes ML)
-    const okF=ok.filter(v=>v.comissao_valor!=null), nPend=ok.length-okF.length;
+    const okF=ok.filter(v=>v.comissao_valor!=null&&v.custo_total!=null), nPend=ok.length-okF.length; // BUILD 2026-10-26-A: sem custo (SKU fora do Catalogo) tambem e pendente — espelho do lucroPedido ML
     const receita=ok.reduce((s,v)=>s+Number(v.receita_bruta),0);
     const receitaF=okF.reduce((s,v)=>s+Number(v.receita_bruta),0);
     const tarifas=okF.reduce((s,v)=>s+Number(v.comissao_valor||0),0);
@@ -10844,7 +11067,7 @@ const shopeeTab={
     nota.textContent=(nCanc||nDev)
       ?('Fora do resultado: '+nCanc+' cancelado(s), '+nDev+' devolvido(s). Convenção v1: devolvido sai do mês inteiro (custo e receita) — mais duro que o razão ML, por desenho.')
       :'Cancelados e devolvidos ficam fora do resultado (convenção v1).';
-    nota.style.color=''; if(c.nPend){ nota.style.color='var(--eamber)'; nota.textContent='⚠ '+c.nPend+' item(ns) sem tarifa registrada — na receita, FORA do resultado até conciliar (edição só por SQL nesta versão). '+nota.textContent; } // BUILD 2026-09-15-J
+    nota.style.color=''; if(c.nPend){ nota.style.color='var(--eamber)'; nota.textContent='⚠ '+c.nPend+' item(ns) sem tarifa ou sem custo no Catálogo — na receita, FORA do resultado até conciliar. '+nota.textContent; } // BUILD 2026-09-15-J
     // capital
     const cap=this._g('shp-rl-cap');
     const liqDe=v=>Number(v.receita_bruta)-Number(v.comissao_valor||0)-Number(v.frete_diferenca||0);
@@ -10880,6 +11103,7 @@ const shopeeTab={
     ['shp-vd-preco','shp-vd-qtd'].forEach(i=>g(i).addEventListener('input',()=>this.sugerirTarifa()));
     const vi=g('shp-vd-item'); if(vi) vi.addEventListener('change',()=>this.sugerirTarifa()); // BUILD 2026-09-15-M
     g('shp-vd-save').addEventListener('click',()=>this.lancarVenda());
+    const fi=g('shp-imp-file'); if(fi) fi.addEventListener('change',e=>{ const f=e.target.files&&e.target.files[0]; if(f) this.importarArquivo(f); }); // BUILD 2026-10-26-A
     g('shp-vd-prev').addEventListener('click',()=>{ this.mes=this.shiftMes(this.mes,-1); this.renderVendas(); });
     g('shp-vd-next').addEventListener('click',()=>{ this.mes=this.shiftMes(this.mes,1); this.renderVendas(); });
     g('shp-rl-prev').addEventListener('click',()=>{ this.mesRl=this.shiftMes(this.mesRl,-1); this.renderRelatorios(); });
