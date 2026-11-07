@@ -2322,28 +2322,31 @@
 .vd-tile .k{font-size:11px;color:var(--emuted);text-transform:uppercase;letter-spacing:.04em}
 .vd-tile .v{font-family:var(--emono);font-size:22px;font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vd-tile .n{font-size:11px;color:var(--eamber);margin-top:2px}
-.fn-dia,.fn-dia-head{display:grid;grid-template-columns:30px 200px 70px 150px 150px 1fr;gap:12px;align-items:center}
+.fn-dia,.fn-dia-head{display:grid;grid-template-columns:30px 200px 70px 150px 150px 150px 1fr;gap:12px;align-items:center}
 .fn-dia{padding:8px 0;border-top:1px solid var(--eborder);font-size:14px}
 .fn-dia-head{padding:0 0 6px;font-size:11px;color:var(--emuted);text-transform:uppercase;letter-spacing:.04em}
-.fn-dia-head span:nth-child(3),.fn-dia-head span:nth-child(4),.fn-dia-head span:nth-child(5){text-align:right}
+.fn-dia-head span:nth-child(3),.fn-dia-head span:nth-child(4),.fn-dia-head span:nth-child(5),.fn-dia-head span:nth-child(6){text-align:right}
 .fn-dia .ix{color:var(--emuted2);font-family:var(--emono);font-size:13px}
-.fn-dia .un,.fn-dia .cp,.fn-dia .lc{font-family:var(--emono);text-align:right;white-space:nowrap}
+.fn-dia .un,.fn-dia .cp,.fn-dia .ch,.fn-dia .lc{font-family:var(--emono);text-align:right;white-space:nowrap}
 .fn-dia .pdf{justify-self:end}
 .fn-dia .k{display:none}
-@media (max-width:760px){
-  .vd-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .vd-tiles .vd-tile:last-child{grid-column:1 / -1}
-  .vd-tile .v{font-size:20px}
+@media (max-width:980px){
   .fn-dia-head{display:none}
-  .fn-dia{grid-template-columns:22px 44px 1fr 1fr;grid-template-areas:"ix dia dia pdf" ". un cp lc";gap:2px 8px;padding:8px 0;font-size:13px}
+  .fn-dia{grid-template-columns:22px minmax(0,1fr) minmax(0,1fr) 70px;grid-template-areas:"ix dia dia pdf" ". un cp cp" ". ch lc lc";gap:2px 8px;padding:8px 0;font-size:13px}
   .fn-dia .ix{grid-area:ix}
   .fn-dia .dia{grid-area:dia}
   .fn-dia .pdf{grid-area:pdf;padding:4px 10px}
   .fn-dia .un{grid-area:un}
   .fn-dia .cp{grid-area:cp}
+  .fn-dia .ch{grid-area:ch}
   .fn-dia .lc{grid-area:lc}
-  .fn-dia .un,.fn-dia .cp,.fn-dia .lc{text-align:left}
+  .fn-dia .un,.fn-dia .cp,.fn-dia .ch,.fn-dia .lc{text-align:left}
   .fn-dia .k{display:block;font-family:inherit;font-size:10px;color:var(--emuted);text-transform:uppercase;letter-spacing:.03em}
+}
+@media (max-width:760px){
+  .vd-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .vd-tiles .vd-tile:last-child{grid-column:1 / -1}
+  .vd-tile .v{font-size:20px}
 }
 
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .rp-idxrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
@@ -5677,21 +5680,24 @@ const ecomFinanceiro={
   },
   async load(){ this.cur=null; await this.loadList(); this.termometro(); }, // BUILD 2026-10-10-A: a faixa nasce da propria lista // BUILD 2026-08-25-H: aguarda a faixa antes da lista (lucro previsto e anexado nela)
   // BUILD 2026-08-17-A: quadrante de leitura rapida — capital do dia (ecom_vw_compras_dia, somente leitura)
-  // BUILD 2026-10-10-A / 12-A: Compras / envio dia — linha numerada por dia de envio: unidades, compra, lucro do dia, PDF (itens so no PDF)
+  // BUILD 2026-11-07: Colchao de 6% por dia de envio, calculado por pedido e exibido sem alterar o lucro (que ja o desconta)
   comprasDia(itens){ const box=this._g('fn-compras-dia'); if(!box) return;
     const V=ecomVendas, vivos=(itens||[]).filter(v=>!v.ocorrencia);
     if(!vivos.length){ box.innerHTML='<div class="ph">nenhum pedido a enviar</div>'; return; }
-    const soma=arr=>{ let custo=0, sc=0, luc=0, pend=0; arr.forEach(v=>{ const q=Math.max(1,Math.round(+v.quantidade||1));
+    const soma=arr=>{ let custo=0, sc=0, colchao=0, sp=0, luc=0, pend=0; arr.forEach(v=>{ const q=Math.max(1,Math.round(+v.quantidade||1));
         if(v.custo_unitario==null) sc++; else custo+=(v.custo_total!=null?Number(v.custo_total):Number(v.custo_unitario)*q);
+        const preco=v.preco_venda==null?NaN:Number(v.preco_venda);
+        if(!Number.isFinite(preco)||preco<=0) sp++; else colchao+=Math.round(preco*q*this.FIXOS.COLCHAO*100)/100;
         const l=this.lucroPedido(v); if(l==null) pend++; else luc+=l; });
-      return {custo:custo,sc:sc,luc:luc,pend:pend,u:V.unid(arr)}; };
-    let h='<div class="fn-dia-head"><span>#</span><span>envio</span><span>un.</span><span>compra</span><span>lucro do dia</span><span></span></div>';
+      return {custo:custo,sc:sc,colchao:colchao,sp:sp,luc:luc,pend:pend,u:V.unid(arr)}; };
+    let h='<div class="fn-dia-head"><span>#</span><span>envio</span><span>un.</span><span>compra</span><span>colchão</span><span>lucro do dia</span><span></span></div>';
     h+=V.porDia(vivos).map((g,ix)=>{ const x=soma(g.itens);
       return '<div class="fn-dia">'
         +'<span class="ix">'+(ix+1)+'.</span>'
         +'<span class="dia" style="font-weight:700;color:'+V.diaCor(g.k)+'">'+V.diaLabel(g.k)+V.diaTag(g.k)+'</span>'
         +'<span class="un"><span class="k">un.</span><span>'+x.u+'</span></span>'
         +'<span class="cp"><span class="k">compra</span><span style="color:var(--eteal);font-weight:600">R$ '+this.fmt(x.custo)+(x.sc>0?' <span style="color:var(--eamber)" title="'+x.sc+' item(ns) sem custo no cat\u00e1logo \u2014 valor subestimado">*</span>':'')+'</span></span>'
+        +'<span class="ch"><span class="k">colchão</span><span style="color:var(--eamber)" title="Reserva de 6% sobre o valor de venda dos pedidos deste dia">R$ '+this.fmt(x.colchao)+(x.sp>0?' <span title="'+x.sp+' item(ns) sem pre\u00e7o de venda \u2014 reserva subestimada">*</span>':'')+'</span></span>'
         +'<span class="lc"><span class="k">lucro do dia</span><span style="color:'+(x.luc>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(x.luc)+(x.pend>0?' <span style="color:var(--eamber)" title="'+x.pend+' item(ns) sem comiss\u00e3o ou custo \u2014 fora da soma">*</span>':'')+'</span></span>'
         +'<button class="vbtn sm pdf" data-pdfdia="'+(g.k||'sem')+'" title="PDF para o fornecedor: itens deste dia de envio (descri\u00e7\u00e3o + quantidade, sem pre\u00e7o)">\ud83d\udcc4 PDF</button></div>'; }).join('');
     box.innerHTML=h;
