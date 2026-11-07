@@ -1,3 +1,4 @@
+<!-- BUILD 2026-11-07-B | RASTREIOS CURITIBA: flag logistica passou_curitiba_em separada de ocorrencia/prejuizo; selo enviado verde; selecao e desfazer no mesmo menu; consulta degrada com seguranca se SQL ainda nao aplicado. -->
 <!-- BUILD 2026-10-26-A | selecta-banco-preco | SHOPEE PELA PLANILHA DA CENTRAL (Igor 26/10: "nunca lancei nada no APP"; sobre 24-A publicado md5 8f86cca9c4f48a67162bb9fc5e62a302; requer SQL SHP-01): (1) Vendas Shopee ganha "Importar pedidos da Central": le o .xlsx de Meus Pedidos no navegador (JSZip ja carregado), por NOME de coluna; dados do comprador (nome, usuario, CPF, telefone, endereco, CEP, observacao) NUNCA lidos nem gravados; previa antes de gravar (novos/atualizados/sem mudanca, nao pagos ignorados, SKU sem custo, tarifa planilha != tabela, multi-item, SKU corrigido); confirmar grava. (2) Regras: linha = pedido|SKU|variacao (chave_import, indice unico); status Central -> app (A Enviar/Enviado/Entregue/Concluido/Cancelado; Nao pago fica fora; devolucao aprovada ou quantidade devolvida = devolvido); status so avanca, cancelado/devolvido finais; Concluido = liberado na carteira (data = Hora completa); tarifa = comissao+servico BRUTOS da planilha (= tabela do app, conservador), liquidos guardados em tarifa_liquida; pedido multi-item = tarifa pela tabela e frete na 1a linha; frete dif = estimado - pago pelo comprador - desconto Shopee (>=0, provisorio ate o Detalhes da renda); custo NF do Catalogo no momento da importacao, nunca sobrescrito; codigo/produto/obs nunca sobrescritos; WAD-0007 com "Powerline" no nome = RDE-0005 (decisao Igor 26/10). (3) fila "A enviar" SEM MES, por dia de envio (atrasado vermelho / hoje ambar), + linha "Postagens fora do prazo nos ultimos 30 dias". (4) cartoes de pedido: rastreio, postado DD/MM (+N d do prazo), motivo do cancelamento, devolucao; CSS .vli.vped corrige o cartao deitado pela regra .vli flex do Controle. (5) calcMes: item sem custo (custo_total NULL) = PENDENTE, como sem tarifa (espelho do lucroPedido ML). (6) Lancar venda manual oculto (ids preservados, padrao ML 12-A). (7) cartao cancelado nao mostra Liquido. Fora da regiao Shopee nada muda. -->
 <!-- BUILD 2026-10-24-A | selecta-banco-preco | ORFAOS DO ML NO APP (caso RTR-0034, Igor 24/10: anuncio 7839026382 cadastrado em 18/10 foi encerrado pelo ML no mesmo dia; o ativo 7838387024 nunca entrou no app e ficou 6 dias sem margem vigiada — a ml-market ja logava SEM_CADASTRO desde 18/10 21:05 UTC, o app nao lia), sobre 16-C publicado md5 691a29ec1b37a8dc2df80966254bbb51: (1) le resumo.sem_cadastro da ultima varredura sync (exige ml-market v4.6; sem ela a faixa nao aparece — nada e inventado do log deduplicado). (2) faixa AMBAR no topo do Alvo, abaixo da vermelha de vigilancia: anuncio ativo no ML sem registro no app = margem nao vigiada; sem botao ignorar (regra ativo no ML = ativo no app, decisao Igor 24/10); filtro no app tira o que ja foi cadastrado/trocado desde a varredura. (3) SUBSTITUTO (mesmo SKU de registro encerrado): botao Trocar MLB = UPDATE com trava anuncio_mlb=antigo, titulo do ML, ativo=true, data_publicacao mantida (decisao 3) + linha no Historico (campo mlb). (4) SEM substituto (inclui 2o anuncio do mesmo SKU, Classico+Premium — decisao 2): botao Cadastrar = pre-preenche o Cadastro de anuncio com SKU/MLB/titulo/preco cheio/tipo/data do ML e passa pela trava do piso; promocao do ML vira aviso (registrar pelo Editar). (5) sem SKU no ML ou SKU fora do Catalogo: aviso, sem atalho de substituto (decisao 4). (6) Realtime e Trocar/Cadastrar redesenham a faixa. Zero SQL. -->
 <!-- BUILD 2026-10-16-C | selecta-banco-preco | FAIXA DE VIGILANCIA SEM ALARME FALSO (Igor 18/10 17h24, print "Vigilancia PARADA ha 6 h 48 min", sobre 16-B publicado md5 619bf595ab5991e74d432dbcbfe119b4): defeito do 16-B — o timer de 5 min so recontava a idade do dado carregado na abertura da pagina; com o app aberto horas, a faixa acusava PARADA mesmo com o ml-market rodando. Agora _vigCheck() rele a ultima varredura sync no banco a cada 5 min e ao voltar ao app (visibilitychange); havendo varredura nova, recarrega o Alvo (vermelhos/aviso REGISTRO != ML atualizados), exceto com um Editar aberto. Nada mais muda. -->
@@ -2130,6 +2131,7 @@
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vd-mestot{margin-left:auto;font-size:12.5px;color:var(--emuted);font-family:var(--emono)}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-aenv{background:rgba(245,158,11,.15);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-env{background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.35)}
+    #tab-ecommerce #ecom-sub-rastreios .vpill.st-env-curitiba{background:rgba(16,185,129,.15);color:var(--eemerald);border:1px solid rgba(16,185,129,.45)}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-ent{background:rgba(16,185,129,.15);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-can{background:rgba(95,111,140,.18);color:var(--emuted2);border:1px solid var(--eborder)}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-per{background:rgba(239,68,68,.15);color:var(--ered);border:1px solid rgba(239,68,68,.35)}
@@ -5494,10 +5496,17 @@ const ecomVendas={
   // Entregue sai daqui automaticamente (status vira entregue via sync/Historico) e ja vive no Historico.
   // Cancelado/perda: consultaveis na Consulta gerencial (Relatorios > Historico).
   async load(){ const box=this._g('vd-list');
-    try{ const r=await sb.from('ecom_vendas')
-        .select('id,ml_pedido_id,produto,marca,modelo,produto_codigo,preco_venda,quantidade,status,data_solicitacao,data_embarque,prazo_postagem,envio_substatus,envio_atualizado_em,codigo_rastreio,ocorrencia,ocorrencia_em,custo_total,taxas_ml_total,prejuizo_valor')
+    try{ const campos='id,ml_pedido_id,produto,marca,modelo,produto_codigo,preco_venda,quantidade,status,data_solicitacao,data_embarque,prazo_postagem,envio_substatus,envio_atualizado_em,codigo_rastreio,ocorrencia,ocorrencia_em,custo_total,taxas_ml_total,prejuizo_valor';
+      let r=await sb.from('ecom_vendas')
+        .select(campos+',passou_curitiba_em')
         .in('status',['a_enviar','enviado'])
         .order('data_solicitacao',{ascending:false});
+      this.curitibaDisponivel=!r.error;
+      // Se o SQL ainda nao tiver sido aplicado, toda a fila anterior continua funcionando.
+      if(r.error&&/passou_curitiba_em/i.test(r.error.message||'')){
+        this.curitibaDisponivel=false;
+        r=await sb.from('ecom_vendas').select(campos).in('status',['a_enviar','enviado']).order('data_solicitacao',{ascending:false});
+      }
       if(r.error) throw r.error;
       // BUILD 2026-08-20-G: familia PERDA e venda finalizada — sai da aba Vendas, vive no Historico
       const itens=(r.data||[]).filter(v=>!v.ocorrencia||v.ocorrencia==='retido_doc'||v.ocorrencia==='outro');
@@ -5518,11 +5527,30 @@ const ecomVendas={
   },
   // BUILD 2026-08-18-B: catalogo de ocorrencias manuais (verdade do Igor por cima do substatus ML)
   OCORR:{apreendido:'apreendido \u00b7 fiscaliza\u00e7\u00e3o',devolvido:'devolvido pelo cliente',devolvido_reintegrado:'devolvido \u00b7 reintegrado ao estoque',extraviado:'extraviado (confirmado)',roubado:'roubado',avariado:'avariado',retido_doc:'retido \u00b7 aguardando documento',outro:'outra ocorr\u00eancia'},
-  ocorrSelect(v){ const cur=v.ocorrencia||'';
+  ocorrSelect(v){ const cur=v.ocorrencia||'', passou=!!v.passou_curitiba_em;
     const ops=['<option value="">\u2014 ocorr\u00eancia</option>'].concat(Object.entries(this.OCORR).map(([k,l])=>'<option value="'+k+'"'+(cur===k?' selected':'')+'>'+l+'</option>'));
+    // Marco informativo: no mesmo menu, mas NUNCA gravado em ecom_vendas.ocorrencia (campo financeiro).
+    if(this.curitibaDisponivel!==false){
+      ops.push('<option value="__curitiba_marcar"'+(passou&&!cur?' selected':'')+'>\u2705 Passou por Curitiba</option>');
+      if(passou) ops.push('<option value="__curitiba_desmarcar">\u21b6 Desmarcar passagem por Curitiba</option>');
+    }
     return '<select class="vinput mono" data-ocorr="'+v.id+'" style="width:auto;min-width:150px;padding:4px 8px;font-size:11px'+(cur?';border-color:var(--ered);color:var(--ered)':'')+'" title="marcar a situa\u00e7\u00e3o REAL do pacote (comanda os n\u00fameros do painel)">'+ops.join('')+'</select>';
   },
-  async setOcorrencia(id,val){ const v=(this.itens||[]).find(x=>String(x.id)===String(id)); const lbl=val?this.OCORR[val]:null;
+  async setPassouCuritiba(id,marcar){
+    const v=(this.itens||[]).find(x=>String(x.id)===String(id));
+    if(!v||v.status!=='enviado'||this.curitibaDisponivel===false){ alert('Pedido indispon\u00edvel para a marca\u00e7\u00e3o log\u00edstica.'); this.load(); return; }
+    if(!confirm(marcar?'Confirmar que este pacote passou por Curitiba?\n\nO selo Enviado ficar\u00e1 verde. Lucro, capital e ocorr\u00eancias n\u00e3o mudam.':'Desmarcar a passagem por Curitiba?\n\nO selo Enviado voltar\u00e1 a azul.')){ this.load(); return; }
+    try{ const r=await sb.from('ecom_vendas').update({passou_curitiba_em:marcar?new Date().toISOString():null,atualizado_em:new Date().toISOString()})
+        .eq('id',id).eq('status','enviado').select('id');
+      if(r.error) throw r.error;
+      if(!r.data||r.data.length!==1) throw new Error('O pedido mudou de status. Atualize a lista antes de marcar.');
+      await this.load();
+    }catch(e){ alert('Erro na passagem por Curitiba: '+e.message); this.load(); }
+  },
+  async setOcorrencia(id,val){
+    if(val==='__curitiba_marcar') return this.setPassouCuritiba(id,true);
+    if(val==='__curitiba_desmarcar') return this.setPassouCuritiba(id,false);
+    const v=(this.itens||[]).find(x=>String(x.id)===String(id)); const lbl=val?this.OCORR[val]:null;
     const msgTxt=val?('Marcar ocorr\u00eancia "'+lbl+'"?\n\nEfeito: sai dos n\u00fameros de venda (faturamento, lucro, capital em tr\u00e2nsito) e entra nos cards de ocorr\u00eancia. O prej\u00edzo l\u00edquido voc\u00ea apura no Editar do Hist\u00f3rico.'):'Limpar a ocorr\u00eancia? O pedido volta a contar como venda normal.';
     if(!confirm(msgTxt)){ this.load(); return; }
     try{ const dados={ocorrencia:val||null, ocorrencia_em:val?new Date().toISOString():null, atualizado_em:new Date().toISOString()};
@@ -5567,18 +5595,20 @@ const ecomVendas={
   render(itens){ const box=this._g('vd-list'); this.itens=itens; const modo=this.modo||'aenviar'; // BUILD 2026-10-13-A
     const ttl=this._g('vd-rast-titulo'); if(ttl) ttl.textContent=modo==='aenviar'?'A enviar':'Enviadas';
     this.totalizador(itens);
+    const avisoCuritiba=this.curitibaDisponivel===false?'<div class="ph" style="color:var(--eamber)">A marca\u00e7\u00e3o Curitiba aguarda a coluna SQL. O restante dos rastreios continua dispon\u00edvel.</div>':'';
     const stp={a_enviar:['st-aenv','a enviar'],enviado:['st-env','enviado'],entregue:['st-ent','entregue'],concluido:['st-ent','concluído'],cancelado:['st-can','cancelado'],perda:['st-per','perda']};
     // BUILD 2026-10-10-A / 13-A: A enviar = agrupado por dia de envio; Enviadas = postagem mais recente primeiro
     const aEnv=itens.filter(v=>v.status==='a_enviar');
     const tEmb=v=>{ const t=new Date(v.data_embarque||v.data_solicitacao).getTime(); return isNaN(t)?0:t; };
     const outros=itens.filter(v=>v.status!=='a_enviar').sort((a,b)=>tEmb(b)-tEmb(a));
     const alvo=modo==='aenviar'?aEnv:outros;
-    if(!alvo.length){ box.innerHTML='<div class="ph">'+(modo==='aenviar'?'nenhum pedido a postar':'nenhum envio em tr\u00e2nsito \u2014 tudo com o cliente')+'</div>'; return; }
+    if(!alvo.length){ box.innerHTML=avisoCuritiba+'<div class="ph">'+(modo==='aenviar'?'nenhum pedido a postar':'nenhum envio em tr\u00e2nsito \u2014 tudo com o cliente')+'</div>'; return; }
     const blocos=modo==='aenviar'?this.porDia(aEnv).map(g=>({head:this.diaHead(g.k,g.itens),itens:g.itens})):[{head:'',itens:outros}];
     let ix=-1;
     const linha=(v)=>{ ix++;
       const dt=new Date(v.data_solicitacao).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       const st=stp[v.status]||['mut',v.status];
+      const curitibaOk=v.status==='enviado'&&!!v.passou_curitiba_em;
       const sem=(v.status==='a_enviar')?this.semaforo(v).pill:'';
       const btnPost=v.status==='a_enviar'?'<div style="display:flex;gap:6px"><button class="vbtn sm" data-act="postar" data-id="'+v.id+'">postado</button></div>':'';
       const selOc=v.status==='enviado'?this.ocorrSelect(v):'';
@@ -5590,9 +5620,9 @@ const ecomVendas={
         +'<span class="vp" style="margin:0">'+v.produto+'</span>'
         +'<span class="vm" style="margin:0">#'+v.ml_pedido_id+' · '+(v.produto_codigo||'')+' · '+dt+' · '+qtxt+'R$ '+this.fmt(v.preco_venda)+'</span>'
         +(rast?'<span class="vm" style="margin:0;display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">'+rast+'</span>':'')
-        +'</div><span class="vpill '+st[0]+'">'+st[1]+'</span>'+sem+selOc+btnPost+'</div></div>';
+        +'</div><span class="vpill '+(curitibaOk?'st-env-curitiba':st[0])+'"'+(curitibaOk?' title="Passou por Curitiba (marcado manualmente)"':'')+'>'+st[1]+'</span>'+sem+selOc+btnPost+'</div></div>';
     };
-    box.innerHTML=blocos.map(b=>b.head+b.itens.map(linha).join('')).join('');
+    box.innerHTML=avisoCuritiba+blocos.map(b=>b.head+b.itens.map(linha).join('')).join('');
   },
   // BUILD 2026-08-25-B: LISTA DE COMPRA para o fornecedor, no padrao do ORCAMENTO (logo, titulo, linha verde, data, tabela, rodape).
   // Itens A_ENVIAR sem ocorrencia, descricao COMPLETA (nome canonico do catalogo), agrupados por produto com soma de quantidade.
