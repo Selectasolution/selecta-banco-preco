@@ -1,3 +1,4 @@
+<!-- BUILD 2026-11-08-B | RASTREIOS LISTA UNICA: Enviadas sem filtros internos nem notas; selo permanece 'Enviado' azul/verde conforme confirmacao manual Curitiba; layout compacto e operacoes preservados. -->
 <!-- BUILD 2026-11-08-A | RASTREIOS LAYOUT COMPACTO: linhas profissionais em duas faixas, sem SKU/valor, controles preservados; destaque da atualizacao ML; sem SQL/Edge novos. -->
 <!-- BUILD 2026-11-07-D | RASTREIOS: triagem Curitiba (confirmacao somente manual), prioridade por antiguidade da atualizacao ML, consulta Correios, copia do codigo e alertas corretos; sem SQL e sem Edge novos. -->
 <!-- BUILD 2026-11-07-C | RASTREIOS CURITIBA: quando passou_curitiba_em estiver marcado, selo azul Enviado muda para verde Passou; sem alterar demais funcoes. -->
@@ -2135,13 +2136,6 @@
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-aenv{background:rgba(245,158,11,.15);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-env{background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.35)}
     #tab-ecommerce #ecom-sub-rastreios .vpill.st-env-curitiba{background:rgba(16,185,129,.15);color:var(--eemerald);border:1px solid rgba(16,185,129,.45)}
-    #tab-ecommerce #ecom-sub-rastreios .vd-prio{margin:0 0 10px;padding:9px 12px;border:1px solid var(--eborder);border-left:3px solid var(--eamber);border-radius:9px;background:var(--epanel2)}
-    #tab-ecommerce #ecom-sub-rastreios .vd-prio-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-    #tab-ecommerce #ecom-sub-rastreios .vd-prio strong{font-size:12px;color:var(--etxt);white-space:nowrap}
-    #tab-ecommerce #ecom-sub-rastreios .vd-prio-botoes{display:flex;flex-wrap:wrap;gap:6px}
-    #tab-ecommerce #ecom-sub-rastreios .vd-prio-btn{border:1px solid var(--eborder);border-radius:7px;background:var(--epanel3);color:var(--emuted);padding:5px 9px;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
-    #tab-ecommerce #ecom-sub-rastreios .vd-prio-btn.active{color:var(--eteal);border-color:var(--eteal)}
-    #tab-ecommerce #ecom-sub-rastreios .vd-prio-nota{font-size:11px;line-height:1.4;color:var(--emuted);margin-top:5px}
     /* BUILD 2026-11-08-A: 2 faixas compactas por pedido; CSS isolado para não afetar Vendas/Shopee. */
     #tab-ecommerce #ecom-sub-rastreios .vd-rast-row{display:grid;grid-template-columns:24px minmax(0,1fr) minmax(155px,185px);align-items:center;gap:10px;padding:8px 9px;border-bottom:1px solid var(--eborder);transition:background .12s}
     #tab-ecommerce #ecom-sub-rastreios [data-vwrap]:last-child .vd-rast-row{border-bottom:0}
@@ -5672,8 +5666,7 @@ const ecomVendas={
     return bits.join(' ');
   },
   render(itens){ const box=this._g('vd-list'); this.itens=itens; const modo=this.modo||'aenviar'; // BUILD 2026-10-13-A
-    const filtro=this.filtroCuritiba||'pendentes';
-    const ttl=this._g('vd-rast-titulo'); if(ttl) ttl.textContent=modo==='aenviar'?'A enviar':(filtro==='pendentes'?'Enviadas · prioridade Curitiba':'Enviadas · todas');
+    const ttl=this._g('vd-rast-titulo'); if(ttl) ttl.textContent=modo==='aenviar'?'A enviar':'Enviadas';
     this.totalizador(itens);
     const avisoCuritiba=this.curitibaDisponivel===false?'<div class="ph" style="color:var(--eamber)">A marca\u00e7\u00e3o Curitiba aguarda a coluna SQL. O restante dos rastreios continua dispon\u00edvel.</div>':'';
     const stp={a_enviar:['st-aenv','a enviar'],enviado:['st-env','enviado'],entregue:['st-ent','entregue'],concluido:['st-ent','concluído'],cancelado:['st-can','cancelado'],perda:['st-per','perda']};
@@ -5681,18 +5674,8 @@ const ecomVendas={
     const aEnv=itens.filter(v=>v.status==='a_enviar');
     const tEmb=v=>{ const t=new Date(v.data_embarque||v.data_solicitacao).getTime(); return isNaN(t)?0:t; };
     const outros=itens.filter(v=>v.status!=='a_enviar').sort((a,b)=>tEmb(b)-tEmb(a));
-    // A conferir = ainda nao ha prova/manual da passagem; pode ser rota que nem utiliza Curitiba.
-    const pendentes=outros.filter(v=>!v.passou_curitiba_em).sort((a,b)=>this._rastIdade(b)-this._rastIdade(a)||tEmb(a)-tEmb(b));
-    const semStatus=pendentes.filter(v=>this._rastSemAtualizacao(v));
-    const semCodigo=pendentes.filter(v=>!String(v.codigo_rastreio||'').trim());
-    const barra=modo!=='enviadas'?''
-      :'<div class="vd-prio"><div class="vd-prio-top"><strong>📍 Curitiba</strong>'
-      +'<div class="vd-prio-botoes"><button type="button" class="vd-prio-btn'+(filtro==='pendentes'?' active':'')+'" data-act="filtrar-curitiba" data-filtro="pendentes">A conferir ('+this.nPed(pendentes)+')</button>'
-      +'<button type="button" class="vd-prio-btn'+(filtro==='todos'?' active':'')+'" data-act="filtrar-curitiba" data-filtro="todos">Todas ('+this.nPed(outros)+')</button></div>'
-      +'<span class="vd-prio-nota" style="margin-top:0">⚠ ML ≥3d/sem data: '+this.nPed(semStatus)+' · sem código: '+this.nPed(semCodigo)+'</span></div>'
-      +'<div class="vd-prio-nota" title="A ausência de confirmação não significa que a encomenda passou por Curitiba ou que foi retida">A conferir = passagem ainda não confirmada manualmente; a rota e o trânsito físico não são inferidos.</div></div>';
-    const alvo=modo==='aenviar'?aEnv:(filtro==='todos'?outros:pendentes);
-    if(!alvo.length){ box.innerHTML=avisoCuritiba+barra+'<div class="ph">'+(modo==='aenviar'?'nenhum pedido a postar':(outros.length?'Nenhuma encomenda aguardando confirmação manual de Curitiba.':'nenhum envio em trânsito — tudo com o cliente'))+'</div>'; return; }
+    const alvo=modo==='aenviar'?aEnv:outros;
+    if(!alvo.length){ box.innerHTML=avisoCuritiba+'<div class="ph">'+(modo==='aenviar'?'nenhum pedido a postar':'nenhum envio em trânsito — tudo com o cliente')+'</div>'; return; }
     const blocos=modo==='aenviar'?this.porDia(aEnv).map(g=>({head:this.diaHead(g.k,g.itens),itens:g.itens})):[{head:'',itens:alvo}];
     let ix=-1;
     const linha=(v)=>{ ix++;
@@ -5705,7 +5688,7 @@ const ecomVendas={
       const rast=this.rastreioHtml(v);
       const alteracao=this._rastMudancas?.get(String(v.id));
       const novoBadge=alteracao?'<span class="vpill vd-rast-alterado" title="Diferença detectada em relação à consulta anterior nesta sessão">'+(alteracao==='novo'?'Novo pedido':'↻ Atualizado')+'</span>':'';
-      const estado='<span class="vpill '+(curitibaOk?'st-env-curitiba':st[0])+'"'+(curitibaOk?' title="Passou por Curitiba (marcado manualmente)"':'')+'>'+(curitibaOk?'Passou':this._rastEsc(st[1]))+'</span>';
+      const estado='<span class="vpill '+(curitibaOk?'st-env-curitiba':st[0])+'"'+(curitibaOk?' title="Passagem por Curitiba confirmada manualmente"':'')+'>'+(v.status==='enviado'?'Enviado':this._rastEsc(st[1]))+'</span>';
       const classe=alteracao?' changed':(curitibaOk?' passed':(v.status==='enviado'&&this._rastSemAtualizacao(v)?' risk':''));
       // BUILD 2026-11-08-A: duas faixas enxutas; SKU/valor ocultados SOMENTE nesta lista.
       return '<div data-vwrap="'+v.id+'"><div class="vd-rast-row'+classe+'">'
@@ -5717,7 +5700,7 @@ const ecomVendas={
         +'</div><div class="vd-rast-controls"><div class="vd-rast-state">'+estado+sem+'</div>'
         +selOc+btnPost+'</div></div></div>';
     };
-    box.innerHTML=avisoCuritiba+barra+blocos.map(b=>b.head+b.itens.map(linha).join('')).join('');
+    box.innerHTML=avisoCuritiba+blocos.map(b=>b.head+b.itens.map(linha).join('')).join('');
   },
   // BUILD 2026-08-25-B: LISTA DE COMPRA para o fornecedor, no padrao do ORCAMENTO (logo, titulo, linha verde, data, tabela, rodape).
   // Itens A_ENVIAR sem ocorrencia, descricao COMPLETA (nome canonico do catalogo), agrupados por produto com soma de quantidade.
@@ -8568,8 +8551,6 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
     if(Array.isArray(ecomVendas.itens)) ecomVendas.render(ecomVendas.itens); else ecomVendas.load(); });
   const list=ecomVendas._g('vd-list');
   if(list) list.addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return; const id=b.dataset.id;
-    if(b.dataset.act==='filtrar-curitiba'){ if(!['pendentes','todos'].includes(b.dataset.filtro)) return;
-      ecomVendas.filtroCuritiba=b.dataset.filtro; if(Array.isArray(ecomVendas.itens)) ecomVendas.render(ecomVendas.itens); return; }
     if(b.dataset.act==='copiar-rastreio'){ ecomVendas.copiarRastreio(id,b); return; }
     if(b.dataset.act==='postar') ecomVendas.openPostar(id);
     else if(b.dataset.act==='postar-conf') ecomVendas.postarConf(id);
