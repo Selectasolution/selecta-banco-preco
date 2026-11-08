@@ -1,3 +1,4 @@
+<!-- BUILD 2026-11-08-A | RASTREIOS LAYOUT COMPACTO: linhas profissionais em duas faixas, sem SKU/valor, controles preservados; destaque da atualizacao ML; sem SQL/Edge novos. -->
 <!-- BUILD 2026-11-07-D | RASTREIOS: triagem Curitiba (confirmacao somente manual), prioridade por antiguidade da atualizacao ML, consulta Correios, copia do codigo e alertas corretos; sem SQL e sem Edge novos. -->
 <!-- BUILD 2026-11-07-C | RASTREIOS CURITIBA: quando passou_curitiba_em estiver marcado, selo azul Enviado muda para verde Passou; sem alterar demais funcoes. -->
 <!-- BUILD 2026-11-07-B | RASTREIOS CURITIBA: flag logistica passou_curitiba_em separada de ocorrencia/prejuizo; selo enviado verde; selecao e desfazer no mesmo menu; consulta degrada com seguranca se SQL ainda nao aplicado. -->
@@ -2134,13 +2135,47 @@
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-aenv{background:rgba(245,158,11,.15);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-env{background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.35)}
     #tab-ecommerce #ecom-sub-rastreios .vpill.st-env-curitiba{background:rgba(16,185,129,.15);color:var(--eemerald);border:1px solid rgba(16,185,129,.45)}
-    #tab-ecommerce #ecom-sub-rastreios .vd-prio{margin:0 0 14px;padding:12px 14px;border:1px solid var(--eborder);border-left:3px solid var(--eamber);border-radius:10px;background:var(--epanel2)}
-    #tab-ecommerce #ecom-sub-rastreios .vd-prio strong{font-size:13px;color:var(--etxt)}
-    #tab-ecommerce #ecom-sub-rastreios .vd-prio-botoes{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
-    #tab-ecommerce #ecom-sub-rastreios .vd-prio-btn{border:1px solid var(--eborder);border-radius:8px;background:var(--epanel3);color:var(--emuted);padding:7px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+    #tab-ecommerce #ecom-sub-rastreios .vd-prio{margin:0 0 10px;padding:9px 12px;border:1px solid var(--eborder);border-left:3px solid var(--eamber);border-radius:9px;background:var(--epanel2)}
+    #tab-ecommerce #ecom-sub-rastreios .vd-prio-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+    #tab-ecommerce #ecom-sub-rastreios .vd-prio strong{font-size:12px;color:var(--etxt);white-space:nowrap}
+    #tab-ecommerce #ecom-sub-rastreios .vd-prio-botoes{display:flex;flex-wrap:wrap;gap:6px}
+    #tab-ecommerce #ecom-sub-rastreios .vd-prio-btn{border:1px solid var(--eborder);border-radius:7px;background:var(--epanel3);color:var(--emuted);padding:5px 9px;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
     #tab-ecommerce #ecom-sub-rastreios .vd-prio-btn.active{color:var(--eteal);border-color:var(--eteal)}
-    #tab-ecommerce #ecom-sub-rastreios .vd-prio-nota{font-size:11.5px;line-height:1.5;color:var(--emuted);margin-top:7px}
-    #tab-ecommerce #ecom-sub-rastreios .vd-copy{padding:3px 7px;font-size:11px;white-space:nowrap}
+    #tab-ecommerce #ecom-sub-rastreios .vd-prio-nota{font-size:11px;line-height:1.4;color:var(--emuted);margin-top:5px}
+    /* BUILD 2026-11-08-A: 2 faixas compactas por pedido; CSS isolado para não afetar Vendas/Shopee. */
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-row{display:grid;grid-template-columns:24px minmax(0,1fr) minmax(155px,185px);align-items:center;gap:10px;padding:8px 9px;border-bottom:1px solid var(--eborder);transition:background .12s}
+    #tab-ecommerce #ecom-sub-rastreios [data-vwrap]:last-child .vd-rast-row{border-bottom:0}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-row:hover{background:rgba(148,163,184,.045)}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-row.risk{box-shadow:inset 2px 0 0 rgba(245,158,11,.65)}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-row.passed{box-shadow:inset 2px 0 0 rgba(16,185,129,.5)}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-row.changed{box-shadow:inset 2px 0 0 var(--eteal);background:rgba(45,212,191,.045)}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-num{font:600 11px var(--emono);color:var(--emuted2);align-self:start;padding-top:3px;text-align:right}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-body{min-width:0;display:flex;flex-direction:column;gap:4px}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-title{display:flex;gap:9px;align-items:baseline;min-width:0}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-prod{font-size:13px;font-weight:650;color:var(--etxt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-pedido{font:500 11px var(--emono);color:var(--emuted2);white-space:nowrap;flex-shrink:0}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 9px;min-height:20px}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-meta .vpill{font-size:10px;padding:2px 7px;white-space:nowrap}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-meta a{font:600 11px var(--emono);white-space:nowrap}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-meta .vd-copy{border:0;background:rgba(45,212,191,.09);color:var(--eteal);font-size:10.5px;font-weight:600;padding:3px 7px;min-height:0}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-meta .vd-copy:hover{background:rgba(45,212,191,.18)}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-post{font-size:10.5px;color:var(--emuted2);white-space:nowrap}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-meta .vd-rast-recente{background:rgba(45,212,191,.09);color:var(--eteal);border:1px solid rgba(45,212,191,.2)}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-meta .vd-rast-alterado{background:rgba(45,212,191,.16);color:var(--eteal);border:1px solid rgba(45,212,191,.4)}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-controls{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:5px;min-width:0}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-state{display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-state .vpill{padding:2px 8px;font-size:10.5px;white-space:nowrap}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-controls select.vinput{min-width:155px;width:185px;max-width:100%;min-height:28px;padding:3px 7px;font-size:10.5px;border-radius:6px}
+    #tab-ecommerce #ecom-sub-rastreios .vd-rast-controls .vbtn.sm{min-height:28px;padding:4px 9px;font-size:11px}
+    @media(max-width:720px){
+      #tab-ecommerce #ecom-sub-rastreios .vd-rast-row{grid-template-columns:20px minmax(0,1fr);gap:5px 8px;padding:9px 5px}
+      #tab-ecommerce #ecom-sub-rastreios .vd-rast-controls{grid-column:2;flex-direction:row;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+      #tab-ecommerce #ecom-sub-rastreios .vd-rast-title{flex-wrap:wrap;gap:2px 8px}
+      #tab-ecommerce #ecom-sub-rastreios .vd-rast-prod{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+      #tab-ecommerce #ecom-sub-rastreios .vd-rast-controls select.vinput{min-height:30px!important;width:160px;min-width:145px;font-size:11px!important}
+      #tab-ecommerce #ecom-sub-rastreios .vd-rast-controls .vbtn.sm{min-height:30px!important;padding:4px 9px!important;font-size:11px!important}
+      #tab-ecommerce #ecom-sub-rastreios .vd-rast-meta .vd-copy{min-height:28px!important;padding:3px 8px!important;font-size:10.5px!important}
+    }
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-ent{background:rgba(16,185,129,.15);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-can{background:rgba(95,111,140,.18);color:var(--emuted2);border:1px solid var(--eborder)}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-per{background:rgba(239,68,68,.15);color:var(--ered);border:1px solid rgba(239,68,68,.35)}
@@ -5519,6 +5554,13 @@ const ecomVendas={
       if(r.error) throw r.error;
       // BUILD 2026-08-20-G: familia PERDA e venda finalizada — sai da aba Vendas, vive no Historico
       const itens=(r.data||[]).filter(v=>!v.ocorrencia||v.ocorrencia==='retido_doc'||v.ocorrencia==='outro');
+      // BUILD 2026-11-08-A: mudanças visuais entre consultas desta sessão; somente memória, zero SQL/Edge.
+      const anterior=this._rastSnapshot, proximo=new Map(), mudou=new Map();
+      itens.forEach(v=>{ const id=String(v.id), estado=[v.status,v.envio_substatus,v.envio_atualizado_em,v.codigo_rastreio].map(x=>String(x??'')).join('|');
+        proximo.set(id,estado);
+        if(anterior){ if(!anterior.has(id)) mudou.set(id,'novo'); else if(anterior.get(id)!==estado) mudou.set(id,'alterado'); }
+      });
+      this._rastSnapshot=proximo; this._rastMudancas=mudou;
       this.render(itens);
     }catch(e){ box.innerHTML='<div class="ph" style="color:var(--ered)">erro ao carregar: '+e.message+'</div>'; const tt=this._g('vd-mes-tot'); if(tt) tt.textContent=''; }
   },
@@ -5592,7 +5634,7 @@ const ecomVendas={
       setTimeout(()=>{ if(btn.isConnected){btn.textContent=anterior;btn.disabled=false;} },1600); }
   },
   // BUILD 2026-08-18-A: rastreio na fila — traduz substatus ML, linka Correios, mede frescor.
-  // Objetivo: NUNCA precisar abrir o site dos Correios. Severidade: err=agir ja, warn=atencao, ok=boa noticia, mut=fluxo normal.
+  // Severidade: err=agir ja, warn=atencao, ok=boa noticia, mut=fluxo normal; link externo exige consulta humana.
   rastreioHtml(v){
     const MAP={
       invoice_pending:['warn','NF pendente'], ready_to_print:['mut','etiqueta a imprimir'],
@@ -5605,25 +5647,28 @@ const ecomVendas={
       lost:['err','extraviado'], stolen:['err','roubado'], damaged:['err','danificado'],
       buffered:['mut','aguardando fluxo ML']
     };
-    const bits=[];
+    const bits=[], marcadores=[];
     // BUILD 2026-08-18-B: ocorrencia manual tem precedencia — o substatus ML (que atrasa dias em evento fiscal) sai de cena
     if(v.ocorrencia){ const dt=v.ocorrencia_em?new Date(v.ocorrencia_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'';
-      bits.push('<span class="vpill crit">\u26d4 '+(this.OCORR[v.ocorrencia]||v.ocorrencia)+(dt?' \u00b7 '+dt:'')+'</span>'); }
+      marcadores.push('<span class="vpill crit">\u26d4 '+(this.OCORR[v.ocorrencia]||v.ocorrencia)+(dt?' \u00b7 '+dt:'')+'</span>'); }
     else if(v.envio_substatus){ const m=MAP[v.envio_substatus]||['mut',String(v.envio_substatus).replace(/_/g,' ')];
-      bits.push('<span class="vpill '+m[0]+'">'+m[1]+'</span>'); }
+      marcadores.push('<span class="vpill '+m[0]+'">'+this._rastEsc(m[1])+'</span>'); }
     if(v.status==='enviado'){
       if(v.codigo_rastreio){
         const codigo=String(v.codigo_rastreio).trim();
         bits.push('<a class="mono" style="color:var(--eteal);text-decoration:none" href="https://rastreamento.correios.com.br/app/index.php?objetos='+encodeURIComponent(codigo)+'" target="_blank" rel="noopener noreferrer" title="Abrir site oficial dos Correios (pode solicitar CAPTCHA)">\ud83d\udce6 '+this._rastEsc(codigo)+' \u2197</a>');
-        bits.push('<button type="button" class="vbtn sm vd-copy" data-act="copiar-rastreio" data-id="'+v.id+'" title="Copiar código de rastreamento">\ud83d\udccb Copiar</button>');
-      }else{ bits.push('<span class="vpill warn">ML: sem código</span>'); }
+        bits.push('<button type="button" class="vbtn sm vd-copy" data-act="copiar-rastreio" data-id="'+v.id+'" title="Copiar código de rastreamento">Copiar</button>');
+      }else{ bits.push('<span class="vpill warn">Sem código ML</span>'); }
+      bits.push(...marcadores);
       const h=this._rastHoras(v.envio_atualizado_em);
-      if(h==null){ bits.push('<span class="vpill warn">\u26a0 ML: sem data de atualização</span>'); }
-      else if(h>=72){ bits.push('<span class="vpill warn">\u26a0 ML sem atualização de status há '+Math.floor(h/24)+'d</span>'); }
-      else{ bits.push('<span class="vpill mut">Status ML atualizado há '+(h<1?'menos de 1h':(h<48?Math.round(h)+'h':Math.floor(h/24)+'d'))+'</span>'); }
+      if(h==null){ bits.push('<span class="vpill warn" title="Mercado Livre não informou data de atualização do status">⚠ ML sem data</span>'); }
+      else if(h>=72){ bits.push('<span class="vpill warn" title="Status de envio do ML sem atualização; não comprova falta de movimento físico">⚠ ML sem atualização · '+Math.floor(h/24)+'d</span>'); }
+      else{ bits.push('<span class="vpill '+(h<24?'vd-rast-recente':'mut')+'" title="Última alteração de status informada pelo Mercado Livre, não um evento de movimentação física">↻ ML há '+(h<1?Math.max(1,Math.round(h*60))+'min':(h<48?Math.round(h)+'h':Math.floor(h/24)+'d'))+'</span>'); }
       const desdePostagem=this._rastHoras(v.data_embarque);
-      if(desdePostagem!=null&&desdePostagem>=24) bits.push('<span class="vpill mut">Postado há '+Math.floor(desdePostagem/24)+'d</span>');
+      if(desdePostagem!=null){ const dataPost=new Date(v.data_embarque).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit'});
+        bits.push('<span class="vd-rast-post" title="Data de postagem registrada no APP">Post. '+dataPost+(desdePostagem>=24?' · '+Math.floor(desdePostagem/24)+'d':'')+'</span>'); }
     }
+    else bits.push(...marcadores);
     return bits.join(' ');
   },
   render(itens){ const box=this._g('vd-list'); this.itens=itens; const modo=this.modo||'aenviar'; // BUILD 2026-10-13-A
@@ -5641,31 +5686,36 @@ const ecomVendas={
     const semStatus=pendentes.filter(v=>this._rastSemAtualizacao(v));
     const semCodigo=pendentes.filter(v=>!String(v.codigo_rastreio||'').trim());
     const barra=modo!=='enviadas'?''
-      :'<div class="vd-prio"><strong>📍 Triagem Curitiba</strong>'
-      +'<div class="vd-prio-botoes"><button type="button" class="vd-prio-btn'+(filtro==='pendentes'?' active':'')+'" data-act="filtrar-curitiba" data-filtro="pendentes">⚠ A conferir ('+this.nPed(pendentes)+')</button>'
-      +'<button type="button" class="vd-prio-btn'+(filtro==='todos'?' active':'')+'" data-act="filtrar-curitiba" data-filtro="todos">Todas enviadas ('+this.nPed(outros)+')</button></div>'
-      +'<div class="vd-prio-nota">A conferir = ainda sem confirmação manual de passagem por Curitiba; não significa que a rota passe por lá. Ordena primeiro quem está há mais tempo sem atualização de status no ML.</div>'
-      +'<div class="vd-prio-nota">Entre os a conferir: ⚠ '+this.nPed(semStatus)+' sem atualização de status no ML há 3 dias ou sem data · '+this.nPed(semCodigo)+' sem código de rastreio. Nenhum desses alertas prova retenção ou apreensão.</div></div>';
+      :'<div class="vd-prio"><div class="vd-prio-top"><strong>📍 Curitiba</strong>'
+      +'<div class="vd-prio-botoes"><button type="button" class="vd-prio-btn'+(filtro==='pendentes'?' active':'')+'" data-act="filtrar-curitiba" data-filtro="pendentes">A conferir ('+this.nPed(pendentes)+')</button>'
+      +'<button type="button" class="vd-prio-btn'+(filtro==='todos'?' active':'')+'" data-act="filtrar-curitiba" data-filtro="todos">Todas ('+this.nPed(outros)+')</button></div>'
+      +'<span class="vd-prio-nota" style="margin-top:0">⚠ ML ≥3d/sem data: '+this.nPed(semStatus)+' · sem código: '+this.nPed(semCodigo)+'</span></div>'
+      +'<div class="vd-prio-nota" title="A ausência de confirmação não significa que a encomenda passou por Curitiba ou que foi retida">A conferir = passagem ainda não confirmada manualmente; a rota e o trânsito físico não são inferidos.</div></div>';
     const alvo=modo==='aenviar'?aEnv:(filtro==='todos'?outros:pendentes);
     if(!alvo.length){ box.innerHTML=avisoCuritiba+barra+'<div class="ph">'+(modo==='aenviar'?'nenhum pedido a postar':(outros.length?'Nenhuma encomenda aguardando confirmação manual de Curitiba.':'nenhum envio em trânsito — tudo com o cliente'))+'</div>'; return; }
     const blocos=modo==='aenviar'?this.porDia(aEnv).map(g=>({head:this.diaHead(g.k,g.itens),itens:g.itens})):[{head:'',itens:alvo}];
     let ix=-1;
     const linha=(v)=>{ ix++;
-      const dt=new Date(v.data_solicitacao).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       const st=stp[v.status]||['mut',v.status];
       const curitibaOk=v.status==='enviado'&&!!v.passou_curitiba_em;
       const sem=(v.status==='a_enviar')?this.semaforo(v).pill:'';
-      const btnPost=v.status==='a_enviar'?'<div style="display:flex;gap:6px"><button class="vbtn sm" data-act="postar" data-id="'+v.id+'">postado</button></div>':'';
+      const btnPost=v.status==='a_enviar'?'<button class="vbtn sm" data-act="postar" data-id="'+v.id+'">Postado</button>':'';
       const selOc=v.status==='enviado'?this.ocorrSelect(v):'';
-      const q=(+v.quantidade||1); const qtxt=q>1?q+'× ':'';
+      const q=(+v.quantidade||1); const qtxt=q>1?' · '+q+' un.':'';
       const rast=this.rastreioHtml(v);
-      // BUILD 2026-08-20-I: linha unica numerada — produto e meta lado a lado, rastreio inline, controles a direita
-      return '<div data-vwrap="'+v.id+'"><div class="vli" style="align-items:center"><div class="vmain" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0">'
-        +'<span class="vm mono" style="margin:0;color:var(--emuted2)">'+(ix+1)+'.</span>'
-        +'<span class="vp" style="margin:0">'+v.produto+'</span>'
-        +'<span class="vm" style="margin:0">#'+v.ml_pedido_id+' · '+(v.produto_codigo||'')+' · '+dt+' · '+qtxt+'R$ '+this.fmt(v.preco_venda)+'</span>'
-        +(rast?'<span class="vm" style="margin:0;display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">'+rast+'</span>':'')
-        +'</div><span class="vpill '+(curitibaOk?'st-env-curitiba':st[0])+'"'+(curitibaOk?' title="Passou por Curitiba (marcado manualmente)"':'')+'>'+(curitibaOk?'passou':st[1])+'</span>'+sem+selOc+btnPost+'</div></div>';
+      const alteracao=this._rastMudancas?.get(String(v.id));
+      const novoBadge=alteracao?'<span class="vpill vd-rast-alterado" title="Diferença detectada em relação à consulta anterior nesta sessão">'+(alteracao==='novo'?'Novo pedido':'↻ Atualizado')+'</span>':'';
+      const estado='<span class="vpill '+(curitibaOk?'st-env-curitiba':st[0])+'"'+(curitibaOk?' title="Passou por Curitiba (marcado manualmente)"':'')+'>'+(curitibaOk?'Passou':this._rastEsc(st[1]))+'</span>';
+      const classe=alteracao?' changed':(curitibaOk?' passed':(v.status==='enviado'&&this._rastSemAtualizacao(v)?' risk':''));
+      // BUILD 2026-11-08-A: duas faixas enxutas; SKU/valor ocultados SOMENTE nesta lista.
+      return '<div data-vwrap="'+v.id+'"><div class="vd-rast-row'+classe+'">'
+        +'<span class="vd-rast-num">'+(ix+1)+'.</span>'
+        +'<div class="vd-rast-body"><div class="vd-rast-title">'
+        +'<span class="vd-rast-prod" title="'+this._rastEsc(v.produto||'')+'">'+this._rastEsc(v.produto||'(sem produto)')+'</span>'
+        +'<span class="vd-rast-pedido">#'+this._rastEsc(v.ml_pedido_id||'—')+qtxt+'</span></div>'
+        +(rast||novoBadge?'<div class="vd-rast-meta">'+novoBadge+rast+'</div>':'')
+        +'</div><div class="vd-rast-controls"><div class="vd-rast-state">'+estado+sem+'</div>'
+        +selOc+btnPost+'</div></div></div>';
     };
     box.innerHTML=avisoCuritiba+barra+blocos.map(b=>b.head+b.itens.map(linha).join('')).join('');
   },
