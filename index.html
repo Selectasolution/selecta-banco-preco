@@ -1,3 +1,4 @@
+<!-- BUILD 2026-11-07-D | RASTREIOS: triagem Curitiba (confirmacao somente manual), prioridade por antiguidade da atualizacao ML, consulta Correios, copia do codigo e alertas corretos; sem SQL e sem Edge novos. -->
 <!-- BUILD 2026-11-07-C | RASTREIOS CURITIBA: quando passou_curitiba_em estiver marcado, selo azul Enviado muda para verde Passou; sem alterar demais funcoes. -->
 <!-- BUILD 2026-11-07-B | RASTREIOS CURITIBA: flag logistica passou_curitiba_em separada de ocorrencia/prejuizo; selo enviado verde; selecao e desfazer no mesmo menu; consulta degrada com seguranca se SQL ainda nao aplicado. -->
 <!-- BUILD 2026-10-26-A | selecta-banco-preco | SHOPEE PELA PLANILHA DA CENTRAL (Igor 26/10: "nunca lancei nada no APP"; sobre 24-A publicado md5 8f86cca9c4f48a67162bb9fc5e62a302; requer SQL SHP-01): (1) Vendas Shopee ganha "Importar pedidos da Central": le o .xlsx de Meus Pedidos no navegador (JSZip ja carregado), por NOME de coluna; dados do comprador (nome, usuario, CPF, telefone, endereco, CEP, observacao) NUNCA lidos nem gravados; previa antes de gravar (novos/atualizados/sem mudanca, nao pagos ignorados, SKU sem custo, tarifa planilha != tabela, multi-item, SKU corrigido); confirmar grava. (2) Regras: linha = pedido|SKU|variacao (chave_import, indice unico); status Central -> app (A Enviar/Enviado/Entregue/Concluido/Cancelado; Nao pago fica fora; devolucao aprovada ou quantidade devolvida = devolvido); status so avanca, cancelado/devolvido finais; Concluido = liberado na carteira (data = Hora completa); tarifa = comissao+servico BRUTOS da planilha (= tabela do app, conservador), liquidos guardados em tarifa_liquida; pedido multi-item = tarifa pela tabela e frete na 1a linha; frete dif = estimado - pago pelo comprador - desconto Shopee (>=0, provisorio ate o Detalhes da renda); custo NF do Catalogo no momento da importacao, nunca sobrescrito; codigo/produto/obs nunca sobrescritos; WAD-0007 com "Powerline" no nome = RDE-0005 (decisao Igor 26/10). (3) fila "A enviar" SEM MES, por dia de envio (atrasado vermelho / hoje ambar), + linha "Postagens fora do prazo nos ultimos 30 dias". (4) cartoes de pedido: rastreio, postado DD/MM (+N d do prazo), motivo do cancelamento, devolucao; CSS .vli.vped corrige o cartao deitado pela regra .vli flex do Controle. (5) calcMes: item sem custo (custo_total NULL) = PENDENTE, como sem tarifa (espelho do lucroPedido ML). (6) Lancar venda manual oculto (ids preservados, padrao ML 12-A). (7) cartao cancelado nao mostra Liquido. Fora da regiao Shopee nada muda. -->
@@ -2133,6 +2134,13 @@
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-aenv{background:rgba(245,158,11,.15);color:var(--eamber);border:1px solid rgba(245,158,11,.35)}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-env{background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.35)}
     #tab-ecommerce #ecom-sub-rastreios .vpill.st-env-curitiba{background:rgba(16,185,129,.15);color:var(--eemerald);border:1px solid rgba(16,185,129,.45)}
+    #tab-ecommerce #ecom-sub-rastreios .vd-prio{margin:0 0 14px;padding:12px 14px;border:1px solid var(--eborder);border-left:3px solid var(--eamber);border-radius:10px;background:var(--epanel2)}
+    #tab-ecommerce #ecom-sub-rastreios .vd-prio strong{font-size:13px;color:var(--etxt)}
+    #tab-ecommerce #ecom-sub-rastreios .vd-prio-botoes{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+    #tab-ecommerce #ecom-sub-rastreios .vd-prio-btn{border:1px solid var(--eborder);border-radius:8px;background:var(--epanel3);color:var(--emuted);padding:7px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+    #tab-ecommerce #ecom-sub-rastreios .vd-prio-btn.active{color:var(--eteal);border-color:var(--eteal)}
+    #tab-ecommerce #ecom-sub-rastreios .vd-prio-nota{font-size:11.5px;line-height:1.5;color:var(--emuted);margin-top:7px}
+    #tab-ecommerce #ecom-sub-rastreios .vd-copy{padding:3px 7px;font-size:11px;white-space:nowrap}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-ent{background:rgba(16,185,129,.15);color:var(--eemerald);border:1px solid rgba(16,185,129,.35)}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-can{background:rgba(95,111,140,.18);color:var(--emuted2);border:1px solid var(--eborder)}
     :is(#tab-ecommerce,#tab-financeiro,#tab-radar) .vpill.st-per{background:rgba(239,68,68,.15);color:var(--ered);border:1px solid rgba(239,68,68,.35)}
@@ -5564,6 +5572,25 @@ const ecomVendas={
       this.load(); if(typeof ecomRelatorios!=='undefined'&&ecomRelatorios.loaded) ecomRelatorios.load(); if(typeof ecomFinanceiro!=='undefined') ecomFinanceiro.termometro();
     }catch(e){ alert('Erro ao gravar ocorr\u00eancia: '+e.message); this.load(); }
   },
+  // BUILD 2026-11-07-D: shipment.last_updated do ML NAO comprova movimento fisico.
+  _rastTs(val){ const t=val?new Date(val).getTime():NaN; return Number.isFinite(t)?t:null; },
+  _rastHoras(val){ const t=this._rastTs(val); return t==null?null:Math.max(0,(Date.now()-t)/36e5); },
+  _rastIdade(v){ const t=this._rastTs(v.envio_atualizado_em)??this._rastTs(v.data_embarque)??this._rastTs(v.data_solicitacao); return t==null?Infinity:Math.max(0,Date.now()-t); },
+  _rastSemAtualizacao(v){ const horas=this._rastHoras(v.envio_atualizado_em); return horas==null||horas>=72; },
+  _rastEsc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); },
+  async copiarRastreio(id,btn){
+    const v=(this.itens||[]).find(x=>String(x.id)===String(id));
+    const codigo=String(v?.codigo_rastreio||'').trim();
+    if(!codigo){ alert('O Mercado Livre ainda não informou o código de rastreio deste pedido.'); return; }
+    let copiou=false;
+    if(navigator.clipboard?.writeText){ try{ await navigator.clipboard.writeText(codigo); copiou=true; }catch(_e){} }
+    if(!copiou){ const campo=document.createElement('textarea'); campo.value=codigo; campo.setAttribute('readonly','');
+      campo.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;opacity:0'; document.body.appendChild(campo); campo.focus(); campo.select();
+      try{ copiou=!!document.execCommand('copy'); }catch(_e){} campo.remove(); }
+    if(!copiou){ window.prompt('Copie o código manualmente:',codigo); return; }
+    if(btn){ const anterior=btn.textContent; btn.textContent='✓ Copiado'; btn.disabled=true;
+      setTimeout(()=>{ if(btn.isConnected){btn.textContent=anterior;btn.disabled=false;} },1600); }
+  },
   // BUILD 2026-08-18-A: rastreio na fila — traduz substatus ML, linka Correios, mede frescor.
   // Objetivo: NUNCA precisar abrir o site dos Correios. Severidade: err=agir ja, warn=atencao, ok=boa noticia, mut=fluxo normal.
   rastreioHtml(v){
@@ -5585,26 +5612,43 @@ const ecomVendas={
     else if(v.envio_substatus){ const m=MAP[v.envio_substatus]||['mut',String(v.envio_substatus).replace(/_/g,' ')];
       bits.push('<span class="vpill '+m[0]+'">'+m[1]+'</span>'); }
     if(v.status==='enviado'){
-      if(v.codigo_rastreio){ bits.push('<a class="mono" style="color:var(--eteal);text-decoration:none" href="https://rastreamento.correios.com.br/app/index.php?objetos='+encodeURIComponent(v.codigo_rastreio)+'" target="_blank" rel="noopener" title="abrir rastreio nos Correios">\ud83d\udce6 '+v.codigo_rastreio+' \u2197</a>'); }
-      if(v.envio_atualizado_em){ const h=(Date.now()-new Date(v.envio_atualizado_em).getTime())/36e5;
-        if(h>72){ bits.push('<span class="vpill warn">\u26a0 sem movimento h\u00e1 '+Math.round(h/24)+'d</span>'); }
-        else { bits.push('<span class="vpill mut">ML viu h\u00e1 '+(h<1?'menos de 1h':(h<48?Math.round(h)+'h':Math.round(h/24)+'d'))+'</span>'); }
-      } else { bits.push('<span class="vpill mut">sem rastreio ainda</span>'); }
+      if(v.codigo_rastreio){
+        const codigo=String(v.codigo_rastreio).trim();
+        bits.push('<a class="mono" style="color:var(--eteal);text-decoration:none" href="https://rastreamento.correios.com.br/app/index.php?objetos='+encodeURIComponent(codigo)+'" target="_blank" rel="noopener noreferrer" title="Abrir site oficial dos Correios (pode solicitar CAPTCHA)">\ud83d\udce6 '+this._rastEsc(codigo)+' \u2197</a>');
+        bits.push('<button type="button" class="vbtn sm vd-copy" data-act="copiar-rastreio" data-id="'+v.id+'" title="Copiar código de rastreamento">\ud83d\udccb Copiar</button>');
+      }else{ bits.push('<span class="vpill warn">ML: sem código</span>'); }
+      const h=this._rastHoras(v.envio_atualizado_em);
+      if(h==null){ bits.push('<span class="vpill warn">\u26a0 ML: sem data de atualização</span>'); }
+      else if(h>=72){ bits.push('<span class="vpill warn">\u26a0 ML sem atualização de status há '+Math.floor(h/24)+'d</span>'); }
+      else{ bits.push('<span class="vpill mut">Status ML atualizado há '+(h<1?'menos de 1h':(h<48?Math.round(h)+'h':Math.floor(h/24)+'d'))+'</span>'); }
+      const desdePostagem=this._rastHoras(v.data_embarque);
+      if(desdePostagem!=null&&desdePostagem>=24) bits.push('<span class="vpill mut">Postado há '+Math.floor(desdePostagem/24)+'d</span>');
     }
     return bits.join(' ');
   },
   render(itens){ const box=this._g('vd-list'); this.itens=itens; const modo=this.modo||'aenviar'; // BUILD 2026-10-13-A
-    const ttl=this._g('vd-rast-titulo'); if(ttl) ttl.textContent=modo==='aenviar'?'A enviar':'Enviadas';
+    const filtro=this.filtroCuritiba||'pendentes';
+    const ttl=this._g('vd-rast-titulo'); if(ttl) ttl.textContent=modo==='aenviar'?'A enviar':(filtro==='pendentes'?'Enviadas · prioridade Curitiba':'Enviadas · todas');
     this.totalizador(itens);
     const avisoCuritiba=this.curitibaDisponivel===false?'<div class="ph" style="color:var(--eamber)">A marca\u00e7\u00e3o Curitiba aguarda a coluna SQL. O restante dos rastreios continua dispon\u00edvel.</div>':'';
     const stp={a_enviar:['st-aenv','a enviar'],enviado:['st-env','enviado'],entregue:['st-ent','entregue'],concluido:['st-ent','concluído'],cancelado:['st-can','cancelado'],perda:['st-per','perda']};
-    // BUILD 2026-10-10-A / 13-A: A enviar = agrupado por dia de envio; Enviadas = postagem mais recente primeiro
+    // BUILD 2026-10-10-A / 13-A: A enviar agrupado por dia; Enviadas todas conserva ordem original.
     const aEnv=itens.filter(v=>v.status==='a_enviar');
     const tEmb=v=>{ const t=new Date(v.data_embarque||v.data_solicitacao).getTime(); return isNaN(t)?0:t; };
     const outros=itens.filter(v=>v.status!=='a_enviar').sort((a,b)=>tEmb(b)-tEmb(a));
-    const alvo=modo==='aenviar'?aEnv:outros;
-    if(!alvo.length){ box.innerHTML=avisoCuritiba+'<div class="ph">'+(modo==='aenviar'?'nenhum pedido a postar':'nenhum envio em tr\u00e2nsito \u2014 tudo com o cliente')+'</div>'; return; }
-    const blocos=modo==='aenviar'?this.porDia(aEnv).map(g=>({head:this.diaHead(g.k,g.itens),itens:g.itens})):[{head:'',itens:outros}];
+    // A conferir = ainda nao ha prova/manual da passagem; pode ser rota que nem utiliza Curitiba.
+    const pendentes=outros.filter(v=>!v.passou_curitiba_em).sort((a,b)=>this._rastIdade(b)-this._rastIdade(a)||tEmb(a)-tEmb(b));
+    const semStatus=pendentes.filter(v=>this._rastSemAtualizacao(v));
+    const semCodigo=pendentes.filter(v=>!String(v.codigo_rastreio||'').trim());
+    const barra=modo!=='enviadas'?''
+      :'<div class="vd-prio"><strong>📍 Triagem Curitiba</strong>'
+      +'<div class="vd-prio-botoes"><button type="button" class="vd-prio-btn'+(filtro==='pendentes'?' active':'')+'" data-act="filtrar-curitiba" data-filtro="pendentes">⚠ A conferir ('+this.nPed(pendentes)+')</button>'
+      +'<button type="button" class="vd-prio-btn'+(filtro==='todos'?' active':'')+'" data-act="filtrar-curitiba" data-filtro="todos">Todas enviadas ('+this.nPed(outros)+')</button></div>'
+      +'<div class="vd-prio-nota">A conferir = ainda sem confirmação manual de passagem por Curitiba; não significa que a rota passe por lá. Ordena primeiro quem está há mais tempo sem atualização de status no ML.</div>'
+      +'<div class="vd-prio-nota">Entre os a conferir: ⚠ '+this.nPed(semStatus)+' sem atualização de status no ML há 3 dias ou sem data · '+this.nPed(semCodigo)+' sem código de rastreio. Nenhum desses alertas prova retenção ou apreensão.</div></div>';
+    const alvo=modo==='aenviar'?aEnv:(filtro==='todos'?outros:pendentes);
+    if(!alvo.length){ box.innerHTML=avisoCuritiba+barra+'<div class="ph">'+(modo==='aenviar'?'nenhum pedido a postar':(outros.length?'Nenhuma encomenda aguardando confirmação manual de Curitiba.':'nenhum envio em trânsito — tudo com o cliente'))+'</div>'; return; }
+    const blocos=modo==='aenviar'?this.porDia(aEnv).map(g=>({head:this.diaHead(g.k,g.itens),itens:g.itens})):[{head:'',itens:alvo}];
     let ix=-1;
     const linha=(v)=>{ ix++;
       const dt=new Date(v.data_solicitacao).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -5623,7 +5667,7 @@ const ecomVendas={
         +(rast?'<span class="vm" style="margin:0;display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">'+rast+'</span>':'')
         +'</div><span class="vpill '+(curitibaOk?'st-env-curitiba':st[0])+'"'+(curitibaOk?' title="Passou por Curitiba (marcado manualmente)"':'')+'>'+(curitibaOk?'passou':st[1])+'</span>'+sem+selOc+btnPost+'</div></div>';
     };
-    box.innerHTML=avisoCuritiba+blocos.map(b=>b.head+b.itens.map(linha).join('')).join('');
+    box.innerHTML=avisoCuritiba+barra+blocos.map(b=>b.head+b.itens.map(linha).join('')).join('');
   },
   // BUILD 2026-08-25-B: LISTA DE COMPRA para o fornecedor, no padrao do ORCAMENTO (logo, titulo, linha verde, data, tabela, rodape).
   // Itens A_ENVIAR sem ocorrencia, descricao COMPLETA (nome canonico do catalogo), agrupados por produto com soma de quantidade.
@@ -8474,6 +8518,9 @@ $$('.ecom-subtab').forEach(b=>b.addEventListener('click',()=>{
     if(Array.isArray(ecomVendas.itens)) ecomVendas.render(ecomVendas.itens); else ecomVendas.load(); });
   const list=ecomVendas._g('vd-list');
   if(list) list.addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return; const id=b.dataset.id;
+    if(b.dataset.act==='filtrar-curitiba'){ if(!['pendentes','todos'].includes(b.dataset.filtro)) return;
+      ecomVendas.filtroCuritiba=b.dataset.filtro; if(Array.isArray(ecomVendas.itens)) ecomVendas.render(ecomVendas.itens); return; }
+    if(b.dataset.act==='copiar-rastreio'){ ecomVendas.copiarRastreio(id,b); return; }
     if(b.dataset.act==='postar') ecomVendas.openPostar(id);
     else if(b.dataset.act==='postar-conf') ecomVendas.postarConf(id);
     else if(b.dataset.act==='postar-cancel') document.querySelectorAll('#vd-list .vd-postbox').forEach(el=>el.remove()); });
