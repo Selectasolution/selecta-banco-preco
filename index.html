@@ -1,3 +1,4 @@
+<!-- BUILD 2026-11-11-USD | SELECTA 97: cadastro em USD, valor de reposicao diario em BRL/PTAX e revisao manual USD em 10 dias. Margem ML/Shopee e Compras do Dia usam reposicao PTAX; custos/precos historicos das vendas nao sao revalorados. REQUER SQL USD-02 + Edge ml-orders 1.5.6.2 conferida, testada e publicada em ordem controlada. Imposto 4%, colchao 6% e piso 10% preservados. -->
 <!-- BUILD 2026-11-11-B | CATALOGO: botao somente 'Atualizar' vermelho se revisao vencida, somente 'Atualizado' verde se vigente; remove nota de 10 dias do painel. Sem SQL adicional, sem mudanca de persistencia ou funcoes. -->
 <!-- BUILD 2026-11-11-A | CATALOGO: botao Midia vira Atualizar (revisao de custo NF), vermelho sem revisao ou apos 10 dias, historico auditavel, filtro de pendentes; custo alterado via Editar tambem rastreado pelo trigger SQL separado. Nao modifica canais/financeiro/rastreios. SQL CUSTO-01 obrigatorio ANTES deste HTML. -->
 <!-- BUILD 2026-11-08-B | RASTREIOS LISTA UNICA: Enviadas sem filtros internos nem notas; selo permanece 'Enviado' azul/verde conforme confirmacao manual Curitiba; layout compacto e operacoes preservados. -->
@@ -923,14 +924,15 @@
         <div class="efield" id="ecom-f-capacidade-wrap" style="display:none"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px"></div>
         <div class="efield" id="ecom-f-interface-wrap" style="display:none"><label>Interface</label><select class="ainput" id="ecom-f-interface" style="width:110px"><option value="">—</option><option value="SATA III">SATA III</option><option value="NVMe">NVMe</option></select></div>
         <div class="efield pesofield"><label>Peso (g) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-pesog" type="number" min="1" step="1" style="width:90px"><span id="ecom-f-faixa-msg" class="ffaixa"></span><select id="ecom-f-peso" style="display:none"></select><span id="ecom-f-peso-warn" style="display:none"></span></div>
-        <div class="efield"><label>Custo (NF) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" style="width:90px"></div>
+        <div class="efield"><label>Custo (US$) <span class="req">*</span></label><input class="ainput mono" id="ecom-f-custo" type="number" min="0.01" step="0.01" style="width:100px"></div>
+        <div class="efield"><label>Valor (R$ PTAX)</label><div class="ainput mono" id="ecom-f-convertido" style="min-width:110px;display:flex;align-items:center;color:var(--eteal)">—</div></div>
         <button class="addbtn" id="ecom-add">+ Adicionar</button>
         <button class="addbtn" id="ecom-add-gerar" title="Grava o produto e pré-preenche o Cadastro de anúncio abaixo" style="display:none;background:none;border:1px solid var(--eaccent);color:var(--eaccent)">+ Gravar e gerar anúncio</button>
         <button class="cancelbtn hidden-section" id="ecom-cancel">Cancelar</button>
       </div>
       <!-- BUILD 2026-08-15-R: montador de composição do KIT (ecom_kit_componentes) -->
       <div id="ecom-kit-wrap" style="display:none;margin:8px 0 4px;padding:10px 12px;border:1px dashed var(--eaccent);border-radius:8px">
-        <div style="font-size:12px;color:var(--emuted2);margin-bottom:6px">Composição do kit — código do componente (Catálogo) + quantidade. O Modelo é montado automaticamente; o Custo (NF) continua manual (a soma abaixo é referência).</div>
+        <div style="font-size:12px;color:var(--emuted2);margin-bottom:6px">Composição do kit — código do componente (Catálogo) + quantidade. O preço em dólar continua manual; a soma dos componentes é referência.</div>
         <div id="ecom-kit-rows"></div>
         <button class="cancelbtn" id="ecom-kit-add" type="button">+ componente</button>
         <span class="note" id="ecom-kit-soma" style="margin-left:10px"></span>
@@ -950,13 +952,14 @@
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px">
         <label class="custo-filtro"><input type="checkbox" id="ecom-flt-custo"> Só pendentes de revisão</label>
         <span class="custo-resumo" id="ecom-custo-resumo"></span>
+        <span class="custo-resumo" id="ecom-ptax-hoje" style="margin-left:auto;font-weight:600"></span>
       </div>
     </div>
 
     <div class="tbl-wrap">
       <table class="emain">
         <thead><tr><!-- BUILD 2026-08-08-F: layout neutro — Codigo/Produto/Preco Venda/Mercado/vs/Custo NF/Acoes -->
-          <th>Código</th><th class="l">Produto</th><th>Peso</th><th>Custo NF</th><!-- BUILD 2026-10-16-B: + coluna Peso (Igor 18/10) · BUILD 2026-10-16-A: produto = Categoria/Marca/Modelo/Peso/Custo NF; preco e margem vivem no anuncio de cada plataforma -->
+          <th>Código</th><th class="l">Produto</th><th>Peso</th><th>Custo (US$)</th><th>Valor (R$ PTAX)</th>
           <th style="text-align:center">Ações</th>
         </tr></thead>
         <tbody id="ecom-tbody"></tbody>
@@ -4154,6 +4157,33 @@ function generatePDFs() {
 // =====================================================================
 // E-COMMERCE (v8) — simulador ML + persistência (ecom_produtos / ecom_frete_matriz)
 // =====================================================================
+// BUILD 2026-11-11-USD: cotacao de reposicao, separada de registros historicos.
+// A mesma regra de validade (7 dias) e usada em ecom_vw_custo_reposicao.
+const selectaUSD = {
+  ptax:null, data:null, atualizado:0, erro:'',
+  dataSP(){ return new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); },
+  valido(){
+    if(!(Number(this.ptax)>0)||!/^\d{4}-\d{2}-\d{2}$/.test(String(this.data||''))) return false;
+    const dias=(Date.parse(this.dataSP()+'T00:00:00Z')-Date.parse(this.data+'T00:00:00Z'))/86400000;
+    return Number.isFinite(dias)&&dias>=0&&dias<=7;
+  },
+  custo(prod){ const usd=prod&&prod.custo_usd!=null?Number(prod.custo_usd):NaN;
+    if(!this.valido()||!Number.isFinite(usd)||usd<=0) return null;
+    const cents=Math.round(usd*100), fx4=Math.round(Number(this.ptax)*10000);
+    return Math.round(cents*fx4/10000)/100; },
+  async atualizar(forcar){
+    if(!forcar&&this.atualizado&&Date.now()-this.atualizado<5*60*1000) return this.valido();
+    this.atualizado=Date.now();
+    try{ const r=await sb.from('imp_vw_cambio_atual').select('ptax_venda,data').limit(1).maybeSingle();
+      if(r.error) throw r.error;
+      this.ptax=r.data&&r.data.ptax_venda!=null?Number(r.data.ptax_venda):null;
+      this.data=r.data&&r.data.data?String(r.data.data).slice(0,10):null;
+      this.erro=this.valido()?'':'PTAX indisponível ou com mais de 7 dias: custos e margens bloqueados.';
+    }catch(e){ this.ptax=null; this.data=null; this.erro='Erro ao consultar PTAX: '+e.message; }
+    return this.valido();
+  },
+  rotulo(){ return this.valido()?('PTAX '+this.data.split('-').reverse().join('/')+' · R$ '+Number(this.ptax).toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4})):('⚠ '+(this.erro||'PTAX indisponível')); }
+};
 const ecom = {
   PESOS: [['ate300','≤300g'],['f301_500','301–500g'],['f501_1000','501g–1kg'],['f1001_2000','1–2kg']],
   // ZONAS/mtx/repFactor aposentados em 02/07/2026 — modelo FRETE_TBL oficial ML
@@ -4190,18 +4220,18 @@ const ecom = {
       '<div style="display:flex;gap:8px;align-items:center;margin:4px 0;flex-wrap:wrap">'
       +'<input class="ainput mono" style="width:130px;text-transform:uppercase" placeholder="ex.: AP-0008" value="'+(r.codigo||'')+'" onchange="ecom.kitCod('+i+',this.value)">'
       +'<input class="ainput mono" type="number" min="1" step="1" style="width:64px" value="'+(r.qtd||1)+'" onchange="ecom.kitQtd('+i+',this.value)">'
-      +'<span class="note" style="flex:1;min-width:200px">'+(r.eco?((r.eco.produto||'')+' · '+[r.eco.marca,r.eco.modelo].filter(Boolean).join(' ')+' — custo un. R$ '+this.fmt(r.eco.custo)):(r.codigo?'<span style="color:var(--ered)">código não encontrado ou inativo</span>':''))+'</span>'
+      +'<span class="note" style="flex:1;min-width:200px">'+(r.eco?((r.eco.produto||'')+' · '+[r.eco.marca,r.eco.modelo].filter(Boolean).join(' ')+' — reposição '+(selectaUSD.custo(r.eco)==null?'indisponível':'R$ '+this.fmt(selectaUSD.custo(r.eco)))):(r.codigo?'<span style="color:var(--ered)">código não encontrado ou inativo</span>':''))+'</span>'
       +'<button class="cancelbtn" type="button" onclick="ecom.kitDel('+i+')">×</button></div>').join(''); this.kitSomaShow(); },
   async kitCod(i,v){ const r=this.kitRows[i]; if(!r) return; r.codigo=(v||'').trim().toUpperCase(); r.eco=null;
-    if(r.codigo){ try{ const q=await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,custo').eq('codigo',r.codigo).eq('ativo',true).maybeSingle(); if(!q.error&&q.data) r.eco=q.data; }catch(_e){} }
+    if(r.codigo){ try{ const q=await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,custo_usd').eq('codigo',r.codigo).eq('ativo',true).maybeSingle(); if(!q.error&&q.data) r.eco=q.data; }catch(_e){} }
     this.kitRender(); this.kitAfter(); },
   kitQtd(i,v){ const r=this.kitRows[i]; if(!r) return; const n=parseInt(v,10); r.qtd=(isNaN(n)||n<1)?1:n; this.kitRender(); this.kitAfter(); },
-  kitSoma(){ let s=0,pend=false,tem=false; this.kitRows.forEach(r=>{ if(r.eco&&r.eco.custo!=null){ s+=Number(r.eco.custo)*(r.qtd||1); tem=true; } else if(r.codigo) pend=true; }); return {soma:s,completo:tem&&!pend}; },
+  kitSoma(){ let s=0,pend=false,tem=false; this.kitRows.forEach(r=>{ const c=selectaUSD.custo(r.eco); if(c!=null){ s+=c*(r.qtd||1); tem=true; } else if(r.codigo) pend=true; }); return {soma:s,completo:tem&&!pend}; },
   kitSomaShow(){ const el=this._g('ecom-kit-soma'); if(!el) return; if(!this.isKit()){ el.innerHTML=''; return; } const st=this.kitSoma();
-    const custo=parseFloat(this._g('ecom-f-custo').value); let t='';
+    const usd=parseFloat(this._g('ecom-f-custo').value), custo=usd>0?selectaUSD.custo({custo_usd:usd}):null; let t='';
     if(st.completo) t='soma dos componentes: <b>R$ '+this.fmt(st.soma)+'</b>';
     else if(this.kitRows.some(r=>r.codigo)) t='soma parcial: R$ '+this.fmt(st.soma);
-    if(st.completo&&!isNaN(custo)&&Math.abs(custo-st.soma)>0.01) t+=' · <span style="color:var(--eamber)">Custo (NF) difere da soma — observação, não trava</span>';
+    if(st.completo&&custo!=null&&Math.abs(custo-st.soma)>0.01) t+=' · <span style="color:var(--eamber)">Valor do kit difere da soma — observação, não trava</span>';
     el.innerHTML=t; },
   kitAfter(){ if(this.isKit()){ const partes=this.kitRows.filter(r=>r.eco).map(r=>(r.qtd||1)+'x '+(r.eco.modelo||r.eco.produto||r.codigo)); if(partes.length) this._g('ecom-f-modelo').value=partes.join(' + '); } this.kitSomaShow(); },
   async kitLoad(cod){ this.kitRows=[]; try{ const q=await sb.from('ecom_kit_componentes').select('componente_codigo,quantidade').eq('kit_codigo',cod).order('id');
@@ -4254,11 +4284,18 @@ const ecom = {
   // BUILD 2026-10-16-A: calc/breakeven/veredito/itemVer/freteDe APAGADOS — o Catalogo nao calcula margem; motor unico do ML = ecomAlvo._simMargem (preco praticado do anuncio)
   isVis(it){ if(this.fCod && String(it.codigo||'').toUpperCase().indexOf(this.fCod)<0) return false; if(this.fCat && it.categoria!==this.fCat) return false; if(this.fCustoPendente&&!this.revisaoVencida(it)) return false; return true; }, // BUILD 2026-11-11-A
 
+  usdPreview(){ const out=this._g('ecom-f-convertido'), usd=Number(this._g('ecom-f-custo').value);
+    if(!out) return;
+    out.textContent=usd>0&&selectaUSD.valido()?'R$ '+this.fmt(selectaUSD.custo({custo_usd:usd})):'—';
+    out.style.color=selectaUSD.valido()?'var(--eteal)':'var(--ered)'; },
+
   async onEnter(){
-    if(!this.loaded){ await this.loadFreteTbl(); await this.loadComissoes(); await this.loadProdutos(); this.loaded=true; }
+    await selectaUSD.atualizar(true);
+    if(!this.loaded){ await this.loadFreteTbl(); await this.loadComissoes(); this.loaded=true; }
+    await this.loadProdutos();
     this.rebuildCatSelect(); // BUILD 2026-09-10-B
     if(!this.wired){ this.wire(); this.wired=true; }
-    this.buildFreteRef(); this.updateCtx(); this.render();
+    this.buildFreteRef(); this.updateCtx(); this.usdPreview(); this.render();
   },
   async loadFreteTbl(){ try{ const r=await sb.from('ecom_frete_tbl').select('reputacao,peso_min_g,peso_max_g,preco_min,preco_max,valor,observacao'); if(r.error) throw r.error;
       this.freteTbl=(r.data||[]).map(x=>({reputacao:x.reputacao,peso_min_g:+x.peso_min_g,peso_max_g:+x.peso_max_g,preco_min:+x.preco_min,preco_max:x.preco_max==null?null:+x.preco_max,valor:+x.valor,observacao:x.observacao})); }
@@ -4300,7 +4337,7 @@ const ecom = {
     { const pe=g('ecom-f-pesog'); if(pe) pe.addEventListener('input',()=>{ this.applyPesoG(); }); }
     { const cat=g('ecom-f-categoria'); if(cat) cat.addEventListener('change',()=>{ this.toggleCapInterface(); this.toggleKit(); }); }
     { const kb=g('ecom-kit-add'); if(kb) kb.addEventListener('click',()=>this.kitAdd()); }
-    { const cu=g('ecom-f-custo'); if(cu) cu.addEventListener('input',()=>this.kitSomaShow()); }
+    { const cu=g('ecom-f-custo'); if(cu) cu.addEventListener('input',()=>{ this.usdPreview(); this.kitSomaShow(); }); }
   },
   updateCtx(){
     const rep=this.reputacao;
@@ -4342,13 +4379,14 @@ const ecom = {
   updateCount(){ const vis=this.itens.filter(it=>this.isVis(it)).length;
     this._g('ecom-flt-count').textContent=(this.fCod||this.fCat||this.fCustoPendente)?`${vis} de ${this.itens.length} itens`:`${this.itens.length} itens no banco`;
     const pend=this.itens.filter(it=>this.revisaoVencida(it)).length; const aviso=this._g('ecom-custo-resumo');
-    if(aviso){ aviso.className='custo-resumo'+(pend?' pendente':''); aviso.textContent=pend?`● ${pend} produto(s) com custo sem revisão válida (mais de 10 dias ou nunca conferido)`:'✓ Custos revisados nos últimos 10 dias'; } },
+    if(aviso){ aviso.className='custo-resumo'+(pend?' pendente':''); aviso.textContent=pend?`● ${pend} preço(s) USD sem conferência válida`:'✓ Preços USD revisados nos últimos 10 dias'; }
+    const fx=this._g('ecom-ptax-hoje'); if(fx){ fx.textContent=selectaUSD.rotulo(); fx.style.color=selectaUSD.valido()?'var(--eteal)':'var(--ered)'; } },
 
   // BUILD 2026-11-11-A: a data de alteracao geral atualizado_em NAO serve de prova da revisao do custo.
-  // custo_revisado_em vem do banco: cadastro novo, alteracao real de custo ou confirmacao de conferencia.
-  revisaoVencida(it){ const d=it&&it.custo_revisado_em?new Date(it.custo_revisado_em).getTime():NaN;
+  // custo_usd_revisado_em e a conferencia do preco em USD, nao a cotacao PTAX.
+  revisaoVencida(it){ const d=it&&it.custo_usd!=null&&it.custo_usd_revisado_em?new Date(it.custo_usd_revisado_em).getTime():NaN;
     return !Number.isFinite(d)||(Date.now()-d)>10*24*60*60*1000; },
-  revisaoData(it){ const d=it&&it.custo_revisado_em?new Date(it.custo_revisado_em):null;
+  revisaoData(it){ const d=it&&it.custo_usd_revisado_em?new Date(it.custo_usd_revisado_em):null;
     return d&&Number.isFinite(d.getTime())?d.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}):'sem revisão'; },
   revisaoDataHora(iso){ const d=iso?new Date(iso):null;
     return d&&Number.isFinite(d.getTime())?d.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'; },
@@ -4360,44 +4398,44 @@ const ecom = {
     this.revisaoId=id; this.revisaoHistorico=[]; this.revisaoMensagem=''; this.revisaoErro=''; this.render();
     await this.revisaoCarregar(id); if(String(this.revisaoId)===String(id)) this.render(); },
   async revisaoCarregar(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
-    try{ const r=await sb.from('ecom_custo_revisoes').select('tipo,custo_anterior,custo_novo,registrado_em').eq('produto_codigo',it.codigo).order('registrado_em',{ascending:false}).limit(30);
+    try{ const r=await sb.from('ecom_usd_revisoes').select('tipo,usd_anterior,usd_novo,registrado_em').eq('produto_codigo',it.codigo).order('registrado_em',{ascending:false}).limit(30);
       if(r.error) throw r.error; if(String(this.revisaoId)!==String(id)) return;
       this.revisaoHistorico=r.data||[]; this.revisaoErro=''; }
     catch(e){ if(String(this.revisaoId)!==String(id)) return; this.revisaoHistorico=[];
-      this.revisaoErro='Histórico indisponível: '+e.message+'. Verifique se o SQL CUSTO-01 foi aplicado.'; } },
+      this.revisaoErro='Histórico indisponível: '+e.message+'. Verifique se o SQL USD-02 foi aplicado.'; } },
   revisaoMontar(){ const tb=this._g('ecom-tbody'); if(!tb||this.revisaoId==null) return;
     const it=this.itens.find(x=>String(x.id)===String(this.revisaoId));
     const linha=it?[...tb.querySelectorAll('tr[data-id]')].find(x=>String(x.dataset.id)===String(it.id)):null;
     if(!linha) return;
-    const row=document.createElement('tr'); row.className='custo-rev-row'; const cel=document.createElement('td'); cel.colSpan=5; row.appendChild(cel); linha.after(row);
+    const row=document.createElement('tr'); row.className='custo-rev-row'; const cel=document.createElement('td'); cel.colSpan=6; row.appendChild(cel); linha.after(row);
     const hist=this.revisaoHistorico.length?this.revisaoHistorico.map(h=>{
-      const antigo=h.custo_anterior==null?'—':'R$ '+this.fmt(h.custo_anterior);
-      const novo='R$ '+this.fmt(h.custo_novo);
-      const tipo=h.tipo==='cadastro'?'Cadastro':h.tipo==='alteracao'?'Custo alterado':'Preço conferido';
+      const antigo=h.usd_anterior==null?'—':'US$ '+this.fmt(h.usd_anterior);
+      const novo='US$ '+this.fmt(h.usd_novo);
+      const tipo=h.tipo==='cadastro'?'Cadastro':h.tipo==='alteracao'?'Preço alterado':'Preço conferido';
       return `<div class="custo-rev-line"><time>${this.revisaoDataHora(h.registrado_em)}</time><span>${tipo}</span><strong>${antigo} → ${novo}</strong></div>`;
     }).join(''):'<div style="color:var(--emuted);padding:5px 0">Nenhuma revisão registrada.</div>';
     cel.innerHTML=`<div class="custo-rev-box">
-      <div class="custo-rev-head"><div class="custo-rev-title">Atualizar custo NF · ${this.revisaoEscape(it.codigo)} · ${this.revisaoEscape([it.marca,it.modelo].filter(Boolean).join(' '))}</div><button type="button" class="rowbtn" id="ecom-rev-fechar">Fechar</button></div>
-      <div class="custo-rev-form"><div><label>Custo atual</label><div style="font-size:15px;font-weight:700">R$ ${this.fmt(it.custo)}</div></div>
-      <div><label for="ecom-rev-novo">Custo conferido (R$)</label><input id="ecom-rev-novo" class="ainput mono" type="number" min="0.01" step="0.01" style="width:122px" value="${Number(it.custo).toFixed(2)}" ${this.revisaoBusy?'disabled':''}></div>
+      <div class="custo-rev-head"><div class="custo-rev-title">Atualizar preço USD · ${this.revisaoEscape(it.codigo)} · ${this.revisaoEscape([it.marca,it.modelo].filter(Boolean).join(' '))}</div><button type="button" class="rowbtn" id="ecom-rev-fechar">Fechar</button></div>
+      <div class="custo-rev-form"><div><label>Preço atual</label><div style="font-size:15px;font-weight:700">${it.custo_usd==null?'—':'US$ '+this.fmt(it.custo_usd)}</div></div>
+      <div><label for="ecom-rev-novo">Preço conferido (US$)</label><input id="ecom-rev-novo" class="ainput mono" type="number" min="0.01" step="0.01" style="width:122px" value="${it.custo_usd==null?'':Number(it.custo_usd).toFixed(2)}" ${this.revisaoBusy?'disabled':''}></div>
       <button type="button" class="addbtn" id="ecom-rev-salvar" ${this.revisaoBusy||this.revisaoErro?'disabled':''}>${this.revisaoBusy?'Salvando…':'Confirmar revisão'}</button></div>
       ${this.revisaoErro?`<div style="color:var(--ered);font-size:11px">${this.revisaoEscape(this.revisaoErro)}</div>`:''}
       ${this.revisaoMensagem?`<div style="color:var(--eemerald);font-size:11px">${this.revisaoEscape(this.revisaoMensagem)}</div>`:''}
-      <div class="custo-rev-history"><strong>Histórico de preços de compra</strong>${hist}</div>
+      <div class="custo-rev-history"><strong>Histórico de preços em dólar</strong>${hist}</div>
       </div>`;
     cel.querySelector('#ecom-rev-fechar').addEventListener('click',()=>this.revisaoFechar());
     const salvar=cel.querySelector('#ecom-rev-salvar'); if(salvar) salvar.addEventListener('click',()=>this.revisaoSalvar(it.id)); },
   async revisaoSalvar(id){ if(this.revisaoBusy||this.revisaoErro) return;
     const it=this.itens.find(x=>String(x.id)===String(id)); const campo=this._g('ecom-rev-novo'); if(!it||!campo) return;
     const valor=Number(campo.value); if(!campo.value.trim()||!Number.isFinite(valor)||valor<=0||Math.abs(valor*100-Math.round(valor*100))>0.00001){
-      alert('Informe um custo NF válido, maior que zero, com até duas casas decimais.'); campo.focus(); return; }
+      alert('Informe um preço USD válido, maior que zero, com até duas casas decimais.'); campo.focus(); return; }
     this.revisaoBusy=true; this.revisaoMensagem='';
-    try{ const r=await sb.rpc('ecom_confirmar_custo',{p_codigo:it.codigo,p_custo_esperado:Number(it.custo),p_novo_custo:valor}); if(r.error) throw r.error;
-      const dados=Array.isArray(r.data)?r.data[0]:r.data; if(!dados||!dados.custo_revisado_em) throw new Error('Resposta de confirmação incompleta');
-      const mudou=Math.round(Number(it.custo)*100)!==Math.round(valor*100);
-      Object.assign(it,{custo:Number(dados.custo),custo_revisado_em:dados.custo_revisado_em});
-      await this.revisaoCarregar(id); this.revisaoMensagem=mudou?'✓ Custo atualizado e registrado no histórico.':'✓ Preço conferido e prazo de 10 dias renovado.';
-    }catch(e){ this.revisaoMensagem=''; alert('Não foi possível confirmar o custo: '+e.message+'\nNenhuma revisão foi marcada como concluída.'); }
+    try{ const r=await sb.rpc('ecom_confirmar_preco_usd',{p_codigo:it.codigo,p_usd_esperado:it.custo_usd==null?null:Number(it.custo_usd),p_revisao_esperada:it.custo_usd_revisado_em||null,p_novo_usd:valor}); if(r.error) throw r.error;
+      const dados=Array.isArray(r.data)?r.data[0]:r.data; if(!dados||!dados.custo_usd_revisado_em) throw new Error('Resposta de confirmação incompleta');
+      const mudou=it.custo_usd==null||Math.round(Number(it.custo_usd)*100)!==Math.round(valor*100);
+      Object.assign(it,{custo_usd:Number(dados.custo_usd),custo_usd_revisado_em:dados.custo_usd_revisado_em});
+      await this.revisaoCarregar(id); this.revisaoMensagem=mudou?'✓ Preço USD atualizado e registrado.':'✓ Preço conferido; prazo de 10 dias renovado.';
+    }catch(e){ this.revisaoMensagem=''; alert('Não foi possível confirmar o preço USD: '+e.message+'\nNenhuma revisão foi marcada como concluída.'); }
     finally{ this.revisaoBusy=false; this.render(); } },
 
   // ===== BUILD 2026-08-26-T · MIDIA DO CATALOGO (bucket produto-midia + ecom_produto_midia) =====
@@ -4428,7 +4466,7 @@ const ecom = {
     if(!this.midiaCod){ const holder=this._g('ecom-midia-holder'); if(holder&&box.parentNode!==holder) holder.appendChild(box); return; }
     const tr=[...tb.querySelectorAll('tr[data-cod]')].find(r=>String(r.dataset.cod||'').toUpperCase()===this.midiaCod);
     if(!tr){ this.midiaClose(); return; }
-    const row=document.createElement('tr'); row.className='midia-row'; const td=document.createElement('td'); td.colSpan=7; row.appendChild(td);
+    const row=document.createElement('tr'); row.className='midia-row'; const td=document.createElement('td'); td.colSpan=6; row.appendChild(td);
     tr.parentNode.insertBefore(row,tr.nextSibling); td.appendChild(box); box.style.display='block'; },
   async midiaLoad(){ if(!this.midiaCod) return; const r=await sb.from('ecom_produto_midia').select('*').eq('produto_codigo',this.midiaCod).order('ordem').order('id');
     if(r.error){ alert('Erro ao ler a mídia: '+r.error.message); this.midiaItens=[]; return; }
@@ -4557,10 +4595,11 @@ const ecom = {
         <td>${codCell}</td>
         <td class="l"><span class="eprod">${linhaPrincipal}</span>${modeloSub}</td>
         <td style="white-space:nowrap">${this.pesoCell(it)}</td>
-        <td>${this.fmt(it.custo)}</td>
+        <td style="white-space:nowrap">${it.custo_usd==null?'<span style="color:var(--ered)">—</span>':'US$ '+this.fmt(it.custo_usd)}</td>
+        <td style="white-space:nowrap">${selectaUSD.custo(it)==null?'<span style="color:var(--eamber)">—</span>':'R$ '+this.fmt(selectaUSD.custo(it))}</td>
         <td><div class="acts"><button class="rowbtn ecom-custo-btn ${vencida?'em-atraso':''}" data-id="${it.id}" title="Última revisão: ${this.revisaoData(it)}">${vencida?'Atualizar':'Atualizado'}</button><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
       </tr>`; }).join('');
-    tb.innerHTML=rows||'<tr><td class="l" colspan="5" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
+    tb.innerHTML=rows||'<tr><td class="l" colspan="6" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
     tb.querySelectorAll('.ecom-edit').forEach(b=>b.addEventListener('click',()=>this.edit(b.dataset.id)));
     tb.querySelectorAll('.ecom-del').forEach(b=>b.addEventListener('click',()=>this.del(b.dataset.id)));
     tb.querySelectorAll('.ecom-custo-btn').forEach(b=>b.addEventListener('click',()=>this.revisaoOpen(b.dataset.id)));
@@ -4580,31 +4619,32 @@ const ecom = {
     box.innerHTML='<div class="sent-h">'+(crit?'🔴':'🟠')+' Integridade do catálogo — '+probs.length+' ponto(s) a revisar</div><ul>'+probs.map(p=>'<li>'+(p.sev==='crit'?'🔴':'🟠')+' '+p.txt+'</li>').join('')+'</ul>'; },
 
   // BUILD 2026-10-16-A: inlineEdit (preco/media na celula) e updateFormBreakeven APAGADOS
-  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-capacidade','ecom-f-custo'].forEach(id=>this._g(id).value=''); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const m=this._g('ecom-f-faixa-msg'); if(m){ m.textContent=''; m.className='ffaixa'; } } this._g('ecom-f-interface').value=''; this._g('ecom-f-categoria').value=''; this.toggleCapInterface(); this.kitRows=[]; this.toggleKit(); { const fm=this._g('ecom-formmsg'); fm.textContent=''; fm.style.color=''; } },
+  clearForm(){ ['ecom-f-produto','ecom-f-marca','ecom-f-modelo','ecom-f-capacidade','ecom-f-custo'].forEach(id=>this._g(id).value=''); this.usdPreview(); this._g('ecom-f-pesog').value=''; this._g('ecom-f-peso').value='ate300'; { const m=this._g('ecom-f-faixa-msg'); if(m){ m.textContent=''; m.className='ffaixa'; } } this._g('ecom-f-interface').value=''; this._g('ecom-f-categoria').value=''; this.toggleCapInterface(); this.kitRows=[]; this.toggleKit(); { const fm=this._g('ecom-formmsg'); fm.textContent=''; fm.style.color=''; } },
   edit(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
     this._g('ecom-f-produto').value=it.produto||''; this._g('ecom-f-marca').value=it.marca||''; this._g('ecom-f-modelo').value=it.modelo||''; this._g('ecom-f-capacidade').value=it.capacidade||''; this._g('ecom-f-interface').value=it.interface||'';
     this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-categoria').value=it.categoria||''; this.toggleCapInterface(); this.toggleKit(); if(it.categoria==='KIT'&&it.codigo) this.kitLoad(it.codigo); // BUILD 2026-08-15-R
-    this._g('ecom-f-custo').value=it.custo;
+    this._g('ecom-f-custo').value=it.custo_usd==null?'':it.custo_usd; this.usdPreview();
     this.editId=id; this._g('ecom-add').textContent='Salvar alteração'; show('#ecom-cancel'); this._g('ecom-f-marca').focus(); },
   cancelEdit(){ this.editId=null; this.clearForm(); this._g('ecom-add').textContent='+ Adicionar'; hide('#ecom-cancel'); },
 
   async save(){ const num=id=>{ const v=parseFloat(this._g(id).value); return isNaN(v)?null:v; };
     const catSel=this._g('ecom-f-categoria'); const categoria=catSel.value||null;
     const produto=categoria?(((catSel.options[catSel.selectedIndex]||{}).text)||'').trim():''; this._g('ecom-f-produto').value=produto;
-    const custo=num('ecom-f-custo');
-    if(!categoria||custo==null){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='Categoria e Custo (NF) são obrigatórios.'; fm.style.color='var(--eamber)'; return; }
+    const custoUsd=num('ecom-f-custo');
+    if(!categoria||custoUsd==null||custoUsd<=0||Math.abs(custoUsd*100-Math.round(custoUsd*100))>0.00001){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='Categoria e Custo (US$) positivo, com até 2 casas decimais, são obrigatórios.'; fm.style.color='var(--eamber)'; return; }
+    if(!selectaUSD.valido()){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='PTAX indisponível/vencida. Cadastro bloqueado até carregar cotação válida.'; fm.style.color='var(--ered)'; return; }
     if(categoria==='KIT'){ const val=this.kitRows.filter(r=>r.eco&&r.codigo); if(!val.length){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='Kit precisa de ao menos 1 componente válido do Catálogo.'; fm.style.color='var(--eamber)'; return; } } // BUILD 2026-08-15-R
     this._g('ecom-formmsg').textContent='';
     const pesog=(()=>{ const v=parseInt(this._g('ecom-f-pesog').value,10); return isNaN(v)?null:v; })();
     const dados={ produto, categoria, marca:this._g('ecom-f-marca').value.trim()||null, modelo:this._g('ecom-f-modelo').value.trim()||null,
       capacidade:this._g('ecom-f-capacidade').value.trim()||null, interface:this._g('ecom-f-interface').value||null,
-      custo, peso_g:pesog, peso_faixa:(pesog!=null?this.faixaFromPeso(pesog):this._g('ecom-f-peso').value) }; // BUILD 2026-10-16-A: sem preco/media/menor/tipo_anuncio no produto
+      custo_usd:custoUsd, peso_g:pesog, peso_faixa:(pesog!=null?this.faixaFromPeso(pesog):this._g('ecom-f-peso').value) }; // USD-02: nao regravar legado BRL em edicoes
     if(this.editId){ this.gerarAposSalvar=false; const idx=this.itens.findIndex(x=>String(x.id)===String(this.editId)); const prev=idx>=0?Object.assign({},this.itens[idx]):null;
       if(idx>=0) this.itens[idx]=Object.assign({},this.itens[idx],dados);
       try{ const r=await sb.from('ecom_produtos').update(Object.assign({},dados,{atualizado_em:new Date().toISOString()})).eq('id',this.editId).select().single(); if(r.error) throw r.error; if(categoria==='KIT'&&r.data&&r.data.codigo) await this.kitPersist(r.data.codigo); /* BUILD 2026-08-15-R: antes do cancelEdit, que limpa o montador */ if(idx>=0&&r.data) this.itens[idx]=r.data; this.cancelEdit(); this.render(); }
       catch(e){ if(idx>=0&&prev) this.itens[idx]=prev; const fm=this._g('ecom-formmsg'); fm.textContent='Erro ao salvar: '+e.message; fm.style.color='var(--ered)'; this.render(); } }
     else { const codigo=await this.nextCodigo(categoria);
-      try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{codigo,ativo:true})).select().single(); if(r.error) throw r.error; if(categoria==='KIT') await this.kitPersist(r.data.codigo); /* BUILD 2026-08-15-R: antes do clearForm, que limpa o montador */ this.itens.push(r.data); this.clearForm(); this.render(); const fm=this._g('ecom-formmsg'); fm.textContent='✓ Salvo no banco: '+r.data.codigo+' — campos limpos para o próximo.'; fm.style.color='var(--eemerald)';
+      try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{custo:selectaUSD.custo({custo_usd:custoUsd}),codigo,ativo:true})).select().single(); if(r.error) throw r.error; if(categoria==='KIT') await this.kitPersist(r.data.codigo); /* BUILD 2026-08-15-R: antes do clearForm, que limpa o montador */ this.itens.push(r.data); this.clearForm(); this.render(); const fm=this._g('ecom-formmsg'); fm.textContent='✓ Salvo no banco: '+r.data.codigo+' — campos limpos para o próximo.'; fm.style.color='var(--eemerald)';
         if(this.gerarAposSalvar){ this.gerarAposSalvar=false; this.prefillAnuncio(r.data); } }
       catch(e){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='Erro ao cadastrar: '+e.message; fm.style.color='var(--ered)'; } } },
 
@@ -5523,7 +5563,7 @@ const ecomVendas={
     const cod=this._g('vd-cod').value.trim().toUpperCase(); const box=this._g('vd-nome'); const wrap=this._g('vd-anuncio-wrap'); box.style.cssText='';
     this.anuncios=[]; this.anuncioMlb=null;
     if(!cod){ this.prod=null; box.innerHTML='digite o SKU — produto, anúncio e preço são puxados'; if(wrap) wrap.innerHTML=''; return; }
-    try{ const r=await sb.from('ecom_produtos').select('id,produto,marca,modelo,codigo,capacidade,interface,custo').eq('codigo',cod).eq('ativo',true).maybeSingle();
+    try{ await selectaUSD.atualizar(true); const r=await sb.from('ecom_produtos').select('id,produto,marca,modelo,codigo,capacidade,interface,custo_usd').eq('codigo',cod).eq('ativo',true).maybeSingle();
       if(r.error) throw r.error;
       if(!r.data){ this.prod=null; box.innerHTML='<span style="color:var(--eamber)">código não encontrado no catálogo</span>'; if(wrap) wrap.innerHTML=''; return; }
       this.prod=r.data; box.style.cssText='background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.5);color:var(--etxt)'; box.innerHTML='<b>'+r.data.produto+'</b>'+(r.data.interface?' '+r.data.interface:'')+(r.data.marca?' · '+r.data.marca:'')+(r.data.modelo?' · '+r.data.modelo:'')+(r.data.capacidade?' · '+r.data.capacidade:'');
@@ -5568,9 +5608,13 @@ const ecomVendas={
     const aoVivo=(stIni==='a_enviar');
     const com=aoVivo?null:numOf('vd-com'), tar=aoVivo?null:numOf('vd-tar'), fre=aoVivo?null:numOf('vd-fre');
     const obs=(this._g('vd-obs')?this._g('vd-obs').value.trim():'')||null;
+    const custoAtual=selectaUSD.custo(this.prod);
     const dados={ canal:'mercado_livre', ml_pedido_id:ped, comprador:this._g('vd-comp').value.trim()||null,
       produto_id:this.prod.id, produto:this.prod.produto, marca:this.prod.marca, modelo:this.prod.modelo, produto_codigo:this.prod.codigo,
-      anuncio_mlb:this.anuncioMlb, custo_unitario:(this.prod.custo!=null?this.prod.custo:null),
+      anuncio_mlb:this.anuncioMlb, custo_unitario:custoAtual,
+      custo_usd_snapshot:custoAtual==null?null:this.prod.custo_usd,
+      ptax_snapshot:custoAtual==null?null:selectaUSD.ptax,
+      ptax_data_snapshot:custoAtual==null?null:selectaUSD.data,
       quantidade:qtd, preco_venda:preco, uf,
       data_solicitacao:new Date(dt).toISOString(),
       prazo_postagem: pp?new Date(pp+'T23:59:59').toISOString():null,
@@ -5869,17 +5913,18 @@ const ecomFinanceiro={
     if(f) f.style.display='none';
     document.querySelectorAll('#fn-list .vli.fn-open').forEach(el=>el.classList.remove('fn-open'));
   },
-  async load(){ this.cur=null; await this.loadList(); this.termometro(); }, // BUILD 2026-10-10-A: a faixa nasce da propria lista // BUILD 2026-08-25-H: aguarda a faixa antes da lista (lucro previsto e anexado nela)
+  async load(){ this.cur=null; await selectaUSD.atualizar(true); await this.loadList(); this.termometro(); }, // USD-02: compras futuras com PTAX, termometro historico intocado
   // BUILD 2026-08-17-A: quadrante de leitura rapida — capital do dia (ecom_vw_compras_dia, somente leitura)
   // BUILD 2026-11-07: Colchao de 6% por dia de envio, calculado por pedido e exibido sem alterar o lucro (que ja o desconta)
   comprasDia(itens){ const box=this._g('fn-compras-dia'); if(!box) return;
     const V=ecomVendas, vivos=(itens||[]).filter(v=>!v.ocorrencia);
     if(!vivos.length){ box.innerHTML='<div class="ph">nenhum pedido a enviar</div>'; return; }
     const soma=arr=>{ let custo=0, sc=0, colchao=0, sp=0, luc=0, pend=0; arr.forEach(v=>{ const q=Math.max(1,Math.round(+v.quantidade||1));
-        if(v.custo_unitario==null) sc++; else custo+=(v.custo_total!=null?Number(v.custo_total):Number(v.custo_unitario)*q);
+        const custoHoje=this._custosHoje&&v.produto_codigo?this._custosHoje[v.produto_codigo]:null;
+        if(custoHoje==null) sc++; else custo+=custoHoje*q;
         const preco=v.preco_venda==null?NaN:Number(v.preco_venda);
         if(!Number.isFinite(preco)||preco<=0) sp++; else colchao+=Math.round(preco*q*this.FIXOS.COLCHAO*100)/100;
-        const l=this.lucroPedido(v); if(l==null) pend++; else luc+=l; });
+        const l=custoHoje==null?null:this.lucroPedido(Object.assign({},v,{custo_unitario:custoHoje})); if(l==null) pend++; else luc+=l; });
       return {custo:custo,sc:sc,colchao:colchao,sp:sp,luc:luc,pend:pend,u:V.unid(arr)}; };
     let h='<div class="fn-dia-head"><span>#</span><span>envio</span><span>un.</span><span>compra</span><span>colchão</span><span>lucro do dia</span><span></span></div>';
     h+=V.porDia(vivos).map((g,ix)=>{ const x=soma(g.itens);
@@ -5887,9 +5932,9 @@ const ecomFinanceiro={
         +'<span class="ix">'+(ix+1)+'.</span>'
         +'<span class="dia" style="font-weight:700;color:'+V.diaCor(g.k)+'">'+V.diaLabel(g.k)+V.diaTag(g.k)+'</span>'
         +'<span class="un"><span class="k">un.</span><span>'+x.u+'</span></span>'
-        +'<span class="cp"><span class="k">compra</span><span style="color:var(--eteal);font-weight:600">R$ '+this.fmt(x.custo)+(x.sc>0?' <span style="color:var(--eamber)" title="'+x.sc+' item(ns) sem custo no cat\u00e1logo \u2014 valor subestimado">*</span>':'')+'</span></span>'
+        +'<span class="cp"><span class="k">compra</span><span style="color:var(--eteal);font-weight:600">R$ '+this.fmt(x.custo)+(x.sc>0?' <span style="color:var(--eamber)" title="'+x.sc+' item(ns) sem USD ou PTAX v\u00e1lida \u2014 valor parcial">*</span>':'')+'</span></span>'
         +'<span class="ch"><span class="k">colchão</span><span style="color:var(--eamber)" title="Reserva de 6% sobre o valor de venda dos pedidos deste dia">R$ '+this.fmt(x.colchao)+(x.sp>0?' <span title="'+x.sp+' item(ns) sem pre\u00e7o de venda \u2014 reserva subestimada">*</span>':'')+'</span></span>'
-        +'<span class="lc"><span class="k">lucro do dia</span><span style="color:'+(x.luc>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(x.luc)+(x.pend>0?' <span style="color:var(--eamber)" title="'+x.pend+' item(ns) sem comiss\u00e3o ou custo \u2014 fora da soma">*</span>':'')+'</span></span>'
+        +'<span class="lc"><span class="k">lucro do dia</span><span style="color:'+(x.luc>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(x.luc)+(x.pend>0?' <span style="color:var(--eamber)" title="'+x.pend+' item(ns) sem comiss\u00e3o ou custo atualizado \u2014 fora da soma">*</span>':'')+'</span></span>'
         +'<button class="vbtn sm pdf" data-pdfdia="'+(g.k||'sem')+'" title="PDF para o fornecedor: itens deste dia de envio (descri\u00e7\u00e3o + quantidade, sem pre\u00e7o)">\ud83d\udcc4 PDF</button></div>'; }).join('');
     box.innerHTML=h;
   },
@@ -5914,9 +5959,13 @@ const ecomFinanceiro={
     try{ const r=await sb.from('ecom_vendas').select('id,ml_pedido_id,produto,produto_codigo,marca,modelo,preco_venda,quantidade,comissao_valor,tarifa_fixa_valor,frete_valor,frete_onus,custo_unitario,custo_total,prazo_postagem,ocorrencia,data_solicitacao').eq('status','a_enviar').order('data_solicitacao',{ascending:false});
       if(r.error) throw r.error; const itens=r.data||[]; this._fila=itens; // BUILD 2026-10-10-A: fonte unica da faixa, da lista e do PDF por dia
       // BUILD 2026-08-25-H: descricao canonica do catalogo (mesma regra do pdfCompra) para leitura/cotacao
-      this._cat={}; const cods=[...new Set(itens.map(v=>v.produto_codigo).filter(Boolean))];
+      this._cat={}; this._custosHoje={}; const cods=[...new Set(itens.map(v=>v.produto_codigo).filter(Boolean))];
       if(cods.length){ try{ const q=await sb.from('ecom_produtos').select('codigo,produto,interface,marca,modelo,capacidade').in('codigo',cods);
         if(!q.error) (q.data||[]).forEach(p=>{ if(p.codigo) this._cat[p.codigo]=[p.produto,p.interface,p.marca,p.modelo,p.capacidade].filter(Boolean).join(' '); }); }catch(_e){} }
+      if(cods.length){ try{ const rfx=await sb.from('ecom_vw_custo_reposicao').select('codigo,custo_reposicao_brl').in('codigo',cods);
+        if(rfx.error) throw rfx.error;
+        (rfx.data||[]).forEach(p=>{ this._custosHoje[p.codigo]=p.custo_reposicao_brl==null?null:Number(p.custo_reposicao_brl); });
+      }catch(e){ console.warn('Previsao de compras USD/PTAX indisponivel:',e.message); this._custosHoje={}; } }
       this.renderList(itens); this.comprasDia(itens);
     }catch(e){ this.parkForm(); box.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; const fx=this._g('fn-compras-dia'); if(fx) fx.innerHTML='<span style="color:var(--ered)">erro: '+e.message+'</span>'; }
   },
@@ -6537,6 +6586,7 @@ const ecomAlvo={
   _g:id=>document.getElementById(id),
   fmt:v=>(v==null||isNaN(v))?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}),
   async load(){
+    await selectaUSD.atualizar(true);
     try{ if(typeof ecom!=='undefined' && !ecom.loaded){ await ecom.loadFreteTbl(); await ecom.loadComissoes(); await ecom.loadProdutos(); ecom.loaded=true; } }catch(_e){}
     try{ const rv=await sb.from('ecom_vendas').select('produto,produto_codigo,anuncio_mlb,uf,receita_bruta,resultado_liquido,status,data_solicitacao');
       const ra=await sb.from('ecom_anuncios').select('*').order('data_publicacao',{ascending:false});
@@ -7052,7 +7102,7 @@ const ecomAlvo={
         const comOrigem=this._comOrigemLabel(r,prod); // BUILD 2026-09-15-L
         md+='- margem (app): **'+pct.toFixed(1)+'%** \u00b7 lucro R$ '+fR(r.margem)+' \u00b7 '+(pct>=10?'LIBERADO':'NEGADO \u2014 abaixo do piso')+'\n'
           +(dvX.estado==='div'?('- \u26a0 REGISTRO \u2260 ML: margem calculada sobre o registro do app, n\u00e3o sobre o pre\u00e7o do ML ('+dvX.itens.map(d=>String(d.tipo).toLowerCase()+' no ML '+(d.ml==null?'\u2014':d.ml)+' \u00b7 no app '+(d.app==null?'\u2014':d.app)).join(' / ')+') \u2014 n\u00e3o usar para decis\u00e3o at\u00e9 corrigir pelo Editar\n'):'')
-          +'- detalhes: custo NF R$ '+fR(prod.custo)+' \u00b7 comiss\u00e3o '+(r.comPct*100).toFixed(2)+'% ('+comOrigem+')'+(r.comFixa>0?(' \u00b7 tarifa fixa R$ '+fR(r.comFixa)):'')+' \u00b7 frete R$ '+fR(r.frete)+' ('+this._freteOrigemLabel(r)+')'+(r.pesoMl!=null?(' \u00b7 peso ML '+Math.round(r.pesoMl)+' g'):'')+' \u00b7 colch\u00e3o R$ '+fR(praticado*colPct/100)+(r.estorno>0?(' \u00b7 estorno campanha +R$ '+fR(r.estorno)):'')+'\n';
+          +'- detalhes: reposi\u00e7\u00e3o PTAX R$ '+fR(selectaUSD.custo(prod))+' \u00b7 US$ '+fR(prod.custo_usd)+' \u00b7 comiss\u00e3o '+(r.comPct*100).toFixed(2)+'% ('+comOrigem+')'+(r.comFixa>0?(' \u00b7 tarifa fixa R$ '+fR(r.comFixa)):'')+' \u00b7 frete R$ '+fR(r.frete)+' ('+this._freteOrigemLabel(r)+')'+(r.pesoMl!=null?(' \u00b7 peso ML '+Math.round(r.pesoMl)+' g'):'')+' \u00b7 colch\u00e3o R$ '+fR(praticado*colPct/100)+(r.estorno>0?(' \u00b7 estorno campanha +R$ '+fR(r.estorno)):'')+'\n';
         if(prod.estoque_atual!=null) md+='- estoque (cat\u00e1logo): '+prod.estoque_atual+' un.\n';
         // BUILD 2026-10-16-B: margem no price_to_win (substitui margem_alvo do dossie SQL) — mesmo motor _simMargem, preco cheio, sem estorno; frete da faixa do ptw quando o ML ja declarou
         { const sn=(this.snapAtual||{})[this._normMlb(an.anuncio_mlb)]||null; const ptw=(sn&&sn.price_to_win!=null)?+sn.price_to_win:null;
@@ -7061,7 +7111,7 @@ const ecomAlvo={
               +((rw&&rw.ok)?('margem no ptw **'+(rw.margemPct*100).toFixed(1)+'%** \u00b7 '+(rw.margemPct>=0.10?'LIBERADO':'NEGADO \u2014 abaixo do piso')+' (frete '+this._freteOrigemLabel(rw)+')'):('sem c\u00e1lculo \u2014 '+((rw&&rw.reason)||'dado incompleto')))+'\n'; } }
       } else {
         md+='- margem (app): sem c\u00e1lculo \u2014 '+((r&&r.reason)||(prod?'sem pre\u00e7o':'produto n\u00e3o encontrado/inativo no cat\u00e1logo'))+'\n';
-        if(prod&&prod.custo!=null) md+='- custo NF R$ '+fR(prod.custo)+'\n';
+        if(prod) md+='- custo USD: '+(prod.custo_usd==null?'pendente':('US$ '+fR(prod.custo_usd)))+'\n';
       }
       md+='\n';
     });
@@ -7080,7 +7130,7 @@ const ecomAlvo={
     const prod=(typeof ecom!=='undefined' && ecom.itens)?ecom.itens.find(p=>String(p.codigo).toUpperCase()===cod):null;
     if(!prod) return {status:'warn',reason:'produto não encontrado no catálogo — não é possível avaliar piso',prod:null,preco,tipo};
     if(isNaN(preco)||preco<=0) return {status:'warn',reason:'preço não informado',prod,preco,tipo};
-    if(prod.custo==null||isNaN(+prod.custo)||+prod.custo<=0) return {status:'warn',reason:'custo NF ausente no cadastro do produto',prod,preco,tipo};
+    if(selectaUSD.custo(prod)==null) return {status:'warn',reason:'custo USD ou PTAX indisponível',prod,preco,tipo};
     const pesoEf=(typeof ecom!=='undefined'&&ecom.pesoEfetivoG)?ecom.pesoEfetivoG(prod):null;
     if(pesoEf==null) return {status:'warn',reason:'peso ausente no cadastro do produto (peso_g / banda efetiva)',prod,preco,tipo};
     return {status:'ok',prod,preco,tipo};
@@ -7095,7 +7145,7 @@ const ecomAlvo={
     const setBtn=on=>{ if(btn){ if(on) btn.removeAttribute('disabled'); else btn.setAttribute('disabled',''); } };
     if(ow) ow.style.display=st.naFaixaDono?'flex':'none'; if(ov&&!st.naFaixaDono) ov.checked=false;
     if(st.status==='vazio'){ neutro(st.reason); setBtn(true); return; } // formulario vazio: clicar mostra o que falta
-    if(st.status==='prod'){ box.innerHTML='<span style="color:var(--eemerald)">✓ '+(st.prod.produto||'')+'</span><span style="color:var(--emuted2)">· custo NF '+F(st.prod.custo)+' · digite o preço</span>'; setBtn(false); return; }
+    if(st.status==='prod'){ box.innerHTML='<span style="color:var(--eemerald)">✓ '+(st.prod.produto||'')+'</span><span style="color:var(--emuted2)">· reposição PTAX '+F(selectaUSD.custo(st.prod))+' · digite o preço</span>'; setBtn(false); return; }
     if(st.status==='warn'){ box.innerHTML='<span style="color:var(--eamber)">'+st.reason+'</span>'; setBtn(false); return; }
     const r=st.r, pct=st.pct;
     const cor=pct>=10?'var(--eemerald)':pct>=5?'var(--eamber)':'var(--ered)';
@@ -7112,7 +7162,7 @@ const ecomAlvo={
     if(typeof ecom==='undefined'||!ecom.loaded) return {status:'vazio',ok:false,reason:'carregando catálogo…'};
     const prod=(ecom.itens||[]).find(x=>String(x.codigo||'').toUpperCase()===cod);
     if(!prod) return {status:'warn',ok:false,reason:'código não encontrado no Catálogo'};
-    if(prod.custo==null||isNaN(+prod.custo)||+prod.custo<=0) return {status:'warn',ok:false,prod,reason:'custo NF ausente no cadastro do produto — piso não verificável'};
+    if(selectaUSD.custo(prod)==null) return {status:'warn',ok:false,prod,reason:'custo USD ou PTAX indisponível — piso não verificável'};
     if((ecom.pesoEfetivoG?ecom.pesoEfetivoG(prod):null)==null) return {status:'warn',ok:false,prod,reason:'peso ausente no cadastro do produto — piso não verificável'};
     if(!(preco>0)) return {status:'prod',ok:false,prod};
     const r=this._simMargem(prod, preco, tipo, (ecom.reputacao||'verde'));
@@ -7159,6 +7209,9 @@ const ecomAlvo={
     // Espelha ecom.calc usando FRETE_TBL para a reputação escolhida
     // BUILD 2026-08-26-K: estorno (R$, opcional) = parcela do desconto que o ML devolve em campanha comercial; entra como (+) na margem. Ausente = 0 (regua conservadora)
     // BUILD 2026-09-15-L: an (opcional) = anuncio com custos aferidos do ML; quando validos, substituem comissao da categoria e FRETE_TBL
+    const custo=selectaUSD.custo(prod);
+    if(custo==null) return {ok:false,reason:'cotação USD ausente ou PTAX indisponível — margem bloqueada'};
+    if(!(Number(preco)>0)) return {ok:false,reason:'preço de venda inválido'};
     const pr={ comC:13, comP:17,
       imp:(typeof ecom!=='undefined'?(ecom._n?ecom._n('ecom-imp'):4):4),
       outros:(typeof ecom!=='undefined'?(ecom._n?ecom._n('ecom-outros'):0):0),
@@ -7180,7 +7233,7 @@ const ecomAlvo={
     }
     const P=+preco;
     const custoML=P*t+fr+ml.comFixa;
-    const custo=+prod.custo; const colchao=P*pr.colchao/100; const custoTotal=custo+colchao; // BUILD 2026-08-21-A: colchão sobre a VENDA
+    const colchao=P*pr.colchao/100; const custoTotal=custo+colchao; // USD-02: reposicao PTAX; colchao sobre a VENDA
     const est=(+estorno>0)?+estorno:0; // BUILD 2026-08-26-K
     const margem=P-custoML-custoTotal+est;
     return {ok:true,margem,margemPct:P>0?margem/P:0,comPct,frete:fr,estorno:est,
@@ -7268,7 +7321,7 @@ const ecomAlvo={
         const impPct=(typeof ecom!=='undefined'&&ecom._n)?ecom._n('ecom-imp'):4;
         elMeta.innerHTML='<div class="meta-grid">'
           +'<span class="vig">vigente: '+(promoAtiva?'promoção':'preço cheio')+'</span>'
-          +'<span class="nf-k">Custo NF</span><span class="nf-v">R$ '+this._fmtBR(gate.prod.custo)+'</span>'
+          +'<span class="nf-k">Reposição PTAX</span><span class="nf-v">R$ '+this._fmtBR(selectaUSD.custo(gate.prod))+'</span>'
           +'<span class="k">comissão ('+comOrigem+')</span><span class="vv">'+comPct.toFixed(2)+'%</span>'
           +((efet.comFixa>0)?'<span class="k">tarifa fixa (ML)</span><span class="vv">R$ '+this._fmtBR(efet.comFixa)+'</span>':'') // BUILD 2026-09-15-L
           +((promoAtiva&&efet.estorno>0)?'<span class="k">estorno ML (campanha)</span><span class="vv">\u2212 R$ '+this._fmtBR(efet.estorno)+'</span>':'') // BUILD 2026-08-26-K
@@ -7555,7 +7608,7 @@ const ecomAlvo={
     const r=this._simMargem(prod,+preco,tipo,rep);
     if(!r.ok) return r;
     const colch=(typeof ecom!=='undefined'&&ecom._n)?ecom._n('ecom-colchao'):6;
-    const custo=+prod.custo||0;
+    const custo=selectaUSD.custo(prod)||0;
     const margem=r.margem+custo*colch/100; // remove o colchão: espelho ML (comissão real + frete + imposto + custo NF)
     const P=+preco;
     return {ok:true, recebe:P-P*r.comPct-r.frete, margem, pct:P>0?margem/P*100:0, frete:r.frete, comPct:r.comPct};
@@ -7685,7 +7738,7 @@ const ecomAlvo={
       const preco=an.preco!=null?+an.preco:NaN; const tipo=(an.tipo_anuncio==='premium')?'premium':'classico';
       if(!prod) motivo='produto não encontrado no catálogo';
       else if(isNaN(preco)||preco<=0) motivo='preço não informado';
-      else if(prod.custo==null||isNaN(+prod.custo)||+prod.custo<=0) motivo='custo NF ausente';
+      else if(selectaUSD.custo(prod)==null) motivo='cotação USD/PTAX ausente';
       else if(!(typeof ecom!=='undefined'&&ecom.pesoEfetivoG&&ecom.pesoEfetivoG(prod)!=null)) motivo='peso ausente';
       else { const promo=an.preco_promocao!=null?+an.preco_promocao:null; const tipoP=tipo; // BUILD 2026-08-26-I: herda
         if(promo!=null&&(isNaN(promo)||promo<=0)) motivo='promoção inválida';
@@ -8384,7 +8437,8 @@ const ecomInsta = {
     this.prodAtual = null; box.style.display='none';
     if(!cod){ this.msg('Digite o código do produto.', 'var(--eamber)'); return; }
     try{
-      const r = await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,custo,capacidade,interface,peso_g').eq('codigo',cod).eq('ativo',true).limit(1); // BUILD 2026-08-10-Q (embute P): capacidade/interface no eco + peso_g copiado p/ frete
+      await selectaUSD.atualizar(true);
+      const r = await sb.from('ecom_produtos').select('codigo,produto,marca,modelo,custo_usd,capacidade,interface,peso_g').eq('codigo',cod).eq('ativo',true).limit(1);
       if(r.error) throw r.error;
       const p = (r.data||[])[0];
       if(!p){ this.msg('Código não encontrado ou produto não está ativo no Catálogo. Produto nasce na Consulta Produto (cadastro do Igor).', 'var(--ered)'); this.margem(); return; }
@@ -8393,7 +8447,7 @@ const ecomInsta = {
       box.innerHTML = '<b style="color:var(--etxt)">'+p.produto+'</b>'
         + (p.marca?' · '+p.marca:'') + (p.modelo?' · '+p.modelo:'')
         + (p.capacidade?' · '+p.capacidade:'') + (p.interface?' · '+p.interface:'')
-        + ' &nbsp;|&nbsp; custo NF <b style="color:var(--etxt)">'+this.fmt(p.custo)+'</b>'
+        + ' &nbsp;|&nbsp; reposição PTAX <b style="color:var(--etxt)">'+(selectaUSD.custo(p)==null?'pendente':this.fmt(selectaUSD.custo(p)))+'</b>'
         + (p.peso_g!=null?' · peso <b style="color:var(--etxt)">'+p.peso_g+'g</b>':' · <span style="color:var(--eamber)">SEM PESO no cadastro — frete não simulará</span>');
       const nome = this._g('ig-nome');
       if(!nome.value.trim()){
@@ -8407,7 +8461,8 @@ const ecomInsta = {
     const box = this._g('ig-margem');
     const p = parseFloat(this._g('ig-preco').value);
     if(!this.prodAtual || !p || p<=0){ box.style.display='none'; return; }
-    const c = Number(this.prodAtual.custo||0);
+    const c = selectaUSD.custo(this.prodAtual);
+    if(c==null){ box.style.display=''; box.innerHTML='<span style="color:var(--ered)">Preço USD/PTAX indisponível — margem não calculada.</span>'; return; }
     const m = ((p - c) / p) * 100;
     const cor = m >= 20 ? 'var(--eemerald)' : (m >= 10 ? 'var(--eamber)' : 'var(--ered)');
     box.style.display='';
@@ -10486,7 +10541,7 @@ const shopeeTab={
   // ---------- MARGEM: unica conta do modulo (regua da casa, espelho da _simMargem do ML) ----------
   // pv = preco valido (promocao governa) · frete dif = 0 no simulador (sem tabela de frete Shopee)
   margemDe(pv,campanha,custo){
-    const t=this.tarifa(pv,campanha); if(!t||!(custo>=0)||!(pv>0)) return null;
+    const t=this.tarifa(pv,campanha); if(!t||typeof custo!=='number'||!Number.isFinite(custo)||!(custo>0)||!(pv>0)) return null;
     const colchao=pv*this.FIXOS.COLCHAO, imposto=pv*this.FIXOS.IMPOSTO;
     const lucro=pv-t.total-custo-colchao-imposto, pct=lucro/pv*100;
     return {t,colchao,imposto,lucro,pct,libera:pct>=this.FIXOS.PISO};
@@ -10508,7 +10563,8 @@ const shopeeTab={
 
   // ---------- carga ----------
   async onEnter(){
-    if(this.loaded){ this.renderAll(); return; }
+    await selectaUSD.atualizar(true);
+    if(this.loaded){ try{ await this.loadCustos(); this.renderAll(); }catch(e){ this.toast('Erro ao atualizar custos USD/PTAX: '+e.message,true); } return; }
     this.mes=this.mesAtual(); this.mesRl=this.mesAtual();
     const d=this.hojeLocal(); this._g('shp-vd-data').value=d;
     try{
@@ -10525,9 +10581,10 @@ const shopeeTab={
     }catch(e){ this.toast('Erro ao carregar Shopee: '+(e.message||e),true); }
   },
   async loadCustos(){
-    const cods=[...new Set(this.anuncios.map(a=>a.codigo))]; if(!cods.length) return;
-    const {data}=await sb.from('ecom_produtos').select('codigo,custo').in('codigo',cods);
-    (data||[]).forEach(p=>{ this.custos[p.codigo]=Number(p.custo); });
+    const cods=[...new Set(this.anuncios.map(a=>a.codigo))]; this.custos={}; if(!cods.length) return;
+    const {data,error}=await sb.from('ecom_produtos').select('codigo,custo_usd').in('codigo',cods);
+    if(error) throw error;
+    (data||[]).forEach(p=>{ this.custos[p.codigo]=selectaUSD.custo(p); });
   },
   // Historico (SQL 17): tolerante — se as tabelas/colunas divergirem, degrada com aviso e o resto vive
   async loadHist(){
@@ -10557,11 +10614,12 @@ const shopeeTab={
     const el=this._g(elId); el.className='hintline'; el.textContent='';
     this[slot]=null; cod=(cod||'').trim().toUpperCase(); if(slot==='prodVd') this._montarSeletorItem(cod); if(!cod) return;
     const seq=(this._echoSeq[slot]=(this._echoSeq[slot]||0)+1);
-    const {data,error}=await sb.from('ecom_produtos').select('codigo,produto,custo').eq('codigo',cod).eq('ativo',true).maybeSingle();
+    const {data,error}=await sb.from('ecom_produtos').select('codigo,produto,custo_usd').eq('codigo',cod).eq('ativo',true).maybeSingle();
     if(seq!==this._echoSeq[slot]) return; // resposta atrasada de um codigo anterior
     if(error){ el.className='hintline err'; el.textContent=error.message; return; }
     if(!data){ el.className='hintline err'; el.textContent='Código não encontrado ou inativo no Catálogo.'; return; }
-    this[slot]=data; el.className='hintline ok'; el.textContent=data.produto+' · custo NF R$ '+this.fmt(data.custo);
+    data.custo=selectaUSD.custo(data);
+    this[slot]=data; el.className=data.custo==null?'hintline err':'hintline ok'; el.textContent=data.produto+' · '+(data.custo==null?'preço USD/PTAX pendente':'reposição PTAX R$ '+this.fmt(data.custo));
     if(slot==='prodAl') this.sim(); if(slot==='prodVd'){ this._montarSeletorItem(data.codigo); this.sugerirTarifa(); } if(slot==='prodCt') this.ctlSim();
   },
   // BUILD 2026-09-15-M: Item ID = chave do anuncio (espelho do _normMlb do ML)
@@ -10581,9 +10639,10 @@ const shopeeTab={
       const e=g('shp-al-echo'); const msg=(e&&e.className.indexOf('err')>=0&&e.textContent)?e.textContent:'valide o código no Catálogo';
       box.innerHTML='<span style="color:var(--eamber)">'+esc(msg)+'</span>'; return; }
     const camp=g('shp-al-camp').value==='1', pv=this.precoValidoForm();
-    if(!(pv>0)){ box.innerHTML='<span style="color:var(--eemerald)">✓ '+esc(this.prodAl.produto||'')+'</span><span style="color:var(--emuted2)">· custo NF '+F(this.prodAl.custo)+' · digite o preço</span>'; return; }
-    const m=this.margemDe(pv,camp,Number(this.prodAl.custo));
-    if(!m){ box.innerHTML='<span style="color:var(--eamber)">sem tabela de tarifas — aplique o SQL 16</span>'; return; }
+    if(this.prodAl.custo==null){ box.innerHTML='<span style="color:var(--ered)">preço USD/PTAX pendente — margem bloqueada</span>'; return; }
+    if(!(pv>0)){ box.innerHTML='<span style="color:var(--eemerald)">✓ '+esc(this.prodAl.produto||'')+'</span><span style="color:var(--emuted2)">· reposição PTAX '+F(this.prodAl.custo)+' · digite o preço</span>'; return; }
+    const m=this.margemDe(pv,camp,this.prodAl.custo);
+    if(!m){ box.innerHTML='<span style="color:var(--ered)">custo USD/PTAX ou tarifa indisponível — margem bloqueada</span>'; return; }
     const cor=m.pct>=10?'var(--eemerald)':m.pct>=5?'var(--eamber)':'var(--ered)';
     box.innerHTML='<b style="color:'+cor+';font-size:14px">'+m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%</b>'
       +'<span style="color:'+cor+'">'+F(m.lucro)+' líq.</span>'
@@ -10729,8 +10788,8 @@ const shopeeTab={
         m?(m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% · '+F(m.lucro)+' · '+(m.libera?'LIBERADO':'NEGADO')):'—',
         (custo!=null?F(custo):'—'),m?(m.t.rotulo+' · '+m.t.pct+'% + '+F(m.t.fixa)+' = '+F(m.t.total)):'—',m?F(m.imposto):'—',m?F(m.colchao):'—'].join(' | ')+' |'; }).join('\n');
     const md='# Controle de Anúncios — Shopee · Selecta\nExportado em: '+new Date().toLocaleString('pt-BR')+(flt?('\nFiltro: '+flt):'')+'\n\n'
-      +'- margem = motor do app (tarifa da faixa + custo NF + colchão '+(this.FIXOS.COLCHAO*100)+'% + imposto '+(this.FIXOS.IMPOSTO*100)+'%; promoção vigente governa; frete dif. = 0; piso '+this.FIXOS.PISO+'%)\n\n'
-      +'| Código | Item ID | Título | Status | No ar · vendas | Preço | Promoção | Campanha | Margem (motor) | Custo NF | Tarifa | Imposto | Colchão |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n'+(linhas||'| (nenhum) | | | | | | | | | | | | |')+'\n';
+      +'- margem = motor do app (tarifa da faixa + reposição PTAX + colchão '+(this.FIXOS.COLCHAO*100)+'% + imposto '+(this.FIXOS.IMPOSTO*100)+'%; promoção vigente governa; frete dif. = 0; piso '+this.FIXOS.PISO+'%)\n\n'
+      +'| Código | Item ID | Título | Status | No ar · vendas | Preço | Promoção | Campanha | Margem (motor) | Reposição PTAX | Tarifa | Imposto | Colchão |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n'+(linhas||'| (nenhum) | | | | | | | | | | | | |')+'\n';
     const blob=new Blob([md],{type:'text/markdown;charset=utf-8'}); const url=URL.createObjectURL(blob); const el=document.createElement('a');
     el.href=url; el.download='controle_shopee_'+new Date().toISOString().slice(0,10)+'.md'; document.body.appendChild(el); el.click(); document.body.removeChild(el); URL.revokeObjectURL(url);
     this.toast('Exportado: '+lista.length+' anúncio(s).');
@@ -10773,10 +10832,10 @@ const shopeeTab={
     const g=i=>this._g(i); if(!g('shp-ct-preco')) return null;
     const a=this.anuncios.find(x=>x.id===this.ctlEditId); if(!a) return null;
     const p=this.num(g('shp-ct-preco').value), pr=this.num(g('shp-ct-promo').value), camp=g('shp-ct-camp').value==='1';
-    const custo=this.prodCt?Number(this.prodCt.custo):this.custos[a.codigo];
+    const custo=this.prodCt?this.prodCt.custo:this.custos[a.codigo];
     const promoRaw=(g('shp-ct-promo').value||'').trim(); let promoErr=null;
     if(promoRaw!==''&&!(pr>0)) promoErr='promoção inválida'; else if(pr>0&&p>0&&pr>=p) promoErr='promoção deve ser menor que o preço';
-    const wrap=m=>m?{ok:true,...m}:{ok:false,reason:(custo>=0)?'sem tabela de tarifas ou preço inválido':'custo NF não encontrado no Catálogo'};
+    const wrap=m=>m?{ok:true,...m}:{ok:false,reason:(typeof custo==='number'&&custo>0)?'sem tabela de tarifas ou preço inválido':'custo USD/PTAX não encontrado no Catálogo'};
     const rC=(p>0)?wrap(this.margemDe(p,camp,custo)):{ok:false,reason:'preço inválido'};
     const promoAtiva=(promoRaw!=='');
     const semAlt=Math.abs(p-Number(a.preco))<=0.004&&camp===!!a.campanha&&((promoRaw==='')===(a.preco_promocao==null))&&(promoRaw===''||Math.abs(pr-Number(a.preco_promocao))<=0.004); // BUILD 2026-09-20-A: form igual ao gravado — sem decisao de preco o Salvar segue habilitado (correcao de Item ID)
@@ -10787,7 +10846,7 @@ const shopeeTab={
     const meta=g('shp-ct-meta');
     if(meta){ if(efet&&efet.ok){ meta.innerHTML='<div class="meta-grid">'
         +'<span class="vig">vigente: '+(promoAtiva?'promoção':'preço cheio')+'</span>'
-        +'<span class="nf-k">Custo NF</span><span class="nf-v">R$ '+this.fmt(custo)+'</span>'
+        +'<span class="nf-k">Reposição PTAX</span><span class="nf-v">R$ '+this.fmt(custo)+'</span>'
         +'<span class="k">tarifa ('+this.esc(efet.t.rotulo)+')</span><span class="vv">'+efet.t.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% + R$ '+this.fmt(efet.t.fixa)+' = R$ '+this.fmt(efet.t.total)+'</span>'
         +'<span class="k">imposto</span><span class="vv">'+(this.FIXOS.IMPOSTO*100)+'% · R$ '+this.fmt(efet.imposto)+'</span>'
         +'<span class="k">frete dif.</span><span class="vv">R$ 0,00</span>'
@@ -10908,7 +10967,9 @@ const shopeeTab={
     if(this.vendas.some(v=>v.pedido_id===ped&&v.produto_codigo===cod)&&!confirm('Já existe lançamento deste produto no pedido '+ped+'. Lançar mesmo assim?')) return;
     const tarifa=this.num(g('shp-vd-tarifa').value); const fdif=this.num(g('shp-vd-fretedif').value)||0;
     if(!(tarifa>0)){ msg.className='hintline err'; msg.textContent='Tarifa Shopee é obrigatória (sugerida pela faixa; ajuste na conciliação).'; return; } // BUILD 2026-09-15-J: furo F1
-    const custoU=Number(this.prodVd.custo), receita=Math.round(preco*qtd*100)/100;
+    const custoU=this.prodVd.custo;
+    if(typeof custoU!=='number'||!(custoU>0)){ msg.className='hintline err'; msg.textContent='Preço USD/PTAX indisponível: não é possível lançar custo de compra seguro.'; return; }
+    const receita=Math.round(preco*qtd*100)/100;
     const an=esc_.an; // BUILD 2026-09-15-M
     const dados={pedido_id:ped,data_solicitacao:data,status:'a_enviar',
       prazo_envio:g('shp-vd-prazo').value||null,produto_codigo:cod,produto:this.prodVd.produto,
@@ -11115,12 +11176,13 @@ const shopeeTab={
   async importarArquivo(file){
     const msg=this._g('shp-imp-msg'), res=this._g('shp-imp-res'); this._imp=null; res.innerHTML=''; msg.className='hintline'; msg.textContent='Lendo '+file.name+'…';
     try{
+      await selectaUSD.atualizar(true);
       await this._probeImport();
       const m=this._montarImport(await this._lerXlsx(file));
       if(!m.linhas.length) throw new Error('Nenhum pedido aproveitável no arquivo.');
-      // custo NF do Catalogo (unica fonte de custo do app); sem cadastro = custo pendente (fora do resultado)
+      // Custo novo de reposicao USD/PTAX: somente em linhas NOVAS, jamais revaloriza venda ja registrada.
       const cods=[...new Set(m.linhas.map(l=>l.produto_codigo).filter(Boolean))], cat={};
-      if(cods.length){ const r=await sb.from('ecom_produtos').select('codigo,produto,custo').in('codigo',cods); if(r.error) throw r.error; (r.data||[]).forEach(p=>{ cat[p.codigo]=p; }); }
+      if(cods.length){ const r=await sb.from('ecom_produtos').select('codigo,produto,custo_usd').in('codigo',cods); if(r.error) throw r.error; (r.data||[]).forEach(p=>{ cat[p.codigo]=Object.assign({},p,{custo:selectaUSD.custo(p)}); }); }
       const semCat=new Set();
       m.linhas.forEach(l=>{ const p=l.produto_codigo&&cat[l.produto_codigo];
         if(p){ l.produto=p.produto||l.produto; if(p.custo!=null){ l.custo_unitario=Number(p.custo); l.custo_total=this._r2(Number(p.custo)*l.quantidade); } }
@@ -11165,7 +11227,7 @@ const shopeeTab={
     if(l.data_embarque&&!(e.data_embarque&&new Date(e.data_embarque).getTime()===new Date(l.data_embarque).getTime())) up.data_embarque=l.data_embarque;
     if(e.origem==='import_central'){ ['quantidade','preco_unitario','receita_bruta','comissao_valor','tarifa_liquida','frete_diferenca'].forEach(k=>set(k,l[k])); }
     else { ['comissao_valor','tarifa_liquida'].forEach(k=>{ if(e[k]==null&&l[k]!=null) up[k]=l[k]; }); }
-    if(e.custo_unitario==null&&l.custo_unitario!=null){ up.custo_unitario=l.custo_unitario; up.custo_total=l.custo_total; }
+    // USD-02: custo historico imutavel, mesmo quando anteriormente estava nulo.
     if(!e.uf&&l.uf) up.uf=l.uf;
     if(l.liberado_carteira&&!e.liberado_carteira){ up.liberado_carteira=true; if(!e.data_liberacao&&l.data_liberacao) up.data_liberacao=l.data_liberacao; }
     return up; },
@@ -11564,13 +11626,13 @@ const finOps={
       const ini=data+'T00:00:00-03:00', fimD=new Date(new Date(data+'T12:00:00Z').getTime()+86400000).toISOString().slice(0,10)+'T00:00:00-03:00';
       let post=null,nPost=0; try{ const r=await sb.from('ecom_vendas').select('custo_total,status,canal').gte('data_embarque',ini).lt('data_embarque',fimD);
         if(!r.error){ const rows=(r.data||[]).filter(v=>v.status!=='cancelado'&&(!v.canal||/^(mercado_livre|ml)$/i.test(v.canal))); nPost=rows.length; post=rows.reduce((s,v)=>s+(+v.custo_total||0),0); } }catch(e){}
-      let fila=null; if(data===this.hoje()){ try{ const r=await sb.from('ecom_vw_compras_dia').select('custo_compra_total'); if(!r.error) fila=(r.data||[]).reduce((s,x)=>s+(+x.custo_compra_total||0),0); }catch(e){} }
+      let fila=null,semFila=0; if(data===this.hoje()){ try{ const r=await sb.from('ecom_vw_compras_dia').select('custo_compra_total,pedidos_sem_custo'); if(!r.error){ fila=(r.data||[]).reduce((s,x)=>s+(+x.custo_compra_total||0),0); semFila=(r.data||[]).reduce((s,x)=>s+(+x.pedidos_sem_custo||0),0); } }catch(e){} }
       let outras=0; try{ const r=await sb.from('ecom_inv_operacao').select('valor_aporte').eq('data_aporte',data).neq('status','anulada'); if(!r.error) outras=(r.data||[]).reduce((s,x)=>s+(+x.valor_aporte||0),0); }catch(e){}
       if(tok!==this._pv) return;
       if(val!=null&&tx!=null) partes.push('devido <b>R$ '+F(Math.round(val*(1+tx/100)*100)/100)+'</b> (juro R$ '+F(Math.round(val*tx)/100)+')');
       partes.push('início da contagem <b>'+(inicio?this.wd(inicio)+' '+this.dY(inicio):'—')+'</b>');
       partes.push('vencimento <b style="color:var(--eteal)">'+(venc?this.wd(venc)+' '+this.dY(venc):'—')+'</b>');
-      let l2='ML postado em '+this.d(data)+': R$ '+F(post)+' ('+nPost+' pedido'+(nPost===1?'':'s')+')'+(fila!=null?' · fila a enviar agora: R$ '+F(fila):'')+(outras>0?' · <span style="color:var(--eamber)">outras operações neste dia: R$ '+F(outras)+'</span>':'');
+      let l2='ML postado em '+this.d(data)+': R$ '+F(post)+' ('+nPost+' pedido'+(nPost===1?'':'s')+')'+(fila!=null?' · fila a enviar agora (PTAX): R$ '+F(fila)+(semFila?' <span style="color:var(--eamber)" title="'+semFila+' produto(s) sem USD/PTAX; total parcial">*</span>':''):'')+(outras>0?' · <span style="color:var(--eamber)">outras operações neste dia: R$ '+F(outras)+'</span>':'');
       pv.innerHTML=partes.join(' · ')+'<div class="mut" style="margin-top:4px">'+l2+'</div>';
     }catch(e){ if(tok===this._pv) pv.innerHTML='<span style="color:var(--ered)">'+this.esc(e.message||e)+'</span>'; }
   },
