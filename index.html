@@ -1,3 +1,4 @@
+<!-- BUILD 2026-11-11-A | CATALOGO: botao Midia vira Atualizar (revisao de custo NF), vermelho sem revisao ou apos 10 dias, historico auditavel, filtro de pendentes; custo alterado via Editar tambem rastreado pelo trigger SQL separado. Nao modifica canais/financeiro/rastreios. SQL CUSTO-01 obrigatorio ANTES deste HTML. -->
 <!-- BUILD 2026-11-08-B | RASTREIOS LISTA UNICA: Enviadas sem filtros internos nem notas; selo permanece 'Enviado' azul/verde conforme confirmacao manual Curitiba; layout compacto e operacoes preservados. -->
 <!-- BUILD 2026-11-08-A | RASTREIOS LAYOUT COMPACTO: linhas profissionais em duas faixas, sem SKU/valor, controles preservados; destaque da atualizacao ML; sem SQL/Edge novos. -->
 <!-- BUILD 2026-11-07-D | RASTREIOS: triagem Curitiba (confirmacao somente manual), prioridade por antiguidade da atualizacao ML, consulta Correios, copia do codigo e alertas corretos; sem SQL e sem Edge novos. -->
@@ -536,6 +537,25 @@
   #tab-catalogo .rowbtn{background:none;border:1px solid var(--eborder);color:var(--emuted);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer}
   #tab-catalogo .rowbtn:hover{border-color:var(--eaccent);color:var(--etxt)}
   #tab-catalogo .rowbtn.del:hover{border-color:var(--ered);color:var(--ered)}
+  /* BUILD 2026-11-11-A: revisao do custo NF com prazo maximo de 10 dias */
+  #tab-catalogo .custo-resumo{font-size:11.5px;color:var(--emuted);margin:0 0 3px}
+  #tab-catalogo .custo-resumo.pendente{color:#fca5a5;font-weight:600}
+  #tab-catalogo .custo-filtro{display:inline-flex;gap:5px;align-items:center;color:var(--emuted);font-size:12px;cursor:pointer;margin:0 0 6px}
+  #tab-catalogo .custo-filtro input{accent-color:var(--ered)}
+  #tab-catalogo .rowbtn.ecom-custo-btn{min-width:113px;display:inline-flex;align-items:center;justify-content:center;gap:6px;color:#a7f3d0;border-color:#256d59;background:#0b2b25}
+  #tab-catalogo .rowbtn.ecom-custo-btn .custo-data{font-size:10px;opacity:.75;font-family:var(--emono)}
+  #tab-catalogo .rowbtn.ecom-custo-btn.em-atraso{color:#fecaca;background:#401b24;border-color:#ef4444;font-weight:700}
+  #tab-catalogo .rowbtn.ecom-custo-btn.em-atraso .custo-data{opacity:1}
+  #tab-catalogo tr.custo-rev-row>td{background:#101c2c;padding:8px 10px;text-align:left;white-space:normal;font-family:inherit}
+  #tab-catalogo .custo-rev-box{border:1px solid #2a4657;border-radius:9px;padding:12px 14px;background:#122034;max-width:850px}
+  #tab-catalogo .custo-rev-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  #tab-catalogo .custo-rev-title{font-size:12px;font-weight:700;color:var(--eteal)}
+  #tab-catalogo .custo-rev-form{display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px;margin:10px 0 7px}
+  #tab-catalogo .custo-rev-form label{display:block;font-size:10.5px;color:var(--emuted);margin-bottom:4px}
+  #tab-catalogo .custo-rev-history{margin-top:11px;border-top:1px solid var(--eborder);padding-top:9px;font-size:11.5px}
+  #tab-catalogo .custo-rev-line{display:flex;gap:15px;padding:5px 0;border-bottom:1px solid #213047;align-items:center;flex-wrap:wrap}
+  #tab-catalogo .custo-rev-line time{color:var(--emuted);font-family:var(--emono);min-width:120px}
+  #tab-catalogo .custo-rev-line strong{color:var(--etxt)}
   /* BUILD 2026-08-26-T: painel Midia */
   #tab-catalogo .midia-n{display:inline-block;margin-left:5px;font-size:10px;color:var(--eaccent);font-family:var(--emono)}
   #tab-catalogo .midia-drop{margin-top:10px;padding:14px;border:1px dashed var(--eborder);border-radius:10px;display:flex;align-items:center;flex-wrap:wrap}
@@ -927,6 +947,10 @@
         <div class="efield"><label>Categoria</label><select class="ainput" id="ecom-flt-cat" style="width:190px"><option value="">Todas as categorias</option></select></div>
         <button class="cancelbtn" id="ecom-flt-clear">Limpar filtros</button>
         <span class="note" id="ecom-flt-count" style="margin:0 0 7px"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px">
+        <label class="custo-filtro"><input type="checkbox" id="ecom-flt-custo"> Só pendentes de revisão</label>
+        <span class="custo-resumo" id="ecom-custo-resumo"></span>
       </div>
     </div>
 
@@ -4142,7 +4166,7 @@ const ecom = {
     [9000,11000,'9–11 kg']
   ],
   itens: [], freteTbl: [], comMap: {}, loaded:false, wired:false,
-  reputacao:'verde', modalidade:'flex', editId:null, fCod:'', fCat:'', // BUILD 2026-08-08-F: filtros por codigo/categoria
+  reputacao:'verde', modalidade:'flex', editId:null, fCod:'', fCat:'', fCustoPendente:false, // BUILD 2026-11-11-A: filtro dos custos sem revisao vigente
 
   _g(id){ return document.getElementById(id); },
   _n(id){ const v=parseFloat(this._g(id).value); return isNaN(v)?0:v; },
@@ -4229,7 +4253,7 @@ const ecom = {
   },
 
   // BUILD 2026-10-16-A: calc/breakeven/veredito/itemVer/freteDe APAGADOS — o Catalogo nao calcula margem; motor unico do ML = ecomAlvo._simMargem (preco praticado do anuncio)
-  isVis(it){ if(this.fCod && String(it.codigo||'').toUpperCase().indexOf(this.fCod)<0) return false; if(this.fCat && it.categoria!==this.fCat) return false; return true; }, // BUILD 2026-08-08-F
+  isVis(it){ if(this.fCod && String(it.codigo||'').toUpperCase().indexOf(this.fCod)<0) return false; if(this.fCat && it.categoria!==this.fCat) return false; if(this.fCustoPendente&&!this.revisaoVencida(it)) return false; return true; }, // BUILD 2026-11-11-A
 
   async onEnter(){
     if(!this.loaded){ await this.loadFreteTbl(); await this.loadComissoes(); await this.loadProdutos(); this.loaded=true; }
@@ -4269,7 +4293,8 @@ const ecom = {
     ['ecom-com-classico','ecom-com-premium','ecom-imp','ecom-outros','ecom-colchao'].forEach(id=>{ const el=g(id); if(el) el.addEventListener('input',()=>{ this.render(); }); }); // BUILD 2026-10-16-A: sem simulacao no Catalogo
     g('ecom-flt-cod').addEventListener('input',e=>{ this.fCod=e.target.value.trim().toUpperCase(); this.render(); }); // BUILD 2026-08-08-F
     g('ecom-flt-cat').addEventListener('change',e=>{ this.fCat=e.target.value; this.render(); });
-    g('ecom-flt-clear').addEventListener('click',()=>{ this.fCod=''; this.fCat=''; g('ecom-flt-cod').value=''; g('ecom-flt-cat').value=''; this.render(); });
+    g('ecom-flt-custo').addEventListener('change',e=>{ this.fCustoPendente=e.target.checked; this.render(); });
+    g('ecom-flt-clear').addEventListener('click',()=>{ this.fCod=''; this.fCat=''; this.fCustoPendente=false; g('ecom-flt-cod').value=''; g('ecom-flt-cat').value=''; g('ecom-flt-custo').checked=false; this.render(); });
     g('ecom-add').addEventListener('click',()=>this.save());
     { const bg=g('ecom-add-gerar'); if(bg) bg.addEventListener('click',()=>{ this.gerarAposSalvar=true; this.save(); }); }
     g('ecom-cancel').addEventListener('click',()=>this.cancelEdit());
@@ -4316,7 +4341,68 @@ const ecom = {
     Object.keys(cats).sort((a,b)=>(labels[a]||a).localeCompare(labels[b]||b)).forEach(c=>{ o+=`<option value="${c}">${labels[c]||c} (${cats[c]})</option>`; });
     sel.innerHTML=o; sel.value=[].some.call(sel.options,x=>x.value===cur)?cur:''; this.fCat=sel.value; }, // BUILD 2026-08-08-F
   updateCount(){ const vis=this.itens.filter(it=>this.isVis(it)).length;
-    this._g('ecom-flt-count').textContent=(this.fCod||this.fCat)?`${vis} de ${this.itens.length} itens`:`${this.itens.length} itens no banco`; },
+    this._g('ecom-flt-count').textContent=(this.fCod||this.fCat||this.fCustoPendente)?`${vis} de ${this.itens.length} itens`:`${this.itens.length} itens no banco`;
+    const pend=this.itens.filter(it=>this.revisaoVencida(it)).length; const aviso=this._g('ecom-custo-resumo');
+    if(aviso){ aviso.className='custo-resumo'+(pend?' pendente':''); aviso.textContent=pend?`● ${pend} produto(s) com custo sem revisão válida (mais de 10 dias ou nunca conferido)`:'✓ Custos revisados nos últimos 10 dias'; } },
+
+  // BUILD 2026-11-11-A: a data de alteracao geral atualizado_em NAO serve de prova da revisao do custo.
+  // custo_revisado_em vem do banco: cadastro novo, alteracao real de custo ou confirmacao de conferencia.
+  revisaoVencida(it){ const d=it&&it.custo_revisado_em?new Date(it.custo_revisado_em).getTime():NaN;
+    return !Number.isFinite(d)||(Date.now()-d)>10*24*60*60*1000; },
+  revisaoData(it){ const d=it&&it.custo_revisado_em?new Date(it.custo_revisado_em):null;
+    return d&&Number.isFinite(d.getTime())?d.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}):'sem revisão'; },
+  revisaoDataHora(iso){ const d=iso?new Date(iso):null;
+    return d&&Number.isFinite(d.getTime())?d.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'; },
+  revisaoEstado(it){ if(!it||!it.custo_revisado_em) return 'pendente'; const d=new Date(it.custo_revisado_em).getTime();
+    if(!Number.isFinite(d)) return 'pendente'; const dias=Math.max(0,Math.floor((Date.now()-d)/86400000)); return dias===0?'hoje':dias+'d'; },
+  revisaoEscape(v){ return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); },
+  revisaoId:null, revisaoHistorico:[], revisaoBusy:false, revisaoMensagem:'', revisaoErro:'',
+  revisaoFechar(){ this.revisaoId=null; this.revisaoHistorico=[]; this.revisaoMensagem=''; this.revisaoErro=''; this.render(); },
+  async revisaoOpen(id){ if(this.revisaoId!=null&&String(this.revisaoId)===String(id)){ this.revisaoFechar(); return; }
+    const it=this.itens.find(x=>String(x.id)===String(id)); if(!it||!it.codigo) return;
+    this.revisaoId=id; this.revisaoHistorico=[]; this.revisaoMensagem=''; this.revisaoErro=''; this.render();
+    await this.revisaoCarregar(id); if(String(this.revisaoId)===String(id)) this.render(); },
+  async revisaoCarregar(id){ const it=this.itens.find(x=>String(x.id)===String(id)); if(!it) return;
+    try{ const r=await sb.from('ecom_custo_revisoes').select('tipo,custo_anterior,custo_novo,registrado_em').eq('produto_codigo',it.codigo).order('registrado_em',{ascending:false}).limit(30);
+      if(r.error) throw r.error; if(String(this.revisaoId)!==String(id)) return;
+      this.revisaoHistorico=r.data||[]; this.revisaoErro=''; }
+    catch(e){ if(String(this.revisaoId)!==String(id)) return; this.revisaoHistorico=[];
+      this.revisaoErro='Histórico indisponível: '+e.message+'. Verifique se o SQL CUSTO-01 foi aplicado.'; } },
+  revisaoMontar(){ const tb=this._g('ecom-tbody'); if(!tb||this.revisaoId==null) return;
+    const it=this.itens.find(x=>String(x.id)===String(this.revisaoId));
+    const linha=it?[...tb.querySelectorAll('tr[data-id]')].find(x=>String(x.dataset.id)===String(it.id)):null;
+    if(!linha) return;
+    const row=document.createElement('tr'); row.className='custo-rev-row'; const cel=document.createElement('td'); cel.colSpan=5; row.appendChild(cel); linha.after(row);
+    const hist=this.revisaoHistorico.length?this.revisaoHistorico.map(h=>{
+      const antigo=h.custo_anterior==null?'—':'R$ '+this.fmt(h.custo_anterior);
+      const novo='R$ '+this.fmt(h.custo_novo);
+      const tipo=h.tipo==='cadastro'?'Cadastro':h.tipo==='alteracao'?'Custo alterado':'Preço conferido';
+      return `<div class="custo-rev-line"><time>${this.revisaoDataHora(h.registrado_em)}</time><span>${tipo}</span><strong>${antigo} → ${novo}</strong></div>`;
+    }).join(''):'<div style="color:var(--emuted);padding:5px 0">Nenhuma revisão registrada.</div>';
+    cel.innerHTML=`<div class="custo-rev-box">
+      <div class="custo-rev-head"><div class="custo-rev-title">Atualizar custo NF · ${this.revisaoEscape(it.codigo)} · ${this.revisaoEscape([it.marca,it.modelo].filter(Boolean).join(' '))}</div><button type="button" class="rowbtn" id="ecom-rev-fechar">Fechar</button></div>
+      <div class="custo-rev-form"><div><label>Custo atual</label><div style="font-size:15px;font-weight:700">R$ ${this.fmt(it.custo)}</div></div>
+      <div><label for="ecom-rev-novo">Custo conferido (R$)</label><input id="ecom-rev-novo" class="ainput mono" type="number" min="0.01" step="0.01" style="width:122px" value="${Number(it.custo).toFixed(2)}" ${this.revisaoBusy?'disabled':''}></div>
+      <button type="button" class="addbtn" id="ecom-rev-salvar" ${this.revisaoBusy||this.revisaoErro?'disabled':''}>${this.revisaoBusy?'Salvando…':'Confirmar revisão'}</button>
+      <span style="font-size:11px;color:var(--emuted);padding-bottom:6px">Mesmo sem mudança no custo, a conferência reinicia os 10 dias.</span></div>
+      ${this.revisaoErro?`<div style="color:var(--ered);font-size:11px">${this.revisaoEscape(this.revisaoErro)}</div>`:''}
+      ${this.revisaoMensagem?`<div style="color:var(--eemerald);font-size:11px">${this.revisaoEscape(this.revisaoMensagem)}</div>`:''}
+      <div class="custo-rev-history"><strong>Histórico de preços de compra</strong>${hist}</div>
+      </div>`;
+    cel.querySelector('#ecom-rev-fechar').addEventListener('click',()=>this.revisaoFechar());
+    const salvar=cel.querySelector('#ecom-rev-salvar'); if(salvar) salvar.addEventListener('click',()=>this.revisaoSalvar(it.id)); },
+  async revisaoSalvar(id){ if(this.revisaoBusy||this.revisaoErro) return;
+    const it=this.itens.find(x=>String(x.id)===String(id)); const campo=this._g('ecom-rev-novo'); if(!it||!campo) return;
+    const valor=Number(campo.value); if(!campo.value.trim()||!Number.isFinite(valor)||valor<=0||Math.abs(valor*100-Math.round(valor*100))>0.00001){
+      alert('Informe um custo NF válido, maior que zero, com até duas casas decimais.'); campo.focus(); return; }
+    this.revisaoBusy=true; this.revisaoMensagem='';
+    try{ const r=await sb.rpc('ecom_confirmar_custo',{p_codigo:it.codigo,p_custo_esperado:Number(it.custo),p_novo_custo:valor}); if(r.error) throw r.error;
+      const dados=Array.isArray(r.data)?r.data[0]:r.data; if(!dados||!dados.custo_revisado_em) throw new Error('Resposta de confirmação incompleta');
+      const mudou=Math.round(Number(it.custo)*100)!==Math.round(valor*100);
+      Object.assign(it,{custo:Number(dados.custo),custo_revisado_em:dados.custo_revisado_em});
+      await this.revisaoCarregar(id); this.revisaoMensagem=mudou?'✓ Custo atualizado e registrado no histórico.':'✓ Preço conferido e prazo de 10 dias renovado.';
+    }catch(e){ this.revisaoMensagem=''; alert('Não foi possível confirmar o custo: '+e.message+'\nNenhuma revisão foi marcada como concluída.'); }
+    finally{ this.revisaoBusy=false; this.render(); } },
 
   // ===== BUILD 2026-08-26-T · MIDIA DO CATALOGO (bucket produto-midia + ecom_produto_midia) =====
   midiaMap:{}, midiaCod:null, midiaItens:[], midiaUrls:{}, midiaBusy:false, midiaWired:false,
@@ -4470,18 +4556,19 @@ const ecom = {
       const linhaPrincipal=_det||it.produto;
       const modeloSub=_det?`<div class="emodel">${it.produto}</div>`:'';
       const codCell=it.codigo?`<span style="font-family:var(--emono);font-size:12px;color:var(--eteal);background:var(--epanel2);border:1px solid var(--eborder);border-radius:5px;padding:2px 7px;white-space:nowrap">${it.codigo}</span>`:`<span style="font-size:10px;color:var(--eamber)">sem código</span>`;
-      return `<tr data-cod="${it.codigo||''}">
+      const vencida=this.revisaoVencida(it);
+      return `<tr data-id="${it.id}" data-cod="${it.codigo||''}">
         <td>${codCell}</td>
         <td class="l"><span class="eprod">${linhaPrincipal}</span>${modeloSub}</td>
         <td style="white-space:nowrap">${this.pesoCell(it)}</td>
         <td>${this.fmt(it.custo)}</td>
-        <td><div class="acts"><button class="rowbtn ecom-midia-btn" data-cod="${it.codigo||''}">Mídia${this.midiaBadge(it.codigo)}</button><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
+        <td><div class="acts"><button class="rowbtn ecom-custo-btn ${vencida?'em-atraso':''}" data-id="${it.id}" title="Última revisão: ${this.revisaoData(it)}">Atualizar <span class="custo-data">${this.revisaoEstado(it)}</span></button><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
       </tr>`; }).join('');
     tb.innerHTML=rows||'<tr><td class="l" colspan="5" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
     tb.querySelectorAll('.ecom-edit').forEach(b=>b.addEventListener('click',()=>this.edit(b.dataset.id)));
     tb.querySelectorAll('.ecom-del').forEach(b=>b.addEventListener('click',()=>this.del(b.dataset.id)));
-    tb.querySelectorAll('.ecom-midia-btn').forEach(b=>b.addEventListener('click',()=>this.midiaOpen(b.dataset.cod)));
-    this.updateCount(); this.midiaMount(); },
+    tb.querySelectorAll('.ecom-custo-btn').forEach(b=>b.addEventListener('click',()=>this.revisaoOpen(b.dataset.id)));
+    this.updateCount(); this.midiaMount(); this.revisaoMontar(); },
 
   sentinela(){ const box=this._g('ecom-sentinela'); if(!box) return; const itens=this.itens||[]; const probs=[];
     const ssdInc=itens.filter(it=>it.categoria==='SSD'&&(!it.capacidade||!it.interface));
