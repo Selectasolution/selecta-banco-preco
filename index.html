@@ -1,3 +1,4 @@
+<!-- BUILD 2026-11-11-B | CATALOGO: botao somente 'Atualizar' vermelho se revisao vencida, somente 'Atualizado' verde se vigente; remove nota de 10 dias do painel. Sem SQL adicional, sem mudanca de persistencia ou funcoes. -->
 <!-- BUILD 2026-11-11-A | CATALOGO: botao Midia vira Atualizar (revisao de custo NF), vermelho sem revisao ou apos 10 dias, historico auditavel, filtro de pendentes; custo alterado via Editar tambem rastreado pelo trigger SQL separado. Nao modifica canais/financeiro/rastreios. SQL CUSTO-01 obrigatorio ANTES deste HTML. -->
 <!-- BUILD 2026-11-08-B | RASTREIOS LISTA UNICA: Enviadas sem filtros internos nem notas; selo permanece 'Enviado' azul/verde conforme confirmacao manual Curitiba; layout compacto e operacoes preservados. -->
 <!-- BUILD 2026-11-08-A | RASTREIOS LAYOUT COMPACTO: linhas profissionais em duas faixas, sem SKU/valor, controles preservados; destaque da atualizacao ML; sem SQL/Edge novos. -->
@@ -542,10 +543,8 @@
   #tab-catalogo .custo-resumo.pendente{color:#fca5a5;font-weight:600}
   #tab-catalogo .custo-filtro{display:inline-flex;gap:5px;align-items:center;color:var(--emuted);font-size:12px;cursor:pointer;margin:0 0 6px}
   #tab-catalogo .custo-filtro input{accent-color:var(--ered)}
-  #tab-catalogo .rowbtn.ecom-custo-btn{min-width:113px;display:inline-flex;align-items:center;justify-content:center;gap:6px;color:#a7f3d0;border-color:#256d59;background:#0b2b25}
-  #tab-catalogo .rowbtn.ecom-custo-btn .custo-data{font-size:10px;opacity:.75;font-family:var(--emono)}
+  #tab-catalogo .rowbtn.ecom-custo-btn{min-width:90px;display:inline-flex;align-items:center;justify-content:center;color:#a7f3d0;border-color:#256d59;background:#0b2b25;font-weight:600}
   #tab-catalogo .rowbtn.ecom-custo-btn.em-atraso{color:#fecaca;background:#401b24;border-color:#ef4444;font-weight:700}
-  #tab-catalogo .rowbtn.ecom-custo-btn.em-atraso .custo-data{opacity:1}
   #tab-catalogo tr.custo-rev-row>td{background:#101c2c;padding:8px 10px;text-align:left;white-space:normal;font-family:inherit}
   #tab-catalogo .custo-rev-box{border:1px solid #2a4657;border-radius:9px;padding:12px 14px;background:#122034;max-width:850px}
   #tab-catalogo .custo-rev-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -4353,8 +4352,6 @@ const ecom = {
     return d&&Number.isFinite(d.getTime())?d.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}):'sem revisão'; },
   revisaoDataHora(iso){ const d=iso?new Date(iso):null;
     return d&&Number.isFinite(d.getTime())?d.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'; },
-  revisaoEstado(it){ if(!it||!it.custo_revisado_em) return 'pendente'; const d=new Date(it.custo_revisado_em).getTime();
-    if(!Number.isFinite(d)) return 'pendente'; const dias=Math.max(0,Math.floor((Date.now()-d)/86400000)); return dias===0?'hoje':dias+'d'; },
   revisaoEscape(v){ return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); },
   revisaoId:null, revisaoHistorico:[], revisaoBusy:false, revisaoMensagem:'', revisaoErro:'',
   revisaoFechar(){ this.revisaoId=null; this.revisaoHistorico=[]; this.revisaoMensagem=''; this.revisaoErro=''; this.render(); },
@@ -4383,8 +4380,7 @@ const ecom = {
       <div class="custo-rev-head"><div class="custo-rev-title">Atualizar custo NF · ${this.revisaoEscape(it.codigo)} · ${this.revisaoEscape([it.marca,it.modelo].filter(Boolean).join(' '))}</div><button type="button" class="rowbtn" id="ecom-rev-fechar">Fechar</button></div>
       <div class="custo-rev-form"><div><label>Custo atual</label><div style="font-size:15px;font-weight:700">R$ ${this.fmt(it.custo)}</div></div>
       <div><label for="ecom-rev-novo">Custo conferido (R$)</label><input id="ecom-rev-novo" class="ainput mono" type="number" min="0.01" step="0.01" style="width:122px" value="${Number(it.custo).toFixed(2)}" ${this.revisaoBusy?'disabled':''}></div>
-      <button type="button" class="addbtn" id="ecom-rev-salvar" ${this.revisaoBusy||this.revisaoErro?'disabled':''}>${this.revisaoBusy?'Salvando…':'Confirmar revisão'}</button>
-      <span style="font-size:11px;color:var(--emuted);padding-bottom:6px">Mesmo sem mudança no custo, a conferência reinicia os 10 dias.</span></div>
+      <button type="button" class="addbtn" id="ecom-rev-salvar" ${this.revisaoBusy||this.revisaoErro?'disabled':''}>${this.revisaoBusy?'Salvando…':'Confirmar revisão'}</button></div>
       ${this.revisaoErro?`<div style="color:var(--ered);font-size:11px">${this.revisaoEscape(this.revisaoErro)}</div>`:''}
       ${this.revisaoMensagem?`<div style="color:var(--eemerald);font-size:11px">${this.revisaoEscape(this.revisaoMensagem)}</div>`:''}
       <div class="custo-rev-history"><strong>Histórico de preços de compra</strong>${hist}</div>
@@ -4562,7 +4558,7 @@ const ecom = {
         <td class="l"><span class="eprod">${linhaPrincipal}</span>${modeloSub}</td>
         <td style="white-space:nowrap">${this.pesoCell(it)}</td>
         <td>${this.fmt(it.custo)}</td>
-        <td><div class="acts"><button class="rowbtn ecom-custo-btn ${vencida?'em-atraso':''}" data-id="${it.id}" title="Última revisão: ${this.revisaoData(it)}">Atualizar <span class="custo-data">${this.revisaoEstado(it)}</span></button><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
+        <td><div class="acts"><button class="rowbtn ecom-custo-btn ${vencida?'em-atraso':''}" data-id="${it.id}" title="Última revisão: ${this.revisaoData(it)}">${vencida?'Atualizar':'Atualizado'}</button><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
       </tr>`; }).join('');
     tb.innerHTML=rows||'<tr><td class="l" colspan="5" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
     tb.querySelectorAll('.ecom-edit').forEach(b=>b.addEventListener('click',()=>this.edit(b.dataset.id)));
