@@ -1,3 +1,4 @@
+<!-- BUILD 2026-11-15-COM03 | POLITICA DE PRECIFICACAO ATIVA: imposto PROVISIONADO 7,50% em ML + Shopee, sem colchao para novos precos, antecipacao MP 5,00% somente ML sobre 100% do liquido previsto de venda apos comissao/fixa/frete e rebates; piso minimo 10%. Shopee NAO tem antecipacao MP, mas conserva tarifas proprio canal. Historicos e motores financeiros de vendas antigas preservados. Shopee relatórios mantem reserva apenas para vendas ate 14/11/2026. Zero SQL/Edge/cron. Validacao matematica obrigatoria antes de publicar. -->
 <!-- BUILD 2026-11-15-MP02 | Antecipacao MP FIXA 4,50% (media operacional declarada pelo usuario), aplicada a 100% do liquido ML previsto. Parametro compartilhado por todas as sessoes desta versao, sem localStorage ou edicao por usuario. Precificacao ML usa motor unico _simMargem (analise, controle, cadastro, exportacao, price_to_win), preservando venda historica, Shopee, Financeiro, Edge, SQL e cron. Custo e PROJECAO e nao tarifa real conciliada. -->
 <!-- BUILD 2026-11-15-MP01 | ML: provisionamento de antecipação 100% do liquido previsto A LIBERAR (preco - comissao - fixa - frete + estorno de campanha). Taxa efetiva percentual inserida pelo usuario, nao presumida; guardada apenas NESTE navegador (ate parametrizacao auditada no Supabase). Com taxa ausente o gate de margem do ML fica pendente/bloqueado; Shopee, vendas historicas, Financeiro/Termometro e banco INTACTOS. Entrada no motor unico _simMargem (Cadastro, Controle, Analise, export e price_to_win), linha de detalhamento no popover, visibilidade nos exports. Sem SQL ou Edge. -->
 <!-- BUILD 2026-11-11-USD | SELECTA 97: cadastro em USD, valor de reposicao diario em BRL/PTAX e revisao manual USD em 10 dias. Margem ML/Shopee e Compras do Dia usam reposicao PTAX; custos/precos historicos das vendas nao sao revalorados. REQUER SQL USD-02 + Edge ml-orders 1.5.6.2 conferida, testada e publicada em ordem controlada. Imposto 4%, colchao 6% e piso 10% preservados. -->
@@ -2693,15 +2694,16 @@
     <!-- PARÂMETROS -->
     <div class="ecard"><!-- BUILD 2026-08-26-E: recolhido -->
       <details id="ecom-param-details">
-      <summary style="cursor:pointer;list-style:none;user-select:none"><h3 style="display:inline;margin:0">Parâmetros comerciais <span style="font-weight:400;font-size:11px;color:var(--emuted2)">· clique para abrir</span> <span id="ecom-mp-status-mini" style="font-weight:600;font-size:10.5px;color:var(--eemerald)">· MP 4,50% fixo</span></h3></summary>
+      <summary style="cursor:pointer;list-style:none;user-select:none"><h3 style="display:inline;margin:0">Parâmetros comerciais <span style="font-weight:400;font-size:11px;color:var(--emuted2)">· clique para abrir</span> <span id="ecom-mp-status-mini" style="font-weight:600;font-size:10.5px;color:var(--eemerald)">· MP 5,00% fixo</span></h3></summary>
       <div class="param-grid" style="margin-top:12px">
         <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Clássico (fallback) · % da venda</label><div class="field-row"><input class="num" id="ecom-com-classico" type="number" step="0.5" value="13"><span class="unit">%</span></div></div>
         <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Premium (fallback) · % da venda</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
         <div class="efield"><label title="Provisão comercial de segurança para precificação futura; não é alíquota PGDAS-D homologada nem altera vendas já gravadas.">Provisão tributária para preços (%)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" min="7.50" step="0.01" value="7.50" title="Mínimo comercial de 7,50%; aumento permitido quando necessário"><span class="unit">%</span></div></div>
         <div class="efield"><label>Outros custos · % da venda</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
-        <div class="efield"><label>Colchão · % da venda</label><div class="field-row"><input class="num" id="ecom-colchao" type="number" step="0.5" value="6"><span class="unit">%</span></div></div>
-        <div class="efield"><label title="Provisão comercial fixa de 4,50% sobre 100% do líquido previsto para liberação no Mercado Pago; não incide sobre a NF-e nem substitui a tarifa real a conciliar.">Antecipação MP · taxa fixa (% do líquido)</label><div class="field-row"><input class="num" id="ecom-mp-antecipacao" type="number" value="4.50" readonly aria-readonly="true" aria-describedby="ecom-mp-status" title="4,50% fixos nesta versão; somente leitura" style="opacity:.84;cursor:default"><span class="unit">%</span></div></div>
-        <div class="efield" style="grid-column:1/-1"><div id="ecom-mp-status" style="font-size:11px;color:var(--eemerald)">4,50% fixos sobre 100% do líquido ML projetado para antecipação.</div><div style="margin-top:3px;font-size:10.5px;color:var(--emuted2)">Média informada pela Selecta para precificação. É uma provisão, não tarifa efetiva reconciliada; vendas históricas e registros do banco não são alterados.</div></div>
+        <!-- COM03: id preservado para compatibilidade do motor antigo; reserva excluida da precificacao. -->
+        <input id="ecom-colchao" type="hidden" value="0">
+        <div class="efield"><label title="Provisão comercial fixa de 5,00% sobre 100% do líquido previsto para liberação no Mercado Pago; não incide sobre a NF-e nem substitui a tarifa real a conciliar.">Antecipação MP · taxa fixa (% do líquido)</label><div class="field-row"><input class="num" id="ecom-mp-antecipacao" type="number" value="5.00" readonly aria-readonly="true" aria-describedby="ecom-mp-status" title="5,00% fixos nesta versão; somente leitura" style="opacity:.84;cursor:default"><span class="unit">%</span></div></div>
+        <div class="efield" style="grid-column:1/-1"><div id="ecom-mp-status" style="font-size:11px;color:var(--eemerald)">5,00% fixos sobre 100% do líquido ML projetado para antecipação.</div><div style="margin-top:3px;font-size:10.5px;color:var(--emuted2)">Média informada pela Selecta para precificação. É uma provisão, não tarifa efetiva reconciliada; vendas históricas e registros do banco não são alterados.</div></div>
       </div>
       </details>
     </div>
@@ -4190,11 +4192,11 @@ const selectaUSD = {
   rotulo(){ return this.valido()?('PTAX '+this.data.split('-').reverse().join('/')+' · R$ '+Number(this.ptax).toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4})):('⚠ '+(this.erro||'PTAX indisponível')); }
 };
 // BUILD MP02 — política comercial: antecipamos 100% do líquido previsto do ML.
-// Taxa fixa de 4,50% informada pela Selecta em 15/11/2026, PROVISÃO até conciliação do MP.
+// Taxa fixa de 5,00% informada pela Selecta em 15/11/2026, PROVISÃO até conciliação do MP.
 // Base: preço efetivo - comissão - fixa - frete + estorno ML conhecido. Nunca sobre a NF-e.
 // Sem localStorage: todos os navegadores desta versão aplicam a MESMA taxa.
 const selectaMP = Object.freeze({
-  percentual: 4.50,
+  percentual: 5.00,
   taxaPct(){ return this.percentual; },
   custo(liquido){
     const base=Number(liquido);
@@ -4203,6 +4205,7 @@ const selectaMP = Object.freeze({
   }
 });
 const SELECTA_TAXA_PRECIFICACAO = Object.freeze({ percentual:7.50, fracao:0.0750, vigenteDesde:"2026-11-14", provisoria:true });
+const SELECTA_SEM_COLCHAO_DESDE = '2026-11-15'; // fronteira comercial, nao altera registros historicos
 const ecom = {
   PESOS: [['ate300','≤300g'],['f301_500','301–500g'],['f501_1000','501g–1kg'],['f1001_2000','1–2kg']],
   // ZONAS/mtx/repFactor aposentados em 02/07/2026 — modelo FRETE_TBL oficial ML
@@ -4265,7 +4268,7 @@ const ecom = {
   familia(p){ return ((p||'').trim().split(/\s+/)[0]||'').toUpperCase(); },
 
   params(){ return { comC:this._n('ecom-com-classico'), comP:this._n('ecom-com-premium'),
-    imp:this.impostoPrecificacaoPct(), outros:this._n('ecom-outros'), colchao:this._n('ecom-colchao') }; },
+    imp:this.impostoPrecificacaoPct(), outros:this._n('ecom-outros'), colchao:0 }; },
 
   // Deriva peso efetivo em gramas a partir do produto.
   // Ordem: (1) override manual frete_banda_efetiva; (2) peso_g direto; (3) fallback pela faixa antiga.
@@ -5939,21 +5942,23 @@ const ecomFinanceiro={
   comprasDia(itens){ const box=this._g('fn-compras-dia'); if(!box) return;
     const V=ecomVendas, vivos=(itens||[]).filter(v=>!v.ocorrencia);
     if(!vivos.length){ box.innerHTML='<div class="ph">nenhum pedido a enviar</div>'; return; }
-    const soma=arr=>{ let custo=0, sc=0, colchao=0, sp=0, luc=0, pend=0; arr.forEach(v=>{ const q=Math.max(1,Math.round(+v.quantidade||1));
+    const soma=arr=>{ let custo=0, sc=0, antecipacao=0, luc=0, pend=0;
+      arr.forEach(v=>{ const q=Math.max(1,Math.round(+v.quantidade||1));
         const custoHoje=this._custosHoje&&v.produto_codigo?this._custosHoje[v.produto_codigo]:null;
         if(custoHoje==null) sc++; else custo+=custoHoje*q;
-        const preco=v.preco_venda==null?NaN:Number(v.preco_venda);
-        if(!Number.isFinite(preco)||preco<=0) sp++; else colchao+=Math.round(preco*q*this.FIXOS.COLCHAO*100)/100;
-        const l=custoHoje==null?null:this.lucroPedido(Object.assign({},v,{custo_unitario:custoHoje})); if(l==null) pend++; else luc+=l; });
-      return {custo:custo,sc:sc,colchao:colchao,sp:sp,luc:luc,pend:pend,u:V.unid(arr)}; };
-    let h='<div class="fn-dia-head"><span>#</span><span>envio</span><span>un.</span><span>compra</span><span>colchão</span><span>lucro do dia</span><span></span></div>';
+        const calc=custoHoje==null?null:this.projecaoPedido(Object.assign({},v,{custo_unitario:custoHoje}));
+        if(calc==null) pend++; else { luc+=calc.lucro; antecipacao+=calc.antecipacao; }
+      });
+      return {custo,sc,antecipacao,luc,pend,u:V.unid(arr)};
+    };
+    let h='<div class="fn-dia-head"><span>#</span><span>envio</span><span>un.</span><span>compra</span><span>antec. MP</span><span>lucro previsto</span><span></span></div>';
     h+=V.porDia(vivos).map((g,ix)=>{ const x=soma(g.itens);
       return '<div class="fn-dia">'
         +'<span class="ix">'+(ix+1)+'.</span>'
         +'<span class="dia" style="font-weight:700;color:'+V.diaCor(g.k)+'">'+V.diaLabel(g.k)+V.diaTag(g.k)+'</span>'
         +'<span class="un"><span class="k">un.</span><span>'+x.u+'</span></span>'
         +'<span class="cp"><span class="k">compra</span><span style="color:var(--eteal);font-weight:600">R$ '+this.fmt(x.custo)+(x.sc>0?' <span style="color:var(--eamber)" title="'+x.sc+' item(ns) sem USD ou PTAX v\u00e1lida \u2014 valor parcial">*</span>':'')+'</span></span>'
-        +'<span class="ch"><span class="k">colchão</span><span style="color:var(--eamber)" title="Reserva de 6% sobre o valor de venda dos pedidos deste dia">R$ '+this.fmt(x.colchao)+(x.sp>0?' <span title="'+x.sp+' item(ns) sem pre\u00e7o de venda \u2014 reserva subestimada">*</span>':'')+'</span></span>'
+        +'<span class="ch"><span class="k">antec. MP</span><span style="color:var(--eamber)" title="Provisão de 5% sobre o líquido previsto do ML nas vendas desde 15/11/2026; antes disso, projeções usam a regra histórica">R$ '+this.fmt(x.antecipacao)+'</span></span>' 
         +'<span class="lc"><span class="k">lucro do dia</span><span style="color:'+(x.luc>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(x.luc)+(x.pend>0?' <span style="color:var(--eamber)" title="'+x.pend+' item(ns) sem comiss\u00e3o ou custo atualizado \u2014 fora da soma">*</span>':'')+'</span></span>'
         +'<button class="vbtn sm pdf" data-pdfdia="'+(g.k||'sem')+'" title="PDF para o fornecedor: itens deste dia de envio (descri\u00e7\u00e3o + quantidade, sem pre\u00e7o)">\ud83d\udcc4 PDF</button></div>'; }).join('');
     box.innerHTML=h;
@@ -5989,11 +5994,24 @@ const ecomFinanceiro={
       this.renderList(itens); this.comprasDia(itens);
     }catch(e){ this.parkForm(); box.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; const fx=this._g('fn-compras-dia'); if(fx) fx.innerHTML='<span style="color:var(--ered)">erro: '+e.message+'</span>'; }
   },
-  // BUILD 2026-08-25-H: lucro real de UM pedido — copia fiel do recalc() (receita - taxas ML - custo - colchao 6% - imposto 4%); null se faltar comissao ou custo
-  lucroPedido(v){ const com=v.comissao_valor!=null?Number(v.comissao_valor):null, cus=v.custo_unitario!=null?Number(v.custo_unitario):null; if(com==null||cus==null||isNaN(com)||isNaN(cus)) return null;
-    const P=Number(v.preco_venda)||0, Q=Number(v.quantidade)||1, tar=Number(v.tarifa_fixa_valor)||0, fre=((v.frete_onus||'vendedor')==='vendedor')?(Number(v.frete_valor)||0):0;
-    const r2=x=>Math.round(x*100)/100; const rec=P*Q, tax=com+tar+fre, cusT=cus*Q, imp=r2(rec*this.FIXOS.IMPOSTO), colch=r2(rec*this.FIXOS.COLCHAO); // BUILD 2026-08-26-K: FIXOS em vez de literais
-    return r2(rec-tax-cusT-colch-imp); },
+  // COM03: projeção operacional apenas. Datas anteriores preservam 4% e reserva histórica 6%; novas vendas 7,5%, sem reserva, MP 5% do líquido previsto.
+  // Nunca grava em ecom_vendas. O resultado efetivo depende da conciliação MP e do cálculo server-side ainda em auditoria.
+  projecaoPedido(v){
+    const com=v.comissao_valor!=null?Number(v.comissao_valor):null, cus=v.custo_unitario!=null?Number(v.custo_unitario):null;
+    if(com==null||cus==null||!Number.isFinite(com)||!Number.isFinite(cus)) return null;
+    const P=Number(v.preco_venda), Q=Number(v.quantidade)||1,
+      tar=Number(v.tarifa_fixa_valor)||0,
+      fre=((v.frete_onus||'vendedor')==='vendedor')?(Number(v.frete_valor)||0):0;
+    if(!(P>0)||!(Q>0)) return null;
+    const r2=x=>Math.round(x*100)/100, receita=P*Q, tarifas=com+tar+fre;
+    const nova=String(v.data_solicitacao||'').slice(0,10)>=SELECTA_SEM_COLCHAO_DESDE;
+    const imposto=r2(receita*(nova?SELECTA_TAXA_PRECIFICACAO.fracao:this.FIXOS.IMPOSTO));
+    const reserva=nova?0:r2(receita*this.FIXOS.COLCHAO);
+    const antecipacao=nova?selectaMP.custo(Math.max(0,receita-tarifas)):0;
+    const lucro=r2(receita-tarifas-cus*Q-imposto-reserva-antecipacao);
+    return {lucro,antecipacao,imposto,reserva,liquidoMlPrevisto:Math.max(0,receita-tarifas),nova};
+  },
+  lucroPedido(v){ const p=this.projecaoPedido(v); return p==null?null:p.lucro; },
   renderList(itens){ this.parkForm(); const box=this._g('fn-list');
     if(!itens.length){ box.innerHTML='<div class="ph">sem pedidos a fechar</div>'; return; }
     const cat=this._cat||{};
@@ -7096,10 +7114,10 @@ const ecomAlvo={
     const lista=_flt?rows.filter(r=>String(r.an.produto_codigo||'').toLowerCase().includes(_flt)):rows;
     if(!lista.length) return {erro:'nenhum an\u00fancio para exportar'+(_flt?(' com o filtro \u00ab'+String(this.anunciosFiltro).trim()+'\u00bb'):'')};
     const prodMap={}; (ecom.itens||[]).forEach(p=>{ prodMap[String(p.codigo).toUpperCase()]=p; });
-    const impPct=ecom.impostoPrecificacaoPct(), colPct=(ecom._n?ecom._n('ecom-colchao'):6);
+    const impPct=ecom.impostoPrecificacaoPct(), colPct=0; // COM03: sem reserva comercial
     let md='# Controle de An\u00fancios \u2014 export\n\n'
       +'- gerado: '+new Date().toLocaleString('pt-BR')+'\n'
-      +'- reputa\u00e7\u00e3o: '+rep+' \u00b7 imposto '+impPct+'% \u00b7 colch\u00e3o '+colPct+'% s/ venda \u00b7 antecipa\u00e7\u00e3o MP '+(selectaMP.taxaPct()==null?'SEM TAXA':selectaMP.taxaPct().toFixed(2)+'% do l\u00edquido')+' (m\u00e9dia fixa declarada, pendente de concilia\u00e7\u00e3o) \u00b7 piso 10%\n'
+      +'- reputa\u00e7\u00e3o: '+rep+' \u00b7 imposto '+impPct+'% \u00b7 sem colch\u00e3o \u00b7 antecipa\u00e7\u00e3o MP '+(selectaMP.taxaPct()==null?'SEM TAXA':selectaMP.taxaPct().toFixed(2)+'% do l\u00edquido')+' (m\u00e9dia fixa declarada, pendente de concilia\u00e7\u00e3o) \u00b7 piso 10%\n'
       +'- an\u00fancios: '+lista.length+' de '+rows.length+(_flt?(' (filtro \u00ab'+String(this.anunciosFiltro).trim()+'\u00bb)'):'')+'\n'
       +'- margem = motor do app (comiss\u00e3o e frete AFERIDOS DO ML por an\u00fancio quando lidos — origem "ML hh:mm"; sen\u00e3o comiss\u00e3o da categoria \u00d7 FRETE_TBL \u00d7 reputa\u00e7\u00e3o — origem "tabela"; promo\u00e7\u00e3o vigente governa; estorno de campanha quando analisado)\n\n';
     lista.forEach(row=>{ const an=row.an;
@@ -7122,7 +7140,7 @@ const ecomAlvo={
         const comOrigem=this._comOrigemLabel(r,prod); // BUILD 2026-09-15-L
         md+='- margem (app): **'+pct.toFixed(1)+'%** \u00b7 lucro R$ '+fR(r.margem)+' \u00b7 '+(pct>=10?'LIBERADO':'NEGADO \u2014 abaixo do piso')+'\n'
           +(dvX.estado==='div'?('- \u26a0 REGISTRO \u2260 ML: margem calculada sobre o registro do app, n\u00e3o sobre o pre\u00e7o do ML ('+dvX.itens.map(d=>String(d.tipo).toLowerCase()+' no ML '+(d.ml==null?'\u2014':d.ml)+' \u00b7 no app '+(d.app==null?'\u2014':d.app)).join(' / ')+') \u2014 n\u00e3o usar para decis\u00e3o at\u00e9 corrigir pelo Editar\n'):'')
-          +'- detalhes: reposi\u00e7\u00e3o PTAX R$ '+fR(selectaUSD.custo(prod))+' \u00b7 US$ '+fR(prod.custo_usd)+' \u00b7 comiss\u00e3o '+(r.comPct*100).toFixed(2)+'% ('+comOrigem+')'+(r.comFixa>0?(' \u00b7 tarifa fixa R$ '+fR(r.comFixa)):'')+' \u00b7 frete R$ '+fR(r.frete)+' ('+this._freteOrigemLabel(r)+')'+(r.pesoMl!=null?(' \u00b7 peso ML '+Math.round(r.pesoMl)+' g'):'')+' \u00b7 colch\u00e3o R$ '+fR(praticado*colPct/100)+' · líquido ML estimado R$ '+fR(r.liquidoMlPrevisto)+' · antecip. MP R$ '+fR(r.antecipacaoMp)+(r.estorno>0?(' \u00b7 estorno campanha +R$ '+fR(r.estorno)):'')+'\n';
+          +'- detalhes: reposi\u00e7\u00e3o PTAX R$ '+fR(selectaUSD.custo(prod))+' \u00b7 US$ '+fR(prod.custo_usd)+' \u00b7 comiss\u00e3o '+(r.comPct*100).toFixed(2)+'% ('+comOrigem+')'+(r.comFixa>0?(' \u00b7 tarifa fixa R$ '+fR(r.comFixa)):'')+' \u00b7 frete R$ '+fR(r.frete)+' ('+this._freteOrigemLabel(r)+')'+(r.pesoMl!=null?(' \u00b7 peso ML '+Math.round(r.pesoMl)+' g'):'')+' · líquido ML estimado R$ '+fR(r.liquidoMlPrevisto)+' · antecip. MP R$ '+fR(r.antecipacaoMp)+(r.estorno>0?(' \u00b7 estorno campanha +R$ '+fR(r.estorno)):'')+'\n';
         if(prod.estoque_atual!=null) md+='- estoque (cat\u00e1logo): '+prod.estoque_atual+' un.\n';
         // BUILD 2026-10-16-B: margem no price_to_win (substitui margem_alvo do dossie SQL) — mesmo motor _simMargem, preco cheio, sem estorno; frete da faixa do ptw quando o ML ja declarou
         { const sn=(this.snapAtual||{})[this._normMlb(an.anuncio_mlb)]||null; const ptw=(sn&&sn.price_to_win!=null)?+sn.price_to_win:null;
@@ -7172,7 +7190,7 @@ const ecomAlvo={
     const selo=pct>=10?'<b style="color:var(--eemerald)">✔ LIBERADO</b>':(st.override?'<b style="color:var(--eamber)">⚠ LIBERAÇÃO ABAIXO DO PISO</b>':'<b style="color:var(--ered)">✖ NEGADO</b>');
     box.innerHTML='<b style="color:'+cor+';font-size:14px">'+pct.toFixed(1).replace('.',',')+'%</b>'
       +'<span style="color:'+cor+'">'+F(r.margem)+' líq.</span>'+selo
-      +'<span class="faint" style="font-size:11px;color:var(--emuted2)">frete '+F(r.frete)+' · comissão '+(r.comPct*100).toFixed(1).replace('.',',')+'% (tabela — anúncio ainda sem leitura do ML) · líquido ML '+F(r.liquidoMlPrevisto)+' · antecipação MP '+F(r.antecipacaoMp)+' (4,50% fixos sobre o líquido, provisão)</span>'; // BUILD 2026-09-15-L
+      +'<span class="faint" style="font-size:11px;color:var(--emuted2)">frete '+F(r.frete)+' · comissão '+(r.comPct*100).toFixed(1).replace('.',',')+'% (tabela — anúncio ainda sem leitura do ML) · líquido ML '+F(r.liquidoMlPrevisto)+' · antecipação MP '+F(r.antecipacaoMp)+' (5,00% fixos sobre o líquido, provisão)</span>'; // BUILD 2026-09-15-L
     setBtn(st.ok);
   },
   // BUILD 2026-10-16-A: trava do piso no Cadastro de anuncio — MESMAS zonas do Editar do Controle: >=10 grava · 5..10 so o dono (checkbox + motivo + 2 cliques) · <5 negado absoluto
@@ -7235,7 +7253,7 @@ const ecomAlvo={
     const pr={ comC:13, comP:17,
       imp:(typeof ecom!=='undefined'&&ecom.impostoPrecificacaoPct?ecom.impostoPrecificacaoPct():SELECTA_TAXA_PRECIFICACAO.percentual),
       outros:(typeof ecom!=='undefined'?(ecom._n?ecom._n('ecom-outros'):0):0),
-      colchao:(typeof ecom!=='undefined'?(ecom._n?ecom._n('ecom-colchao'):6):6) };
+      colchao:0 }; // COM03: margem liquida de reserva; nenhum desconto hipotetico
     const ml=this._custosMlDe(an,preco,tipo);
     const comPct=(ml.com!=null)?ml.com:((typeof ecom!=='undefined' && ecom.comPctDe)?ecom.comPctDe(prod.categoria,tipo,pr):((tipo==='premium'?pr.comP:pr.comC)/100));
     const t=comPct+pr.imp/100+pr.outros/100;
@@ -7253,14 +7271,14 @@ const ecomAlvo={
     }
     const P=+preco;
     const custoML=P*t+fr+ml.comFixa;
-    const colchao=P*pr.colchao/100; const custoTotal=custo+colchao; // USD-02: reposicao PTAX; colchao sobre a VENDA
+    const custoTotal=custo; // COM03: reposicao PTAX; sem colchao (reserva nao e despesa)
     const est=(+estorno>0)?+estorno:0; // BUILD 2026-08-26-K
     // MP01: líquido liberável = preço - despesas do próprio Mercado Livre + estorno de tarifa ML.
-    // NÃO retirar imposto, colchão, custo do produto ou "outros custos" desta base: são desembolsos da Selecta.
+    // NÃO retirar imposto, custo do produto ou outros custos desta base: o MP antecipa o liquido do ML.
     // Frete integra as tarifas ML e é abatido só uma vez. Estorno de campanha comprovado repõe o líquido.
     const liquidoMlPrevisto=Math.max(0,P-(P*comPct+ml.comFixa+fr)+est);
     const antecipacaoMp=selectaMP.custo(liquidoMlPrevisto);
-    const margem=P-custoML-custoTotal+est-antecipacaoMp;
+    const margem=Math.round((P-custoML-custoTotal+est-antecipacaoMp+Number.EPSILON)*100)/100; // COM03: margem em centavos antes do piso de 10%
     return {ok:true,margem,margemPct:P>0?margem/P:0,comPct,frete:fr,estorno:est,
       liquidoMlPrevisto,antecipacaoMp,antecipacaoPct:selectaMP.taxaPct(),
       comFixa:ml.comFixa,comOrig:ml.comOrig,freteOrig,custosEm:ml.em,pesoMl:ml.pesoMl,pesoUsado,tarifaLida:ml.tarifaLida}; // BUILD 2026-09-15-L
@@ -7343,7 +7361,7 @@ const ecomAlvo={
         const freteOrigem=this._freteOrigemLabel(efet);
         const pesoCad=(typeof ecom!=='undefined'&&ecom.pesoEfetivoG)?ecom.pesoEfetivoG(gate.prod):null;
         const pesoLinha=(efet.pesoMl!=null&&pesoCad!=null&&Math.abs(efet.pesoMl-pesoCad)>=1)?('<span class="k">peso</span><span class="vv">cad. '+Math.round(pesoCad)+' g \u00b7 ML considera '+Math.round(efet.pesoMl)+' g</span>'):'';
-        const colchaoPct=(typeof ecom!=='undefined'&&ecom._n)?ecom._n('ecom-colchao'):6;
+        const colchaoPct=0; // COM03: excluido da margem comercial
         const impPct=(typeof ecom!=='undefined'&&ecom.impostoPrecificacaoPct)?ecom.impostoPrecificacaoPct():SELECTA_TAXA_PRECIFICACAO.percentual;
         elMeta.innerHTML='<div class="meta-grid">'
           +'<span class="vig">vigente: '+(promoAtiva?'promoção':'preço cheio')+'</span>'
@@ -7356,7 +7374,6 @@ const ecomAlvo={
           +'<span class="k">líquido ML estimado (base MP)</span><span class="vv">R$ '+this._fmtBR(efet.liquidoMlPrevisto)+'</span>'
           +'<span class="k">antecipação MP ('+efet.antecipacaoPct.toFixed(2)+'% do líquido)</span><span class="vv">− R$ '+this._fmtBR(efet.antecipacaoMp)+'</span>'
           +pesoLinha
-          +'<span class="k">colchão '+colchaoPct+'% s/ venda</span><span class="vv">R$ '+this._fmtBR((promoAtiva?promoVal:gate.preco)*colchaoPct/100)+'</span>'
           +'</div>';
       } else {
         elMeta.innerHTML='<div class="meta-grid"><span class="k">'+((efet&&efet.reason)||'—')+'</span></div>';
@@ -7635,9 +7652,9 @@ const ecomAlvo={
     const rep=(typeof ecom!=='undefined'&&ecom.reputacao)?ecom.reputacao:'verde';
     const r=this._simMargem(prod,+preco,tipo,rep);
     if(!r.ok) return r;
-    const colch=(typeof ecom!=='undefined'&&ecom._n)?ecom._n('ecom-colchao'):6;
+    const colch=0; // COM03: compatibilidade de espelho legado
     const custo=selectaUSD.custo(prod)||0;
-    const margem=r.margem+custo*colch/100; // remove o colchão: espelho ML (comissão real + frete + imposto + custo NF)
+    const margem=r.margem; // COM03: fonte unica _simMargem ja sem reserva
     const P=+preco;
     return {ok:true, recebe:P-P*r.comPct-r.frete, margem, pct:P>0?margem/P*100:0, frete:r.frete, comPct:r.comPct};
   },
@@ -10546,7 +10563,7 @@ const shopeeTab={
   // BUILD 2026-09-15-A · paridade com o ML (reconstrucao do 26-W orfao sobre a base 11-C)
   loaded:false, subtab:'alvo', taxas:[], anuncios:[], custos:{}, vendas:[], alteracoes:[], lido:{},
   mes:null, mesRl:null, editId:null, ctlEditId:null, prodAl:null, prodVd:null, prodCt:null, histAviso:false,
-  FIXOS:{get IMPOSTO(){ return (typeof ecom!=="undefined" && ecom.impostoPrecificacaoPct ? ecom.impostoPrecificacaoPct() : SELECTA_TAXA_PRECIFICACAO.percentual)/100; }, COLCHAO:0.06, PISO:10},
+  FIXOS:{get IMPOSTO(){ return (typeof ecom!=="undefined" && ecom.impostoPrecificacaoPct ? ecom.impostoPrecificacaoPct() : SELECTA_TAXA_PRECIFICACAO.percentual)/100; }, COLCHAO:0.06, COLCHAO_PRECIFICACAO:0, PISO:10},
   _g:id=>document.getElementById(id),
   // BUILD 2026-09-15-N: trava de toque duplo — uma gravacao por vez no modulo; btnId opcional fica disabled durante
   _busy:false,
@@ -10574,7 +10591,7 @@ const shopeeTab={
   // pv = preco valido (promocao governa) · frete dif = 0 no simulador (sem tabela de frete Shopee)
   margemDe(pv,campanha,custo){
     const t=this.tarifa(pv,campanha); if(!t||typeof custo!=='number'||!Number.isFinite(custo)||!(custo>0)||!(pv>0)) return null;
-    const colchao=pv*this.FIXOS.COLCHAO, imposto=pv*this.FIXOS.IMPOSTO;
+    const colchao=pv*this.FIXOS.COLCHAO_PRECIFICACAO, imposto=pv*this.FIXOS.IMPOSTO;
     const lucro=pv-t.total-custo-colchao-imposto, pct=lucro/pv*100;
     return {t,colchao,imposto,lucro,pct,libera:pct>=this.FIXOS.PISO};
   },
@@ -10818,10 +10835,10 @@ const shopeeTab={
     const linhas=lista.map(a=>{ const pv=this.pvDe(a), custo=this.custos[a.codigo], m=this.margemDe(pv,!!a.campanha,custo), ci=this._infoAnuncio(a);
       return '| '+[cel(a.codigo),cel(a.shopee_item_id||'—'),cel(a.titulo),(a.pausado?'pausado':'ativo'),ci.txt,F(a.preco),(a.preco_promocao?F(a.preco_promocao):'—'),(a.campanha?'sim':'não'),
         m?(m.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% · '+F(m.lucro)+' · '+(m.libera?'LIBERADO':'NEGADO')):'—',
-        (custo!=null?F(custo):'—'),m?(m.t.rotulo+' · '+m.t.pct+'% + '+F(m.t.fixa)+' = '+F(m.t.total)):'—',m?F(m.imposto):'—',m?F(m.colchao):'—'].join(' | ')+' |'; }).join('\n');
+        (custo!=null?F(custo):'—'),m?(m.t.rotulo+' · '+m.t.pct+'% + '+F(m.t.fixa)+' = '+F(m.t.total)):'—',m?F(m.imposto):'—'].join(' | ')+' |'; }).join('\n');
     const md='# Controle de Anúncios — Shopee · Selecta\nExportado em: '+new Date().toLocaleString('pt-BR')+(flt?('\nFiltro: '+flt):'')+'\n\n'
-      +'- margem = motor do app (tarifa da faixa + reposição PTAX + colchão '+(this.FIXOS.COLCHAO*100)+'% + imposto '+(this.FIXOS.IMPOSTO*100)+'%; promoção vigente governa; frete dif. = 0; piso '+this.FIXOS.PISO+'%)\n\n'
-      +'| Código | Item ID | Título | Status | No ar · vendas | Preço | Promoção | Campanha | Margem (motor) | Reposição PTAX | Tarifa | Imposto | Colchão |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n'+(linhas||'| (nenhum) | | | | | | | | | | | | |')+'\n';
+      +'- margem = motor do app (tarifa da faixa + reposição PTAX + imposto '+(this.FIXOS.IMPOSTO*100)+'%; colchão comercial desativado; promoção vigente governa; frete dif. = 0 [PREVISÃO, validar no financeiro]; piso '+this.FIXOS.PISO+'%)\n\n'
+      +'| Código | Item ID | Título | Status | No ar · vendas | Preço | Promoção | Campanha | Margem (motor) | Reposição PTAX | Tarifa | Imposto |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n'+(linhas||'| (nenhum) | | | | | | | | | | | |')+'\n';
     const blob=new Blob([md],{type:'text/markdown;charset=utf-8'}); const url=URL.createObjectURL(blob); const el=document.createElement('a');
     el.href=url; el.download='controle_shopee_'+new Date().toISOString().slice(0,10)+'.md'; document.body.appendChild(el); el.click(); document.body.removeChild(el); URL.revokeObjectURL(url);
     this.toast('Exportado: '+lista.length+' anúncio(s).');
@@ -10882,7 +10899,6 @@ const shopeeTab={
         +'<span class="k">tarifa ('+this.esc(efet.t.rotulo)+')</span><span class="vv">'+efet.t.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% + R$ '+this.fmt(efet.t.fixa)+' = R$ '+this.fmt(efet.t.total)+'</span>'
         +'<span class="k">imposto</span><span class="vv">'+(this.FIXOS.IMPOSTO*100)+'% · R$ '+this.fmt(efet.imposto)+'</span>'
         +'<span class="k">frete dif.</span><span class="vv">R$ 0,00</span>'
-        +'<span class="k">colchão '+(this.FIXOS.COLCHAO*100)+'% s/ venda</span><span class="vv">R$ '+this.fmt(efet.colchao)+'</span>'
         +'</div>'; } else meta.innerHTML='<div class="meta-grid"><span class="k">'+this.esc((efet&&efet.reason)||'—')+'</span></div>'; }
     const btn=g('shp-ct-save'), msg=g('shp-ct-msg'), ovrLbl=g('shp-ct-ovrlbl'), ovrEl=g('shp-ct-ovr');
     if(!efet||!efet.ok){ if(msg){ msg.className='hintline err'; msg.textContent=(efet&&efet.reason)||'dado incompleto'; } if(btn){ if(semAlt) btn.removeAttribute('disabled'); else btn.setAttribute('disabled',''); } if(ovrLbl) ovrLbl.style.display='none'; return {ok:false,promoAtiva,pv,camp,p,pr:promoAtiva?pr:null}; } // BUILD 2026-09-20-A: semAlt mantem Salvar
@@ -11317,7 +11333,7 @@ const shopeeTab={
     const custos=okF.reduce((s,v)=>s+Number(v.custo_total||0),0);
     const imposto=receitaF*this.FIXOS.IMPOSTO;
     const lucro=receitaF-tarifas-fdif-custos-imposto;
-    const colchao=receitaF*this.FIXOS.COLCHAO;
+    const colchao=okF.reduce((acc,v)=>acc+(String(v.data_solicitacao||'').slice(0,10)<SELECTA_SEM_COLCHAO_DESDE?Number(v.receita_bruta||0)*this.FIXOS.COLCHAO:0),0); // COM03: somente reserva historica; nova venda sem colchao
     const devV=vs.filter(v=>v.status==='devolvido').reduce((s,v)=>s+Number(v.custo_total||0),0);   // BUILD 15-F: custo preso em devolucao
     const cancV=vs.filter(v=>v.status==='cancelado').reduce((s,v)=>s+Number(v.receita_bruta||0),0); // BUILD 15-F: receita cancelada
     return {nOk:ok.length,nF:okF.length,nPend,receitaF,nCanc,nDev,devV,cancV,receita,tarifas,fdif,custos,imposto,lucro,colchao,amortecido:lucro-colchao};
@@ -11325,7 +11341,7 @@ const shopeeTab={
   renderRelatorios(){
     const trm=this._g('shp-rl-trm'); if(!trm) return;
     this._g('shp-rl-meslabel').textContent=this.mesLabel(this.mesRl);
-    const IMPOSTO_PCT=this.FIXOS.IMPOSTO*100, COLCHAO_PCT=this.FIXOS.COLCHAO*100;
+    const IMPOSTO_PCT=this.FIXOS.IMPOSTO*100, COLCHAO_PCT=this.FIXOS.COLCHAO*100; // percentual historico apenas
     const c=this.calcMes(this.mesRl); // BUILD 2026-09-15-D: fonte unica
     const {nCanc,nDev,receita,tarifas,fdif,custos,imposto,lucro,colchao,amortecido}=c; const okLen=c.nOk;
     const kp=this._g('shp-rl-kpis'); // BUILD 2026-09-15-F: Painel ESPELHO do kpiHtml ML — mesmos cards, dados do canal
@@ -11335,8 +11351,8 @@ const shopeeTab={
       const F=this.fmt;
       kp.innerHTML='<div class="rp-idxrow">'
         +card('Faturamento','R$ '+F(receita))
-        +card('Resultado amortecido do mês','R$ '+F(amortecido),amortecido>=0?' good':' bad')
-        +card('Margem s/ receita (amortecida)',receita>0?(amortecido/receita*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%':'—')
+        +card('Resultado do mês (reserva histórica se houver)','R$ '+F(amortecido),amortecido>=0?' good':' bad')
+        +card('Margem s/ receita (após reserva histórica)',receita>0?(amortecido/receita*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%':'—')
         +card('Devoluções (custo preso)',c.nDev+' · R$ '+F(c.devV),c.nDev?' bad':'')
         +card('Custo das mercadorias (mês)','R$ '+F(custos))
         +card('Preso no escrow (líquido)','R$ '+F(presoK),' bad')
@@ -11351,10 +11367,10 @@ const shopeeTab={
       +'<tr><td>(−) Frete além do subsídio</td><td class="n">'+F(fdif)+'</td></tr>'
       +'<tr><td>(−) Custo das mercadorias</td><td class="n">'+F(custos)+'</td></tr>'
       +'<tr><td>(−) Imposto ('+IMPOSTO_PCT+'% · régua do razão)</td><td class="n">'+F(imposto)+'</td></tr>'
-      +'<tr><td>Lucro antes do colchão</td><td class="n '+(lucro<0?'neg':'')+'">'+F(lucro)+'</td></tr>'
-      +'<tr><td>(−) Colchão ('+COLCHAO_PCT+'% da receita · reserva da casa)</td><td class="n">'+F(colchao)+'</td></tr>'
-      +'<tr class="big"><td>RESULTADO AMORTECIDO · SHOPEE</td><td class="n '+(amortecido<0?'neg':'pos')+'">'+F(amortecido)+'</td></tr>'
-      +'<tr><td>Margem média s/ receita (amortecida)</td><td class="n">'+(receita>0?(amortecido/receita*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%':'—')+'</td></tr>';
+      +'<tr><td>Lucro da operação (antes de reserva histórica)</td><td class="n '+(lucro<0?'neg':'')+'">'+F(lucro)+'</td></tr>'
+      +(colchao>0?'<tr><td>(−) Reserva histórica ('+COLCHAO_PCT+'% somente das vendas anteriores a 15/11/2026)</td><td class="n">'+F(colchao)+'</td></tr>':'')
+      +'<tr class="big"><td>RESULTADO APÓS RESERVA HISTÓRICA · SHOPEE</td><td class="n '+(amortecido<0?'neg':'pos')+'">'+F(amortecido)+'</td></tr>'
+      +'<tr><td>Margem média s/ receita (após reserva histórica)</td><td class="n">'+(receita>0?(amortecido/receita*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%':'—')+'</td></tr>';
     const nota=this._g('shp-rl-nota');
     nota.textContent=(nCanc||nDev)
       ?('Fora do resultado: '+nCanc+' cancelado(s), '+nDev+' devolvido(s). Convenção v1: devolvido sai do mês inteiro (custo e receita) — mais duro que o razão ML, por desenho.')
@@ -11473,10 +11489,10 @@ const finMacro={
         '<tr><td>🛒 Mercado Livre · receita</td><td class="n">'+F(c.rec)+'</td></tr>'
         +'<tr><td style="padding-left:18px;color:var(--emuted)">resultado operacional · lucro real (colchão devolvido)</td><td class="n '+(c.lucOp<0?'neg':'')+'">'+F(c.lucOp)+' · '+F(c.lucReal)+'</td></tr>'
         +'<tr><td>🛍️ Shopee · receita</td><td class="n">'+F(s.receita)+'</td></tr>'
-        +'<tr><td style="padding-left:18px;color:var(--emuted)">resultado amortecido (colchão retido)</td><td class="n '+(s.amortecido<0?'neg':'')+'">'+F(s.amortecido)+'</td></tr>'
+        +'<tr><td style="padding-left:18px;color:var(--emuted)">resultado após reserva histórica, quando aplicável</td><td class="n '+(s.amortecido<0?'neg':'')+'">'+F(s.amortecido)+'</td></tr>'
         +'<tr class="big"><td>EMPRESA · receita</td><td class="n">'+F(totRec)+'</td></tr>'
         +'<tr class="big"><td>EMPRESA · resultado conservador</td><td class="n '+(totCons<0?'neg':'pos')+'">'+F(totCons)+'</td></tr>'
-        +'<tr><td>Colchão retido no mês (reserva, os 2 canais)</td><td class="n">'+F(colTot)+'</td></tr>';
+        +'<tr><td>Reservas históricas registradas (ambos canais)</td><td class="n">'+F(colTot)+'</td></tr>';
       this.loaded=true;
       try{ ecomFinanceiro.load(); }catch(e){ console.warn('razao empresa:',e.message); }
       try{ if(window.finOps) window.finOps.load(); }catch(e){ console.warn('finOps:',e.message); } // BUILD 2026-09-28-A // BUILD 2026-09-15-E: Termometro da SELECTA + Conta MP + Investidores agora moram aqui
