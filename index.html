@@ -1039,9 +1039,12 @@
         <div class="efield"><label>Descrição curta (1-2 linhas no card)</label><input id="ig-desc" class="vinput" maxlength="140"></div>
         <!-- BUILD 2026-08-10-Q: ficha rica da vitrine (Fase 2b) -->
         <div class="efield"><label>Descrição longa (ficha do produto — texto de venda completo)</label><textarea id="ig-desclonga" class="vinput" rows="4" style="resize:vertical"></textarea></div>
-        <div class="efield"><label>Especificações técnicas (UMA por linha — ex.: Capacidade: 256GB)</label><textarea id="ig-specs" class="vinput" rows="4" style="resize:vertical" placeholder="Capacidade: 256GB&#10;Interface: SATA III&#10;Leitura: até 550 MB/s"></textarea></div>
+        <div class="efield"><label>Especificações técnicas (UMA por linha — ex.: Capacidade: 256GB)</label><textarea id="ig-specs" class="vinput" rows="4" style="resize:vertical" placeholder="Capacidade: 256GB
+Interface: SATA III
+Leitura: até 550 MB/s"></textarea></div>
         <div class="vrow">
-          <div class="efield"><label>Fotos extras (UM caminho por linha)</label><textarea id="ig-fotosx" class="vinput" rows="3" style="resize:vertical" placeholder="img/catalogo/arquivo-2.jpg&#10;img/catalogo/arquivo-3.jpg"></textarea></div>
+          <div class="efield"><label>Fotos extras (UM caminho por linha)</label><textarea id="ig-fotosx" class="vinput" rows="3" style="resize:vertical" placeholder="img/catalogo/arquivo-2.jpg
+img/catalogo/arquivo-3.jpg"></textarea></div>
           <div class="efield"><label>Vídeo do produto (link YouTube, opcional)</label><input id="ig-video" class="vinput" placeholder="https://www.youtube.com/watch?v=…"></div>
         </div>
         <div class="vrow3">
@@ -1051,7 +1054,7 @@
         </div>
         <div class="vrow">
           <div class="efield"><label>URL da foto</label><input id="ig-foto" class="vinput" placeholder="img/catalogo/arquivo.jpg ou https://…"></div>
-          <div class="efield"><label>&nbsp;</label>
+          <div class="efield"><label> </label>
             <div style="display:flex;gap:16px;align-items:center;padding-top:8px">
               <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--etxt);cursor:pointer"><input id="ig-promo" type="checkbox"> Promoção (selo)</label>
               <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--etxt);cursor:pointer"><input id="ig-ativo" type="checkbox" checked> Ativo na vitrine</label>
@@ -1202,7 +1205,7 @@
           <i data-lucide="handshake"></i> Agente China
         </button>
         <button class="imp-subnav-btn" data-pane="cambio">
-          <i data-lucide="coins"></i> Câmbio &amp; Fretes
+          <i data-lucide="coins"></i> Câmbio & Fretes
         </button>
         <button class="imp-subnav-btn" data-pane="regulatorio">
           <i data-lucide="scale"></i> Base Regulatória
@@ -1276,7 +1279,7 @@
         <div id="cat-form-produto" class="hidden-section" style="background:#1f2937;border:1px solid #374151;border-radius:0.5rem;padding:1rem;margin-bottom:1rem;">
           <h4 id="cat-form-prod-titulo" class="text-sm font-semibold text-gray-200 mb-3">Novo produto</h4>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div><label class="block text-xs font-medium text-gray-400 mb-1">Chave / slug * <span class="text-gray-500 normal-case">(PK &middot; não muda depois)</span></label>
+            <div><label class="block text-xs font-medium text-gray-400 mb-1">Chave / slug * <span class="text-gray-500 normal-case">(PK · não muda depois)</span></label>
               <input id="cat-p-chave" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm font-mono" placeholder="mem_ddr4_8gb_3200"></div>
             <div><label class="block text-xs font-medium text-gray-400 mb-1">Nome comercial *</label>
               <input id="cat-p-nome" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Memória RAM DDR4 8GB 3200"></div>
@@ -1297,7 +1300,7 @@
           </div>
           <div class="mt-3"><label class="block text-xs font-medium text-gray-400 mb-1">Descrição DUIMP</label>
             <input id="cat-p-desc" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="Descrição conforme atributos da DUIMP"></div>
-          <div class="mt-3"><label class="block text-xs font-medium text-gray-400 mb-1">Atributos (JSON &middot; opcional)</label>
+          <div class="mt-3"><label class="block text-xs font-medium text-gray-400 mb-1">Atributos (JSON · opcional)</label>
             <textarea id="cat-p-atributos" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm font-mono" placeholder='{"capacidade":"8GB","frequencia":"3200MHz"}'></textarea></div>
           <div id="cat-form-prod-erro" class="text-sm text-red-400 mt-2"></div>
           <div class="flex gap-2 mt-3">
@@ -1319,7 +1322,7 @@
         <!-- FORM FORNECEDOR -->
         <div id="cat-form-fornecedor" class="hidden-section" style="background:#1f2937;border:1px solid #374151;border-radius:0.5rem;padding:1rem;margin-bottom:1rem;">
           <h4 class="text-sm font-semibold text-gray-200 mb-1">Fornecedor</h4>
-          <p class="text-xs text-gray-500 mb-3">Entrada manual &middot; preencha conforme a negociação avança.</p>
+          <p class="text-xs text-gray-500 mb-3">Entrada manual · preencha conforme a negociação avança.</p>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div><label class="block text-xs font-medium text-gray-400 mb-1">Produto *</label>
               <select id="cat-f-produto-sel" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm"></select></div>
@@ -1356,7 +1359,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
             <div><label class="block text-xs font-medium text-gray-400 mb-1">Classificação</label>
               <input id="cat-f-class" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm" placeholder="ex: A / preferencial"></div>
-            <div><label class="block text-xs font-medium text-gray-400 mb-1">Dossiê da Mesa (JSON &middot; opcional)</label>
+            <div><label class="block text-xs font-medium text-gray-400 mb-1">Dossiê da Mesa (JSON · opcional)</label>
               <input id="cat-f-dossie" type="text" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm font-mono" placeholder='{...}'></div>
           </div>
           <div id="cat-form-forn-erro" class="text-sm text-red-400 mt-2"></div>
@@ -2542,7 +2545,7 @@
           <div class="efield" style="width:140px"><label>Postar até</label><input class="vinput mono" id="vd-pp" type="date"></div>
           <div class="efield" style="width:140px"><label>Previsão entrega</label><input class="vinput mono" id="vd-pe" type="date"></div>
           <div class="efield" style="width:250px"><label>Observações</label><input class="vinput" id="vd-obs" placeholder="opcional"></div>
-          <div class="efield" style="width:auto"><label>&nbsp;</label><button class="vbtn" id="vd-add">Lançar venda</button></div>
+          <div class="efield" style="width:auto"><label> </label><button class="vbtn" id="vd-add">Lançar venda</button></div>
         </div>
         <div class="vmsg" id="vd-msg"></div>
         </div><!-- /vd-form-body -->
@@ -3477,7 +3480,7 @@ function renderCatalog(items) {
         <td class="px-3 py-2 font-mono text-xs text-primary-500">${p.codigo_slc}</td>
         <td class="px-3 py-2"><span class="bg-gray-700 text-xs px-1.5 py-0.5 rounded">${p.prefixo}</span></td>
         <td class="px-3 py-2 font-medium">${p.marca || '—'}</td>
-        <td class="px-3 py-2 text-gray-300 max-w-xl truncate" title="${(p.descricao || '').replace(/"/g, '&quot;')}">${p.descricao || '—'}</td>
+        <td class="px-3 py-2 text-gray-300 max-w-xl truncate" title="${(p.descricao || '').replace(/"/g, '"')}">${p.descricao || '—'}</td>
         <td class="px-3 py-2 text-right font-mono text-sm">$ ${fmtUSD(p.menor_usd)}</td>
         <td class="px-3 py-2 text-right font-mono text-sm">R$ ${fmtBRL(p.menor_brl)}</td>
         <td class="px-3 py-2 text-center text-xs text-gray-400">${(p.fornecedores_disponiveis || []).join(' + ') || '—'}</td>
@@ -3927,10 +3930,10 @@ async function openProductDetail(produtoId) {
           <button class="del-oferta-btn text-xs bg-red-900 hover:bg-red-800 text-white px-2 py-1 rounded" title="Apagar oferta" data-oferta-id="${o.id}">🗑</button>
           <button class="add-to-cart-btn text-xs bg-primary-600 hover:bg-primary-700 text-white px-2 py-1 rounded font-medium"
                   data-oferta-id="${o.id}"
-                  data-sku="${(o.sku_fornecedor || '').replace(/"/g, '&quot;')}"
-                  data-desc="${(o.desc_original || '').replace(/"/g, '&quot;')}"
+                  data-sku="${(o.sku_fornecedor || '').replace(/"/g, '"')}"
+                  data-desc="${(o.desc_original || '').replace(/"/g, '"')}"
                   data-fornecedor-id="${o.fornecedor_id}"
-                  data-fornecedor-nome="${o.fornecedores.nome_curto.replace(/"/g, '&quot;')}">
+                  data-fornecedor-nome="${o.fornecedores.nome_curto.replace(/"/g, '"')}">
             + Add
           </button>
         </div>
@@ -4413,7 +4416,7 @@ const ecom = {
     return d&&Number.isFinite(d.getTime())?d.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}):'sem revisão'; },
   revisaoDataHora(iso){ const d=iso?new Date(iso):null;
     return d&&Number.isFinite(d.getTime())?d.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'; },
-  revisaoEscape(v){ return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); },
+  revisaoEscape(v){ return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'''}[c])); },
   revisaoId:null, revisaoHistorico:[], revisaoBusy:false, revisaoMensagem:'', revisaoErro:'',
   revisaoFechar(){ this.revisaoId=null; this.revisaoHistorico=[]; this.revisaoMensagem=''; this.revisaoErro=''; this.render(); },
   async revisaoOpen(id){ if(this.revisaoId!=null&&String(this.revisaoId)===String(id)){ this.revisaoFechar(); return; }
@@ -5763,7 +5766,7 @@ const ecomVendas={
   _rastHoras(val){ const t=this._rastTs(val); return t==null?null:Math.max(0,(Date.now()-t)/36e5); },
   _rastIdade(v){ const t=this._rastTs(v.envio_atualizado_em)??this._rastTs(v.data_embarque)??this._rastTs(v.data_solicitacao); return t==null?Infinity:Math.max(0,Date.now()-t); },
   _rastSemAtualizacao(v){ const horas=this._rastHoras(v.envio_atualizado_em); return horas==null||horas>=72; },
-  _rastEsc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); },
+  _rastEsc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'''}[c])); },
   async copiarRastreio(id,btn){
     const v=(this.itens||[]).find(x=>String(x.id)===String(id));
     const codigo=String(v?.codigo_rastreio||'').trim();
@@ -6374,7 +6377,7 @@ const ecomFinanceiro={
               +'</div>').join(''))
           +line('CREDORES','R$ '+F(devo),'#2a0d0d','var(--ered)')
           +line('Venda mínima custo',vendaMin!=null?('R$ '+F0(vendaMin)+'/mês'):'—','#241c08','var(--eamber)')
-          +(capAtraso?'<div style="padding:7px 13px;background:#241c08;font-size:11px;color:var(--eamber)">⚠ Capitalização atrasada (&gt;32d sem lançamento de juro) — lançar movimento tipo \'juro\' no dia-base (c1 dia 05 · c2 dia 20 · c3 dia 30).</div>':'')
+          +(capAtraso?'<div style="padding:7px 13px;background:#241c08;font-size:11px;color:var(--eamber)">⚠ Capitalização atrasada (>32d sem lançamento de juro) — lançar movimento tipo \'juro\' no dia-base (c1 dia 05 · c2 dia 20 · c3 dia 30).</div>':'')
           /* BUILD 2026-08-24-A: transferencias do portal aguardando o carimbo do Igor */
           +(((this._invFunding||[]).length)?('<div style="padding:7px 13px;background:#241c08;font-size:10.5px;letter-spacing:1px;color:var(--eamber)">TRANSFERÊNCIAS DO INVESTIDOR · a validar</div>'
             +this._invFunding.map(t=>{ const dv=+t.valor_declarado||0, vs=(t.valor_sistema==null?null:+t.valor_sistema);
@@ -6411,7 +6414,7 @@ const ecomFinanceiro={
         +line('Imposto · 4% da receita',nF?('– R$ '+F(imp)):'—','#241c08','var(--eamber)')
         +line('Custo financeiro · juros dos credores'+(jurosAuto>0?' · incl. incorrido s/ lançamento':'')+(c.jurosOps>0?' · incl. operações R$ '+F(c.jurosOps):''),jurosMes>0?('– R$ '+F(jurosMes)):'—','#241c08','var(--eamber)')
         +'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:#241c08"><span style="font-size:12.5px;color:var(--eamber)">Despesas operacionais <button class="vbtn sm" style="margin-left:6px;padding:2px 9px" title="lançar despesa (aluguel, passagem, luz, hospedagem...)" data-despadd="1">+</button></span><span style="font-family:var(--emono);font-size:12.5px">'+(despOp===null?'<span style="color:var(--eamber)">aplicar SQL</span>':(despOpMes>0?('– R$ '+F(despOpMes)):'—'))+'</span></div>'
-        +((despOp&&despOp.length)?despOp.map(x=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 13px 5px 26px;background:var(--epanel)"><span style="font-size:11.5px;color:var(--emuted)">'+String(x.data).slice(8,10)+'/'+String(x.data).slice(5,7)+' · '+String(x.descricao).replace(/</g,'&lt;')+' <button class="vbtn sm" style="padding:1px 7px;font-size:11px" title="anular (histórico preservado)" data-despanular="'+x.id+'" data-desc="'+String(x.descricao).replace(/"/g,'&quot;')+'">×</button></span><span style="font-family:var(--emono);font-size:11.5px">R$ '+F(+x.valor||0)+'</span></div>').join(''):'')
+        +((despOp&&despOp.length)?despOp.map(x=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 13px 5px 26px;background:var(--epanel)"><span style="font-size:11.5px;color:var(--emuted)">'+String(x.data).slice(8,10)+'/'+String(x.data).slice(5,7)+' · '+String(x.descricao).replace(/</g,'<')+' <button class="vbtn sm" style="padding:1px 7px;font-size:11px" title="anular (histórico preservado)" data-despanular="'+x.id+'" data-desc="'+String(x.descricao).replace(/"/g,'"')+'">×</button></span><span style="font-family:var(--emono);font-size:11.5px">R$ '+F(+x.valor||0)+'</span></div>').join(''):'')
         +(mesOc.length?line('Perdas do mês · '+[ocDev?ocDev+' devolu\u00e7\u00e3o(\u00f5es)':'',ocApr?ocApr+' apreens\u00e3o(\u00f5es)':'',ocOut?ocOut+' outra(s) perda(s)':''].filter(Boolean).join(' + '),(perdas>0?'\u2013 R$ '+F(perdas):'\u2014'),'#241c08','var(--ered)'):'')
         ) /* fim DESPESAS (26-Q) */
         +sec('RESULTADO','#1a2740','var(--emuted)')
@@ -6423,7 +6426,7 @@ const ecomFinanceiro={
          line('Capital de giro preso (custo)','R$ '+F(preso))
         +line('A receber no Mercado Pago','R$ '+F(recMP))
         +'<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 13px;background:var(--epanel)"><span style="font-size:12.5px">Devoluções a custo <button class="vbtn sm" style="margin-left:6px" title="adicionar item por fora ao capital a recuperar" data-recupadd="1">+</button></span><span style="font-family:var(--emono);font-size:12.5px">R$ '+F(devCusto)+'</span></div>'
-        +itensExt.map(i=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 13px 7px 26px;background:var(--epanel)"><span style="font-size:12px;color:var(--emuted)">'+String(i.descricao).replace(/</g,'&lt;')+' <button class="vbtn sm" title="baixar item (histórico preservado)" data-recupbaixar="'+i.id+'">×</button></span><span style="font-family:var(--emono);font-size:12px">R$ '+F(+i.valor||0)+'</span></div>').join('')
+        +itensExt.map(i=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 13px 7px 26px;background:var(--epanel)"><span style="font-size:12px;color:var(--emuted)">'+String(i.descricao).replace(/</g,'<')+' <button class="vbtn sm" title="baixar item (histórico preservado)" data-recupbaixar="'+i.id+'">×</button></span><span style="font-family:var(--emono);font-size:12px">R$ '+F(+i.valor||0)+'</span></div>').join('')
         +line('MP libera após entrega',medLib==null?'— (sem venda liberada medida)':'~'+Math.round(medLib)+' dia(s) · mediana')
         ) /* fim CAPITAL (26-Q); Coberto/Descoberto vive no resumo */
         +invHtml
@@ -6690,7 +6693,7 @@ const ecomAlvo={
   VIG_MAX_MIN:60,
   renderVigilancia(){ const box=this._g('al-vig-alerta'); if(!box) return;
     const fH=iso=>{ try{ return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(_e){ return String(iso||''); } };
-    const ea=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const ea=v=>String(v==null?'':v).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');
     let txt=null;
     if(!this.syncQuandoIso) txt='<b>Vigilância app × ML sem nenhuma conferência registrada.</b> O Histórico não pinta divergência e as margens não estão sendo vigiadas.';
     else if(this.syncOk===false) txt='<b>Vigilância app × ML CEGA</b> — a última varredura ('+fH(this.syncQuandoIso)+') terminou com erro'+(this.syncErro?(': '+ea(String(this.syncErro).slice(0,160))):'')+'. Enquanto isso, nenhum anúncio fica vermelho no Histórico, mesmo que o ML tenha mudado.';
@@ -6712,7 +6715,7 @@ const ecomAlvo={
   renderOrfaos(){ const box=this._g('al-orfao-alerta'); if(!box) return;
     const vivos=(this.syncOk===false)?null:this._orfaosVivos(); // varredura cega: a faixa vermelha ja avisa, a lista seria velha
     if(!vivos||!vivos.length){ box.innerHTML=''; box.style.display='none'; return; }
-    const ea=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const ea=v=>String(v==null?'':v).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');
     const fR=v=>(v==null||isNaN(+v))?'—':'R$ '+(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
     const btn='font-size:11.5px;padding:3px 10px;border-radius:6px;border:1px solid var(--eamber);background:none;color:var(--eamber);cursor:pointer;font-family:inherit;margin-left:6px';
     const linhas=vivos.map(o=>{ const sub=this._orfaoSub(o);
@@ -6895,7 +6898,7 @@ const ecomAlvo={
     if(!itens.length){ box.innerHTML='<div class="ph" style="color:var(--emuted2);font-size:12px">Nenhum veredito importado ainda. Use o card abaixo para importar o JSON.</div>'; if(cnt) cnt.textContent=''; return; }
     const LABELS={'PARCELAMENTO':'\u{1F4B3} Parcelamento','AJUSTAR PRECO':'\u{1F3F7}\uFE0F Ajustar pre\u00E7o','PRECO':'\u{1F3F7}\uFE0F Ajustar pre\u00E7o','DEFENDER':'\u{1F6E1}\uFE0F Defender','INVESTIGAR':'\u{1F50E} Investigar','CONTEUDO':'\u{1F4DD} Conte\u00FAdo / Ficha','BLOQUEAR':'\u26D4 Bloquear'};
     const ORDEM=['PARCELAMENTO','AJUSTAR PRECO','PRECO','DEFENDER','INVESTIGAR','CONTEUDO','BLOQUEAR'];
-    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');
     const grupos={}; itens.forEach(r=>{ const g=(r.veredito||'OUTROS').toUpperCase(); (grupos[g]=grupos[g]||[]).push(r); });
     const chaves=Object.keys(grupos).sort((a,b)=>{ const ia=ORDEM.indexOf(a),ib=ORDEM.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib); });
     let html='';
@@ -6951,7 +6954,7 @@ const ecomAlvo={
     const _bmsg=this._g('al-anuncios-busca-msg');
     if(_bmsg) _bmsg.textContent=_flt?(listaF.length+' de '+lista.length):'';
     if(_flt && !listaF.length){ box.innerHTML='<div class="ph">nenhum anúncio com o código «'+String(this.anunciosFiltro).trim()+'»</div>'; const c0=this._g('al-anuncios-count'); if(c0) c0.textContent='0 de '+lista.length; return; }
-    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');
     // Semáforo pelo fato (dias × vendas). Cor entra no texto do "dias no ar · N venda(s)" — Opção 1.
     const infoCls=(dias,vendas)=>{
       if(dias==null||dias<7) return 'novo';
@@ -7021,7 +7024,7 @@ const ecomAlvo={
     const box=document.querySelector('[data-alsugbox="'+anid+'"]'); if(!box) return;
     if(box.style.display!=='none'){ box.style.display='none'; box.innerHTML=''; return; }
     const res = mlb ? this.resultados[mlb] : null;
-    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');
     const fmtDt=iso=>{ if(!iso) return ''; try{ return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return String(iso).slice(0,16); } };
     if(!res){
       box.innerHTML='<div class="al-sugbox gray"><div class="al-sugh">Sugestão</div><div class="al-sugp">Nenhuma análise da Estratégia de Anúncios foi importada para este MLB ainda.</div></div>';
@@ -7057,7 +7060,7 @@ const ecomAlvo={
       if(!ecom.loaded){ await ecom.loadFreteTbl(); if(ecom.loadComissoes) await ecom.loadComissoes(); await ecom.loadProdutos(); ecom.loaded=true; }
       else if(ecom.loadComissoes && (!ecom.comMap||!Object.keys(ecom.comMap).length)){ await ecom.loadComissoes(); }
     } }catch(e){ console.warn('ecom lazy load:',e.message); }
-    const v=s=>String(s==null?'':s).replace(/"/g,'&quot;');
+    const v=s=>String(s==null?'':s).replace(/"/g,'"');
     // Layout BUILD 30/07-A (piloto v6 aprovado):
     // L1: Código · MLB · Data pub   L2: Título   L3: Preço · Tipo · Margem   L4: Promoção · Tipo · Margem   L5: Motivo
     // Margem inline na altura do input; vigência: promoção preenchida governa selo/gate, apagada volta o preço cheio.
@@ -7365,14 +7368,14 @@ const ecomAlvo={
         const impPct=(typeof ecom!=='undefined'&&ecom.impostoPrecificacaoPct)?ecom.impostoPrecificacaoPct():SELECTA_TAXA_PRECIFICACAO.percentual;
         elMeta.innerHTML='<div class="meta-grid">'
           +'<span class="vig">vigente: '+(promoAtiva?'promoção':'preço cheio')+'</span>'
-          +'<span class="nf-k">Reposição PTAX</span><span class="nf-v">R$ '+this._fmtBR(selectaUSD.custo(gate.prod))+'</span>'
+          +'<span class="nf-k">Reposição PTAX</span><span class="nf-v">'+this._fmtBR(selectaUSD.custo(gate.prod))+'</span>'
           +'<span class="k">comissão ('+comOrigem+')</span><span class="vv">'+comPct.toFixed(2)+'%</span>'
-          +((efet.comFixa>0)?'<span class="k">tarifa fixa (ML)</span><span class="vv">R$ '+this._fmtBR(efet.comFixa)+'</span>':'') // BUILD 2026-09-15-L
+          +((efet.comFixa>0)?'<span class="k">tarifa fixa (ML)</span><span class="vv">'+this._fmtBR(efet.comFixa)+'</span>':'') // BUILD 2026-09-15-L
           +((promoAtiva&&efet.estorno>0)?'<span class="k">estorno ML (campanha)</span><span class="vv">\u2212 R$ '+this._fmtBR(efet.estorno)+'</span>':'') // BUILD 2026-08-26-K
           +'<span class="k">imposto</span><span class="vv">'+impPct+'%</span>'
-          +'<span class="k">frete ('+freteOrigem+')</span><span class="vv">R$ '+this._fmtBR(efet.frete)+'</span>' // BUILD 2026-09-15-L
-          +'<span class="k">líquido ML estimado (base MP)</span><span class="vv">R$ '+this._fmtBR(efet.liquidoMlPrevisto)+'</span>'
-          +'<span class="k">antecipação MP ('+efet.antecipacaoPct.toFixed(2)+'% do líquido)</span><span class="vv">− R$ '+this._fmtBR(efet.antecipacaoMp)+'</span>'
+          +'<span class="k">frete ('+freteOrigem+')</span><span class="vv">'+this._fmtBR(efet.frete)+'</span>' // BUILD 2026-09-15-L
+          +'<span class="k">líquido ML estimado (base MP)</span><span class="vv">'+this._fmtBR(efet.liquidoMlPrevisto)+'</span>'
+          +'<span class="k">antecipação MP ('+efet.antecipacaoPct.toFixed(2)+'% do líquido)</span><span class="vv">− '+this._fmtBR(efet.antecipacaoMp)+'</span>'
           +pesoLinha
           +'</div>';
       } else {
@@ -7496,7 +7499,7 @@ const ecomAlvo={
     // Pedido da Alexia (08/07): ela lembra do que FEZ, não do que foi sugerido. Estratégias ficam na Mesa.
     if(box.style.display!=='none'){ box.style.display='none'; box.innerHTML=''; return; }
     const hist=(this.altHist&&this.altHist[mlb])||[];
-    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');
     const fmtDt=iso=>{ if(!iso) return '—'; try{ return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return String(iso).slice(0,16); } };
     // BUILD 2026-08-26-A: faixa = o que a ULTIMA conferencia corrigiu neste anuncio; historico = so as alteracoes dela
     const anB=(this.anuncios||[]).find(a=>a.anuncio_mlb===mlb)||null; const dv=this.divergencia(anB);
@@ -7531,7 +7534,7 @@ const ecomAlvo={
     // Histórico de ESTRATÉGIAS (ecom_resultado_anuncio) — vive na Mesa de veredito, abaixo de cada anúncio.
     if(box.style.display!=='none'){ box.style.display='none'; box.innerHTML=''; return; }
     const hist=this.resHist[mlb]||[];
-    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');
     if(!hist.length){
       box.innerHTML='<div class="al-sugbox n"><div class="al-sugmeta">Histórico de Estratégias</div><div class="al-sugp faint">Nenhuma estratégia importada ainda.</div></div>';
     } else {
@@ -7669,7 +7672,7 @@ const ecomAlvo={
     let anns=this.anuncios;
     if(!anns||!anns.length){ try{ const r=await sb.from('ecom_anuncios').select('*'); if(!r.error) anns=r.data||[]; }catch(_e){} }
     anns=(anns||[]).filter(a=>a.ativo!==false);
-    const ea=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const ea=v=>String(v==null?'':v).replace(/&/g,'&').replace(/"/g,'"').replace(/</g,'<').replace(/>/g,'>');
     const fR=v=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
     const clsCor={o:'var(--eemerald)',a:'var(--eamber)',c:'var(--ered)'};
     // BUILD 2026-08-26-E: ordem por ultima alteracao no historico; nao-lido em verde e no topo
@@ -7796,7 +7799,7 @@ const ecomAlvo={
       else if(ctrl!=null&&tab.marg!=null&&Math.abs(ctrl-tab.marg)<0.05) iguais.push(mlb);
       else div.push(cod+' '+mlb+' · Controle '+f(ctrl)+(motivo?' ('+motivo+')':'')+' · Análise '+f(tab.marg)+(tab.reason?' ('+tab.reason+')':''));
     });
-    const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&','<':'<','>':'>','"':'"'}[c]));
     out.innerHTML='<b>'+anns.length+'</b> anúncio(s) · <span style="color:var(--eemerald)"><b>'+iguais.length+'</b> iguais</span> · <span style="color:'+(div.length?'#f87171':'var(--emuted)')+'"><b>'+div.length+'</b> divergentes</span> · <span style="color:var(--emuted)"><b>'+semCalc.length+'</b> sem cálculo</span>'
       +(div.length?'<div style="margin-top:6px;color:#fca5a5">'+div.map(esc).join('<br>')+'</div>':'')
       +(semCalc.length?'<div style="margin-top:6px;color:var(--emuted)">'+semCalc.map(esc).join('<br>')+'</div>':'');
@@ -7871,7 +7874,7 @@ const ecomAlvo={
     const head=this._g('al-an-head'), body=this._g('al-an-body');
     if(!head||!body) return;
     const norm=v=>String(v==null?'':v).trim().toUpperCase();
-    const ea=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const ea=v=>String(v==null?'':v).replace(/&/g,'&').replace(/"/g,'"').replace(/</g,'<').replace(/>/g,'>');
     const fR=v=>(v==null||isNaN(v))?null:('R$'+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}));
     const one='display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3;overflow-wrap:break-word;';
     const prodCell='padding:1px 10px 1px 6px;color:var(--etxt);overflow:hidden;';
@@ -8061,7 +8064,7 @@ const ecomAlvo={
     }catch(e){ msg.className='vmsg err'; msg.textContent='Não consegui validar contra o catálogo: '+e.message; return; }
     const orfaos=[...new Set(rows.map(r=>r.codigo).filter(c=>!validos.has(c)))];
     if(orfaos.length){ msg.className='vmsg err';
-      msg.innerHTML='✗ '+orfaos.length+' código(s) não existe(m) no catálogo — NADA foi importado. Corrija no JSON com o código interno real (ex.: SSD-0001):<br>'+orfaos.slice(0,25).map(c=>'· '+String(c).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')).join('<br>')+(orfaos.length>25?'<br>…(+'+(orfaos.length-25)+' outros)':'');
+      msg.innerHTML='✗ '+orfaos.length+' código(s) não existe(m) no catálogo — NADA foi importado. Corrija no JSON com o código interno real (ex.: SSD-0001):<br>'+orfaos.slice(0,25).map(c=>'· '+String(c).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>')).join('<br>')+(orfaos.length>25?'<br>…(+'+(orfaos.length-25)+' outros)':'');
       return;
     }
     try{
@@ -8126,7 +8129,7 @@ const ecomRadar={
   _g:id=>document.getElementById(id),
   grupos:null, cacheHi:{}, _ultTermo:'', _ultCandidatos:[],
   brl:v=>v==null?'—':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),
-  esc:s=>s==null?'':String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+  esc:s=>s==null?'':String(s).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'''}[c])),
   badge(st){ const m={concluida:'ok',parcial:'warn',erro:'err'}; return '<span class="rd-badge '+(m[st]||'warn')+'">'+this.esc(st)+'</span>'; },
   dtBR:s=>s?new Date(s).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—',
 
@@ -8492,7 +8495,7 @@ const ecomInsta = {
       box.innerHTML = '<b style="color:var(--etxt)">'+p.produto+'</b>'
         + (p.marca?' · '+p.marca:'') + (p.modelo?' · '+p.modelo:'')
         + (p.capacidade?' · '+p.capacidade:'') + (p.interface?' · '+p.interface:'')
-        + ' &nbsp;|&nbsp; reposição PTAX <b style="color:var(--etxt)">'+(selectaUSD.custo(p)==null?'pendente':this.fmt(selectaUSD.custo(p)))+'</b>'
+        + '  |  reposição PTAX <b style="color:var(--etxt)">'+(selectaUSD.custo(p)==null?'pendente':this.fmt(selectaUSD.custo(p)))+'</b>'
         + (p.peso_g!=null?' · peso <b style="color:var(--etxt)">'+p.peso_g+'g</b>':' · <span style="color:var(--eamber)">SEM PESO no cadastro — frete não simulará</span>');
       const nome = this._g('ig-nome');
       if(!nome.value.trim()){
@@ -8512,7 +8515,7 @@ const ecomInsta = {
     const cor = m >= 20 ? 'var(--eemerald)' : (m >= 10 ? 'var(--eamber)' : 'var(--ered)');
     box.style.display='';
     box.innerHTML = 'Margem bruta (antes de frete/gateway/impostos): <b style="color:'+cor+'">'+m.toFixed(1)+'%</b>'
-      + ' &nbsp;·&nbsp; custo '+this.fmt(c)+' → preço '+this.fmt(p)
+      + '  ·  custo '+this.fmt(c)+' → preço '+this.fmt(p)
       + ' <span style="color:var(--emuted2)">· indicativo — modelo de custo do canal direto ainda não certificado</span>';
   },
   clear(){
@@ -9170,7 +9173,7 @@ window.importacao = (function () {
 
   function impNum(v) { return (v === null || v === undefined || isNaN(Number(v))) ? null : Number(v); }
   function impInt(v) { return (v === null || v === undefined || isNaN(parseInt(v, 10))) ? null : parseInt(v, 10); }
-  function impEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function impEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&','<':'<','>':'>','"':'"'}[c])); }
 
   function abrirImportador() {
     const box = document.getElementById('imp-importador');
@@ -9784,7 +9787,7 @@ window.importacao = (function () {
       (r.nome_comercial || '').toLowerCase().includes(termo) ||
       (r.chave || '').toLowerCase().includes(termo));
     if (!rows.length) {
-      box.innerHTML = '<div class="imp-empty"><i data-lucide="factory"></i><h3 class="text-base font-semibold mb-1">Nenhum fornecedor cadastrado</h3><p class="text-sm">Clique em &quot;Novo fornecedor&quot; para começar.</p></div>';
+      box.innerHTML = '<div class="imp-empty"><i data-lucide="factory"></i><h3 class="text-base font-semibold mb-1">Nenhum fornecedor cadastrado</h3><p class="text-sm">Clique em "Novo fornecedor" para começar.</p></div>';
       if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
       return;
     }
@@ -9794,7 +9797,7 @@ window.importacao = (function () {
       return '<tr style="border-top:1px solid #1f2937;">'
         + '<td style="padding:6px 8px;">' + impEsc(r.fornecedor_nome || '—') + (r.fornecedor_pais ? ' <span style="color:#6b7280;">(' + impEsc(r.fornecedor_pais) + ')</span>' : '') + '</td>'
         + '<td style="padding:6px 8px;color:#9ca3af;">' + impEsc(r.nome_comercial || r.chave) + '</td>'
-        + '<td style="padding:6px 8px;"><span style="font-size:11px;color:' + (CAT_ESTAGIO_COR[est] || '#6b7280') + ';font-weight:600;">&#9679; ' + impEsc(CAT_ESTAGIO_LABEL[est] || est) + '</span></td>'
+        + '<td style="padding:6px 8px;"><span style="font-size:11px;color:' + (CAT_ESTAGIO_COR[est] || '#6b7280') + ';font-weight:600;">● ' + impEsc(CAT_ESTAGIO_LABEL[est] || est) + '</span></td>'
         + '<td style="padding:6px 8px;text-align:right;font-family:monospace;">US$ ' + (r.preco_fob_usd != null ? fmtUSD(r.preco_fob_usd) : '—') + '</td>'
         + '<td style="padding:6px 8px;text-align:right;">' + (r.moq_unidades != null ? r.moq_unidades : '—') + '</td>'
         + '<td style="padding:6px 8px;text-align:right;">' + (r.lead_time_dias != null ? r.lead_time_dias + 'd' : '—') + '</td>'
@@ -9835,7 +9838,7 @@ window.importacao = (function () {
     }
     lista.sort((a, b) => (a.nome_comercial || '').localeCompare(b.nome_comercial || ''));
     if (!lista.length) {
-      box.innerHTML = '<div class="imp-empty"><i data-lucide="library"></i><h3 class="text-base font-semibold mb-1">Catálogo vazio</h3><p class="text-sm">Clique em &quot;Novo produto&quot; para começar a cadastrar.</p></div>';
+      box.innerHTML = '<div class="imp-empty"><i data-lucide="library"></i><h3 class="text-base font-semibold mb-1">Catálogo vazio</h3><p class="text-sm">Clique em "Novo produto" para começar a cadastrar.</p></div>';
       if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
       return;
     }
@@ -9852,14 +9855,14 @@ window.importacao = (function () {
     const linhasForn = forn.length ? forn.map((f) => {
       const est = f.estagio || 'triado';
       return '<tr style="border-top:1px solid #1f2937;">'
-        + '<td style="padding:5px 8px;"><span style="font-size:11px;color:' + (CAT_ESTAGIO_COR[est] || '#6b7280') + ';font-weight:600;">&#9679; ' + impEsc(CAT_ESTAGIO_LABEL[est] || est) + '</span></td>'
+        + '<td style="padding:5px 8px;"><span style="font-size:11px;color:' + (CAT_ESTAGIO_COR[est] || '#6b7280') + ';font-weight:600;">● ' + impEsc(CAT_ESTAGIO_LABEL[est] || est) + '</span></td>'
         + '<td style="padding:5px 8px;">' + impEsc(f.fornecedor_nome || '—') + (f.fornecedor_pais ? ' <span style="color:#6b7280;">(' + impEsc(f.fornecedor_pais) + ')</span>' : '') + '</td>'
         + '<td style="padding:5px 8px;text-align:right;font-family:monospace;">US$ ' + (f.preco_fob_usd != null ? fmtUSD(f.preco_fob_usd) : '—') + '</td>'
         + '<td style="padding:5px 8px;text-align:right;">' + (f.moq_unidades != null ? f.moq_unidades : '—') + '</td>'
         + '<td style="padding:5px 8px;text-align:right;">' + (f.lead_time_dias != null ? f.lead_time_dias + 'd' : '—') + '</td>'
         + '<td style="padding:5px 8px;text-align:right;">' + (f.score_combinado != null ? f.score_combinado : '—') + '</td>'
         + '</tr>';
-    }).join('') : '<tr><td colspan="6" style="padding:8px;color:#6b7280;font-size:12px;text-align:center;">Nenhum fornecedor ainda — clique em &quot;+ fornecedor&quot;.</td></tr>';
+    }).join('') : '<tr><td colspan="6" style="padding:8px;color:#6b7280;font-size:12px;text-align:center;">Nenhum fornecedor ainda — clique em "+ fornecedor".</td></tr>';
     return '<div style="background:#111827;border:1px solid #1f2937;border-radius:10px;padding:14px;margin-bottom:12px;">'
       + '<div style="display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap;">'
       +   '<div style="min-width:0;">'
@@ -9867,8 +9870,8 @@ window.importacao = (function () {
       +       '<span style="font-family:monospace;font-size:11px;color:#10b981;">' + impEsc(p.chave) + '</span></div>'
       +     '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;font-size:12px;color:#9ca3af;">'
       +       '<span>NCM <b style="color:#d1d5db;font-family:monospace;">' + impEsc(p.ncm) + '</b></span>'
-      +       (p.categoria ? '<span>&middot; ' + impEsc(p.categoria) + '</span>' : '')
-      +       (p.peso_bruto_kg != null ? '<span>&middot; ' + p.peso_bruto_kg + ' kg/un</span>' : '<span style="color:#b45309;">&middot; sem peso</span>')
+      +       (p.categoria ? '<span>· ' + impEsc(p.categoria) + '</span>' : '')
+      +       (p.peso_bruto_kg != null ? '<span>· ' + p.peso_bruto_kg + ' kg/un</span>' : '<span style="color:#b45309;">· sem peso</span>')
       +       '</div>'
       +     '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;">' + flags.join('') + '</div>'
       +   '</div>'
@@ -10116,16 +10119,16 @@ window.importacao = (function () {
     if (ncm.length < 8) { hint.innerHTML = ''; return; }
     const reg = _catNcmsMap ? _catNcmsMap[ncm] : null;
     if (!reg) {
-      hint.innerHTML = '<span style="color:#f59e0b;">&#9888; NCM fora da sua Base Regulatória — o cálculo de custo não vai funcionar até cadastrar este NCM + alíquotas (aba Base Regulatória).</span>';
+      hint.innerHTML = '<span style="color:#f59e0b;">⚠ NCM fora da sua Base Regulatória — o cálculo de custo não vai funcionar até cadastrar este NCM + alíquotas (aba Base Regulatória).</span>';
       return;
     }
     if (reg.extinta) {
-      hint.innerHTML = '<span style="color:#ef4444;">&#9888; NCM EXTINTA — não use; procure o código vigente equivalente.</span>';
+      hint.innerHTML = '<span style="color:#ef4444;">⚠ NCM EXTINTA — não use; procure o código vigente equivalente.</span>';
       return;
     }
     const sels = ['ANATEL ' + (reg.requer_anatel ? 'sim' : 'não'), 'INMETRO ' + (reg.requer_inmetro ? 'sim' : 'não')];
     if (reg.requer_li) sels.push('exige LI');
-    hint.innerHTML = '<span style="color:#10b981;">&#10003; ' + impEsc(reg.descricao || 'registrado') + '</span> <span style="color:#9ca3af;">&middot; ' + sels.join(' &middot; ') + '</span>';
+    hint.innerHTML = '<span style="color:#10b981;">✓ ' + impEsc(reg.descricao || 'registrado') + '</span> <span style="color:#9ca3af;">· ' + sels.join(' · ') + '</span>';
     if (autofill) {
       document.getElementById('cat-p-radio').checked = !!reg.requer_anatel;
       document.getElementById('cat-p-inmetro').checked = !!reg.requer_inmetro;
@@ -10225,7 +10228,7 @@ window.fiscal = (function(){
   const F=v=>(v==null||isNaN(v))?'-':'R$ '+(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const N=v=>(+v||0).toLocaleString('pt-BR',{maximumFractionDigits:2});
   const P=v=>(v==null)?'-':(+v*100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
-  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&','<':'<','>':'>','"':'"'}[c]));
   const parseBR=s=>{ s=String(s||'').trim().replace(/\./g,'').replace(',','.'); const v=parseFloat(s); return isNaN(v)?null:v; };
   const comp=d=>{ const s=(d instanceof Date)?d.toISOString().slice(0,10):String(d||''); return s.slice(0,7)+'-01'; };
   const addM=(c,n)=>{ const [y,m]=c.split('-').map(Number); const d=new Date(Date.UTC(y,m-1+n,1)); return d.toISOString().slice(0,7)+'-01'; };
@@ -10570,7 +10573,7 @@ const shopeeTab={
   async _guard(btnId,fn){ if(this._busy) return; this._busy=true; const b=btnId?this._g(btnId):null; if(b) b.setAttribute('disabled','');
     try{ return await fn(); } finally{ this._busy=false; const b2=btnId?this._g(btnId):null; if(b2) b2.removeAttribute('disabled'); } },
   fmt:v=>Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
-  esc:s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+  esc:s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'''}[c])),
   // BUILD 2026-09-15-J: com virgula -> pontos sao milhar; sem virgula e UM ponto -> ponto decimal (99.90 = 99,90, nao 9.990)
   num(v){ if(v==null||v==='') return NaN; let x=String(v).trim(); if(x.indexOf(',')>=0){ x=x.replace(/\./g,'').replace(',','.'); } else if((x.match(/\./g)||[]).length>1||/\.\d{3}$/.test(x)){ x=x.replace(/\./g,''); } return parseFloat(x); },
   hojeLocal(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); },
@@ -10679,7 +10682,7 @@ const shopeeTab={
     // BUILD 2026-09-15-I: Margem inline — espelho da simAnuncio do ML (mesmos estados e cores); mesma conta margemDe de sempre
     const g=id=>this._g(id); const box=g('shp-al-margem'); if(!box) return;
     const F=v=>'R$ '+this.fmt(v);
-    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');
     const neutro=t=>{ box.innerHTML='<span style="color:var(--emuted2)">'+t+'</span>'; };
     const warn=g('shp-al-warn'); warn.className='warnline'; warn.textContent='';
     const cod=(g('shp-al-cod').value||'').trim().toUpperCase();
@@ -10845,7 +10848,7 @@ const shopeeTab={
   },
   ctlEditHtml(a){
     // BUILD 2026-09-15-J: espelho do Editar do ML — L1 Preco/Campanha/Margem, L2 Promocao/Margem, Motivo, Salvar/Cancelar + detalhes do calculo
-    const v=x=>String(x==null?'':x).replace(/"/g,'&quot;');
+    const v=x=>String(x==null?'':x).replace(/"/g,'"');
     const cel=(d)=>'<div class="efield"><label>Margem Líquida</label><div class="mginline mute" '+d+'><span class="mgi-pct">—</span><span class="mgi-luc">lucro <b>R$ —</b></span><span class="mgi-selo" hidden></span></div></div>';
     return '<span class="al-editflag">✏ Editando anúncio</span>'
       +'<div class="alm-row"><div class="efield"><label>Preço (R$)</label><input class="vinput mono" id="shp-ct-preco" inputmode="decimal" value="'+v(this.fmt(a.preco))+'"></div>'
@@ -10856,7 +10859,7 @@ const shopeeTab={
       +cel('data-shpmgp')+'</div>'
       // BUILD 2026-09-20-A: paridade com o Editar do ML — Item ID editavel (corrige numero errado sem encerrar+recadastrar)
       +'<div class="alm-row"><div class="efield"><label>Item ID Shopee *</label><input class="vinput mono" id="shp-ct-item" inputmode="numeric" value="'+v(a.shopee_item_id||'')+'"></div>'
-      +'<div class="efield" style="grid-column:2/4"><label>&nbsp;</label><div class="vinput" style="color:var(--emuted);display:flex;align-items:center;font-size:12px">nº do anúncio na Central (final do link) — altere apenas para corrigir</div></div></div>'
+      +'<div class="efield" style="grid-column:2/4"><label> </label><div class="vinput" style="color:var(--emuted);display:flex;align-items:center;font-size:12px">nº do anúncio na Central (final do link) — altere apenas para corrigir</div></div></div>'
       +'<div class="hintline" id="shp-ct-echo" style="display:none"></div>'
       +'<div class="efield"><label>Motivo da alteração *</label><input class="vinput" id="shp-ct-motivo" placeholder="descreva por que está alterando (obrigatório para gravar)"></div>'
       +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap"><button class="vbtn sm" id="shp-ct-save" onclick="shopeeTab.ctlSalvar()">Salvar</button>'
@@ -10895,7 +10898,7 @@ const shopeeTab={
     const meta=g('shp-ct-meta');
     if(meta){ if(efet&&efet.ok){ meta.innerHTML='<div class="meta-grid">'
         +'<span class="vig">vigente: '+(promoAtiva?'promoção':'preço cheio')+'</span>'
-        +'<span class="nf-k">Reposição PTAX</span><span class="nf-v">R$ '+this.fmt(custo)+'</span>'
+        +'<span class="nf-k">Reposição PTAX</span><span class="nf-v">'+this.fmt(custo)+'</span>'
         +'<span class="k">tarifa ('+this.esc(efet.t.rotulo)+')</span><span class="vv">'+efet.t.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})+'% + R$ '+this.fmt(efet.t.fixa)+' = R$ '+this.fmt(efet.t.total)+'</span>'
         +'<span class="k">imposto</span><span class="vv">'+(this.FIXOS.IMPOSTO*100)+'% · R$ '+this.fmt(efet.imposto)+'</span>'
         +'<span class="k">frete dif.</span><span class="vv">R$ 0,00</span>'
@@ -11516,7 +11519,7 @@ const finOps={
   WDX:['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'],
   _g:id=>document.getElementById(id),
   F:v=>(v==null||isNaN(v))?'—':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
-  esc:s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+  esc:s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'''}[c])),
   hoje(){ try{ return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }catch(e){ return new Date().toISOString().slice(0,10); } },
   d(k){ if(!k) return '—'; const s=String(k).slice(0,10); return s.slice(8,10)+'/'+s.slice(5,7); },
   dY(k){ if(!k) return '—'; const s=String(k).slice(0,10); return s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4); },
