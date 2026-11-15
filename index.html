@@ -1,3 +1,4 @@
+<!-- BUILD 2026-11-15-FIN04 | SELECTA: Compras/Envio do dia simplificada (remove coluna ANTEC. MP), adiciona Lucro Realizado por dia de entrega, preserva Lucro Previsto, mantém política ativa sem colchão comercial; parâmetro de colchão segue oculto para compatibilidade interna. Zero SQL/Edge. -->
 <!-- BUILD 2026-11-15-COM03 | POLITICA DE PRECIFICACAO ATIVA: imposto PROVISIONADO 7,50% em ML + Shopee, sem colchao para novos precos, antecipacao MP 5,00% somente ML sobre 100% do liquido previsto de venda apos comissao/fixa/frete e rebates; piso minimo 10%. Shopee NAO tem antecipacao MP, mas conserva tarifas proprio canal. Historicos e motores financeiros de vendas antigas preservados. Shopee relatórios mantem reserva apenas para vendas ate 14/11/2026. Zero SQL/Edge/cron. Validacao matematica obrigatoria antes de publicar. -->
 <!-- BUILD 2026-11-15-MP02 | Antecipacao MP FIXA 4,50% (media operacional declarada pelo usuario), aplicada a 100% do liquido ML previsto. Parametro compartilhado por todas as sessoes desta versao, sem localStorage ou edicao por usuario. Precificacao ML usa motor unico _simMargem (analise, controle, cadastro, exportacao, price_to_win), preservando venda historica, Shopee, Financeiro, Edge, SQL e cron. Custo e PROJECAO e nao tarifa real conciliada. -->
 <!-- BUILD 2026-11-15-MP01 | ML: provisionamento de antecipação 100% do liquido previsto A LIBERAR (preco - comissao - fixa - frete + estorno de campanha). Taxa efetiva percentual inserida pelo usuario, nao presumida; guardada apenas NESTE navegador (ate parametrizacao auditada no Supabase). Com taxa ausente o gate de margem do ML fica pendente/bloqueado; Shopee, vendas historicas, Financeiro/Termometro e banco INTACTOS. Entrada no motor unico _simMargem (Cadastro, Controle, Analise, export e price_to_win), linha de detalhamento no popover, visibilidade nos exports. Sem SQL ou Edge. -->
@@ -2392,25 +2393,25 @@
 .vd-tile .k{font-size:11px;color:var(--emuted);text-transform:uppercase;letter-spacing:.04em}
 .vd-tile .v{font-family:var(--emono);font-size:22px;font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vd-tile .n{font-size:11px;color:var(--eamber);margin-top:2px}
-.fn-dia,.fn-dia-head{display:grid;grid-template-columns:30px 200px 70px 150px 150px 150px 1fr;gap:12px;align-items:center}
+.fn-dia,.fn-dia-head{display:grid;grid-template-columns:30px 190px 70px 150px 150px 150px 1fr;gap:12px;align-items:center}
 .fn-dia{padding:8px 0;border-top:1px solid var(--eborder);font-size:14px}
 .fn-dia-head{padding:0 0 6px;font-size:11px;color:var(--emuted);text-transform:uppercase;letter-spacing:.04em}
 .fn-dia-head span:nth-child(3),.fn-dia-head span:nth-child(4),.fn-dia-head span:nth-child(5),.fn-dia-head span:nth-child(6){text-align:right}
 .fn-dia .ix{color:var(--emuted2);font-family:var(--emono);font-size:13px}
-.fn-dia .un,.fn-dia .cp,.fn-dia .ch,.fn-dia .lc{font-family:var(--emono);text-align:right;white-space:nowrap}
+.fn-dia .un,.fn-dia .cp,.fn-dia .lc,.fn-dia .lr{font-family:var(--emono);text-align:right;white-space:nowrap}
 .fn-dia .pdf{justify-self:end}
 .fn-dia .k{display:none}
 @media (max-width:980px){
   .fn-dia-head{display:none}
-  .fn-dia{grid-template-columns:22px minmax(0,1fr) minmax(0,1fr) 70px;grid-template-areas:"ix dia dia pdf" ". un cp cp" ". ch lc lc";gap:2px 8px;padding:8px 0;font-size:13px}
+  .fn-dia{grid-template-columns:22px minmax(0,1fr) minmax(0,1fr) 70px;grid-template-areas:"ix dia dia pdf" ". un cp cp" ". lc lr lr";gap:2px 8px;padding:8px 0;font-size:13px}
   .fn-dia .ix{grid-area:ix}
   .fn-dia .dia{grid-area:dia}
   .fn-dia .pdf{grid-area:pdf;padding:4px 10px}
   .fn-dia .un{grid-area:un}
   .fn-dia .cp{grid-area:cp}
-  .fn-dia .ch{grid-area:ch}
   .fn-dia .lc{grid-area:lc}
-  .fn-dia .un,.fn-dia .cp,.fn-dia .ch,.fn-dia .lc{text-align:left}
+  .fn-dia .lr{grid-area:lr}
+  .fn-dia .un,.fn-dia .cp,.fn-dia .lc,.fn-dia .lr{text-align:left}
   .fn-dia .k{display:block;font-family:inherit;font-size:10px;color:var(--emuted);text-transform:uppercase;letter-spacing:.03em}
 }
 @media (max-width:760px){
@@ -2700,7 +2701,7 @@
         <div class="efield"><label title="Fallback: usado apenas quando a categoria não tem alíquota própria em ecom_categoria_comissao">Comissão Premium (fallback) · % da venda</label><div class="field-row"><input class="num" id="ecom-com-premium" type="number" step="0.5" value="17"><span class="unit">%</span></div></div>
         <div class="efield"><label title="Provisão comercial de segurança para precificação futura; não é alíquota PGDAS-D homologada nem altera vendas já gravadas.">Provisão tributária para preços (%)</label><div class="field-row"><input class="num" id="ecom-imp" type="number" min="7.50" step="0.01" value="7.50" title="Mínimo comercial de 7,50%; aumento permitido quando necessário"><span class="unit">%</span></div></div>
         <div class="efield"><label>Outros custos · % da venda</label><div class="field-row"><input class="num" id="ecom-outros" type="number" step="0.5" value="0"><span class="unit">%</span></div></div>
-        <!-- COM03: id preservado para compatibilidade do motor antigo; reserva excluida da precificacao. -->
+        <!-- COM03/FIN04: id preservado para compatibilidade do motor antigo; reserva excluida da precificacao e sem opcao visual no app. -->
         <input id="ecom-colchao" type="hidden" value="0">
         <div class="efield"><label title="Provisão comercial fixa de 5,00% sobre 100% do líquido previsto para liberação no Mercado Pago; não incide sobre a NF-e nem substitui a tarifa real a conciliar.">Antecipação MP · taxa fixa (% do líquido)</label><div class="field-row"><input class="num" id="ecom-mp-antecipacao" type="number" value="5.00" readonly aria-readonly="true" aria-describedby="ecom-mp-status" title="5,00% fixos nesta versão; somente leitura" style="opacity:.84;cursor:default"><span class="unit">%</span></div></div>
         <div class="efield" style="grid-column:1/-1"><div id="ecom-mp-status" style="font-size:11px;color:var(--eemerald)">5,00% fixos sobre 100% do líquido ML projetado para antecipação.</div><div style="margin-top:3px;font-size:10.5px;color:var(--emuted2)">Média informada pela Selecta para precificação. É uma provisão, não tarifa efetiva reconciliada; vendas históricas e registros do banco não são alterados.</div></div>
@@ -5938,30 +5939,63 @@ const ecomFinanceiro={
   },
   async load(){ this.cur=null; await selectaUSD.atualizar(true); await this.loadList(); this.termometro(); }, // USD-02: compras futuras com PTAX, termometro historico intocado
   // BUILD 2026-08-17-A: quadrante de leitura rapida — capital do dia (ecom_vw_compras_dia, somente leitura)
-  // BUILD 2026-11-07: Colchao de 6% por dia de envio, calculado por pedido e exibido sem alterar o lucro (que ja o desconta)
-  comprasDia(itens){ const box=this._g('fn-compras-dia'); if(!box) return;
+  // BUILD 2026-11-15-FIN04: quadro por dia de envio simplificado (sem coluna de antecipação) + lucro realizado por dia de entrega.
+  async comprasDia(itens){ const box=this._g('fn-compras-dia'); if(!box) return;
     const V=ecomVendas, vivos=(itens||[]).filter(v=>!v.ocorrencia);
     if(!vivos.length){ box.innerHTML='<div class="ph">nenhum pedido a enviar</div>'; return; }
-    const soma=arr=>{ let custo=0, sc=0, antecipacao=0, luc=0, pend=0;
+    const soma=arr=>{ let custo=0, sc=0, luc=0, pend=0;
       arr.forEach(v=>{ const q=Math.max(1,Math.round(+v.quantidade||1));
         const custoHoje=this._custosHoje&&v.produto_codigo?this._custosHoje[v.produto_codigo]:null;
         if(custoHoje==null) sc++; else custo+=custoHoje*q;
         const calc=custoHoje==null?null:this.projecaoPedido(Object.assign({},v,{custo_unitario:custoHoje}));
-        if(calc==null) pend++; else { luc+=calc.lucro; antecipacao+=calc.antecipacao; }
+        if(calc==null) pend++; else { luc+=calc.lucro; }
       });
-      return {custo,sc,antecipacao,luc,pend,u:V.unid(arr)};
+      return {custo,sc,luc,pend,u:V.unid(arr)};
     };
-    let h='<div class="fn-dia-head"><span>#</span><span>envio</span><span>un.</span><span>compra</span><span>antec. MP</span><span>lucro previsto</span><span></span></div>';
-    h+=V.porDia(vivos).map((g,ix)=>{ const x=soma(g.itens);
+    const grupos=V.porDia(vivos), chaves=grupos.map(g=>g.k).filter(Boolean);
+    const real=await this.lucrosRealizadosPorDia(chaves);
+    let h='<div class="fn-dia-head"><span>#</span><span>envio</span><span>un.</span><span>compra</span><span>lucro previsto</span><span>lucro realizado</span><span></span></div>';
+    h+=grupos.map((g,ix)=>{ const x=soma(g.itens), lr=Number((real.mapa||{})[g.k]||0), lrPend=Number((real.pend||{})[g.k]||0);
       return '<div class="fn-dia">'
         +'<span class="ix">'+(ix+1)+'.</span>'
         +'<span class="dia" style="font-weight:700;color:'+V.diaCor(g.k)+'">'+V.diaLabel(g.k)+V.diaTag(g.k)+'</span>'
         +'<span class="un"><span class="k">un.</span><span>'+x.u+'</span></span>'
-        +'<span class="cp"><span class="k">compra</span><span style="color:var(--eteal);font-weight:600">R$ '+this.fmt(x.custo)+(x.sc>0?' <span style="color:var(--eamber)" title="'+x.sc+' item(ns) sem USD ou PTAX v\u00e1lida \u2014 valor parcial">*</span>':'')+'</span></span>'
-        +'<span class="ch"><span class="k">antec. MP</span><span style="color:var(--eamber)" title="Provisão de 5% sobre o líquido previsto do ML nas vendas desde 15/11/2026; antes disso, projeções usam a regra histórica">R$ '+this.fmt(x.antecipacao)+'</span></span>' 
-        +'<span class="lc"><span class="k">lucro do dia</span><span style="color:'+(x.luc>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(x.luc)+(x.pend>0?' <span style="color:var(--eamber)" title="'+x.pend+' item(ns) sem comiss\u00e3o ou custo atualizado \u2014 fora da soma">*</span>':'')+'</span></span>'
-        +'<button class="vbtn sm pdf" data-pdfdia="'+(g.k||'sem')+'" title="PDF para o fornecedor: itens deste dia de envio (descri\u00e7\u00e3o + quantidade, sem pre\u00e7o)">\ud83d\udcc4 PDF</button></div>'; }).join('');
+        +'<span class="cp"><span class="k">compra</span><span style="color:var(--eteal);font-weight:600">R$ '+this.fmt(x.custo)+(x.sc>0?' <span style="color:var(--eamber)" title="'+x.sc+' item(ns) sem USD ou PTAX válida — valor parcial">*</span>':'')+'</span></span>'
+        +'<span class="lc"><span class="k">lucro previsto</span><span style="color:'+(x.luc>=0?'var(--eemerald)':'var(--ered)')+'">R$ '+this.fmt(x.luc)+(x.pend>0?' <span style="color:var(--eamber)" title="'+x.pend+' item(ns) sem comissão ou custo atualizado — fora da soma">*</span>':'')+'</span></span>'
+        +'<span class="lr"><span class="k">lucro realizado</span><span style="color:'+(lr>=0?'var(--eteal)':'var(--ered)')+'">R$ '+this.fmt(lr)+(lrPend>0?' <span style="color:var(--eamber)" title="'+lrPend+' produto(s) entregue(s) no dia sem lucro fechado — fora da soma">*</span>':'')+'</span></span>'
+        +'<button class="vbtn sm pdf" data-pdfdia="'+(g.k||'sem')+'" title="PDF para o fornecedor: itens deste dia de envio (descrição + quantidade, sem preço)">📄 PDF</button></div>'; }).join('');
     box.innerHTML=h;
+  },
+  lucroRealizadoPedido(v){
+    const direto=Number(v&&v.resultado_liquido);
+    if(Number.isFinite(direto)) return Math.round(direto*100)/100;
+    if(!v) return null;
+    const q=Math.max(1,Math.round(Number(v.quantidade)||1));
+    const receita=v.receita_bruta!=null?Number(v.receita_bruta):Number(v.preco_venda)*q;
+    if(!Number.isFinite(receita)||receita<=0) return null;
+    const fre=((v.frete_onus||'vendedor')==='vendedor')?(Number(v.frete_valor)||0):0;
+    const taxas=v.taxas_ml_total!=null?Number(v.taxas_ml_total):((Number(v.comissao_valor)||0)+(Number(v.tarifa_fixa_valor)||0)+fre);
+    const custo=v.custo_total!=null?Number(v.custo_total):(v.custo_unitario!=null?Number(v.custo_unitario)*q:null);
+    if(!Number.isFinite(taxas)||!Number.isFinite(custo)) return null;
+    const r2=x=>Math.round(x*100)/100;
+    const nova=String(v.data_solicitacao||'').slice(0,10)>=SELECTA_SEM_COLCHAO_DESDE;
+    const imposto=v.imposto_valor!=null?Number(v.imposto_valor):r2(receita*(nova?SELECTA_TAXA_PRECIFICACAO.fracao:this.FIXOS.IMPOSTO));
+    const reserva=nova?0:r2(receita*this.FIXOS.COLCHAO);
+    return r2(receita-taxas-custo-imposto-reserva);
+  },
+  async lucrosRealizadosPorDia(chaves){
+    const mapa={}, pend={};
+    (chaves||[]).forEach(k=>{ if(k){ mapa[k]=0; pend[k]=0; } });
+    const validas=Object.keys(mapa).sort();
+    if(!validas.length) return {mapa,pend};
+    try{
+      const ini=validas[0]+'T00:00:00-03:00', fim=validas[validas.length-1]+'T23:59:59-03:00';
+      const q=await sb.from('ecom_vendas').select('id,status,data_entrega,data_solicitacao,quantidade,preco_venda,receita_bruta,comissao_valor,tarifa_fixa_valor,frete_valor,frete_onus,taxas_ml_total,custo_unitario,custo_total,resultado_liquido,imposto_valor')
+        .eq('status','entregue').gte('data_entrega',ini).lte('data_entrega',fim).order('data_entrega',{ascending:true});
+      if(q.error) throw q.error;
+      (q.data||[]).forEach(v=>{ if(!v.data_entrega) return; const k=ecomVendas._spKey(new Date(v.data_entrega)); if(!(k in mapa)) return; const lr=this.lucroRealizadoPedido(v); if(lr==null) pend[k]=(pend[k]||0)+1; else mapa[k]=Math.round((mapa[k]+lr)*100)/100; });
+    }catch(e){ console.warn('Lucro realizado por dia indisponível:',e.message); }
+    return {mapa,pend};
   },
   // BUILD 2026-10-12-A: Vendas dia — vendas feitas HOJE (data da venda em Brasilia); zera a meia-noite; cancelado fora
   async vendasDia(){ const box=this._g('vd-dia'); if(!box) return; const V=ecomVendas; const hoje=V.hojeSP();
@@ -5991,7 +6025,7 @@ const ecomFinanceiro={
         if(rfx.error) throw rfx.error;
         (rfx.data||[]).forEach(p=>{ this._custosHoje[p.codigo]=p.custo_reposicao_brl==null?null:Number(p.custo_reposicao_brl); });
       }catch(e){ console.warn('Previsao de compras USD/PTAX indisponivel:',e.message); this._custosHoje={}; } }
-      this.renderList(itens); this.comprasDia(itens);
+      this.renderList(itens); await this.comprasDia(itens);
     }catch(e){ this.parkForm(); box.innerHTML='<div class="ph" style="color:var(--ered)">erro: '+e.message+'</div>'; const fx=this._g('fn-compras-dia'); if(fx) fx.innerHTML='<span style="color:var(--ered)">erro: '+e.message+'</span>'; }
   },
   // COM03: projeção operacional apenas. Datas anteriores preservam 4% e reserva histórica 6%; novas vendas 7,5%, sem reserva, MP 5% do líquido previsto.
