@@ -1,3 +1,4 @@
+<!-- BUILD 2026-11-15-PC01 | Adiciona somente categoria PC (Perfumaria e Cosméticos) ao Catalogo; codigo PC-0001; simulacao independente sem anuncio ML, reutilizando integralmente ecomAlvo._simMargem, FRETE_TBL, PTAX e provisoes atuais. Taxa fornecida no simulador (referencia ajustavel pela tarifa efetiva do ML). Nenhum SQL estrutural, Edge, financeiro, politica ou fluxo de anuncio alterado. -->
 <!-- BUILD 2026-11-15-FIN04 | SELECTA: Compras/Envio do dia simplificada (remove coluna ANTEC. MP), adiciona Lucro Realizado por dia de entrega, preserva Lucro Previsto, mantém política ativa sem colchão comercial; parâmetro de colchão segue oculto para compatibilidade interna. Zero SQL/Edge. -->
 <!-- BUILD 2026-11-15-COM03 | POLITICA DE PRECIFICACAO ATIVA: imposto PROVISIONADO 7,50% em ML + Shopee, sem colchao para novos precos, antecipacao MP 5,00% somente ML sobre 100% do liquido previsto de venda apos comissao/fixa/frete e rebates; piso minimo 10%. Shopee NAO tem antecipacao MP, mas conserva tarifas proprio canal. Historicos e motores financeiros de vendas antigas preservados. Shopee relatórios mantem reserva apenas para vendas ate 14/11/2026. Zero SQL/Edge/cron. Validacao matematica obrigatoria antes de publicar. -->
 <!-- BUILD 2026-11-15-MP02 | Antecipacao MP FIXA 4,50% (media operacional declarada pelo usuario), aplicada a 100% do liquido ML previsto. Parametro compartilhado por todas as sessoes desta versao, sem localStorage ou edicao por usuario. Precificacao ML usa motor unico _simMargem (analise, controle, cadastro, exportacao, price_to_win), preservando venda historica, Shopee, Financeiro, Edge, SQL e cron. Custo e PROJECAO e nao tarifa real conciliada. -->
@@ -923,7 +924,7 @@
       <h3 id="ecom-form-title">Cadastrar produto</h3>
       <div class="addform">
         <input type="hidden" id="ecom-f-produto">
-        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="KIT">Kit</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="PLR">Placa de rede</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option><option value="RBL">Robô de Limpeza</option><option value="ALX">Alexa</option><option value="PWB">Power Bank</option><option value="CXS">Caixa de Som</option><option value="CAM">Câmera Digital</option><option value="CPS">Controle PS5</option><option value="FLM">Filamento Imp. 3D</option><option value="GBL">Câmera Estabilizadora</option><option value="MPD">Mouse Pad</option><option value="PDR">Pen Drive</option><option value="SPM">Suporte Monitor</option><option value="TAB">Tablet</option><option value="PTE">Porteiro Eletrônico</option><option value="DVR">CCTV / DVR</option><option value="RDE">Repetidor de Sinal</option><option value="CMP">Compressor Portátil</option><option value="ANT">Antena / Rádio de Rede</option></select></div>
+        <div class="efield"><label>Categoria <span class="req">*</span></label><select class="ainput" id="ecom-f-categoria" style="width:160px"><option value="">— escolher —</option><option value="SSD">SSD</option><option value="MEM">Memória RAM</option><option value="PMA">Placa-mãe</option><option value="VGA">Placa de vídeo</option><option value="MS">Mouse</option><option value="TCL">Teclado</option><option value="KTM">Kit teclado+mouse</option><option value="KIT">Kit</option><option value="HST">Headset / Fone</option><option value="FNT">Fonte ATX</option><option value="CCP">Cooler de CPU</option><option value="WBC">Webcam</option><option value="SW">Switch de rede</option><option value="RTR">Roteador</option><option value="AP">Access Point</option><option value="WAD">Adaptador Wi-Fi USB</option><option value="PLR">Placa de rede</option><option value="HUB">Hub USB</option><option value="SEG">Câmera de Segurança</option><option value="RBL">Robô de Limpeza</option><option value="ALX">Alexa</option><option value="PWB">Power Bank</option><option value="CXS">Caixa de Som</option><option value="CAM">Câmera Digital</option><option value="CPS">Controle PS5</option><option value="FLM">Filamento Imp. 3D</option><option value="GBL">Câmera Estabilizadora</option><option value="MPD">Mouse Pad</option><option value="PDR">Pen Drive</option><option value="SPM">Suporte Monitor</option><option value="TAB">Tablet</option><option value="PTE">Porteiro Eletrônico</option><option value="DVR">CCTV / DVR</option><option value="RDE">Repetidor de Sinal</option><option value="CMP">Compressor Portátil</option><option value="ANT">Antena / Rádio de Rede</option><option value="PC">Perfumaria e Cosméticos</option></select></div>
         <div class="efield"><label>Marca</label><input class="ainput" id="ecom-f-marca" style="width:120px"></div>
         <div class="efield"><label>Modelo</label><input class="ainput" id="ecom-f-modelo" style="width:120px"></div>
         <div class="efield" id="ecom-f-capacidade-wrap" style="display:none"><label>Capacidade</label><input class="ainput mono" id="ecom-f-capacidade" style="width:90px"></div>
@@ -943,6 +944,20 @@
         <span class="note" id="ecom-kit-soma" style="margin-left:10px"></span>
       </div>
       <div class="formmsg" id="ecom-formmsg"></div>
+    </div>
+    <!-- PC01: painel apenas de estudo, sem INSERT de anuncio nem alteracao de regras. -->
+    <div class="ecard" id="pc-sim-box" style="display:none;margin-top:12px;border-color:var(--eteal)">
+      <h3>Simulação de margem · PC</h3>
+      <div id="pc-sim-prod" class="note" style="margin:4px 0 10px">Preencha o cadastro ou escolha um produto PC.</div>
+      <div class="addform" style="align-items:flex-end">
+        <div class="efield"><label>Preço de venda (R$)</label><input class="ainput mono" id="pc-sim-preco" type="number" min="0.01" step="0.01" placeholder="ex.: 199,90" style="width:125px"></div>
+        <div class="efield"><label>Tipo de anúncio</label><select class="ainput" id="pc-sim-tipo" style="width:125px"><option value="classico">Clássico</option><option value="premium">Premium</option></select></div>
+        <div class="efield"><label>Comissão ML (%)</label><input class="ainput mono" id="pc-sim-comissao" type="number" min="0" max="100" step="0.01" style="width:110px" title="Confira o percentual da subcategoria e faixa de preco no simulador da sua conta ML"></div>
+        <button class="addbtn" type="button" id="pc-sim-calcular">Simular</button>
+        <button class="cancelbtn" type="button" id="pc-sim-limpar">Limpar</button>
+      </div>
+      <div id="pc-sim-resultado" style="margin-top:10px;font-size:12px;color:var(--emuted2)">Somente simulação; não cadastra anúncio.</div>
+      <div class="note" style="margin-top:8px;font-size:11px">A comissão indicada é referência e pode mudar conforme perfumes/cosméticos, faixa de preço e sua conta. Sem anúncio MLB não existe tarifa/frete individual aferido. Para precisão, informe a comissão do simulador oficial do ML; peso deve ser o da embalagem para envio. Imposto e antecipação seguem como provisões comerciais do APP, não como tributação efetiva do CPF. Custo deve contemplar aquisição regularizada para representar lucro real.</div>
     </div>
     <div id="ecom-sub-simulador" class="ecom-subpanel">
 
@@ -4332,6 +4347,8 @@ const ecom = {
   rebuildCatSelect(){ try{ const sel=this._g('ecom-f-categoria'); if(!sel||!this.comList||!this.comList.length) return;
       const cur=sel.value; const opts=this.comList.slice().sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR'));
       sel.innerHTML='<option value="">— escolher —</option>'+opts.map(o=>'<option value="'+o.sigla+'">'+o.nome+'</option>').join('');
+      // PC01: somente opção visual provisória até a inclusão da categoria na tabela (sem alterar as demais).
+      if(![].some.call(sel.options,o=>o.value==='PC')) sel.insertAdjacentHTML('beforeend','<option value="PC">Perfumaria e Cosméticos</option>');
       if(cur) sel.value=cur; }
     catch(e){ console.warn('rebuildCatSelect:',e.message); } },
   comPctDe(categoria,tipo,pr){ const m=categoria?this.comMap[categoria]:null; const prem=(tipo==='premium');
@@ -4621,9 +4638,10 @@ const ecom = {
         <td style="white-space:nowrap">${this.pesoCell(it)}</td>
         <td style="white-space:nowrap">${it.custo_usd==null?'<span style="color:var(--ered)">—</span>':'US$ '+this.fmt(it.custo_usd)}</td>
         <td style="white-space:nowrap">${selectaUSD.custo(it)==null?'<span style="color:var(--eamber)">—</span>':'R$ '+this.fmt(selectaUSD.custo(it))}</td>
-        <td><div class="acts"><button class="rowbtn ecom-custo-btn ${vencida?'em-atraso':''}" data-id="${it.id}" title="Última revisão: ${this.revisaoData(it)}">${vencida?'Atualizar':'Atualizado'}</button><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
+        <td><div class="acts">${it.categoria==='PC'?`<button class="rowbtn ecom-pc-sim" data-id="${it.id}">Simular</button>`:''}<button class="rowbtn ecom-custo-btn ${vencida?'em-atraso':''}" data-id="${it.id}" title="Última revisão: ${this.revisaoData(it)}">${vencida?'Atualizar':'Atualizado'}</button><button class="rowbtn ecom-edit" data-id="${it.id}">Editar</button><button class="rowbtn del ecom-del" data-id="${it.id}">Excluir</button></div></td>
       </tr>`; }).join('');
     tb.innerHTML=rows||'<tr><td class="l" colspan="6" style="color:var(--emuted2);padding:18px 9px">Nenhum item para esse filtro.</td></tr>';
+    tb.querySelectorAll('.ecom-pc-sim').forEach(b=>b.addEventListener('click',()=>catalogoPC.open(b.dataset.id)));
     tb.querySelectorAll('.ecom-edit').forEach(b=>b.addEventListener('click',()=>this.edit(b.dataset.id)));
     tb.querySelectorAll('.ecom-del').forEach(b=>b.addEventListener('click',()=>this.del(b.dataset.id)));
     tb.querySelectorAll('.ecom-custo-btn').forEach(b=>b.addEventListener('click',()=>this.revisaoOpen(b.dataset.id)));
@@ -4648,8 +4666,8 @@ const ecom = {
     this._g('ecom-f-produto').value=it.produto||''; this._g('ecom-f-marca').value=it.marca||''; this._g('ecom-f-modelo').value=it.modelo||''; this._g('ecom-f-capacidade').value=it.capacidade||''; this._g('ecom-f-interface').value=it.interface||'';
     this._g('ecom-f-pesog').value=(it.peso_g==null?'':it.peso_g); this._g('ecom-f-peso').value=it.peso_faixa||'ate300'; this.applyPesoG(); this._g('ecom-f-categoria').value=it.categoria||''; this.toggleCapInterface(); this.toggleKit(); if(it.categoria==='KIT'&&it.codigo) this.kitLoad(it.codigo); // BUILD 2026-08-15-R
     this._g('ecom-f-custo').value=it.custo_usd==null?'':it.custo_usd; this.usdPreview();
-    this.editId=id; this._g('ecom-add').textContent='Salvar alteração'; show('#ecom-cancel'); this._g('ecom-f-marca').focus(); },
-  cancelEdit(){ this.editId=null; this.clearForm(); this._g('ecom-add').textContent='+ Adicionar'; hide('#ecom-cancel'); },
+    this.editId=id; this._g('ecom-add').textContent='Salvar alteração'; show('#ecom-cancel'); if(typeof catalogoPC!=='undefined') catalogoPC.show(); this._g('ecom-f-marca').focus(); },
+  cancelEdit(){ this.editId=null; this.clearForm(); this._g('ecom-add').textContent='+ Adicionar'; hide('#ecom-cancel'); if(typeof catalogoPC!=='undefined') catalogoPC.show(); },
 
   async save(){ const num=id=>{ const v=parseFloat(this._g(id).value); return isNaN(v)?null:v; };
     const catSel=this._g('ecom-f-categoria'); const categoria=catSel.value||null;
@@ -4668,7 +4686,7 @@ const ecom = {
       try{ const r=await sb.from('ecom_produtos').update(Object.assign({},dados,{atualizado_em:new Date().toISOString()})).eq('id',this.editId).select().single(); if(r.error) throw r.error; if(categoria==='KIT'&&r.data&&r.data.codigo) await this.kitPersist(r.data.codigo); /* BUILD 2026-08-15-R: antes do cancelEdit, que limpa o montador */ if(idx>=0&&r.data) this.itens[idx]=r.data; this.cancelEdit(); this.render(); }
       catch(e){ if(idx>=0&&prev) this.itens[idx]=prev; const fm=this._g('ecom-formmsg'); fm.textContent='Erro ao salvar: '+e.message; fm.style.color='var(--ered)'; this.render(); } }
     else { const codigo=await this.nextCodigo(categoria);
-      try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{custo:selectaUSD.custo({custo_usd:custoUsd}),codigo,ativo:true})).select().single(); if(r.error) throw r.error; if(categoria==='KIT') await this.kitPersist(r.data.codigo); /* BUILD 2026-08-15-R: antes do clearForm, que limpa o montador */ this.itens.push(r.data); this.clearForm(); this.render(); const fm=this._g('ecom-formmsg'); fm.textContent='✓ Salvo no banco: '+r.data.codigo+' — campos limpos para o próximo.'; fm.style.color='var(--eemerald)';
+      try{ const r=await sb.from('ecom_produtos').insert(Object.assign({},dados,{custo:selectaUSD.custo({custo_usd:custoUsd}),codigo,ativo:true})).select().single(); if(r.error) throw r.error; if(categoria==='KIT') await this.kitPersist(r.data.codigo); /* BUILD 2026-08-15-R: antes do clearForm, que limpa o montador */ this.itens.push(r.data); this.clearForm(); this.render(); if(categoria==='PC'&&typeof catalogoPC!=='undefined'){ catalogoPC.ativo=r.data; catalogoPC.show(); } const fm=this._g('ecom-formmsg'); fm.textContent='✓ Salvo no banco: '+r.data.codigo+' — campos limpos para o próximo.'; fm.style.color='var(--eemerald)';
         if(this.gerarAposSalvar){ this.gerarAposSalvar=false; this.prefillAnuncio(r.data); } }
       catch(e){ this.gerarAposSalvar=false; const fm=this._g('ecom-formmsg'); fm.textContent='Erro ao cadastrar: '+e.message; fm.style.color='var(--ered)'; } } },
 
@@ -8422,6 +8440,72 @@ const ecomRadar={
   },
 };
 
+/* ===== BUILD 2026-11-15-PC01: simulacao PC (sem anuncio/cadastro ML; motor e regras intocados) ===== */
+const catalogoPC = {
+  ativo:null, ligado:false, editouComissao:false,
+  g(id){ return document.getElementById(id); },
+  fmt(v){ return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); },
+  esc(s){ return String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x])); },
+  // O valor cadastrado em categoria no banco continua preferencial; referência conservadora só se faltar.
+  comReferencia(){ const m=ecom.comMap&&ecom.comMap.PC; const tipo=this.g('pc-sim-tipo').value;
+    const n=m?Number(tipo==='premium'?m.p:m.c):NaN;
+    return Number.isFinite(n)&&n>=0&&n<=100?n:(tipo==='premium'?17:13); },
+  setReferencia(){ if(!this.editouComissao) this.g('pc-sim-comissao').value=this.comReferencia().toFixed(2); },
+  bind(){ if(this.ligado) return; const box=this.g('pc-sim-box'); if(!box) return; this.ligado=true;
+    ['ecom-f-categoria','ecom-f-marca','ecom-f-modelo','ecom-f-custo','ecom-f-pesog'].forEach(id=>{
+      const el=this.g(id); if(el){ el.addEventListener('input',()=>{ if(!this.ativo) this.show(); }); el.addEventListener('change',()=>{ this.ativo=null; this.show(); }); }
+    });
+    this.g('pc-sim-tipo').addEventListener('change',()=>{ this.editouComissao=false; this.setReferencia(); this.simular(); });
+    this.g('pc-sim-comissao').addEventListener('input',()=>{ this.editouComissao=true; this.simular(); });
+    this.g('pc-sim-preco').addEventListener('input',()=>this.simular());
+    this.g('pc-sim-calcular').addEventListener('click',()=>this.simular());
+    this.g('pc-sim-limpar').addEventListener('click',()=>{ this.ativo=null; this.editouComissao=false; this.g('pc-sim-preco').value=''; this.show(); });
+    this.setReferencia(); this.show();
+  },
+  open(id){ this.bind(); const item=(ecom.itens||[]).find(x=>String(x.id)===String(id)); if(!item||item.categoria!=='PC') return;
+    this.ativo=item; this.editouComissao=false; this.setReferencia(); this.show(); this.g('pc-sim-box').scrollIntoView({behavior:'smooth',block:'center'}); this.g('pc-sim-preco').focus(); },
+  show(){ const box=this.g('pc-sim-box'); if(!box) return; const cadPC=this.g('ecom-f-categoria')?.value==='PC';
+    if(this.ativo&&!(ecom.itens||[]).some(x=>String(x.id)===String(this.ativo.id))) this.ativo=null;
+    box.style.display=(cadPC||this.ativo)?'':'none';
+    if(box.style.display==='none') return;
+    const p=this.ativo, nome=p?[p.marca,p.modelo].filter(Boolean).join(' · '):[this.g('ecom-f-marca').value,this.g('ecom-f-modelo').value].filter(Boolean).join(' · ');
+    this.g('pc-sim-prod').textContent=(p?(p.codigo+' · '):'Cadastro PC · ')+(nome||'preencha marca e modelo')+(p?' · produto salvo':' · produto ainda não salvo');
+    this.setReferencia(); this.simular(); },
+  simular(){ const out=this.g('pc-sim-resultado'); if(!out||this.g('pc-sim-box').style.display==='none') return;
+    const aviso=t=>{ out.innerHTML='<span style="color:var(--eamber)">'+this.esc(t)+'</span>'; };
+    const prod=this.ativo||{categoria:'PC',custo_usd:Number(this.g('ecom-f-custo').value),peso_g:Number(this.g('ecom-f-pesog').value)};
+    const preco=Number(this.g('pc-sim-preco').value), taxa=Number(this.g('pc-sim-comissao').value), tipo=this.g('pc-sim-tipo').value;
+    if(!preco){ out.textContent='Informe o preço de venda para calcular a margem.'; return; }
+    if(!(preco>0)||!Number.isFinite(preco)){ aviso('Preço de venda inválido.'); return; }
+    if(!(Number(prod.custo_usd)>0)){ aviso('Custo em US$ obrigatório para calcular.'); return; }
+    if(!(Number(prod.peso_g)>0)){ aviso('Informe o peso de envio em gramas. Sem peso não é possível estimar o frete.'); return; }
+    if(!selectaUSD.valido()){ aviso('PTAX indisponível ou vencida: cálculo bloqueado, como no restante do APP.'); return; }
+    if(!this.g('pc-sim-comissao').value||!Number.isFinite(taxa)||taxa<0||taxa>100){ aviso('Informe a comissão vigente da categoria no Mercado Livre.'); return; }
+    // Sem MLB, a tarifa fixa abaixo de R$ 79 depende da logística. Não mostrar margem artificialmente elevada.
+    if(preco<79){ aviso('Preço abaixo de R$ 79: a tarifa fixa/logística varia e não está aferida. Simulação bloqueada até existir custo oficial do anúncio.'); return; }
+    // Interface efêmera do custo de comissão lido: _custosMlDe só o usa com data e tipo correspondentes;
+    // nenhum registro de anúncio é criado, nenhum valor de frete é inventado nem gravado.
+    const custoInformado={custos_ml_em:'SIMULACAO_PC_MANUAL',com_pct_ml:taxa,ml_tipo_custos:tipo,frete_ml_preco:preco};
+    const r=ecomAlvo._simMargem(prod,preco,tipo,ecom.reputacao,0,custoInformado);
+    if(!r.ok){ aviso(r.reason||'Simulação indisponível.'); return; }
+    const bom=r.margemPct>=.10, custo=selectaUSD.custo(prod), comissao=preco*taxa/100;
+    const provisao=preco*ecom.impostoPrecificacaoPct()/100, outros=preco*ecom._n('ecom-outros')/100;
+    const estado=bom?'MARGEM ≥ 10%':'MARGEM ABAIXO DE 10%';
+    out.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:9px">'
+     +'<strong style="font-size:19px;color:'+(bom?'var(--eemerald)':'var(--ered)')+'">'+this.fmt(r.margemPct*100)+'%</strong>'
+     +'<strong style="color:var(--etxt)">Lucro estimado R$ '+this.fmt(r.margem)+'</strong>'
+     +'<span style="color:'+(bom?'var(--eemerald)':'var(--ered)')+'">'+estado+'</span></div>'
+     +'<div style="display:flex;gap:8px 16px;flex-wrap:wrap;color:var(--emuted2);font-variant-numeric:tabular-nums">'
+     +'<span>Custo PTAX: R$ '+this.fmt(custo)+'</span>'
+     +'<span>Comissão ('+this.fmt(taxa)+'%): R$ '+this.fmt(comissao)+'</span>'
+     +'<span>Frete tabela ('+this.esc(ecom.reputacao)+'): R$ '+this.fmt(r.frete)+'</span>'
+     +'<span>Imposto provisionado: R$ '+this.fmt(provisao)+'</span>'
+     +(outros?'<span>Outros custos: R$ '+this.fmt(outros)+'</span>':'')
+     +'<span>Antecipação MP provisionada: R$ '+this.fmt(r.antecipacaoMp)+'</span></div>'
+     +'<div class="note" style="font-size:10.5px;margin-top:6px">Projeção para estudo: comissão informada, frete pela tabela de peso/preço/reputação e provisões atuais. Não é tarifa efetiva nem lucro fiscal apurado.</div>';
+  }
+};
+
 /* ===== BUILD 2026-08-08-C: aba Catálogo — roteador Consulta Produto / Simulador PC ===== */
 const catalogoTab = {
   sec: 'consulta', _b: false,
@@ -8441,7 +8525,7 @@ const catalogoTab = {
     if(s === 'consulta'){
       con.style.display = '';
       hide('#tab-simulador');
-      ecom.onEnter();
+      catalogoPC.bind(); ecom.onEnter().then(()=>catalogoPC.show());
     } else {
       con.style.display = 'none';
       show('#tab-simulador');
