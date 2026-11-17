@@ -1,3 +1,4 @@
+<!-- BUILD 2026-11-17-INV-OFF | AUDIT-APP-13: desativa UI Investidor e bloco visual legado, remove carregamentos exclusivos; preserva ledger/juros, capital, operacoes, cobrancas, ecom_mp_saldo, ml-orders/ml-market, fiscais e historicos. Zero SQL/Edge/cron. -->
 <!-- BUILD 2026-11-15-PC01 | Adiciona somente categoria PC (Perfumaria e Cosméticos) ao Catalogo; codigo PC-0001; simulacao independente sem anuncio ML, reutilizando integralmente ecomAlvo._simMargem, FRETE_TBL, PTAX e provisoes atuais. Taxa fornecida no simulador (referencia ajustavel pela tarifa efetiva do ML). Nenhum SQL estrutural, Edge, financeiro, politica ou fluxo de anuncio alterado. -->
 <!-- BUILD 2026-11-15-FIN04 | SELECTA: Compras/Envio do dia simplificada (remove coluna ANTEC. MP), adiciona Lucro Realizado por dia de entrega, preserva Lucro Previsto, mantém política ativa sem colchão comercial; parâmetro de colchão segue oculto para compatibilidade interna. Zero SQL/Edge. -->
 <!-- BUILD 2026-11-15-COM03 | POLITICA DE PRECIFICACAO ATIVA: imposto PROVISIONADO 7,50% em ML + Shopee, sem colchao para novos precos, antecipacao MP 5,00% somente ML sobre 100% do liquido previsto de venda apos comissao/fixa/frete e rebates; piso minimo 10%. Shopee NAO tem antecipacao MP, mas conserva tarifas proprio canal. Historicos e motores financeiros de vendas antigas preservados. Shopee relatórios mantem reserva apenas para vendas ate 14/11/2026. Zero SQL/Edge/cron. Validacao matematica obrigatoria antes de publicar. -->
@@ -2847,16 +2848,12 @@
 <section id="tab-financeiro" class="hidden-section max-w-screen-2xl mx-auto px-4 py-6">
     
   <h2 style="font-size:15px;font-weight:700;margin:0 0 12px">💰 Financeiro</h2>
-  <div class="alsubbar" id="fin-subbar"><!-- BUILD 2026-09-28-B -->
-    <button class="alsub-btn active" data-finsub="termo">🌡 Termômetro</button>
-    <button class="alsub-btn" data-finsub="inv">🤝 Investidor</button>
-  </div>
   <div id="fin-sub-termo">
   <div class="ecard" style="border-color:var(--eteal)">
     <div class="vd-messel"><button id="fm-prev">‹</button><span class="vd-mes" id="fm-mes">—</span><button id="fm-next">›</button></div>
     <h3>Canais · competência do mês</h3>
     <table class="trm" id="fm-canais"><tbody><tr><td class="ph">carregando…</td></tr></tbody></table>
-    <div class="hint" id="fm-nota" style="font-size:11.5px;color:var(--emuted2);margin-top:10px">Doutrina 15/09 aplicada: capital, investidores, juros, fixos e despesas da operação moram AQUI (razão da Selecta, abaixo). Ressalva honesta: a fonte de receitas desse razão ainda é só o ML — integrar as vendas Shopee na fonte da empresa muda matemática travada e é a próxima build (15-F), com consultas de conferência. TOTAL acima na convenção conservadora (colchão retido nos 2 canais).</div>
+    <div class="hint" id="fm-nota" style="font-size:11.5px;color:var(--emuted2);margin-top:10px">Razão financeiro da empresa e leitura dos canais. Juros e despesas históricas permanecem no resultado; módulo Investidor desativado. O total dos canais utiliza a convenção conservadora vigente.</div>
   </div>
 <div id="fin-empresa-body"><!-- BUILD 2026-09-15-E: razao da SELECTA (doutrina Igor 15/09 — capital, investidores e a matematica que move a operacao sao da empresa, nao dos canais) --><!-- BUILD 2026-08-17-B: Financeiro = visao mensal (Termometro; Por mes/competencia foi para o Historico no 26-M) -->
       <div class="ecard" style="border-color:var(--eteal)">
@@ -2872,12 +2869,6 @@
       </div>
       </div><!-- /fin-empresa-body -->
   </div><!-- /fin-sub-termo -->
-  <div id="fin-sub-inv" style="display:none"><!-- BUILD 2026-09-28-B: sub-aba Investidor -->
-      <div class="ecard" id="fop-card" style="border-color:var(--eteal)"><!-- BUILD 2026-09-28-A: Operacoes com investidor (finOps) -->
-        <h3>Operações com investidor</h3>
-        <div id="fop-body"><div class="ph">carregando…</div></div>
-      </div>
-  </div><!-- /fin-sub-inv -->
 </section>
 
 <!-- BUILD 2026-09-15-C: Radar de Nicho promovido a aba principal (rastreador de oportunidades; fonte atual = ML via Edge ml-radar) -->
@@ -6240,12 +6231,9 @@ const ecomFinanceiro={
     let movs=null;    try{ const r=await sb.from('ecom_capital_mov').select('credor,tipo,valor,data_mov'); if(!r.error) movs=r.data||[]; }catch(_e){}
     let despesas=null;try{ const r=await sb.from('ecom_despesa_op').select('id,data,descricao,valor').is('anulado_em',null).order('data'); if(!r.error) despesas=r.data||[]; }catch(_e){}
     let recupItens=null; try{ const r=await sb.from('ecom_recuperavel_item').select('id,descricao,valor').is('baixado_em',null).order('id'); if(!r.error) recupItens=r.data||[]; }catch(_e){}
-    // BUILD 2026-08-24-A: transferencias do investidor aguardando validacao (portal)
-    try{ const r=await sb.from('ecom_inv_funding').select('id,credor,data_ref,valor_sistema,valor_declarado,status,declarado_em,obs').eq('status','declarado').order('declarado_em'); this._invFunding=(!r.error&&r.data)||[]; }catch(_e){ this._invFunding=[]; }
-    // BUILD 2026-08-24-B: historico de validacoes (confirmadas/rejeitadas) do credor_2
-    try{ const r=await sb.from('ecom_inv_funding').select('credor,data_ref,valor_declarado,status,confirmado_em,obs').in('status',['confirmado','rejeitado']).order('confirmado_em',{ascending:false}).limit(12); this._invHist=((!r.error&&r.data)||[]).filter(h=>String(h.obs||'').indexOf('[treino]')<0).slice(0,8); /* BUILD 2026-08-26-Q: linha marcada [treino] nao aparece (tabela e append-only) */ }catch(_e){ this._invHist=[]; }
-    // BUILD 2026-08-25-G: saldo a amortizar por credor (liquidacao em saldo)
-    try{ const r=await sb.from('ecom_vw_credor_saldo').select('credor,saldo_inicial,ajustes,amortizado,saldo_atual,ultima_amortizacao,abertura'); this._credSaldo=(!r.error&&r.data)||[]; }catch(_e){ this._credSaldo=[]; }
+    // AUDIT-APP-13: consultas exclusivas de exibicao/validacao do investidor desligadas.
+    // ecom_capital_mov, ecom_vw_capital_saldo e ecom_inv_operacao seguem ativos: preservam resultado historico.
+    this._invFunding=[]; this._invHist=[]; this._credSaldo=[];
     let opsInv=null; try{ const r=await sb.from('ecom_inv_operacao').select('data_aporte,valor_aporte,valor_devido,status').neq('status','anulada'); if(!r.error) opsInv=r.data||[]; }catch(_e){} // BUILD 2026-09-28-A
     const d={vendasAll,vendas,ledger,movs,despesas,recupItens,opsInv};
     this._fonteCache={t:now,d};
@@ -6478,7 +6466,7 @@ const ecomFinanceiro={
         +itensExt.map(i=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 13px 7px 26px;background:var(--epanel)"><span style="font-size:12px;color:var(--emuted)">'+String(i.descricao).replace(/</g,'&lt;')+' <button class="vbtn sm" title="baixar item (histórico preservado)" data-recupbaixar="'+i.id+'">×</button></span><span style="font-family:var(--emono);font-size:12px">R$ '+F(+i.valor||0)+'</span></div>').join('')
         +line('MP libera após entrega',medLib==null?'— (sem venda liberada medida)':'~'+Math.round(medLib)+' dia(s) · mediana')
         ) /* fim CAPITAL (26-Q); Coberto/Descoberto vive no resumo */
-        +invHtml
+        +'' /* AUDIT-APP-13: bloco visual de investidores desativado; calculos de juros/capital mantidos */
         +degrHtml
         +'</div>'+aviso
         +(perdasPend>0?'<div style="font-size:11px;color:var(--ered);margin-top:6px">\u26d4 '+perdasPend+' ocorr\u00eancia(s) do m\u00eas sem preju\u00edzo apurado — abra o Editar do Hist\u00f3rico e feche o valor l\u00edquido.</div>':'');
@@ -11613,7 +11601,7 @@ const finMacro={
         +'<tr><td>Reservas históricas registradas (ambos canais)</td><td class="n">'+F(colTot)+'</td></tr>';
       this.loaded=true;
       try{ ecomFinanceiro.load(); }catch(e){ console.warn('razao empresa:',e.message); }
-      try{ if(window.finOps) window.finOps.load(); }catch(e){ console.warn('finOps:',e.message); } // BUILD 2026-09-28-A // BUILD 2026-09-15-E: Termometro da SELECTA + Conta MP + Investidores agora moram aqui
+      // AUDIT-APP-13: carregamento automatico finOps desativado; registros preservados.
     }catch(e){ tb.innerHTML='<tr><td class="neg">Erro: '+(e.message||e)+'</td></tr>'; }
   },
   wire(){ const p=this._g('fm-prev'), n=this._g('fm-next');
@@ -11958,16 +11946,7 @@ const finOps={
       else if(a==='posicao') this.posicao(); else if(a==='posicao-inv') this.posicaoPdf(b.getAttribute('data-inv'));
       else if(a==='fechar-slot'){ const s=this._g('fop-slot'); if(s) s.innerHTML=''; } }); }
 };
-try{ finOps.wire(); }catch(e){ console.error('finOps wire',e); }
-// BUILD 2026-09-28-B: sub-abas do Financeiro (Termometro | Investidor)
-try{ const bar=document.getElementById('fin-subbar');
-  if(bar) bar.addEventListener('click',e=>{ const b=e.target.closest('[data-finsub]'); if(!b) return; const k=b.getAttribute('data-finsub');
-    bar.querySelectorAll('[data-finsub]').forEach(x=>x.classList.toggle('active',x===b));
-    document.getElementById('fin-sub-termo').style.display=k==='termo'?'':'none';
-    document.getElementById('fin-sub-inv').style.display=k==='inv'?'':'none';
-    if(k==='inv'){ try{ finOps.load(); }catch(err){ console.warn('finOps:',err.message); } } });
-}catch(e){ console.error('fin subbar',e); }
-window.finOps = finOps;
+// AUDIT-APP-13: finOps mantido inerte para reversao controlada: sem wire, load ou exportacao global.
 
 </script>
 
